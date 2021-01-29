@@ -1,0 +1,18 @@
+bookdown::gitbook:
+  split_by: section
+config:
+  toc:
+  collapse: subsection
+before: |
+  <li><strong><a href="./">Causal Inference in R</a></strong></li>
+  edit:
+  link: https://github.com/LucyMcGowan/causal-inference-in-r/edit/master/%s
+text: "Edit"
+sharing:
+  facebook: no
+twitter: no
+github: yes
+all: []
+
+bookdown::pdf_book:
+  toc_depth: 2
