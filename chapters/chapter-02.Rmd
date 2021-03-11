@@ -1,0 +1,7 @@
+# Expressing causal questions as DAGs
+
+Text for chapter 2. 
+
+```{r}
+x <- 1
+```

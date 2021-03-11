@@ -1,19 +1,6 @@
----
-title: "Causal Inference in R"
-author:  "Lucy D'Agostino McGowan, Malcolm Barrett, Travis Gerke"
-date: "`r Sys.Date()`"
-documentclass: krantz
-# They gave us a hyperref.sty which is outdated
-# We should confirm what version they want used
-header-includes:
-    - \usepackage{hyperref} 
-output:
-  pdf_document:
-    keep_tex: true
-    citation_package: default
----
+# Preface {-}
 
-# Welcome {-}
+Welcome! In this book, we will...
 
 Part 1: Asking Causal Questions
 
