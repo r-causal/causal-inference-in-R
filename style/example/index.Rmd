@@ -1,0 +1,83 @@
+---
+title: "Causal Inference in R"
+author:  "Lucy D'Agostino McGowan, Malcolm Barrett, Travis Gerke"
+date: "`r Sys.Date()`"
+documentclass: krantz
+# They gave us a hyperref.sty which is outdated
+# We should confirm what version they want used
+header-includes:
+    - \usepackage{hyperref} 
+output:
+  pdf_document:
+    keep_tex: true
+    citation_package: default
+---
+
+# Welcome {-}
+
+Part 1: Asking Causal Questions
+
+* Chapter 1: What is a causal question?  
+  - Description, prediction, and explanation  
+  - Causal assumptions  
+  - Whole game example  
+  
+* Chapter 2: Expressing causal questions as DAGs  
+  - Visualizing causal assumptions  
+  - DAGs in R: ggdag and dagitty  
+  
+* Chapter 3: Preparing data to answer causal questions  
+  - Data wrangling with dplyr  
+  - Recognizing missing data: visdat, tidyr, mice  
+  - Working with multiple data sources  
+  
+* Chapter 4: Observational data as causes and effects  
+  - Exploring and visualizing data and assumptions: skimr, ggplot2  
+  - Calculating summary statistics: gtsummary, tableone  
+
+Part 2: The counterfactual framework
+
+* Chapter 5: Estimating counterfactuals  
+  - What is a counterfactual?  
+  - Target trials  
+  - Estimating the average treatment effect  
+  - Estimating treatment effects with other targets in mind  
+  
+* Chapter 6 Building a propensity score models  
+  - Logistic regression  
+  - Choosing variables to include  
+  - Continuous and categorical exposures  
+  
+* Chapter 7: Using the propensity score  
+  - Matching  
+  - Weighting  
+  - Weighting and matching with more complex exposures  
+  
+* Chapter 8: Evaluating your propensity score model  
+  - Calculating the standardized mean difference  
+  - Visualizing balance via Love Plots, boxplots, and eCDF plots  
+  - Pruning, trimming, and stabilizing propensity scores  
+
+Part 3. Estimating causal effects
+
+* Chapter 9: Incorporating propensity scores in generalized linear models  
+  - Using matched data sets  
+  - Using weights in outcome models  
+  - Estimating uncertainty  
+  - Estimating causal effects for complex exposures  
+  
+* Chapter 10: Incorporating propensity scores in survival models  
+  - Preparing data for survival analysis  
+  - Pooled logistic regression  
+  - Confidence intervals for causal survival models  
+  
+* Chapter 11: Sensitivity analyses  
+  - Quantitative bias analyses  
+  - Tipping point analyses: tipr, EValue
+  
+* Chapter 12: Other approaches to causal inference  
+  - G-computation  
+  - Targeted Learning  
+  - Instrumental variable analysis  
+  - Regression discontinuity  
+  - Difference-in-Difference
