@@ -1,0 +1,24 @@
+---
+title: "Causal Inference in R"
+author:  "Malcolm Barrett, Lucy D'Agostino McGowan, Travis Gerke"
+date: "`r Sys.Date()`"
+documentclass: krantz
+# They gave us a hyperref.sty which is outdated
+# We should confirm what version they want used
+output:
+  pdf_document:
+    keep_tex: true
+    citation_package: default
+---
+
+```{r child = '../frontmatter/preface.Rmd'}
+```
+  
+```{r child = '../chapters/chapter-01.Rmd'}
+```
+
+```{r child = '../chapters/chapter-02.Rmd'}
+```
+
+```{r child = '../chapters/chapter-03.Rmd'}
+```
