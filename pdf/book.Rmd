@@ -2,13 +2,18 @@
 title: "Causal Inference in R"
 author:  "Malcolm Barrett, Lucy D'Agostino McGowan, Travis Gerke"
 date: "`r Sys.Date()`"
-documentclass: krantz
-# They gave us a hyperref.sty which is outdated
-# We should confirm what version they want used
+description: > 
+  This book covers causal inference techniques to help statisticians, epidemiologists, economists, and data scientists implement best practices using R.
 output:
-  pdf_document:
+  bookdown::pdf_book:
     keep_tex: true
     citation_package: default
+    delete_merged_file: true
+    output_dir: "pdf"
+#documentclass: krantz
+# krantz throws errors, needs work to make compatible
+# They gave us a hyperref.sty which is outdated
+# We should confirm what version they want used
 ---
 
 ```{r child = '../frontmatter/preface.Rmd'}
