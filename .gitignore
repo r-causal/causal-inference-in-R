@@ -6,6 +6,3 @@ _book
 rsconnect
 _bookdown_files
 .DS_Store
-
-pdf/book.tex
-pdf/book.pdf
