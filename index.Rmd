@@ -2,9 +2,12 @@
 title: "Causal Inference in R"
 author:  "Malcolm Barrett, Lucy D'Agostino McGowan, Travis Gerke"
 date: "`r Sys.Date()`"
-output: bookdown::gitbook
+output: 
+  bookdown::gitbook:
+    css: style.css
 documentclass: book
 biblio-style: apalike
+bibliography: citations.bib
 link-citations: yes
 description: > 
   This book covers causal inference techniques to help statisticians, epidemiologists, economists, and data scientists implement best practices using R.
@@ -23,4 +26,7 @@ github-repo: malcolmbarrett/causal-inference-in-r
 ```
 
 ```{r child = 'chapters/chapter-03.Rmd'}
+```
+
+```{r child = 'chapters/chapter-06.Rmd'}
 ```
