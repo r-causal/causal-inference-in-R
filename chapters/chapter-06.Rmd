@@ -1,0 +1,62 @@
+# Building propensity score models
+
+:::def-box
+A **propensity score** is the probability of being in the exposure group, conditioned on observed covariates.
+:::
+
+@rosenbaum1983central showed in observational studies, conditioning on propensity scores can lead to unbiased estimates of the exposure effect as long as certain assumptions hold:
+
+1. There are no unmeasured confounders
+2. Every subject has a nonzero probability of receiving either exposure
+
+There are many ways to estimate the propensity score; typically people use logistic regression. This is done by fitting a logistic regression model predicting the exposure using known covariates. Each individuals' predicted values are the propensity scores. In R, a logistic regression model can be fit using the `glm()` function. Below is pseudo-code. The first argument is the model, with the exposure on the left side and the confounders on the right. The data frame is passed to the `data` argument and the `family = binomial()` argument to denote the model should be fit using logistic regression (as opposed to a different generalized linear model).
+
+```{r, eval = FALSE}
+glm(
+  exposure ~ confounder_1 + confounder_2, 
+  data = df,
+  family = binomial()
+)
+```
+
+We can extract the propensity scores by pulling out the predictions on the probability scale. Using the `augment()` function from the broom package, we can extract these propensity scores and add them to our original data frame. The argument `type.predict` is set to `"response"` to indicate that we want to extract the predicted values on the *probability* scale. By default, these will be on the linear logit scale. The `data` argument contains the original data frame. This code will output a new data frame consisting of all components in `df` with six additional columns corresponding to the logistic regression model that was fit. The `.fitted` column is the propensity score.
+
+```{r, eval = FALSE}
+glm(
+  exposure ~ confounder_1 + confounder_2, 
+  data = df,
+  family = binomial()
+) %>%
+  augment(type.predict = "response", data = df)
+```
+
+Let's look at an example. 
+
+## Extra Magic Hours
+
+Historically, guests who stayed in a Walt Disney World resort were able to access the park during "Extra Magic Hours" during which the park was closed to all other guests. These extra hours could be in the morning or evening. In 2018, there were four theme parks that provided "Extra Magic Hours" at Disney World: Magic Kingdom Park, EPCOT, Disney's Hollywood Studios, and Disney's Animal Kingdom Park. Typically, each day one park was selected to have these "Extra Magic Hours". We are interested in examining the relationship between whether a park had "Extra Magic Hours" in the morning and the average wait time for attractions the same day at 5pm. Below is a proposed DAG for this question.
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
+library(ggdag)
+
+coord_dag <- list(
+  x = c(Park = 0, Season = 0, x = 1, y = 2),
+  y = c(Park = -1, Season = 1, x = 0, y = 0)
+)
+
+labels <- c(x = "Extra Magic Morning",
+            y = "Average wait time at 6pm",
+            Park = "Park",
+            Season = "Ticket Season")
+
+dagify(y ~ x,
+       y ~ Park,
+       y ~ Season,
+       x ~ Park,
+       x ~ Season,
+       coords = coord_dag,
+       labels = labels) %>%
+  ggdag(use_labels = "label", text = FALSE) + theme_void()
+```
+
+
