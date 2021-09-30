@@ -9,6 +9,8 @@ A **propensity score** is the probability of being in the exposure group, condit
 1. There are no unmeasured confounders
 2. Every subject has a nonzero probability of receiving either exposure
 
+## Logistic Regression
+
 There are many ways to estimate the propensity score; typically people use logistic regression. This is done by fitting a logistic regression model predicting the exposure using known covariates. Each individuals' predicted values are the propensity scores. In R, a logistic regression model can be fit using the `glm()` function. Below is pseudo-code. The first argument is the model, with the exposure on the left side and the confounders on the right. The data frame is passed to the `data` argument and the `family = binomial()` argument to denote the model should be fit using logistic regression (as opposed to a different generalized linear model).
 
 ```{r, eval = FALSE}
@@ -32,7 +34,7 @@ glm(
 
 Let's look at an example. 
 
-## Extra Magic Hours
+### Example
 
 Historically, guests who stayed in a Walt Disney World resort hotel were able to access the park during "Extra Magic Hours" during which the park was closed to all other guests. These extra hours could be in the morning or evening. In 2018, there were four theme parks that provided "Extra Magic Hours" at Disney World: Magic Kingdom Park, EPCOT, Disney's Hollywood Studios, and Disney's Animal Kingdom Park. Typically, each day one park was selected to have these "Extra Magic Hours". We are interested in examining the relationship between whether a park had "Extra Magic Hours" in the morning and the average wait time for attractions the same day between 5pm and 6pm. Below is a proposed DAG for this question.
 
@@ -108,3 +110,8 @@ ggplot() +
   scale_x_continuous("Propensity Score")
 ```
 In the code above, the first `geom_histogram()` call creates the top histogram by subsetting the `df` data frame to only include those in the exposure group, where `extra_magic_morning == 1`. The x-axis for the histogram is the propensity score, which lives in the `.fitted` column of the data frame. The second `geom_histogram()` call creates the bottom histogram, subsetting to only those in the unexposed group. Here, we use the `y` argument to *flip* the histogram by setting this to `-..count..`. `..count..` is a keyword that ggplot2 recognizes as the frequency counts for the histogram. Finally, we need to edit the y-axis to show the absolute value (rather than negative values below 0) so the correct numbers are displayed; this is accomplished by setting `label = abs` in the `scale_y_continuous()` function. 
+
+## Choosing what variables to include
+
+## Continuous exposures
+
