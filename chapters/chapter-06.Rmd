@@ -1,6 +1,6 @@
 # Building propensity score models
 
-Often we are interested in assessing how some *exposure* (or treatment) impacts an outcome. For example, we could assess how an ad campaign (exposure) impacts sales (outcome), whether a certain medication (exposure) improves patient survival (outcome), or whether opening a theme park early to some visitors (exposure) reduces wait times later in the day (outcome). As defined in the previous chapter, an exposure in the context of this book is an often modifiable event or condition that occurs prior to the outcome. In randomized trials, participants are randomly assigned to exposure groups. If all goes well, this allows for an unbiased estimate of the causal effect between the exposure and outcome. In the "real world", outside this randomized trial setting, we are often placed in *exposure* groups based on other factors. For example, when deciding what medication to give a diabetic patient, a doctor may consider the patient's medical history, their likelihood to adhere to certain medications, and the severity of their disease. The medication they are given is no longer random, it is *conditional* on factors about that patient, also known as the patient's *covariates*. If we could could collect information about all of these factors, we could determine each patient's probability of exposure and use this to inform an analysis assessing the relationship between that exposure and some outcome. This is the propensity score!
+Often we are interested in assessing how some *exposure* (or treatment) impacts an outcome. For example, we could assess how an ad campaign (exposure) impacts sales (outcome), whether a certain medication (exposure) improves patient survival (outcome), or whether opening a theme park early to some visitors (exposure) reduces wait times later in the day (outcome). As defined in the previous chapter, an exposure in the context of this book is an often modifiable event or condition that occurs prior to the outcome. In randomized trials, participants are randomly assigned to exposure groups. If all goes well, this allows for an unbiased estimate of the causal effect between the exposure and outcome. In the "real world", outside this randomized trial setting, we are often placed in *exposure* groups based on other factors. For example, when deciding what medication to give a diabetic patient, a doctor may consider the patient's medical history, their likelihood to adhere to certain medications, and the severity of their disease. The medication they are given is no longer random, it is *conditional* on factors about that patient, also known as the patient's *covariates*. If we could could collect information about all of these factors, we could determine each patient's probability of exposure and use this to inform an analysis assessing the relationship between that exposure and some outcome. This is the propensity score! When fitting a *propensity score model* we want to condition on all known confounders.
 
 :::def-box
 A **propensity score** is the probability of being in the exposure group, conditioned on observed covariates.
@@ -44,8 +44,8 @@ Historically, guests who stayed in a Walt Disney World resort hotel were able to
 library(ggdag)
 
 coord_dag <- list(
-  x = c(Park = 0, Season = 0, close = 0, x = 1, y = 2),
-  y = c(Park = -1, Season = 1, close = 0.25, x = 0, y = 0)
+  x = c(Park = 0, Season = 0, close = 0, avg = 0, x = 1, y = 2),
+  y = c(Park = -1, avg = -0.25, Season = 1, close = 0.25, x = 0, y = 0)
 )
 
 labels <- c(
@@ -53,7 +53,8 @@ labels <- c(
   y = "Average wait between 5pm and 6pm",
   Park = "Park",
   Season = "Ticket Season",
-  close = "Time park closed"
+  close = "Time park closed",
+  avg = "Average wait per 100 guests in line"
 )
 
 dagify(
@@ -61,6 +62,8 @@ dagify(
   y ~ close,
   y ~ Park,
   y ~ Season,
+  y ~ avg,
+  x ~ avg,
   x ~ Park,
   x ~ close,
   x ~ Season,
@@ -71,7 +74,7 @@ dagify(
   theme_void()
 ```
 
-Here we are proposing that there are three confounders, the park where the extra time was given, the time the park closed, and the ticket season: value, regular, or peak. We can build a propensity score model using the `touringplans_2018` data set from the touringplans package. First we need to subset the data to only include average wait times between 6 and 7 pm.
+Here we are proposing that there are four confounders, the park where the attraction is located, the time the park closed, the ticket season: value, regular, or peak, and the average wait per 100 guests in line for the attraction. We can build a propensity score model using the `touringplans_2018` data set from the touringplans package. Each row of this dataset contains information about a particular attraction during a certain hour on a given day. First we need to subset the data to only include average wait times between 5 and 6 pm. Then we will use the `glm()` function to fit the propensity score model, predicting `extra_magic_morning` using the four confounders specified above. We'll add the propensity scores to the data frame (in a column called `.fitted` as set by the `augment()` function in the broom package).
 
 ```{r}
 library(tidyverse)
@@ -82,7 +85,7 @@ df <- touringplans_2018 %>%
   filter(hour == 17)
 
 glm(
-  extra_magic_morning ~ park + wdw_ticket_season + close,
+  extra_magic_morning ~ park + wdw_ticket_season + close + average_wait_per_hundred,
   data = df,
   family = binomial()
 ) %>% 
@@ -93,7 +96,7 @@ Let's take a look at these propensity scores. Below, the propensity scores are s
 
 ```{r}
 df %>%
-  select(date, extra_magic_morning, park, wdw_ticket_season, close, .fitted)
+  select(date, name, extra_magic_morning, park, wdw_ticket_season, close, average_wait_per_hundred, .fitted)
 ```
 We can examine the distribution of propensity scores by exposure group. A nice way to visualize this is via "mirrored histograms". The code below creates two histograms of the propensity scores, one on the "top" for the exposed group (the dates with Extra Magic Hours in the morning) and one on the "bottom" for the unexposed group. Because we only have two variables
 
