@@ -22,6 +22,13 @@ jobs:
 
       - uses: r-lib/actions/setup-r@v1
 
+      - name: Cache R packages
+        uses: actions/cache@v2
+        with:
+          path: ${{ env.R_LIBS_USER }}
+          key: ${{ hashFiles('.github/R-version') }}-1-${{ hashFiles('.github/depends.Rds') }}
+          restore-keys: ${{ hashFiles('.github/R-version') }}-1-
+
       - name: Install dependencies
         run: |
           install.packages(c("remotes", "styler"))
@@ -31,7 +38,7 @@ jobs:
       - name: Style
         run: |
           options(styler.addins_style_transformer = "grkstyle::grk_style_transformer()")
-          styler::style_pkg()
+          styler::style_dir(filetype = c(".R", ".Rmd"))
         shell: Rscript {0}
 
       - name: commit
