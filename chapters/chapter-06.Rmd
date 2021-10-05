@@ -92,7 +92,7 @@ glm(
   augment(type.predict = "response", data = df) -> df
 ```
 
-Let's take a look at these propensity scores. Below, the propensity scores are shown in the `.fitted` column for the first 10 observations. The propensity score here is the probability that a given date will have Extra Magic Hours in the morning given the observed covariates, in this case Park and Ticket Season. For example, on June 30, 2018 there was a 51.1\% chance that there would be Extra Magic Hours at Disney's Hollywood Studios given the Ticket Season (peak in this case) and time of park closure (11pm). On this particular day, there were *not* Extra Magic Hours in the morning (as indicated by the 0 in the first row of the `extra_magic_morning` column). 
+Let's take a look at these propensity scores. Below, the propensity scores are shown in the `.fitted` column for the first 10 observations. The propensity score here is the probability that a given date will have Extra Magic Hours in the morning given the observed covariates, in this case Park and Ticket Season. For example, on June 30, 2018 there was a 58.8\% chance that there would be Extra Magic Hours for the Alien Swirling Saucers given this attraction is located at Disney's Hollywood Studios, the Ticket Season (peak in this case), time of park closure (11pm), and the average wait per 100 guests in line (10 minutes). On this particular day, there were *not* Extra Magic Hours in the morning (as indicated by the 0 in the first row of the `extra_magic_morning` column). 
 
 ```{r}
 df %>%
