@@ -1,0 +1,54 @@
+# Workflow derived from https://github.com/r-lib/actions/tree/master/examples
+# Need help debugging build failures? Start at https://github.com/r-lib/actions#where-to-find-help
+on:
+  issue_comment:
+    types: [created]
+
+name: Commands
+
+jobs:
+  style:
+    if: startsWith(github.event.comment.body, '/style')
+    name: style
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: r-lib/actions/pr-fetch@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: r-lib/actions/setup-r@v1
+
+      - name: Cache R packages
+        uses: actions/cache@v2
+        with:
+          path: ${{ env.R_LIBS_USER }}
+          key: ${{ hashFiles('.github/R-version') }}-1-${{ hashFiles('.github/depends.Rds') }}
+          restore-keys: ${{ hashFiles('.github/R-version') }}-1-
+
+      - name: Install Package Dependencies
+        run: |-
+          options(repos = 'https://packagemanager.rstudio.com/all/latest')
+          install.packages('remotes')
+          remotes::install_deps(dependencies = TRUE)
+        shell: Rscript {0}
+
+      - name: Style
+        run: |
+          options(styler.addins_style_transformer = "grkstyle::grk_style_transformer()")
+          styler::style_dir(filetype = c(".R", ".Rmd"))
+        shell: Rscript {0}
+
+      - name: commit
+        run: |
+          git config --local user.name "$GITHUB_ACTOR"
+          git config --local user.email "$GITHUB_ACTOR@users.noreply.github.com"
+          git add .
+          git commit -m 'Style'
+
+      - uses: r-lib/actions/pr-push@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
