@@ -17,7 +17,7 @@ There are many ways to estimate the propensity score; typically people use logis
 
 ```{r, eval = FALSE}
 glm(
-  exposure ~ confounder_1 + confounder_2, 
+  exposure ~ confounder_1 + confounder_2,
   data = df,
   family = binomial()
 )
@@ -27,7 +27,7 @@ We can extract the propensity scores by pulling out the predictions on the proba
 
 ```{r, eval = FALSE}
 glm(
-  exposure ~ confounder_1 + confounder_2, 
+  exposure ~ confounder_1 + confounder_2,
   data = df,
   family = binomial()
 ) %>%
@@ -70,7 +70,7 @@ dagify(
   coords = coord_dag,
   labels = labels
 ) %>%
-  ggdag(use_labels = "label", text = FALSE) + 
+  ggdag(use_labels = "label", text = FALSE) +
   theme_void()
 ```
 
@@ -88,7 +88,7 @@ glm(
   extra_magic_morning ~ park + wdw_ticket_season + close + average_wait_per_hundred,
   data = df,
   family = binomial()
-) %>% 
+) %>%
   augment(type.predict = "response", data = df) -> df
 ```
 
@@ -102,16 +102,22 @@ We can examine the distribution of propensity scores by exposure group. A nice w
 
 ```{r}
 ggplot() +
-  geom_histogram(data = df %>% filter(extra_magic_morning == 1), 
-                 aes(x = .fitted),
-                 fill = "orange", 
-                 bins = 25) + 
-  geom_histogram(data = df %>% filter(extra_magic_morning == 0), 
-                 aes(x = .fitted, 
-                     y = -..count..), 
-                 fill = "cornflower blue",
-                 bins = 25) +
-  scale_y_continuous("Count", label = abs) + 
+  geom_histogram(
+    data = df %>% filter(extra_magic_morning == 1),
+    aes(x = .fitted),
+    fill = "orange",
+    bins = 25
+  ) +
+  geom_histogram(
+    data = df %>% filter(extra_magic_morning == 0),
+    aes(
+      x = .fitted,
+      y = -..count..
+    ),
+    fill = "cornflower blue",
+    bins = 25
+  ) +
+  scale_y_continuous("Count", label = abs) +
   scale_x_continuous("Propensity Score")
 ```
 In the code above, the first `geom_histogram()` call creates the top histogram by subsetting the `df` data frame to only include those in the exposure group, where `extra_magic_morning == 1`. The x-axis for the histogram is the propensity score, which lives in the `.fitted` column of the data frame. The second `geom_histogram()` call creates the bottom histogram, subsetting to only those in the unexposed group. Here, we use the `y` argument to *flip* the histogram by setting this to `-..count..`. `..count..` is a keyword that ggplot2 recognizes as the frequency counts for the histogram. Finally, we need to edit the y-axis to show the absolute value (rather than negative values below 0) so the correct numbers are displayed; this is accomplished by setting `label = abs` in the `scale_y_continuous()` function. 

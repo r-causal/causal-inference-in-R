@@ -17,6 +17,7 @@ github-repo: malcolmbarrett/causal-inference-in-r
 ---
   
 ```{r child = 'frontmatter/preface.Rmd'}
+
 ```
   
 ```{r child = 'chapters/chapter-01.Rmd'}
