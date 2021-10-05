@@ -26,9 +26,9 @@ Imports:
 Suggests: 
     grkstyle (>= 0.0.3),
     styler
-Remotes:  
-    LucyMcGowan/touringplans,
-    gadenbuie/grkstyle
+Remotes: 
+    gadenbuie/grkstyle,
+    LucyMcGowan/touringplans
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
