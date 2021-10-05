@@ -24,9 +24,11 @@ Imports:
     tipr,
     touringplans (>= 0.0.0.9000)
 Suggests: 
+    grkstyle (>= 0.0.3),
     styler
-Remotes: 
-    LucyMcGowan/touringplans
+Remotes:  
+    LucyMcGowan/touringplans,
+    gadenbuie/grkstyle
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)

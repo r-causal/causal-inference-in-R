@@ -29,10 +29,11 @@ jobs:
           key: ${{ hashFiles('.github/R-version') }}-1-${{ hashFiles('.github/depends.Rds') }}
           restore-keys: ${{ hashFiles('.github/R-version') }}-1-
 
-      - name: Install dependencies
-        run: |
-          install.packages(c("remotes", "styler"))
-          remotes::install_github("gadenbuie/grkstyle")
+      - name: Install Package Dependencies
+        run: |-
+          options(repos = 'https://packagemanager.rstudio.com/all/latest')
+          install.packages('remotes')
+          remotes::install_deps(dependencies = TRUE)
         shell: Rscript {0}
 
       - name: Style
