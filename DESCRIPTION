@@ -1,0 +1,33 @@
+Package: causal-inference-in-R
+Title: Causal Inference in R
+Version: 0.0.0.9000
+Authors@R: c(
+    person("Malcolm", "Barrett", , "malcolmbarrett@gmail.com", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0003-0299-5825")),
+    person("Lucy", "D'Agostino McGowan", , "lucydagostino@gmail.com", role = "aut",
+           comment = c(ORCID = "0000-0001-7297-9359")),
+    person("Travis", "Gerke", , "tgerke@mail.harvard.edu", role = "aut",
+           comment = c(ORCID = "0000-0002-9500-8907"))
+  )
+Description: Causal Inference in R.
+License: MIT + file LICENSE
+Imports: 
+    bookdown,
+    broom,
+    ggdag,
+    gtsummary,
+    MatchIt,
+    rsample (>= 0.0.5),
+    smd,
+    survey,
+    tidyverse,
+    tipr,
+    touringplans (>= 0.0.0.9000)
+Suggests: 
+    styler
+Remotes: 
+    LucyMcGowan/touringplans
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.2
