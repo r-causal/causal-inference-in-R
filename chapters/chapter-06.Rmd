@@ -44,13 +44,13 @@ Historically, guests who stayed in a Walt Disney World resort hotel were able to
 library(ggdag)
 
 coord_dag <- list(
-  x = c(Season = 0, close = 0, weather = -0.5, x = 1, y = 2),
+  x = c(Season = 0, close = 0, weather = -1, x = 1, y = 2),
   y = c(Season = -1, close = 1, weather = 0.25, x = 0, y = 0)
 )
 
 labels <- c(
   x = "Extra Magic Morning",
-  y = "Average wait between 5pm and 6pm",
+  y = "Average wait",
   Season = "Ticket Season",
   weather = "Historic high temperature",
   close = "Time park closed"
@@ -68,7 +68,9 @@ dagify(
   labels = labels
 ) %>%
   ggdag(use_labels = "label", text = FALSE) +
-  theme_void()
+  theme_void() +
+  scale_x_continuous(limits = c(-1.25, 2.25), breaks = c(-1, 0, 1, 2), labels = c("2017\n(one year ago)", "2017\n(6 months ago)", "2017\n(3 months ago)", "5pm - 6pm\n(Today)")) +
+  theme(axis.text.x = element_text())
 ```
 
 Here we are proposing that there are three confounders: the historic high temperature on the day, the time the park closed, and the ticket season: value, regular, or peak. We can build a propensity score model using the `seven_dwarfs_train_2018` data set from the touringplans package. Each row of this dataset contains information about the Seven Dwarfs Mine Train during a certain hour on a given day. First we need to subset the data to only include average wait times between 5 and 6 pm. Then we will use the `glm()` function to fit the propensity score model, predicting `extra_magic_morning` using the four confounders specified above. We'll add the propensity scores to the data frame (in a column called `.fitted` as set by the `augment()` function in the broom package).
