@@ -38,33 +38,30 @@ Let's look at an example.
 
 ### Example
 
-Historically, guests who stayed in a Walt Disney World resort hotel were able to access the park during "Extra Magic Hours" during which the park was closed to all other guests. These extra hours could be in the morning or evening. In 2018, there were four theme parks that provided "Extra Magic Hours" at Disney World: Magic Kingdom Park, EPCOT, Disney's Hollywood Studios, and Disney's Animal Kingdom Park. Typically, each day one park was selected to have these "Extra Magic Hours". We are interested in examining the relationship between whether a park had "Extra Magic Hours" in the morning and the average wait time for attractions the same day between 5pm and 6pm. Below is a proposed DAG for this question.
+Historically, guests who stayed in a Walt Disney World resort hotel were able to access the park during "Extra Magic Hours" during which the park was closed to all other guests. These extra hours could be in the morning or evening. The Seven Dwarfs Mine Train is a ride at Walt Disney World's Magic Kingdom. Typically, each day Magic Kingdom may or may not be selected to have these "Extra Magic Hours". We are interested in examining the relationship between whether there were "Extra Magic Hours" in the morning and the average wait time for the Seven Dwarfs Mine Train the same day between 5pm and 6pm. Below is a proposed DAG for this question.
 
 ```{r, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Proposed DAG for the relationship between Extra Magic Hours in the morning at a particular park and the average wait time between 5pm and 6pm."}
 library(ggdag)
 
 coord_dag <- list(
-  x = c(Park = 0, Season = 0, close = 0, avg = 0, x = 1, y = 2),
-  y = c(Park = -1, avg = -0.25, Season = 1, close = 0.25, x = 0, y = 0)
+  x = c(Season = 0, close = 0, weather = -0.5, x = 1, y = 2),
+  y = c(Season = -1, close = 1, weather = 0.25, x = 0, y = 0)
 )
 
 labels <- c(
   x = "Extra Magic Morning",
   y = "Average wait between 5pm and 6pm",
-  Park = "Park",
   Season = "Ticket Season",
-  close = "Time park closed",
-  avg = "Average wait per 100 guests in line"
+  weather = "Historic high temperature",
+  close = "Time park closed"
 )
 
 dagify(
   y ~ x,
   y ~ close,
-  y ~ Park,
   y ~ Season,
-  y ~ avg,
-  x ~ avg,
-  x ~ Park,
+  x ~ weather,
+  y ~ weather,
   x ~ close,
   x ~ Season,
   coords = coord_dag,
@@ -74,29 +71,29 @@ dagify(
   theme_void()
 ```
 
-Here we are proposing that there are four confounders, the park where the attraction is located, the time the park closed, the ticket season: value, regular, or peak, and the average wait per 100 guests in line for the attraction. We can build a propensity score model using the `touringplans_2018` data set from the touringplans package. Each row of this dataset contains information about a particular attraction during a certain hour on a given day. First we need to subset the data to only include average wait times between 5 and 6 pm. Then we will use the `glm()` function to fit the propensity score model, predicting `extra_magic_morning` using the four confounders specified above. We'll add the propensity scores to the data frame (in a column called `.fitted` as set by the `augment()` function in the broom package).
+Here we are proposing that there are three confounders: the historic high temperature on the day, the time the park closed, and the ticket season: value, regular, or peak. We can build a propensity score model using the `seven_dwarfs_train_2018` data set from the touringplans package. Each row of this dataset contains information about the Seven Dwarfs Mine Train during a certain hour on a given day. First we need to subset the data to only include average wait times between 5 and 6 pm. Then we will use the `glm()` function to fit the propensity score model, predicting `extra_magic_morning` using the four confounders specified above. We'll add the propensity scores to the data frame (in a column called `.fitted` as set by the `augment()` function in the broom package).
 
 ```{r}
 library(tidyverse)
 library(broom)
 library(touringplans)
 
-df <- touringplans_2018 %>%
+df <- seven_dwarfs_train_2018 %>%
   filter(hour == 17)
 
 glm(
-  extra_magic_morning ~ park + wdw_ticket_season + close + average_wait_per_hundred,
+  extra_magic_morning ~ wdw_ticket_season + close + weather_wdwhigh,
   data = df,
   family = binomial()
 ) %>%
   augment(type.predict = "response", data = df) -> df
 ```
 
-Let's take a look at these propensity scores. Below, the propensity scores are shown in the `.fitted` column for the first 10 observations. The propensity score here is the probability that a given date will have Extra Magic Hours in the morning given the observed covariates, in this case Park and Ticket Season. For example, on June 30, 2018 there was a 58.8\% chance that there would be Extra Magic Hours for the Alien Swirling Saucers given this attraction is located at Disney's Hollywood Studios, the Ticket Season (peak in this case), time of park closure (11pm), and the average wait per 100 guests in line (10 minutes). On this particular day, there were *not* Extra Magic Hours in the morning (as indicated by the 0 in the first row of the `extra_magic_morning` column). 
+Let's take a look at these propensity scores. Below, the propensity scores are shown in the `.fitted` column for the first 10 observations. The propensity score here is the probability that a given date will have Extra Magic Hours in the morning given the observed confounders, in this case the historical high temperatures on a given date, the time the park closed, and Ticket Season. For example, on January 1, 2018 there was a 30.4\% chance that there would be Extra Magic Hours at the Magic Kingdom given the Ticket Season (peak in this case), time of park closure (11pm), and the historic high temperature on this date (70.3 degrees). On this particular day, there were *not* Extra Magic Hours in the morning (as indicated by the 0 in the first row of the `extra_magic_morning` column). 
 
 ```{r}
 df %>%
-  select(date, name, extra_magic_morning, park, wdw_ticket_season, close, average_wait_per_hundred, .fitted)
+  select(date, extra_magic_morning, wdw_ticket_season, close, weather_wdwhigh, .fitted)
 ```
 We can examine the distribution of propensity scores by exposure group. A nice way to visualize this is via "mirrored histograms". The code below creates two histograms of the propensity scores, one on the "top" for the exposed group (the dates with Extra Magic Hours in the morning) and one on the "bottom" for the unexposed group. Because we only have two variables
 
@@ -106,7 +103,7 @@ ggplot() +
     data = df %>% filter(extra_magic_morning == 1),
     aes(x = .fitted),
     fill = "orange",
-    bins = 25
+    bins = 40
   ) +
   geom_histogram(
     data = df %>% filter(extra_magic_morning == 0),
@@ -115,7 +112,7 @@ ggplot() +
       y = -..count..
     ),
     fill = "cornflower blue",
-    bins = 25
+    bins = 40
   ) +
   scale_y_continuous("Count", label = abs) +
   scale_x_continuous("Propensity Score")
