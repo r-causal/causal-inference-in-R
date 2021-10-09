@@ -25,6 +25,8 @@ knitr::opts_chunk$set(
   fig.align = "center",
   fig.show = "hold"
 )
+
+options(tidyverse.quiet = TRUE)
 ```
   
 ```{r child = 'frontmatter/preface.Rmd'}
