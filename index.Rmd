@@ -12,6 +12,20 @@ github-repo: malcolmbarrett/causal-inference-in-r
 # Render with:
 # bookdown::render_book("index.Rmd", output_dir = "docs")
 ---
+
+```{r setup}
+knitr::opts_chunk$set(
+  echo = FALSE, 
+  dev = "ragg_png",
+  dpi = 320, 
+  out.width = "80%",
+  fig.width = 6,
+  fig.asp = 0.618,
+  fig.retina = 2,
+  fig.align = "center",
+  fig.show = "hold"
+)
+```
   
 ```{r child = 'frontmatter/preface.Rmd'}
 ```
