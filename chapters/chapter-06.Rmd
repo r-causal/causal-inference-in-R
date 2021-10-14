@@ -57,13 +57,8 @@ labels <- c(
 )
 
 dagify(
-  y ~ x,
-  y ~ close,
-  y ~ Season,
-  x ~ weather,
-  y ~ weather,
-  x ~ close,
-  x ~ Season,
+  y ~ x + close + Season + weather,
+  x ~ weather + close + Season,
   coords = coord_dag,
   labels = labels
 ) %>%
