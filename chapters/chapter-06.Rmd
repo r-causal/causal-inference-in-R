@@ -110,7 +110,7 @@ ggplot() +
     data = df %>% filter(extra_magic_morning == 0),
     aes(
       x = .fitted,
-      y = -..count..
+      y = -after_stat(count)
     ),
     fill = "cornflower blue",
     bins = 40
