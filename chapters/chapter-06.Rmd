@@ -82,12 +82,12 @@ library(touringplans)
 df <- seven_dwarfs_train_2018 %>%
   filter(hour == 17)
 
-glm(
+df <- glm(
   extra_magic_morning ~ wdw_ticket_season + close + weather_wdwhigh,
   data = df,
   family = binomial()
 ) %>%
-  augment(type.predict = "response", data = df) -> df
+  augment(type.predict = "response", data = df)
 ```
 
 Let's take a look at these propensity scores. Below, the propensity scores are shown in the `.fitted` column for the first 10 observations. The propensity score here is the probability that a given date will have Extra Magic Hours in the morning given the observed confounders, in this case the historical high temperatures on a given date, the time the park closed, and Ticket Season. For example, on January 1, 2018 there was a 30.4\% chance that there would be Extra Magic Hours at the Magic Kingdom given the Ticket Season (peak in this case), time of park closure (11pm), and the historic high temperature on this date (70.3 degrees). On this particular day, there were *not* Extra Magic Hours in the morning (as indicated by the 0 in the first row of the `extra_magic_morning` column). 
