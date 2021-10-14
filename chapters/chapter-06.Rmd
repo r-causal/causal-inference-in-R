@@ -64,7 +64,11 @@ dagify(
 ) %>%
   ggdag(use_labels = "label", text = FALSE) +
   theme_void() +
-  scale_x_continuous(limits = c(-1.25, 2.25), breaks = c(-1, 0, 1, 2), labels = c("2017\n(one year ago)", "2017\n(6 months ago)", "2017\n(3 months ago)", "5pm - 6pm\n(Today)")) +
+  scale_x_continuous(
+    limits = c(-1.25, 2.25), 
+    breaks = c(-1, 0, 1, 2), 
+    labels = c("2017\n(one year ago)", "2017\n(6 months ago)", "2017\n(3 months ago)", "5pm - 6pm\n(Today)")
+  ) +
   theme(axis.text.x = element_text())
 ```
 
