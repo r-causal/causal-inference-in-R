@@ -120,11 +120,13 @@ ggplot() +
 ```
 In the code above, the first `geom_histogram()` call creates the top histogram by subsetting the `df` data frame to only include those in the exposure group, where `extra_magic_morning == 1`. The x-axis for the histogram is the propensity score, which lives in the `.fitted` column of the data frame. The second `geom_histogram()` call creates the bottom histogram, subsetting to only those in the unexposed group. Here, we use the `y` argument to *flip* the histogram by setting this to `-after_stat(count)`. `after_stat()` allows you to work with values created internally by ggplot2, such as `count`, the frequency counts for the histogram. Finally, we need to edit the y-axis to show the absolute value (rather than negative values below 0) so the correct numbers are displayed; this is accomplished by setting `label = abs` in the `scale_y_continuous()` function. 
 
-## Choosing what variables to include
-
-* [Malcolm] non-confounder additions to models (King etc)
-
 ## Continuous exposures
 
 * [Malcolm will write]
+
+## Choosing what variables to include
+
+The best way to decide what variables to include in your propensity score model is to look at your DAG and include all confounders. Of course these confounders need to be measured in your data set; if you have confounders on your DAG that you do not have access to, sensitivity analyses can help quantify the potential impact. See Chapter 11 for an in depth discussion of sensitivity analyses.
+
+* [Malcolm] non-confounder additions to models (King etc)
 
