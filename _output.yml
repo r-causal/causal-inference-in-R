@@ -8,7 +8,6 @@ bookdown::gitbook:
       after: |
         <li><a href="https://www.r-causal.org/" target="blank">r-causal.org</a></li>
     download: [pdf, epub]
-    edit: https://github.com/malcolmbarrett/causal-inference-in-R
     sharing:
       github: true
       facebook: false
