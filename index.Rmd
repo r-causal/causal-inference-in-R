@@ -2,17 +2,33 @@
 title: "Causal Inference in R"
 author:  "Malcolm Barrett, Lucy D'Agostino McGowan, Travis Gerke"
 date: "`r Sys.Date()`"
-output: bookdown::gitbook
-documentclass: book
+documentclass: krantz
+#bibliography: [book.bib]
 biblio-style: apalike
 link-citations: yes
+colorlinks: yes
+lot: yes
+lof: yes
+site: bookdown::bookdown_site
 description: > 
   This book covers causal inference techniques to help statisticians, epidemiologists, economists, and data scientists implement best practices using R.
 github-repo: malcolmbarrett/causal-inference-in-r
+graphics: yes
 # Render with:
-# bookdown::render_book("index.Rmd", output_dir = "docs")
+# bookdown::render_book(output_format = bookdown::pdf_book())
 ---
   
+```{r setup, include=FALSE}
+options(
+  htmltools.dir.version = FALSE, formatR.indent = 2, width = 55, digits = 4
+)
+
+# install the packages needed by this book; you fill out c(), e.g. c('ggplot2', 'dplyr')
+lapply(c('xfun'), function(pkg) {
+  if (system.file(package = pkg) == '') install.packages(pkg)
+})
+```
+
 ```{r child = 'frontmatter/preface.Rmd'}
 ```
   
