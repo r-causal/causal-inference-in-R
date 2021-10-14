@@ -122,5 +122,9 @@ In the code above, the first `geom_histogram()` call creates the top histogram b
 
 ## Choosing what variables to include
 
+* [Malcolm] non-confounder additions to models (King etc)
+
 ## Continuous exposures
+
+* [Malcolm will write]
 
