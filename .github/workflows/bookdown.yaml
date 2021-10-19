@@ -20,10 +20,9 @@ jobs:
 
       - name: Setup R
         uses: r-lib/actions/setup-r@v1
-
-      - name: Install pandoc
-        run: |
-          brew install pandoc
+        
+      - name: Install system dependencies 
+        run: brew install pandoc harfbuzz freetype2 fribidi
 
       - name: Query dependencies
         run: |
