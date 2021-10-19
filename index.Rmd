@@ -18,7 +18,7 @@ graphics: yes
 # bookdown::render_book(output_format = bookdown::pdf_book())
 ---
 
-```{r setup}
+```{r setup, include=FALSE}
 knitr::opts_chunk$set(
   echo = FALSE, 
   dev = "ragg_png",
@@ -31,18 +31,13 @@ knitr::opts_chunk$set(
   fig.show = "hold"
 )
 
-options(tidyverse.quiet = TRUE)
-```
-  
-```{r setup, include=FALSE}
 options(
-  htmltools.dir.version = FALSE, formatR.indent = 2, width = 55, digits = 4
+  tidyverse.quiet = TRUE, 
+  htmltools.dir.version = FALSE, 
+  formatR.indent = 2, 
+  width = 55, 
+  digits = 4
 )
-
-# install the packages needed by this book; you fill out c(), e.g. c('ggplot2', 'dplyr')
-lapply(c('xfun'), function(pkg) {
-  if (system.file(package = pkg) == '') install.packages(pkg)
-})
 ```
 
 ```{r child = 'frontmatter/preface.Rmd'}
