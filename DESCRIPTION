@@ -17,6 +17,7 @@ Imports:
     ggdag,
     gtsummary,
     MatchIt,
+    ragg,
     rsample (>= 0.0.5),
     smd,
     survey,

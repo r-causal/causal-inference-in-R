@@ -9,13 +9,40 @@ documentclass: book
 biblio-style: apalike
 bibliography: citations.bib
 link-citations: yes
+colorlinks: yes
+lot: yes
+lof: yes
+site: bookdown::bookdown_site
 description: > 
   This book covers causal inference techniques to help statisticians, epidemiologists, economists, and data scientists implement best practices using R.
 github-repo: malcolmbarrett/causal-inference-in-r
+graphics: yes
 # Render with:
-# bookdown::render_book("index.Rmd", output_dir = "docs")
+# bookdown::render_book(output_format = bookdown::pdf_book())
 ---
-  
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE, 
+  dev = "ragg_png",
+  dpi = 320, 
+  out.width = "80%",
+  fig.width = 6,
+  fig.asp = 0.618,
+  fig.retina = 2,
+  fig.align = "center",
+  fig.show = "hold"
+)
+
+options(
+  tidyverse.quiet = TRUE, 
+  htmltools.dir.version = FALSE, 
+  formatR.indent = 2, 
+  width = 55, 
+  digits = 4
+)
+```
+
 ```{r child = 'frontmatter/preface.Rmd'}
 
 ```
