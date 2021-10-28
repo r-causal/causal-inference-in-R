@@ -111,7 +111,7 @@ library(tidyverse)
 library(broom)
 library(touringplans)
 
-df <- seven_dwarfs_train_2018 %>%
+seven_dwarfs <- seven_dwarfs_train_2018 %>%
   filter(hour == 17)
 
 df <- glm(
