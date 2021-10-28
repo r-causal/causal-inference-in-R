@@ -1,6 +1,6 @@
 # Building propensity score models
 
-Often we are interested in assessing how some *exposure* (or treatment) impacts an outcome.
+Often we are interested in how some *exposure* (or treatment) impacts an outcome.
 For example, we could assess how an ad campaign (exposure) impacts sales (outcome), whether a certain medication (exposure) improves patient survival (outcome), or whether opening a theme park early to some visitors (exposure) reduces wait times later in the day (outcome).
 As defined in the previous chapter, an exposure in the context of this book is an often modifiable event or condition that occurs prior to the outcome.
 In randomized trials, participants are randomly assigned to exposure groups.
