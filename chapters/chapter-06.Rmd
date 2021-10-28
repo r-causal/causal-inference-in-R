@@ -24,7 +24,7 @@ A **propensity score** is the probability of being in the exposure group, condit
 ## Logistic Regression
 
 There are many ways to estimate the propensity score; typically people use logistic regression for binary exposures.
-This is done by fitting a logistic regression model predicting the exposure using known covariates.
+This is done by fitting a logistic regression model predicting the exposure using known confounders.
 Each individual's predicted value is the propensity score.
 In R, a logistic regression model can be fit using the `glm()` function.
 Below is pseudo-code.
