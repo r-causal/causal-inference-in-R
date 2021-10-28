@@ -114,7 +114,7 @@ library(touringplans)
 seven_dwarfs <- seven_dwarfs_train_2018 %>%
   filter(hour == 17)
 
-df <- glm(
+seven_dwarfs_with_ps <- glm(
   extra_magic_morning ~ wdw_ticket_season + close + weather_wdwhigh,
   data = df,
   family = binomial()
