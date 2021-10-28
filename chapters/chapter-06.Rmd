@@ -7,7 +7,7 @@ In randomized trials, participants are randomly assigned to exposure groups.
 If all goes well, this allows for an unbiased estimate of the causal effect between the exposure and outcome.
 In the "real world", outside this randomized trial setting, we are often *exposed* to something based on other factors.
 For example, when deciding what medication to give a diabetic patient, a doctor may consider the patient's medical history, their likelihood to adhere to certain medications, and the severity of their disease.
-The medication they are given is no longer random; it is *conditional* on factors about that patient, also known as the patient's *covariates*.
+The medication they are given is no longer random; it is *conditional* on factors about that patient, also known as the patient's *covariates*. If these covariates also affect the outcome, they are *confounders*.
 If we could collect information about all of these factors, we could determine each patient's probability of exposure and use this to inform an analysis assessing the relationship between that exposure and some outcome.
 This is the propensity score!
 When fitting a *propensity score model* we want to condition on all known confounders.
