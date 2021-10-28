@@ -2,9 +2,12 @@
 title: "Causal Inference in R"
 author:  "Malcolm Barrett, Lucy D'Agostino McGowan, Travis Gerke"
 date: "`r Sys.Date()`"
-documentclass: krantz
-#bibliography: [book.bib]
+output: 
+  bookdown::gitbook:
+    css: style.css
+documentclass: book
 biblio-style: apalike
+bibliography: citations.bib
 link-citations: yes
 colorlinks: yes
 lot: yes
@@ -41,6 +44,7 @@ options(
 ```
 
 ```{r child = 'frontmatter/preface.Rmd'}
+
 ```
   
 ```{r child = 'chapters/chapter-01.Rmd'}
@@ -50,4 +54,7 @@ options(
 ```
 
 ```{r child = 'chapters/chapter-03.Rmd'}
+```
+
+```{r child = 'chapters/chapter-06.Rmd'}
 ```
