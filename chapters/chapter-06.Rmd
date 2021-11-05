@@ -171,6 +171,40 @@ Finally, we need to edit the y-axis to show the absolute value (rather than nega
 
 -   [Malcolm will write]
 
+```{r, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Proposed DAG for the relationship between posted wait in the morning at a particular park and the average wait time between 5pm and 6pm."}
+library(tidyverse)
+library(ggdag)
+
+coord_dag <- list(
+  x = c(Season = -1, close = -1, weather = -2, extra = 0, x = 1, y = 2),
+  y = c(Season = -1, close = 1, weather = 0.25, extra = 0, x = 0, y = 0)
+)
+
+labels <- c(
+  extra = "Extra Magic Morning",
+  x = "Posted wait ",
+  y = "Average wait",
+  Season = "Ticket Season",
+  weather = "Historic high temperature",
+  close = "Time park closed"
+)
+
+dagify(
+  y ~ x + close + Season + weather + extra,
+  x ~ weather + close + Season + extra,
+  coords = coord_dag,
+  labels = labels
+) %>%
+  ggdag(use_labels = "label", text = FALSE) +
+  theme_void() +
+  scale_x_continuous(
+    limits = c(-2.25, 2.25), 
+    breaks = c(-2, -1, 0, 1, 2), 
+    labels = c("\n(one year ago)", "\n(6 months ago)", "\n(3 months ago)", "9am-10am\n(Today)", "5pm - 6pm\n(Today)")
+  ) +
+  theme(axis.text.x = element_text())
+```
+
 ## Choosing what variables to include
 
 The best way to decide what variables to include in your propensity score model is to look at your DAG and include all confounders.
