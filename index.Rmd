@@ -23,7 +23,7 @@ graphics: yes
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(
-  echo = FALSE, 
+  echo = TRUE, 
   dev = "ragg_png",
   dpi = 320, 
   out.width = "80%",
@@ -46,7 +46,7 @@ options(
 ```{r child = 'frontmatter/preface.Rmd'}
 
 ```
-  
+
 ```{r child = 'chapters/chapter-01.Rmd'}
 ```
 
