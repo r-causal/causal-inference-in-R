@@ -286,7 +286,7 @@ denominator_model <- lm(
 )
 
 denominators <- denominator_model %>% 
-  augment(data = great_data_name) %>% 
+  augment(data = wait_times) %>% 
   mutate(denominator = dnorm(avg_spostmin, .fitted, mean(.sigma, na.rm = TRUE))) %>% 
   select(date, denominator)
 ```
@@ -306,8 +306,13 @@ denominators %>%
 Let's now fit the marginal density to use for stabilized weights:
 
 ```{r}
+numerator_model <- lm(
+  avg_spostmin ~ 1, 
+  data = wait_times
+)
+
 numerators <- numerator_model %>% 
-  augment(data = great_data_name) %>% 
+  augment(data = wait_times) %>% 
   mutate(numerator = dnorm(avg_spostmin, .fitted, mean(.sigma, na.rm = TRUE))) %>% 
   select(date, numerator)
 ```
@@ -325,7 +330,7 @@ The stabilized weights are much less extreme.
 Often, stabilized weights have a mean close to 1; when that is the case, then the psuedo-population (that is, the equivalent number of observations after weighting) is equal to the original sample size.
 
 ```{r}
-ggplot(great_data_name_wts, aes(swts)) +
+ggplot(wait_times_wts, aes(swts)) +
   geom_density(col = "#E69F00", fill = "#E69F0095") + 
   scale_x_log10() + 
   theme_minimal(base_size = 20) + 
