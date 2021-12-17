@@ -13,7 +13,7 @@ If we could collect information about all of these factors, we could determine e
 This is the propensity score!
 When fitting a *propensity score model* we want to condition on all known confounders.
 
-::: {.def-box}
+::: def-box
 A **propensity score** is the probability of being in the exposure group, conditioned on observed covariates.
 :::
 
@@ -156,7 +156,7 @@ ggplot() +
     fill = "cornflower blue",
     bins = 40
   ) +
-  scale_y_continuous("Count", label = abs) +
+  scale_y_continuous("Count", labels = abs) +
   scale_x_continuous("Propensity Score")
 ```
 
@@ -169,7 +169,17 @@ Finally, we need to edit the y-axis to show the absolute value (rather than nega
 
 ## Continuous exposures
 
--   [Malcolm will write]
+Propensity scores generalize to many other types of exposures, including continuous exposures.
+At it's heart, the workflow is the same: we fit a model where the exposure is the outcome then use that model to weight a second outcome model.
+For continuous exposures, linear regression is the simplest way to create propensities.
+Instead of probabilities, we use the cumulative density function.
+Then, we use this density to weight the outcome model.
+
+Let's take a look at an example.
+In the `tourplans` data set, we have information about the posted waiting times for rides.
+We also have a limited amount of data on the observed, actual times.
+The question that we will consider is this: Do posted wait times for the Seven Dwarves Mine Train at 8 am affect actual wait times at 9 am?
+Here's our DAG:
 
 ```{r, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Proposed DAG for the relationship between posted wait in the morning at a particular park and the average wait time between 5pm and 6pm."}
 library(tidyverse)
@@ -182,8 +192,8 @@ coord_dag <- list(
 
 labels <- c(
   extra = "Extra Magic Morning",
-  x = "Posted wait ",
-  y = "Average wait",
+  x = "Average posted wait ",
+  y = "Average acutal wait",
   Season = "Ticket Season",
   weather = "Historic high temperature",
   close = "Time park closed"
@@ -200,15 +210,158 @@ dagify(
   scale_x_continuous(
     limits = c(-2.25, 2.25), 
     breaks = c(-2, -1, 0, 1, 2), 
-    labels = c("\n(one year ago)", "\n(6 months ago)", "\n(3 months ago)", "9am-10am\n(Today)", "5pm - 6pm\n(Today)")
+    labels = c("\n(one year ago)", "\n(6 months ago)", "\n(3 months ago)", "8am-9am\n(Today)", "9am-10am\n(Today)")
   ) +
   theme(axis.text.x = element_text())
 ```
 
+We're assuming that are primary confounders are the time the park closes, historic high temperatures, whether or not the ride has extra magic morning hours, and the ticket season.
+Similar to above, each of the confounders precede the exposure and outcome, and (by definition) the exposure precedes the outcome.
+The average posted wait time is, in theory, a manipulable exposure because the park could post a time different from what they expect.
+
+Fitting the model is similar to the binary exposure case, but we need to use linear regression, as the posted time is a continuous variable.
+Since we're not using probabilities, we'll instead calculate denominators for our weights from a normal density.
+We then calculate the denominator using the `dnorm()` function, which calculates the normal density for the `exposure`, using `.fitted` as the mean and `mean(.sigma)` as the SD.
+
+```{r, eval = FALSE}
+lm(
+  exposure ~ confounder_1 + confounder_2,
+  data = df
+) %>%
+  augment(data = df) %>% 
+  mutate(denominator = dnorm(exposure, .fitted, mean(.sigma, na.rm = TRUE)))
+```
+
+Continuous exposure weights, however, are very sensitive to modeling choices.
+One problem particular is the existence of extreme weights, an issue that can also affect other types of exposures.
+When some observations have extreme weights, the propensities are *destabalized.* We can stabilize them using the marginal distribution of the exposure.
+A common way to calculate the marginal distribution for propensity scores is to use a regression model with no predictors:
+
+```{r, eval = FALSE}
+# for continuous exposures
+lm(
+  exposure ~ 1,
+  data = df
+) %>%
+  augment(data = df) %>% 
+  transmute(numerator = dnorm(exposure, .fitted, mean(.sigma, na.rm = TRUE)))
+
+# for binary exposures
+glm(
+  exposure ~ 1,
+  data = df,
+  family = binomial()
+) %>%
+  augment(type.predict = "response", data = df) %>% 
+  select(numerator = .fitted)
+```
+
+Then, rather than inverting them, we calculate the weights as `numerator / denominator`.
+Let's try it out on our posted wait times example.
+First, let's wrangle our data to address our question: do posted wait times at 8 affect actual weight times at 9?
+We'll join the baseline data (all covariates and posted wait time at 8) with the outcome (average actual time).
+We also have a lot of missingness for `avg_sactmin`, so we'll drop unobserved values for now.
+
+```{r}
+eight <- seven_dwarfs_train_2018 %>% 
+  filter(hour == 8) %>% 
+  select(-avg_sactmin)
+
+nine <- seven_dwarfs_train_2018 %>% 
+  filter(hour == 9) %>% 
+  select(date, avg_sactmin)
+
+wait_times <- eight %>% 
+  left_join(nine, by = "date") %>% 
+  drop_na(avg_sactmin)
+```
+
+First, let's calculate our denominator model.
+We'll fit a model using `lm()` for `avg_spostmin` with our covariates, then use the fitted predictions of `avg_spostmin` (`.fitted)` to calculate the density using `dnorm()`.
+
+```{r}
+denominator_model <- lm(
+  avg_spostmin ~ close + extra_magic_morning + weather_wdwhigh + wdw_ticket_season, 
+  data = wait_times
+)
+
+denominators <- denominator_model %>% 
+  augment(data = great_data_name) %>% 
+  mutate(denominator = dnorm(avg_spostmin, .fitted, mean(.sigma, na.rm = TRUE))) %>% 
+  select(date, denominator)
+```
+
+When we just use the inverted values of `denominator`, we end up with several extreme weights:
+
+```{r}
+denominators %>% 
+  mutate(wts = 1 / denominator) %>% 
+  ggplot(aes(wts)) +
+  geom_density(col = "#E69F00", fill = "#E69F0095") + 
+  scale_x_log10() + 
+  theme_minimal(base_size = 20) + 
+  xlab("Weights")
+```
+
+Let's now fit the marginal density to use for stabilized weights:
+
+```{r}
+numerators <- numerator_model %>% 
+  augment(data = great_data_name) %>% 
+  mutate(numerator = dnorm(avg_spostmin, .fitted, mean(.sigma, na.rm = TRUE))) %>% 
+  select(date, numerator)
+```
+
+We also need to join the fitted values back to our original data set by date, then calculate the stabilized weights (`swts`) using `numerator / denominator`.
+
+```{r}
+wait_times_wts <- wait_times %>% 
+  left_join(numerators, by = "date") %>% 
+  left_join(denominators, by = "date") %>% 
+  mutate(swts = numerator / denominator)
+```
+
+The stabilized weights are much less extreme.
+Often, stabilized weights have a mean close to 1; when that is the case, then the psuedo-population (that is, the equivalent number of observations after weighting) is equal to the original sample size.
+
+```{r}
+ggplot(great_data_name_wts, aes(swts)) +
+  geom_density(col = "#E69F00", fill = "#E69F0095") + 
+  scale_x_log10() + 
+  theme_minimal(base_size = 20) + 
+  xlab("Stabilized Weights")
+```
+
+**TODO**: is there a good next visualization for the continuous case like the mirrored histogram above?
+
 ## Choosing what variables to include
 
-The best way to decide what variables to include in your propensity score model is to look at your DAG and include all confounders.
-Of course these confounders need to be measured in your data set; if you have confounders on your DAG that you do not have access to, sensitivity analyses can help quantify the potential impact.
+**TODO:** add references
+
+The best way to decide what variables to include in your propensity score model is to look at your DAG and include at least a minimal adjustment set of confounders.
+Of course, sometimes, important variables are missing or measured with error.
+Often there is more than one theoretical adjustment set than can debias your estimate; it may be that one of minimal adjustment sets is measured well in your data set and another is not.
+If you have confounders on your DAG that you do not have access to, sensitivity analyses can help quantify the potential impact.
 See Chapter 11 for an in depth discussion of sensitivity analyses.
 
--   [Malcolm] non-confounder additions to models (King etc)
+Specifying a DAG accurately greatly improves our ability to add the correct variables to our models.
+However, confounders are not the only important type of variable to consider.
+For example, variables that are predictors of the *outcome* *but not the exposure* can improve the precision of propensity score models.
+Conversely, including variables that are predictors of the *exposure but not the outcome* (instrumental variables) can bias the model.
+Luckily, in practice, it seems that this bias is relatively negligible, especially compare to the risk of confounding bias.
+
+Another type of variable to be wary of is a *collider*, a variable that is a descendant of both the exposure and the outcome.
+If you specify your DAG correctly, you can avoid colliders by only using adjustment sets that completely close backdoor paths from the exposure to the outcome.
+There are some circumstances that make this difficult, however: some colliders are inherently stratified on by the design of the study or the nature of follow-up.
+For example, loss-to-follow-up is a common source of collider-stratification bias; we'll discuss this further in Chapter XX.
+
+There's another situation where a variable is both a confounder and a collider, as in the case of so-called butterfly bias:
+
+```{r}
+ggdag(butterfly_bias())
+```
+
+If we have all the variables measured well, we can avoid adjusting for `m` by adjusting for either `a` or `b`.
+However, if we don't have those variables, what should we do?
+Adjusting for `m` opens a biasing path way that we cannot block through `a` and `b` (collider stratification bias), but `m` is also a confounder for `x` and `y`.
+As in the case above, it appears that confounding bias is often the worse of the two options, so we should adjust for `m` unless we have reason to believe it will cause more problems than it solves.
