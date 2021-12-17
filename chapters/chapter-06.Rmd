@@ -352,6 +352,8 @@ Why are extreme weights a problem?
 
 TODO: [https://disneyparks.disney.go.com/blog/2018/06/disney-doodle-pluto-sniffs-out-fun-at-seven-dwarfs-mine-train](https://disneyparks.disney.go.com/blog/2018/06/disney-doodle-pluto-sniffs-out-fun-at-seven-dwarfs-mine-train/)
 
+TODO: Does weighting not have a problem with colliders?
+
 ## Choosing what variables to include
 
 **TODO:** add references
