@@ -337,7 +337,20 @@ ggplot(wait_times_wts, aes(swts)) +
   xlab("Stabilized Weights")
 ```
 
-**TODO**: is there a good next visualization for the continuous case like the mirrored histogram above?
+TODO: Label scatterplot of weights vs exposure
+
+TODO: discuss `mean(wait_times_wts$swts)` -- what does Causal Inference say?
+1 in the linear case, not in others?
+Stabilizing with other numerators?
+
+TODO: Mention binary weights that don't have this problem because they're bounded
+
+TODO: Why do we need to stabilize?
+Why are extreme weights a problem?
+
+**TODO**: **is there a good next visualization for the continuous case like the mirrored histogram above?**
+
+TODO: [https://disneyparks.disney.go.com/blog/2018/06/disney-doodle-pluto-sniffs-out-fun-at-seven-dwarfs-mine-train](https://disneyparks.disney.go.com/blog/2018/06/disney-doodle-pluto-sniffs-out-fun-at-seven-dwarfs-mine-train/)
 
 ## Choosing what variables to include
 
