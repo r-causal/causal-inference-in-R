@@ -21,13 +21,14 @@ This often involves predicting *whether* a certain phenomena will occur given a 
 This is where causal inference shines, and where the bulk of this text will focus.
 While some aspects of these goals are distinct, there is certainly overlap between them.
 
-## Answering causal questions
+## Answering causal questions: assumptions
 
-The most straight forward way to answer a causal question is to run an experiment.
-Such an experiment would be designed to manipulate the causal element in question.
+The most straight forward way to answer a causal question is to run a controlled experiment.
+Such an experiment would be designed to manipulate the causal factor in question.
+For example, if we are interested in assessing whether having a green background on a website increases sales of a particular item compared to a grey background, we could randomly show some people a green background and some people a grey background and compare the average sales between them.
+Even this small, controlled, experiment that we just described comes with some assumptions.
+Since we have *randomly* assigned people to either see the green background or the grey background, we assume that we can make a direct comparison of their average outcome (sales).
 
 ### Target trials
-
-## Causal assumptions
 
 ## The whole game
