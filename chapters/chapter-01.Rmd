@@ -1,7 +1,33 @@
 # What is a causal question?
 
-Text for chapter 1. 
+How do we use data to understand the world around us?
+We can think of three main goals, each with different tools to accomplish them:
 
-```{r}
-rnorm(5)
-```
+1.  Description
+2.  Prediction
+3.  Explanation
+
+**Description** involves observing data and describing what is seen.
+Descriptive studies are general not experimental, in other words nothing is manipulated, phenomena are simply observed as they are.
+With the rise of "big data" simply describing what the data demonstrate is a monumental task, and often extremely valuable.
+This often involves describing *what* phenomena occur or occurred in the past.
+
+**Prediction** involves using data to forecast what will be.
+With the rise of machine learning and advanced computing power prediction has become more widely accessible.
+While the underlying mechanism may be well understood, it is not strictly necessary.
+This often involves predicting *whether* a certain phenomena will occur given a set of circumstances.
+
+**Explanation** involves understand *why* a phenomena occurs.
+This is where causal inference shines, and where the bulk of this text will focus.
+While some aspects of these goals are distinct, there is certainly overlap between them.
+
+## Answering causal questions
+
+The most straight forward way to answer a causal question is to run an experiment.
+Such an experiment would be designed to manipulate the causal element in question.
+
+### Target trials
+
+## Causal assumptions
+
+## The whole game
