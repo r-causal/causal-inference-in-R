@@ -425,6 +425,6 @@ In other words, there are many other types of variables besides confounders that
 As we discuss above, confounding bias is often the most important factor, but systematically searching your variables for anything that changes the coefficient of the exposure can compound many types of bias.
 
 ::: def-box
-Some types of estimates, such as the odds ratio and hazard ration, suffer from an additional problem called *non-collapsibility*.
+Some types of estimates, such as the odds ratio and hazard ratio, suffer from an additional problem called *non-collapsibility*.
 For these types of estimates, adding noise variables (that is, variables that are not related to the exposure or outcome) don't reduce precision: they can bias the estimate as well--more the reason to avoid data-driven approaches to selecting variables for causal models.
 :::
