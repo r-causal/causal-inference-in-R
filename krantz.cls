@@ -714,6 +714,7 @@
                    \@topnewpage[\@makeschapterhead{#1}]%
                  \else
                    \@makeschapterhead{#1}%
+% possible comment h/t https://github.com/yihui/bookdown-crc/issues/7
                    \addcontentsline{toc}{fm}{#1}
                    \markboth{#1}{#1}
                    \@afterheading
