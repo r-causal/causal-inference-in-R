@@ -16,7 +16,7 @@ github-repo: malcolmbarrett/causal-inference-in-r
 graphics: yes
 #cover-image: images/cover.jpg
 # Render pdf with:
-# bookdown::render_book(output_format = bookdown::pdf_book())
+# bookdown::render_book(output_format = "bookdown::pdf_book")
 ---
 
 ```{r setup, include=FALSE}
