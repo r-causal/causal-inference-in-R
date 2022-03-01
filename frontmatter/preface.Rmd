@@ -1,6 +1,7 @@
-# Preface {-}
+# Preface {.unnumbered}
 
-Welcome! In this book, we will...
+Welcome!
+In this book, we will...
 
 Part 1: Asking Causal Questions
 
