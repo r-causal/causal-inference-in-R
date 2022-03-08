@@ -5,79 +5,82 @@ In this book, we will...
 
 Part 1: Asking Causal Questions
 
-* Chapter 1: What is a causal question?  
-  - Description, prediction, and explanation  
-  - Causal assumptions  
-  - Whole game example  
-  
-* Chapter 2: Expressing causal questions as DAGs  
-  - Visualizing causal assumptions  
-  - DAGs in R: ggdag and dagitty  
-
-* Chapter 3: Estimating counterfactuals  
-  - What is a counterfactual?  
-  - Target trials  
-    - Time zero (only pre-treatment covariates etc)
+-   Chapter 1: What is a causal question? [@tgerke // @malcolmbarrett]
+    -   Description, prediction, and explanation\
+    -   Causal assumptions\
+    -   Whole game example
+-   Chapter 2: Expressing causal questions as DAGs [@malcolmbarrett]
+    -   Visualizing causal assumptions\
+    -   DAGs in R: ggdag and dagitty
+-   Chapter 3: Estimating counterfactuals [@LucyMcGowan]
+    -   What is a counterfactual?
+    -   Target trials
+        -   time zero (only pre-treatment covariates, etc)
 
 Part 2: Design Phase
 
-* Chapter 4: Preparing data to answer causal questions  
-  - Data wrangling with dplyr  
-  - Recognizing missing data: visdat, tidyr, mice  
-  - Working with multiple data sources  
-  - Exploring and visualizing data and assumptions: skimr, ggplot2  
-  - Calculating summary statistics: gtsummary, tableone  
-  
-* Chapter 5: Building a propensity score models  
-  - Logistic regression  
-  - Choosing variables to include  
-  - Continuous and categorical exposures  
-  
-* Chapter 6: Using the propensity score  
-  - Matching  
-  - Weighting  
-  - Weighting and matching with more complex exposures  
-  
-* Chapter 7: Evaluating your propensity score model  
-  - Calculating the standardized mean difference  
-  - Weighted / Matched Table 1
-    - ATE (match Overall column of unweighted Table 1)
-    - ATT (match treatment column of unweighted Table 1)
-    - ATC (match control column of unweighted Table 1) 
-    - ATM / ATO
-  - Visualizing balance via Love Plots, boxplots, and eCDF plots  
-  - Pruning, trimming, and stabilizing propensity scores  
- 
-Part 3. Estimating causal effects
+-   Chapter 4: Preparing data to answer causal questions [@malcolmbarrett ]
+    -   Data wrangling with dplyr\
+    -   Recognizing missing data: visdat, tidyr, mice\
+    -   Working with multiple data sources\
+    -   Exploring and visualizing data and assumptions: skimr, ggplot2\
+    -   Calculating summary statistics: gtsummary, tableone
+-   Chapter 5: Building a propensity score models [@LucyMcGowan / @malcolmbarrett]
+    -   Logistic regression\
+    -   Choosing variables to include\
+    -   Continuous and categorical exposures
+-   Chapter 6: Using the propensity score [@LucyMcGowan // @malcolmbarrett]
+    -   Matching\
+    -   Weighting\
+    -   Weighting and matching with more complex exposures
+-   Chapter 7: Evaluating your propensity score model [@LucyMcGowan]
+    -   Calculating the standardized mean difference\
+    -   Weighted / Matched Table 1
+    -   Visualizing balance via Love Plots, boxplots, and eCDF plots\
+    -   Pruning, trimming, and stabilizing propensity scores
 
-* Chapter 8: Causal Estimands
-  - Estimating the average treatment effect  
-  - Estimating treatment effects with other targets in mind  
+Part 3.
+Estimating causal effects
 
-* Chapter 9: Incorporating propensity scores in generalized linear models  
-  - Using matched data sets  
-  - Using weights in outcome models  
-  - Estimating uncertainty  
-  - Estimating causal effects for complex exposures  
-  
-* Chapter 10: Incorporating propensity scores in survival models
-  - Time Zero  
-  - Preparing data for survival analysis  
-  - Pooled logistic regression  
-  - Confidence intervals for causal survival models  
+-   Chapter 8: Causal Estimands [@LucyMcGowan ]
 
-* Chapter 11: Mediation analyses
-  - Estimating direct effects
-  - Estimating indirect effects
-  - Allowing for interactions
+    -   Estimating the average treatment effect\
+    -   Estimating treatment effects with other targets in mind
+        -   ATE (match Overall column of unweighted Table 1)
+        -   ATT (match treatment column of unweighted Table 1)
+        -   ATC (match control column of unweighted Table 1)
+        -   ATM / ATO
+        -   
 
-* Chapter 12: Sensitivity analyses  
-  - Quantitative bias analyses  
-  - Tipping point analyses: tipr, E-Value
-  
-* Chapter 13: Other approaches to causal inference  
-  - G-computation  
-  - Targeted Learning  
-  - Instrumental variable analysis  
-  - Regression discontinuity  
-  - Difference-in-Difference
+-   Chapter 9: Incorporating propensity scores in generalized linear models [@malcolmbarrett // @tgerke]
+
+    -   Using matched data sets\
+    -   Using weights in outcome models\
+    -   Estimating uncertainty\
+    -   Estimating causal effects for complex exposures
+
+-   Chapter 10: G-computation [@malcolmbarrett // @tgerke]
+
+-   Chapter 11: Incorporating propensity scores in survival models [@tgerke]
+
+    -   Preparing data for survival analysis\
+    -   Pooled logistic regression\
+    -   Confidence intervals for causal survival models
+
+-   Chapter 12: Mediation Analyses [@tgerke]
+
+    -   Estimating direct effects
+    -   Estimating indirect effects
+    -   Allowing for interactions
+
+-   Chapter 13: Sensitivity analyses [@LucyMcGowan]
+
+    -   Quantitative bias analyses\
+    -   Tipping point analyses: tipr, EValue
+
+-   Chapter 14: Other approaches to causal inference [@malcolmbarrett // @tgerke]
+
+    -   Targeted Learning\
+    -   Instrumental variable analysis\
+    -   Regression discontinuity\
+    -   Difference-in-Difference
