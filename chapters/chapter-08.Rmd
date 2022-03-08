@@ -1,0 +1,53 @@
+# Causal estimands
+
+## Estimands, Estimators, Estimates
+
+There are three "E" words that help x.
+The **estimand** is the *target of interest*, the **estimator** is the method by which we approximate this estimand using data, and the **estimate** is the value we get when we plug our data into the estimator.
+You can think of the **estimand** as glossy picture of a beautiful cake that we are trying to bake, the **estimator** as the recipe, and the **estimate** as the cake we actually bake.
+
+So far we have been estimating the average treatment effect, that is the effect of the exposure of interest averaged across the whole population.
+The **estimand** here is the expected value of the difference in potential outcomes across all individuals:
+
+$$E[Y(1) - Y(0)]$$
+
+The **estimator** we use depends on the method we've chosen.
+For example, in a randomized controlled trial, our estimator could just be the average outcome among those who received the exposure minus the average outcome among those who did not.
+
+$$\sum_{i=1}^{N}\frac{Y\times X}{N_{\textrm{exposed}}} - \frac{Y\times (1-X)}{N_{\textrm{unexposed}}}$$
+
+Suppose we have some randomized controlled trial data in a dataset called `rct`.
+Here the exposure is `x` and the outcome is `y`.
+The true average treatment effect is 1.
+Below are two ways to estimate this in R.
+
+```{r, echo = FALSE}
+set.seed(928)
+rct <- tibble(
+  x = rbinom(100, 1, 0.5),
+  y = x + rnorm(100)
+)
+```
+
+```{r}
+rct
+```
+
+```{r}
+rct %>%
+  summarise(
+    n_exposed = sum(x),
+    n_unexposed = sum(1 - x),
+    ate = sum(
+    (y * x) / n_exposed - 
+      y * (1 - x) / n_unexposed
+  ))
+
+rct %>%
+  group_by(x) %>%
+  summarise(avg_y = mean(y)) %>%
+  pivot_wider(names_from = x, 
+              values_from = avg_y, 
+              names_prefix = "x_") %>%
+  summarise(ate = x_1 - x_0)
+```

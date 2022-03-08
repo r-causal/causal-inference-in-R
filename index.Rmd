@@ -60,3 +60,6 @@ lapply(c('tidyverse', 'ggdag'), function(pkg) {
 
 ```{r child = 'chapters/chapter-04.Rmd'}
 ```
+
+```{r child = 'chapters/chapter-08.Rmd'}
+```
