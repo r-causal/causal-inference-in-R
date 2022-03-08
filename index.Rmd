@@ -58,5 +58,5 @@ lapply(c('tidyverse', 'ggdag'), function(pkg) {
 ```{r child = 'chapters/chapter-03.Rmd'}
 ```
 
-```{r child = 'chapters/chapter-06.Rmd'}
+```{r child = 'chapters/chapter-04.Rmd'}
 ```
