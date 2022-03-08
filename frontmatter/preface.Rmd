@@ -5,35 +5,35 @@ In this book, we will...
 
 Part 1: Asking Causal Questions
 
--   Chapter 1: What is a causal question? [@tgerke // @malcolmbarrett]
+-   Chapter 1: What is a causal question? [tgerke // malcolmbarrett]
     -   Description, prediction, and explanation\
     -   Causal assumptions\
     -   Whole game example
--   Chapter 2: Expressing causal questions as DAGs [@malcolmbarrett]
+-   Chapter 2: Expressing causal questions as DAGs [malcolmbarrett]
     -   Visualizing causal assumptions\
     -   DAGs in R: ggdag and dagitty
--   Chapter 3: Estimating counterfactuals [@LucyMcGowan]
+-   Chapter 3: Estimating counterfactuals [LucyMcGowan]
     -   What is a counterfactual?
     -   Target trials
         -   time zero (only pre-treatment covariates, etc)
 
 Part 2: Design Phase
 
--   Chapter 4: Preparing data to answer causal questions [@malcolmbarrett ]
+-   Chapter 4: Preparing data to answer causal questions [malcolmbarrett ]
     -   Data wrangling with dplyr\
     -   Recognizing missing data: visdat, tidyr, mice\
     -   Working with multiple data sources\
     -   Exploring and visualizing data and assumptions: skimr, ggplot2\
     -   Calculating summary statistics: gtsummary, tableone
--   Chapter 5: Building a propensity score models [@LucyMcGowan / @malcolmbarrett]
+-   Chapter 5: Building a propensity score models [LucyMcGowan / malcolmbarrett]
     -   Logistic regression\
     -   Choosing variables to include\
     -   Continuous and categorical exposures
--   Chapter 6: Using the propensity score [@LucyMcGowan // @malcolmbarrett]
+-   Chapter 6: Using the propensity score [LucyMcGowan // malcolmbarrett]
     -   Matching\
     -   Weighting\
     -   Weighting and matching with more complex exposures
--   Chapter 7: Evaluating your propensity score model [@LucyMcGowan]
+-   Chapter 7: Evaluating your propensity score model [LucyMcGowan]
     -   Calculating the standardized mean difference\
     -   Weighted / Matched Table 1
     -   Visualizing balance via Love Plots, boxplots, and eCDF plots\
@@ -42,7 +42,7 @@ Part 2: Design Phase
 Part 3.
 Estimating causal effects
 
--   Chapter 8: Causal Estimands [@LucyMcGowan ]
+-   Chapter 8: Causal Estimands [LucyMcGowan ]
 
     -   Estimating the average treatment effect\
     -   Estimating treatment effects with other targets in mind
@@ -52,33 +52,33 @@ Estimating causal effects
         -   ATM / ATO
         -   
 
--   Chapter 9: Incorporating propensity scores in generalized linear models [@malcolmbarrett // @tgerke]
+-   Chapter 9: Incorporating propensity scores in generalized linear models [malcolmbarrett // tgerke]
 
     -   Using matched data sets\
     -   Using weights in outcome models\
     -   Estimating uncertainty\
     -   Estimating causal effects for complex exposures
 
--   Chapter 10: G-computation [@malcolmbarrett // @tgerke]
+-   Chapter 10: G-computation [malcolmbarrett // tgerke]
 
--   Chapter 11: Incorporating propensity scores in survival models [@tgerke]
+-   Chapter 11: Incorporating propensity scores in survival models [tgerke]
 
     -   Preparing data for survival analysis\
     -   Pooled logistic regression\
     -   Confidence intervals for causal survival models
 
--   Chapter 12: Mediation Analyses [@tgerke]
+-   Chapter 12: Mediation Analyses [tgerke]
 
     -   Estimating direct effects
     -   Estimating indirect effects
     -   Allowing for interactions
 
--   Chapter 13: Sensitivity analyses [@LucyMcGowan]
+-   Chapter 13: Sensitivity analyses [LucyMcGowan]
 
     -   Quantitative bias analyses\
     -   Tipping point analyses: tipr, EValue
 
--   Chapter 14: Other approaches to causal inference [@malcolmbarrett // @tgerke]
+-   Chapter 14: Other approaches to causal inference [malcolmbarrett // tgerke]
 
     -   Targeted Learning\
     -   Instrumental variable analysis\
