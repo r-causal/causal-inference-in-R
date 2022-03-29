@@ -13,7 +13,7 @@ $$E[Y(1) - Y(0)]$$
 The **estimator** we use depends on the method we've chosen.
 For example, in a randomized controlled trial, our estimator could just be the average outcome among those who received the exposure minus the average outcome among those who did not.
 
-$$\sum_{i=1}^{N}\frac{Y\times X}{N_{\textrm{exposed}}} - \frac{Y\times (1-X)}{N_{\textrm{unexposed}}}$$
+$$\sum_{i=1}^{N}\frac{Y_i\times X_i}{N_{\textrm{exposed}}} - \frac{Y_i\times (1-X_i)}{N_{\textrm{unexposed}}}$$
 
 Where $X$ is just an indicator for exposure ($X = 1$ for the exposed and $X = 0$ for the unexposed. Suppose we have some randomized controlled trial data in a dataset called `rct`. Here the exposure is `x` and the outcome is `y`. The true average treatment effect is 1. Below are two ways to estimate this in R.
 
@@ -49,9 +49,13 @@ rct %>%
 ```
 
 Because $X$, the exposure, was randomly assigned, this estimator results in an unbiased estimate of our estimand of interest.
+If $X$ had not been randomly assigned, we could use the pre-exposure covariates to estimate the probability of $X$ (the propensity score), and incorporate this probability in a *weight* to estimate this causal effect.
+For example, we could use the following *estimator* to *estimate* our average treatment effect *estimand*:
+
+$$\frac{\sum_{i=1}^NY_i\times X_i\times w_i}{\sum_{i=1}^NX_i\times w_i}-\frac{\sum_{i=1}^NY_i\times(1-X_i)\times w_i}{\sum_{i=1}^N(1-X_i)\times w_i}$$
 
 Depending on the goal of the study, or the causal question at hand, different *estimands* may be of of interest.
-Here, we will outline the most common causal estimands, their target populations, and the causal questions they may help answer.[@greifer2021choosing]
+Here, we will outline the most common causal estimands, their target populations, and the causal questions they may help answer, and the methods used to estimate them.[@greifer2021choosing]
 
 ### Average treatment effect
 
