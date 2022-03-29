@@ -2,9 +2,8 @@
 
 ## Estimands, Estimators, Estimates
 
-There are three "E" words that help x.
 The **estimand** is the *target of interest*, the **estimator** is the method by which we approximate this estimand using data, and the **estimate** is the value we get when we plug our data into the estimator.
-You can think of the **estimand** as glossy picture of a beautiful cake that we are trying to bake, the **estimator** as the recipe, and the **estimate** as the cake we actually bake.
+You can think of the **estimand** as glossy picture of a beautiful cake that we are trying to bake, the **estimator** as the recipe, and the **estimate** as the cake that we actually pull out of our oven.
 
 So far we have been estimating the average treatment effect, that is the effect of the exposure of interest averaged across the whole population.
 The **estimand** here is the expected value of the difference in potential outcomes across all individuals:
@@ -16,10 +15,7 @@ For example, in a randomized controlled trial, our estimator could just be the a
 
 $$\sum_{i=1}^{N}\frac{Y\times X}{N_{\textrm{exposed}}} - \frac{Y\times (1-X)}{N_{\textrm{unexposed}}}$$
 
-Suppose we have some randomized controlled trial data in a dataset called `rct`.
-Here the exposure is `x` and the outcome is `y`.
-The true average treatment effect is 1.
-Below are two ways to estimate this in R.
+Where $X$ is just an indicator for exposure ($X = 1$ for the exposed and $X = 0$ for the unexposed. Suppose we have some randomized controlled trial data in a dataset called `rct`. Here the exposure is `x` and the outcome is `y`. The true average treatment effect is 1. Below are two ways to estimate this in R.
 
 ```{r, echo = FALSE}
 set.seed(928)
@@ -51,3 +47,43 @@ rct %>%
               names_prefix = "x_") %>%
   summarise(ate = x_1 - x_0)
 ```
+
+Because $X$, the exposure, was randomly assigned, this estimator results in an unbiased estimate of our estimand of interest.
+
+Depending on the goal of the study, or the causal question at hand, different *estimands* may be of of interest.
+Here, we will outline the most common causal estimands, their target populations, and the causal questions they may help answer.[@greifer2021choosing]
+
+### Average treatment effect
+
+A common estimand is the average treatment effect (ATE).
+The target population is the *full sample* or population of interest.
+The **estimand** here is the expected value of the difference in potential outcomes across all individuals:
+
+$$E[Y(1) - Y(0)]$$
+
+An example research question is "Should a policy be applied to all eligible patients?"[@greifer2021choosing]
+
+### Average treatment effect among the treated
+
+The target population to estimate the average treatment effect among the treated (ATT) is the *exposed* (treated) population.
+The causal estimand conditions on those in the exposed group.
+
+$$E[Y(1) - Y(0) | X = 1]$$ Example research questions where the ATT is of interest could include "Should we stop our marketing campaign to those currently receiving it?" or "Should medical providers stop recommending treatment for those currently receiving it?"[@greifer2021choosing]
+
+### Average treatment effect among the controls
+
+The target population to estimate the average treatment effect among the control (unexposed) (ATC / ATU) is the *unexposed* (control) population.
+The causal estimand conditions on those in the unexposed group.
+
+$$E[Y(1) - Y(0) | X = 0]$$
+
+Example research questions where the ATC is of interest could include "Should we send our marketing campaign to those not currently receiving it?" or "Should medical providers begin recommending treatment for those not currently receiving it?"[@greifer2021choosing]
+
+### Average treatment effect among the evenly matchable
+
+The target population to estimate the average treatment effect among the evenly matchable (ATM) is the evenly matchable.
+The causal estimand conditions on those deemed "evenly matchable" by some distance metric.
+
+$$E[Y(1) - Y(0) | M_d = 1]$$
+
+Here $d$ denotes a distance measure and $M_d=1$ indicates that a unit is evenly matchable under that distance measure.[@samuels2017aspects; @d2018improving] Example research questions where the ATM is of interest could include "Should those at clinical equipoise receive the exposure?"[@greifer2021choosing]
