@@ -112,39 +112,48 @@ dagify(
 ```
 
 Here we are proposing that there are three confounders: the historic high temperature on the day, the time the park closed, and the ticket season: value, regular, or peak.
-We can build a propensity score model using the `seven_dwarfs_train_2018` data set from the touringplans package.
+We can build a propensity score model using the `seven_dwarfs_train_2018` data set from the [{`touringplans`}](https://lucymcgowan.github.io/touringplans/) package.
 Each row of this dataset contains information about the Seven Dwarfs Mine Train during a certain hour on a given day.
 First we need to subset the data to only include average wait times between 5 and 6 pm.
 Then we will use the `glm()` function to fit the propensity score model, predicting `extra_magic_morning` using the four confounders specified above.
-We'll add the propensity scores to the data frame (in a column called `.fitted` as set by the `augment()` function in the broom package).
+We'll add the propensity scores to the data frame (in a column called `.fitted` as set by the `augment()` function in the {`broom`} package).
 
 ```{r}
 library(broom)
 library(touringplans)
 
-seven_dwarfs <- seven_dwarfs_train_2018 %>%
+seven_dwarfs_17 <- seven_dwarfs_train_2018 %>%
   filter(hour == 17)
 
-seven_dwarfs_with_ps <- glm(
+seven_dwarfs_17_with_ps <- glm(
   extra_magic_morning ~ wdw_ticket_season + close + weather_wdwhigh,
-  data = seven_dwarfs,
+  data = seven_dwarfs_17,
   family = binomial()
 ) %>%
-  augment(type.predict = "response", data = seven_dwarfs)
+  augment(type.predict = "response", data = seven_dwarfs_17)
 ```
 
 Let's take a look at these propensity scores.
-Below, the propensity scores are shown in the `.fitted` column for the first 10 observations.
+Below, the propensity scores are shown in the `.fitted` column for the first 6 observations.
 The propensity score here is the probability that a given date will have Extra Magic Hours in the morning given the observed confounders, in this case the historical high temperatures on a given date, the time the park closed, and Ticket Season.
 For example, on January 1, 2018 there was a 30.4% chance that there would be Extra Magic Hours at the Magic Kingdom given the Ticket Season (peak in this case), time of park closure (11pm), and the historic high temperature on this date (70.3 degrees).
 On this particular day, there were *not* Extra Magic Hours in the morning (as indicated by the 0 in the first row of the `extra_magic_morning` column).
 
+*Draft:* looking for lack of overlap as a potential positivity problem.
+But too much overlap may be indicative of a poor model(? not necessarily. depends on the relative covariate distributions in the two groups).
+Avg treatment effect among treated easier to estimate with precision (because of higher counts) than the control group.
+A single outlier in either group with respect to range could be a problem and warrant data inspection (do this here?) *look at the model coefs here*.
+When do we talk about trimming / matching?
+This may be a "nice" example -- should we also show a bad model (maybe only with ticket season or possibly overspecifying it)
+
 ```{r}
-seven_dwarfs_with_ps %>%
+seven_dwarfs_17_with_ps %>%
   select(
     date, extra_magic_morning, wdw_ticket_season, 
     close, weather_wdwhigh, .fitted
-  )
+  ) %>%
+  head() %>%
+  knitr::kable()
 ```
 
 We can examine the distribution of propensity scores by exposure group.
@@ -153,15 +162,16 @@ The code below creates two histograms of the propensity scores, one on the "top"
 Because we only have two variables
 
 ```{r}
+# add a colored title to serve as legend
 ggplot() +
   geom_histogram(
-    data = seven_dwarfs_with_ps %>% filter(extra_magic_morning == 1),
+    data = seven_dwarfs_17_with_ps %>% filter(extra_magic_morning == 1),
     aes(x = .fitted),
     fill = "orange",
     bins = 40
   ) +
   geom_histogram(
-    data = seven_dwarfs_with_ps %>% filter(extra_magic_morning == 0),
+    data = seven_dwarfs_17_with_ps %>% filter(extra_magic_morning == 0),
     aes(
       x = .fitted,
       y = -after_stat(count)
@@ -170,12 +180,13 @@ ggplot() +
     bins = 40
   ) +
   scale_y_continuous("Count", labels = abs) +
-  scale_x_continuous("Propensity Score")
+  scale_x_continuous("Propensity Score") + 
+  theme_light()
 ```
 
 In the code above, the first `geom_histogram()` call creates the top histogram by subsetting the `seven_dwarfs_with_ps` data frame to only include those in the exposure group, where `extra_magic_morning == 1`.
 The x-axis for the histogram is the propensity score, which lives in the `.fitted` column of the data frame.
-The second `geom_histogram()` call creates the bottom histogram, subsetting to only those in the unexposed group.
+The second `geom_histogram()` call creates the bottom histogram, subsetting to only those in the unexposed group, where `extra_magic_morning == 0`.
 Here, we use the `y` argument to *flip* the histogram by setting this to `-after_stat(count)`.
 `after_stat()` allows you to work with values created internally by ggplot2, such as `count`, the frequency counts for the histogram.
 Finally, we need to edit the y-axis to show the absolute value (rather than negative values below 0) so the correct numbers are displayed; this is accomplished by setting `label = abs` in the `scale_y_continuous()` function.
