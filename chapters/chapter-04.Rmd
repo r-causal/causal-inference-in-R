@@ -162,7 +162,6 @@ The code below creates two histograms of the propensity scores, one on the "top"
 Because we only have two variables
 
 ```{r}
-# add a colored title to serve as legend
 ggplot() +
   geom_histogram(
     data = seven_dwarfs_17_with_ps %>% filter(extra_magic_morning == 1),
@@ -179,9 +178,17 @@ ggplot() +
     fill = "cornflower blue",
     bins = 40
   ) +
+  labs(
+    title = "Mirrored propensity score histograms for the
+    <b style='color:orange'>exposed</b> and <b style='color:#6495ED'>unexposed</b>"
+  ) + 
   scale_y_continuous("Count", labels = abs) +
   scale_x_continuous("Propensity Score") + 
-  theme_light()
+  theme_light() + 
+  theme(
+    plot.title = ggtext::element_markdown(),
+    plot.title.position = "plot"
+  )
 ```
 
 In the code above, the first `geom_histogram()` call creates the top histogram by subsetting the `seven_dwarfs_with_ps` data frame to only include those in the exposure group, where `extra_magic_morning == 1`.
