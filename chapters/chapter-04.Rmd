@@ -75,7 +75,15 @@ Typically, each day Magic Kingdom may or may not be selected to have these "Extr
 We are interested in examining the relationship between whether there were "Extra Magic Hours" in the morning and the average wait time for the Seven Dwarfs Mine Train the same day between 5pm and 6pm.
 Below is a proposed DAG for this question.
 
-```{r, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Proposed DAG for the relationship between Extra Magic Hours in the morning at a particular park and the average wait time between 5pm and 6pm."}
+```{r dag-magic-hours-wait}
+#| echo: false
+#| message: false
+#| warning: false
+#| fig.cap: >
+#|   Proposed DAG for the relationship between Extra Magic Hours
+#|   in the morning at a particular park and the average wait 
+#|   time between 5pm and 6pm.
+
 library(tidyverse)
 library(ggdag)
 
@@ -153,7 +161,11 @@ We can examine the distribution of propensity scores by exposure group.
 A nice way to visualize this is via "mirrored histograms".
 The code below creates two histograms of the propensity scores, one on the "top" for the exposed group (the dates with Extra Magic Hours in the morning) and one on the "bottom" for the unexposed group.
 
-```{r mirrored-ps, fig.cap="Mirrored histograms of estimated propensity scores"}
+```{r mirrored-ps}
+#| fig.cap: >
+#|   Mirrored histograms of estimated propensity scores for
+#|   Extra Magic Hour days (exposed group) and days without
+#|   Extra Magic hours (unexposed group)
 ggplot() +
   geom_histogram(
     data = seven_dwarfs_17_with_ps %>% filter(extra_magic_morning == 1),
@@ -170,12 +182,14 @@ ggplot() +
     fill = "cornflower blue",
     bins = 40
   ) +
-  labs(
-    title = "Mirrored propensity score histograms for the
-    <b style='color:orange'>exposed</b> and <b style='color:#6495ED'>unexposed</b>"
-  ) + 
   scale_y_continuous("Count", labels = abs) +
   scale_x_continuous("Propensity Score") + 
+  # The remaining lines are for plot theme formatting/aesthetics.
+  labs(
+    title = "Mirrored propensity score histograms for the
+    <b style='color:orange'>exposed</b> and 
+    <b style='color:#6495ED'>unexposed</b>"
+  ) + 
   theme_light() + 
   theme(
     plot.title = ggtext::element_markdown(),
@@ -214,7 +228,15 @@ We also have a limited amount of data on the observed, actual times.
 The question that we will consider is this: Do posted wait times for the Seven Dwarves Mine Train at 8 am affect actual wait times at 9 am?
 Here's our DAG:
 
-```{r, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = "Proposed DAG for the relationship between posted wait in the morning at a particular park and the average wait time between 5pm and 6pm."}
+```{r dag-avg-wait}
+#|  echo: false
+#|  message: false
+#|  warning: false
+#|  fig.cap: >
+#|    Proposed DAG for the relationship between posted wait 
+#|    in the morning at a particular park and the average 
+#|    wait time between 5pm and 6pm.
+
 library(tidyverse)
 library(ggdag)
 
