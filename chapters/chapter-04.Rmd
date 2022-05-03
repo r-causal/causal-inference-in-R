@@ -139,13 +139,6 @@ The propensity score here is the probability that a given date will have Extra M
 For example, on January 1, 2018 there was a 30.4% chance that there would be Extra Magic Hours at the Magic Kingdom given the Ticket Season (peak in this case), time of park closure (11pm), and the historic high temperature on this date (70.3 degrees).
 On this particular day, there were *not* Extra Magic Hours in the morning (as indicated by the 0 in the first row of the `extra_magic_morning` column).
 
-*Draft:* looking for lack of overlap as a potential positivity problem.
-But too much overlap may be indicative of a poor model(? not necessarily. depends on the relative covariate distributions in the two groups).
-Avg treatment effect among treated easier to estimate with precision (because of higher counts) than the control group.
-A single outlier in either group with respect to range could be a problem and warrant data inspection (do this here?) *look at the model coefs here*.
-When do we talk about trimming / matching?
-This may be a "nice" example -- should we also show a bad model (maybe only with ticket season or possibly overspecifying it)
-
 ```{r}
 seven_dwarfs_17_with_ps %>%
   select(
@@ -159,9 +152,8 @@ seven_dwarfs_17_with_ps %>%
 We can examine the distribution of propensity scores by exposure group.
 A nice way to visualize this is via "mirrored histograms".
 The code below creates two histograms of the propensity scores, one on the "top" for the exposed group (the dates with Extra Magic Hours in the morning) and one on the "bottom" for the unexposed group.
-Because we only have two variables
 
-```{r}
+```{r mirrored-ps, fig.cap="Mirrored histograms of estimated propensity scores"}
 ggplot() +
   geom_histogram(
     data = seven_dwarfs_17_with_ps %>% filter(extra_magic_morning == 1),
@@ -197,6 +189,16 @@ The second `geom_histogram()` call creates the bottom histogram, subsetting to o
 Here, we use the `y` argument to *flip* the histogram by setting this to `-after_stat(count)`.
 `after_stat()` allows you to work with values created internally by ggplot2, such as `count`, the frequency counts for the histogram.
 Finally, we need to edit the y-axis to show the absolute value (rather than negative values below 0) so the correct numbers are displayed; this is accomplished by setting `label = abs` in the `scale_y_continuous()` function.
+
+Here are some diagnostic insights we gain from Figure \@ref(fig:mirrored-ps).
+
+1.  Look for lack of overlap as a potential positivity problem. But too much overlap may be indicative of a poor model(? not necessarily. depends on the relative covariate distributions in the two groups).
+2.  Avg treatment effect among treated easier to estimate with precision (because of higher counts) than the control group.
+3.  A single outlier in either group with respect to range could be a problem and warrant data inspection (do this here?) *look at the model coefs here*.
+
+*note* When do we talk about trimming / matching?
+
+*note*This may be a "nice" example -- should we also show a bad model (maybe only with ticket season or possibly overspecifying it)
 
 ## Continuous exposures
 
