@@ -23,11 +23,11 @@ graphics: yes
 knitr::opts_chunk$set(
   echo = TRUE, 
   dev = "ragg_png",
-  dpi = 320, 
+  dpi = 740, 
   out.width = "80%",
   fig.width = 6,
   fig.asp = 0.618,
-  fig.retina = 2,
+  fig.retina =3,
   fig.align = "center",
   fig.show = "hold"
 )
@@ -41,7 +41,7 @@ options(
 )
 
 # Install the packages needed by this book
-lapply(c('tidyverse', 'ggdag', 'ggtext'), function(pkg) {
+lapply(c('tidyverse', 'ggdag', 'ggtext', 'broom', 'touringplans'), function(pkg) {
   if (system.file(package = pkg) == '') install.packages(pkg)
 })
 ```
