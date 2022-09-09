@@ -1,7 +1,78 @@
-# Expressing causal questions as DAGs
+# Whole Game: Mosquito Nets and Malaria
 
-Text for chapter 2. 
+In this chapter, we'll analyze data using some of the techniques we'll learn in this book.
+We'll play the [whole game](https://www.gse.harvard.edu/news/uk/09/01/education-bat-seven-principles-educators) of causal analysis using a few key steps:
 
-```{r}
-x <- 1
-```
+1.  Specify a causal question
+2.  Draw our assumptions using a causal diagram
+3.  Model our assumptions
+4.  Diagnose our models
+5.  Estimate the causal effect
+6.  Conduct sensitivity analysis on the effect estimate
+
+In this guided exercise, we'll attempt to answer a causal question: does using a bed net (a mosquito net) reduce risk of malaria?
+
+It's easy to imagine a randomized trial that deals with this question: participants in a study are randomly assigned to using a bed net, and we follow them over time to see if there is a difference in malaria risk between groups.
+Randomization is often the best way to estimate a causal effect of an intervention because it reduces the number of assumptions we need to make for that estimate to be valid.
+In particular, randomization addresses confounding very well, accounting for confounders we may not even know about.
+
+In fact, there have been several landmark trials studying the effects of bed net use on malaria risk.
+
+TODO: Small lit review on actual effects
+
+There are several reasons why we might not be able to conduct a randomized trial, however, including ethics, cost, and time.
+Luckily, we have substantial robust evidence in favor of bed net use, but let's consider some reasons why we might not have or where observational studies are still useful.
+
+-   Imagine we are at a time prior to trials on this subject but when people had started to use bed nets for this purpose on their own: our goal may still be to conduct a randomized trial, but we can answer questions more quickly with observed data, perhaps guiding the design of trials or intermediary policy suggestions.
+
+-   Sometimes it is also not ethical to conduct a trial, as is often the case in smoking studies.
+    Imagine a circumstance where bed net use was closely associated with fire risk, much more than is observed in real life: would it be ethical to then assign someone to bed net use?
+    In this scenario, real-world data might be the only way we can answer questions about malaria risk and bed nets.
+
+-   We also may want to estimate a different effect or for a different population than what was studied in previous trials.
+
+When we conduct an observational study, it's still helpful to think through the randomized trial we would like to conduct were it possible to do so.
+The trial we're trying to emulate in this causal analysis is the *target trial.* Considering the target trial helps us make our causal question more accurate.
+Let's think about the causal question posed earlier: does using a bed net (a mosquito net) reduce risk of malaria?
+This is a relatively straightforward question, but it is still vague.
+In conducting an analysis, we'll need to address several key questions:
+
+-   What do we mean by "bed net"?
+    There are several types of nets: untreated bed nets, insecticide-treated bed nets, and newer long-lasting insecticide-treated bed nets
+
+-   Risk compared to what?
+    Are we, for instance, comparing insecticide-treated bed nets to *no* net?
+    Untreated nets?
+    Or are we comparing a new type of net, like long-lasting insecticide-treated bed nets, to nets that are already in use?
+
+-   Risk as defined by what?
+    Whether or not a person contracted malaria?
+    Whether a person died of malaria?
+
+-   Risk among whom?
+    What is the population we're trying to apply this knowledge to?
+    Who is it practical to include in our study?
+    Who might we need to exclude?
+
+-   TODO: inclusion, exclusion examples
+
+We're going to use simulated data to answer a more specific question: does the use of insecticide-treated bed nets decrease the risk of contracting malaria?
+In this particular data, [simulated by Dr. Andrew Heiss](https://evalsp21.classes.andrewheiss.com/example/matching-ipw/#program-background):
+
+> researchers are interested in whether using mosquito nets decreases an
+> individual\'s risk of contracting malaria.
+> They have collected data from
+> 1,752 households in an unnamed country and have variables related to
+> environmental factors, individual health, and household characteristics.
+> The data is **not experimental**---researchers have no
+> control over who uses mosquito nets, and individual households make
+> their own choices over whether to apply for free nets or buy their own
+> nets, as well as whether they use the nets if they have them.
+
+Because we're using simulated data, we'll have direct access to a variable that measures likelihood of contracting malaria, something we wouldn't likely have in real life.
+We'll stick with this measure because we know the real effect size.
+We also have...
+
+TODO: Data dictionary
+
+TODO: sensitivity analysis of sickle cell as a confounder
