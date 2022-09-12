@@ -26,10 +26,11 @@ Luckily, we have substantial robust evidence in favor of bed net use, but let's 
 -   Imagine we are at a time prior to trials on this subject but when people had started to use bed nets for this purpose on their own: our goal may still be to conduct a randomized trial, but we can answer questions more quickly with observed data, perhaps guiding the design of trials or intermediary policy suggestions.
 
 -   Sometimes it is also not ethical to conduct a trial, as is often the case in smoking studies.
-    Imagine a circumstance where bed net use was closely associated with fire risk, much more than is observed in real life: would it be ethical to then assign someone to bed net use?
+    Imagine a circumstance where the only approved bed net was closely associated with fire risk, much more than is observed in real life: would it be ethical to then assign someone to bed net use?
     In this scenario, real-world data might be the only way we can answer questions about malaria risk and bed nets.
 
 -   We also may want to estimate a different effect or for a different population than what was studied in previous trials.
+    In fact, both randomized trials and observational studies helped us better understand that insecticide-based nets actually improve malaria resistance in the entire community, not just among those who use nets.
 
 When we conduct an observational study, it's still helpful to think through the randomized trial we would like to conduct were it possible to do so.
 The trial we're trying to emulate in this causal analysis is the *target trial.* Considering the target trial helps us make our causal question more accurate.
@@ -59,15 +60,9 @@ In conducting an analysis, we'll need to address several key questions:
 We're going to use simulated data to answer a more specific question: does the use of insecticide-treated bed nets decrease the risk of contracting malaria?
 In this particular data, [simulated by Dr. Andrew Heiss](https://evalsp21.classes.andrewheiss.com/example/matching-ipw/#program-background):
 
-> researchers are interested in whether using mosquito nets decreases an
-> individual\'s risk of contracting malaria.
-> They have collected data from
-> 1,752 households in an unnamed country and have variables related to
-> environmental factors, individual health, and household characteristics.
-> The data is **not experimental**---researchers have no
-> control over who uses mosquito nets, and individual households make
-> their own choices over whether to apply for free nets or buy their own
-> nets, as well as whether they use the nets if they have them.
+> researchers are interested in whether using mosquito nets decreases an individual's risk of contracting malaria.
+> They have collected data from 1,752 households in an unnamed country and have variables related to environmental factors, individual health, and household characteristics.
+> The data is **not experimental**---researchers have no control over who uses mosquito nets, and individual households make their own choices over whether to apply for free nets or buy their own nets, as well as whether they use the nets if they have them.
 
 Because we're using simulated data, we'll have direct access to a variable that measures likelihood of contracting malaria, something we wouldn't likely have in real life.
 We'll stick with this measure because we know the real effect size.
