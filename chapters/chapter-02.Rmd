@@ -26,8 +26,9 @@ Luckily, we have substantial robust evidence in favor of bed net use, but let's 
 -   Imagine we are at a time prior to trials on this subject but when people had started to use bed nets for this purpose on their own: our goal may still be to conduct a randomized trial, but we can answer questions more quickly with observed data, perhaps guiding the design of trials or intermediary policy suggestions.
 
 -   Sometimes it is also not ethical to conduct a trial, as is often the case in smoking studies.
-    Imagine a circumstance where the only approved bed net was closely associated with fire risk, much more than is observed in real life: would it be ethical to then assign someone to bed net use?
-    In this scenario, real-world data might be the only way we can answer questions about malaria risk and bed nets.
+    An interesting example of this in malaria research is a question that arose in the study of bed net effectiveness: does malaria control in early childhood result in delayed immune development, resulting in death later in life?
+    Since we now know bed net use is very effective, *withholding* nets would be unethical.
+    A recent observational study found TODO
 
 -   We also may want to estimate a different effect or for a different population than what was studied in previous trials.
     In fact, both randomized trials and observational studies helped us better understand that insecticide-based nets actually improve malaria resistance in the entire community, not just among those who use nets.
