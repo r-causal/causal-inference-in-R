@@ -1,3 +1,7 @@
+---
+bibliography: ../citations.bib
+---
+
 # Whole Game: Mosquito Nets and Malaria
 
 In this chapter, we'll analyze data using some of the techniques we'll learn in this book.
@@ -12,6 +16,22 @@ We'll play the [whole game](https://www.gse.harvard.edu/news/uk/09/01/education-
 
 In this guided exercise, we'll attempt to answer a causal question: does using a bed net (a mosquito net) reduce risk of malaria?
 
+Malaria remains a serious public health issue.
+
+-   prev and mortality
+
+-   children
+
+-   pregnant women and birth outcomes
+
+Bed nets prevent morbidity and mortality due to malaria by providing a barrier against infective bites by the chief host of malaria parasites, the mosquito.
+Bed nets have been used since ancient times.
+Herodotus, the 5th century BC Greek author of *The Histories*, observed Egyptians using their fishing nets as bed nets:
+
+> Against the gnats, which are very abundant, they have contrived as follows:---those who dwell above the fen-land are helped by the towers, to which they ascend when they go to rest; for the gnats by reason of the winds are not able to fly up high: but those who dwell in the fen-land have contrived another way instead of the towers, and this is it:---every man of them has got a casting net, with which by day he catches fish, but in the night he uses it for this purpose, that is to say he puts the casting-net round about the bed in which he sleeps, and then creeps in under it and goes to sleep: and the gnats, if he sleeps rolled up in a garment or a linen sheet, bite through these, but through the net they do not even attempt to bite [@thehist].
+
+Many modern nets are also treated with insecticide, although they've still been known to be used as fishing nets [@gettleman2015].
+
 It's easy to imagine a randomized trial that deals with this question: participants in a study are randomly assigned to using a bed net, and we follow them over time to see if there is a difference in malaria risk between groups.
 Randomization is often the best way to estimate a causal effect of an intervention because it reduces the number of assumptions we need to make for that estimate to be valid.
 In particular, randomization addresses confounding very well, accounting for confounders we may not even know about.
@@ -25,8 +45,8 @@ Luckily, we have substantial robust evidence in favor of bed net use, but let's 
 
 -   Imagine we are at a time prior to trials on this subject but when people had started to use bed nets for this purpose on their own: our goal may still be to conduct a randomized trial, but we can answer questions more quickly with observed data, perhaps guiding the design of trials or intermediary policy suggestions.
 
--   Sometimes it is also not ethical to conduct a trial, as is often the case in smoking studies.
-    An interesting example of this in malaria research is a question that arose in the study of bed net effectiveness: does malaria control in early childhood result in delayed immune development, resulting in death later in life?
+-   Sometimes it is also not ethical to conduct a trial.
+    An interesting example of this in malaria research is a question that arose in the study of bed net effectiveness: does malaria control in early childhood result in delayed immunity to the disease, resulting in severe malaria or death later in life?
     Since we now know bed net use is very effective, *withholding* nets would be unethical.
     A recent observational study found TODO
 
@@ -71,4 +91,4 @@ We also have...
 
 TODO: Data dictionary
 
-TODO: sensitivity analysis of sickle cell as a confounder
+TODO: sensitivity analysis of sickle cell and ethnicity as a confounder
