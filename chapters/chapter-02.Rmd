@@ -14,7 +14,7 @@ We'll play the [whole game](https://www.gse.harvard.edu/news/uk/09/01/education-
 5.  Estimate the causal effect
 6.  Conduct sensitivity analysis on the effect estimate
 
-In this guided exercise, we'll attempt to answer a causal question: does using a bed net (a mosquito net) reduce risk of malaria?
+In this guided exercise, we'll attempt to answer a causal question: does using a bed net reduce risk of malaria?
 
 Malaria remains a serious public health issue.
 
@@ -23,6 +23,10 @@ Malaria remains a serious public health issue.
 -   children
 
 -   pregnant women and birth outcomes
+
+About 86% of malaria deaths occurred in 29 countries, but about half of all malaria deaths occurred in just six countries: Nigeria (27%), the\
+Democratic Republic of the Congo (12%), Uganda (5%), Mozambique (4%), Angola (3%) and\
+Burkina Faso (3%)
 
 Bed nets prevent morbidity and mortality due to malaria by providing a barrier against infective bites by the chief host of malaria parasites, the mosquito.
 Bed nets have been used since ancient times.
@@ -33,12 +37,16 @@ Herodotus, the 5th century BC Greek author of *The Histories*, observed Egyptian
 Many modern nets are also treated with insecticide, although they've still been known to be used as fishing nets [@gettleman2015].
 
 It's easy to imagine a randomized trial that deals with this question: participants in a study are randomly assigned to using a bed net, and we follow them over time to see if there is a difference in malaria risk between groups.
-Randomization is often the best way to estimate a causal effect of an intervention because it reduces the number of assumptions we need to make for that estimate to be valid.
+Randomization is often the best way to estimate a causal effect of an intervention because it reduces the number of assumptions we need to make for that estimate to be valid (we'll discuss the assumptions we need to make for causal inference in Chapter \@ref(TODO)).
 In particular, randomization addresses confounding very well, accounting for confounders we may not even know about.
 
-In fact, there have been several landmark trials studying the effects of bed net use on malaria risk.
+In fact, there have been several landmark trials studying the effects of bed net use on malaria risk, with several important studies in the 1990s.
+A 2004 meta-analysis found that insecticide-treated nets reduced childhood mortality by 17%, malarial parasite prevalence by 13%, and cases of both uncomplicated and severe malaria by about 50% (compared to no nets) [@lengeler2004].
+Insecticide resistance since the World Health Organization began recommending insecticide-treated nets is a big concern, but a follow-up analysis of trials found that it has yet to impact the public health benefits of bed nets [@pryce2018].
 
-TODO: Small lit review on actual effects
+Trials have also been important in determining the economics of bed net programs.
+For instance, one trial compared free net distribution versus a cost share program (where participants pay a subsidized fee for nets).
+The authors of that study found that net uptake was similar between the groups, and that free free net distribution---because it was easier to access--saved more lives, and was cheaper per life saved than the cost-sharing program [@cohen2010].
 
 There are several reasons why we might not be able to conduct a randomized trial, however, including ethics, cost, and time.
 Luckily, we have substantial robust evidence in favor of bed net use, but let's consider some reasons why we might not have or where observational studies are still useful.
@@ -52,6 +60,10 @@ Luckily, we have substantial robust evidence in favor of bed net use, but let's 
 
 -   We also may want to estimate a different effect or for a different population than what was studied in previous trials.
     In fact, both randomized trials and observational studies helped us better understand that insecticide-based nets actually improve malaria resistance in the entire community, not just among those who use nets.
+    TODO: were any control communities close to treatment communities?
+    If not good to mention in assumption s section
+
+As we'll see in chapters (TODO: precision) and (TODO: loss to follow up), the causal inference techniques that we'll discuss in this book are often very helpful even when we're able to randomize.
 
 When we conduct an observational study, it's still helpful to think through the randomized trial we would like to conduct were it possible to do so.
 The trial we're trying to emulate in this causal analysis is the *target trial.* Considering the target trial helps us make our causal question more accurate.
@@ -91,4 +103,37 @@ We also have...
 
 TODO: Data dictionary
 
-TODO: sensitivity analysis of sickle cell and ethnicity as a confounder
+TODO: basic EDA, group and summarize risk by net
+
+TODO: sensitivity analysis of sickle cell and ethnicity as a confounder.
+Add second dataset where these ARE confounders?
+Maybe show tipr first with data where this is true then show what it is with lm() etc.
+See Lucy's blog post.
+
+```{r}
+# real dag:
+mosquito_dag_full <- dagify(
+  malaria_risk ~ net + income + health + temperature + insecticide_resistance + genetic_resistance,
+  net ~ income + health + temperature + eligible + household + genetic_resistance,
+  eligible ~ income + household,
+  health ~ income,
+  exposure = "net",
+  outcome = "malaria_risk",
+  coords = list(x = c(malaria_risk = 7, net = 3, income = 4, health = 5,
+                      temperature = 6, insecticide_resistance = 8.5, eligible = 2, household = 1, genetic_resistance = 8.5),
+                y = c(malaria_risk = 2, net = 2, income = 3, health = 1,
+                      temperature = 3, insecticide_resistance = 2, eligible = 3, household = 2, genetic_resistance = 1)),
+  labels = c(malaria_risk = "Risk of malaria", net = "Mosquito net", income = "Income",
+             health = "Health", temperature = "Nighttime temperatures",
+             insecticide_resistance = "Insecticide resistance",
+             eligible = "Eligible for program", household = "Number in household",
+             genetic_resistance = "Malaria resistance"
+             )
+)
+
+ggdag_status(mosquito_dag, use_labels = "label", text = FALSE) +
+  guides(fill = "none", color = "none") +  # Disable the legend
+  theme_dag()
+
+dagitty::adjustmentSets(mosquito_dag_full)
+```
