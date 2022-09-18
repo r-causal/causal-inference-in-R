@@ -17,16 +17,10 @@ We'll play the [whole game](https://www.gse.harvard.edu/news/uk/09/01/education-
 In this guided exercise, we'll attempt to answer a causal question: does using a bed net reduce risk of malaria?
 
 Malaria remains a serious public health issue.
-
--   prev and mortality
-
--   children
-
--   pregnant women and birth outcomes
-
-About 86% of malaria deaths occurred in 29 countries, but about half of all malaria deaths occurred in just six countries: Nigeria (27%), the\
-Democratic Republic of the Congo (12%), Uganda (5%), Mozambique (4%), Angola (3%) and\
-Burkina Faso (3%)
+Additionally, while incidence of malaria has decreased since 2000, 2020 and the COVID-19 pandemic saw an increase in cases and deaths due primarily to service interruption[@worldma].
+About 86% of malaria deaths occurred in 29 countries, but about half of all malaria deaths occurred in just six countries: Nigeria (27%), the Democratic Republic of the Congo (12%), Uganda (5%), Mozambique (4%), Angola (3%) and Burkina Faso (3%).
+Most of these deaths occurred in children under 5 [@mosquito] .
+Malaria also poses severe health risks to pregnant women and worsens birth outcomes, including early delivery and low birth weight.
 
 Bed nets prevent morbidity and mortality due to malaria by providing a barrier against infective bites by the chief host of malaria parasites, the mosquito.
 Bed nets have been used since ancient times.
