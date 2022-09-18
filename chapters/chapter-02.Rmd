@@ -17,7 +17,7 @@ We'll play the [whole game](https://www.gse.harvard.edu/news/uk/09/01/education-
 In this guided exercise, we'll attempt to answer a causal question: does using a bed net reduce risk of malaria?
 
 Malaria remains a serious public health issue.
-Additionally, while incidence of malaria has decreased since 2000, 2020 and the COVID-19 pandemic saw an increase in cases and deaths due primarily to service interruption[@worldma].
+Additionally, while incidence of malaria has decreased since 2000, 2020 and the COVID-19 pandemic saw an increase in cases and deaths due primarily to service interruption [@worldma].
 About 86% of malaria deaths occurred in 29 countries, but about half of all malaria deaths occurred in just six countries: Nigeria (27%), the Democratic Republic of the Congo (12%), Uganda (5%), Mozambique (4%), Angola (3%) and Burkina Faso (3%).
 Most of these deaths occurred in children under 5 [@mosquito] .
 Malaria also poses severe health risks to pregnant women and worsens birth outcomes, including early delivery and low birth weight.
@@ -28,7 +28,7 @@ Herodotus, the 5th century BC Greek author of *The Histories*, observed Egyptian
 
 > Against the gnats, which are very abundant, they have contrived as follows:---those who dwell above the fen-land are helped by the towers, to which they ascend when they go to rest; for the gnats by reason of the winds are not able to fly up high: but those who dwell in the fen-land have contrived another way instead of the towers, and this is it:---every man of them has got a casting net, with which by day he catches fish, but in the night he uses it for this purpose, that is to say he puts the casting-net round about the bed in which he sleeps, and then creeps in under it and goes to sleep: and the gnats, if he sleeps rolled up in a garment or a linen sheet, bite through these, but through the net they do not even attempt to bite [@thehist].
 
-Many modern nets are also treated with insecticide, although they've still been known to be used as fishing nets [@gettleman2015].
+Many modern nets are also treated with insecticide, dating back to Russian soldiers in World War II [@nevill1996], although they have still been known to be used as fishing nets [@gettleman2015].
 
 It's easy to imagine a randomized trial that deals with this question: participants in a study are randomly assigned to using a bed net, and we follow them over time to see if there is a difference in malaria risk between groups.
 Randomization is often the best way to estimate a causal effect of an intervention because it reduces the number of assumptions we need to make for that estimate to be valid (we'll discuss the assumptions we need to make for causal inference in Chapter \@ref(TODO)).
@@ -43,19 +43,17 @@ For instance, one trial compared free net distribution versus a cost share progr
 The authors of that study found that net uptake was similar between the groups, and that free free net distribution---because it was easier to access--saved more lives, and was cheaper per life saved than the cost-sharing program [@cohen2010].
 
 There are several reasons why we might not be able to conduct a randomized trial, however, including ethics, cost, and time.
-Luckily, we have substantial robust evidence in favor of bed net use, but let's consider some reasons why we might not have or where observational studies are still useful.
+Luckily, we have substantial robust evidence in favor of bed net use, but let's consider some conditions where observational causal inference is useful in the study of bed nets and malaria prevention.
 
 -   Imagine we are at a time prior to trials on this subject but when people had started to use bed nets for this purpose on their own: our goal may still be to conduct a randomized trial, but we can answer questions more quickly with observed data, perhaps guiding the design of trials or intermediary policy suggestions.
 
 -   Sometimes it is also not ethical to conduct a trial.
     An interesting example of this in malaria research is a question that arose in the study of bed net effectiveness: does malaria control in early childhood result in delayed immunity to the disease, resulting in severe malaria or death later in life?
     Since we now know bed net use is very effective, *withholding* nets would be unethical.
-    A recent observational study found TODO
+    A recent observational study found that benefits of bed net use in childhood on all-cause mortality persist into adulthood [@mosquito].
 
 -   We also may want to estimate a different effect or for a different population than what was studied in previous trials.
-    In fact, both randomized trials and observational studies helped us better understand that insecticide-based nets actually improve malaria resistance in the entire community, not just among those who use nets.
-    TODO: were any control communities close to treatment communities?
-    If not good to mention in assumption s section
+    In fact, both randomized trials and observational studies helped us better understand that insecticide-based nets actually improve malaria resistance in the entire community, not just among those who use nets, so long as net usage is high enough [@howard2000; @hawley2003].
 
 As we'll see in chapters (TODO: precision) and (TODO: loss to follow up), the causal inference techniques that we'll discuss in this book are often very helpful even when we're able to randomize.
 
@@ -82,8 +80,6 @@ In conducting an analysis, we'll need to address several key questions:
     Who is it practical to include in our study?
     Who might we need to exclude?
 
--   TODO: inclusion, exclusion examples
-
 We're going to use simulated data to answer a more specific question: does the use of insecticide-treated bed nets decrease the risk of contracting malaria?
 In this particular data, [simulated by Dr. Andrew Heiss](https://evalsp21.classes.andrewheiss.com/example/matching-ipw/#program-background):
 
@@ -93,15 +89,156 @@ In this particular data, [simulated by Dr. Andrew Heiss](https://evalsp21.classe
 
 Because we're using simulated data, we'll have direct access to a variable that measures likelihood of contracting malaria, something we wouldn't likely have in real life.
 We'll stick with this measure because we know the real effect size.
-We also have...
+We'll use simulated data, `net_data`, from the {causalworkshop} package (TODO: move this to causaldata?), which includes ten variables:
 
-TODO: Data dictionary
+-   `id`: an ID variable
+-   `net` and `net_num`: a binary variable indicating if the participant used a net (1) or didn't use a net (0)
+-   `malaria_risk`: a risk of malaria scale ranging from 0-100
+-   `income`: weekly income, measured in US dollars
+-   `health`: a health score scale ranging from 0--100
+-   `household`: number of people living in the household
+-   `eligible`: a binary variable indicating if the household is eligible for the free net program.
+-   `temperature`: the average temperature at night, in Celsius
+-   `resistance`: Some strains of mosquitoes are more resistant to insecticide and thus pose a higher risk of infecting people with malaria. This is measured on a scale of 0--100, with higher values indicating higher resistance.
 
-TODO: basic EDA, group and summarize risk by net
+The distribution of malaria risk appears to be quite different by net usage.
+
+```{r}
+library(tidyverse)
+library(causalworkshop)
+library(ggokabeito)
+
+net_data |> 
+  ggplot(aes(malaria_risk, fill = net)) +
+  geom_density(color = NA) + 
+  scale_fill_okabe_ito(alpha = .8)
+```
+
+```{r, echo=FALSE}
+means <- net_data |>
+  group_by(net) |> 
+  summarize(malaria_risk = mean(malaria_risk)) |> 
+  pull(malaria_risk)
+```
+
+The mean difference in malaria risk is about `r round(means[[1]] - means[[2]], digits = 1)`, suggesting net use might be protective against malaria.
+
+```{r}
+net_data |>
+  group_by(net) |> 
+  summarize(malaria_risk = mean(malaria_risk))
+```
+
+And that's what we see with simple linear regression, as well.
+
+```{r}
+library(broom)
+net_data |> 
+  lm(malaria_risk ~ net, data = _) |> 
+  tidy()
+```
+
+The problem here is that other factors may be responsible for the effect we're seeing.
+In this example, we'll focus on confounding: a common cause of net usage and malaria will bias the effect we see unless we account for it some way.
+One of the best ways to determine which variables we need to account for is to use a causal diagram.
+These diagrams, also called causal directed acyclic graphs (DAGs), visualize the assumptions that we're making about the causal relationships between the exposure, outcome, and other variables we think might be related.
+
+Here's the DAG that we're proposing for this question.
+
+```{r, echo = FALSE}
+library(ggdag)
+mosquito_dag <- dagify(
+  malaria_risk ~ net + income + health + temperature + resistance,
+  net ~ income + health + temperature + eligible + household,
+  eligible ~ income + household,
+  health ~ income,
+  exposure = "net",
+  outcome = "malaria_risk",
+  coords = list(
+    x = c(
+      malaria_risk = 7, 
+      net = 3, 
+      income = 4, 
+      health = 5,
+      temperature = 6, 
+      resistance = 8.5, 
+      eligible = 2, 
+      household = 1
+    ),
+    y = c(
+      malaria_risk = 2,
+      net = 2, 
+      income = 3, 
+      health = 1,
+      temperature = 3, 
+      resistance = 2, 
+      eligible = 3, 
+      household = 2
+    )
+  ),
+  labels = c(
+    malaria_risk = "Risk of malaria", 
+    net = "Mosquito net", 
+    income = "Income",
+    health = "Health", 
+    temperature = "Nighttime temperatures",
+    resistance = "Insecticide resistance",
+    eligible = "Eligible for program", 
+    household = "Number in household"
+  )
+)
+
+ggdag_status(
+  mosquito_dag, 
+  use_labels = "label", 
+  text = FALSE
+) +
+  guides(color = "none") +
+  theme_dag() +
+  coord_cartesian(clip = "off")
+```
+
+(We'll explore how to create and analyze DAGs in R in Chapter TODO).
+
+In DAGs, each point represents a variable, and each arrow represents a cause.
+In other words, this diagram declares what we think the causal relationships are between these variables.
+We're saying that we believe:
+
+-   Malaria risk is causally impacted by net usage, income, health, temperature, and insecticide resistance.
+-   Net usage is causally impacted by income, health, temperature, eligibility for the free net program, and the number of people in a household.
+-   Eligibility for the free net programs is determined by income and the number of people in a household.
+-   Health is causally impacted by income.
+
+You may agree or disagree with some of these assertions.
+That's a good thing!
+Laying bare our assumptions allows us to consider the scientific credibility of our analysis.
+Another benefit of using DAGs is that, thanks to the mathematics behind them, we can determine exactly the subset of variables we need to account for if we assume this DAG is true.
+
+The chief problem we're dealing with is that, when we analyze the data we're working with, we not only see the impact of net usage on malaria risk, but of all these other relationships, as well.
+In DAG terminology, we have more than one open causal pathway.
+If this DAG is right, in fact, we have *eight* causal pathways: the path between net usage and malaria risk and seven other *confounding* pathways.
+
+```{r, echo = FALSE, fig.width=6}
+ggdag_paths(
+  mosquito_dag, text = FALSE, shadow = TRUE
+) +
+  theme_dag() +
+  theme(legend.position = "none") + 
+  coord_cartesian(clip = "off")
+```
+
+When we calculate a naive linear regression that only includes net usage and malaria risk, the effect we see is incorrect because it is distorted by the seven other confounding pathways.
+In DAG terminology, we need to *block* these open pathways that are distorting the causal estimate we're after.
+(We can block paths through a number of techniques, including stratification, matching, weighting, and more. We'll see several techniques throughout the book.) Luckily, by specifying a DAG, we can determine exactly the set of variables we need to control for to do this.
+For this DAG, we need to control for three variables: `r glue::glue_collapse(as.list(dagitty::adjustmentSets(mosquito_dag))[[1]], sep = ", ", last = ", and ")`.
+
+TODO: Mention pre-processing in variable prep but skip for now
+
+TODO: Mention ATE when calculating weights.
 
 TODO: sensitivity analysis of sickle cell and ethnicity as a confounder.
-Add second dataset where these ARE confounders?
-Maybe show tipr first with data where this is true then show what it is with lm() etc.
+Add second dataset where these ARE confounders.
+Show tipr first with data where this is true then show what it is with lm() etc.
 See Lucy's blog post.
 
 ```{r}
