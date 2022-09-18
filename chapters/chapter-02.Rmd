@@ -214,6 +214,13 @@ That's a good thing!
 Laying bare our assumptions allows us to consider the scientific credibility of our analysis.
 Another benefit of using DAGs is that, thanks to the mathematics behind them, we can determine exactly the subset of variables we need to account for if we assume this DAG is true.
 
+::: callout-tip
+## Assembling DAGs
+
+In this exercise, we're providing you a reasonable DAG based on our knowledge of how the data we're generated.
+In real life, setting up a DAG is a challenge requiring deep thought, domain expertise, and (often) collaboration between several experts.
+:::
+
 The chief problem we're dealing with is that, when we analyze the data we're working with, we not only see the impact of net usage on malaria risk, but of all these other relationships, as well.
 In DAG terminology, we have more than one open causal pathway.
 If this DAG is right, in fact, we have *eight* causal pathways: the path between net usage and malaria risk and seven other *confounding* pathways.
@@ -232,6 +239,8 @@ In DAG terminology, we need to *block* these open pathways that are distorting t
 (We can block paths through a number of techniques, including stratification, matching, weighting, and more. We'll see several techniques throughout the book.) Luckily, by specifying a DAG, we can determine exactly the set of variables we need to control for to do this.
 For this DAG, we need to control for three variables: `r glue::glue_collapse(as.list(dagitty::adjustmentSets(mosquito_dag))[[1]], sep = ", ", last = ", and ")`.
 
+To control for these variables, we'll use a technique called Inverse Probability Weighting (IPW), which we'll discuss in detail in Chapters \@ref(TODO).
+
 TODO: Mention pre-processing in variable prep but skip for now
 
 TODO: Mention ATE when calculating weights.
@@ -240,6 +249,8 @@ TODO: sensitivity analysis of sickle cell and ethnicity as a confounder.
 Add second dataset where these ARE confounders.
 Show tipr first with data where this is true then show what it is with lm() etc.
 See Lucy's blog post.
+
+TODO: Maybe use sickle cell as example of precision variable
 
 ```{r}
 # real dag:
