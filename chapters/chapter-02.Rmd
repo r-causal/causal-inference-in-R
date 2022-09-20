@@ -307,9 +307,36 @@ propensity_model <- glm(
   data = net_data, 
   family = binomial()
 )
+
+# the first six propensity scores
+head(predict(propensity_model, type = "response"))
 ```
 
-TODO: Mention ATE when calculating weights.
+We can use propensity scores to control for confounding in a variety of ways.
+In this example, we'll focus on weighting.
+In particular, we'll compute the inverse probability weight for the *average treatment effect* (ATE).
+The ATE represents a very specific causal question: what if *everyone* in the study used bed nets vs. what if *no one* in the study used bed nets?
+
+To calculate the ATE, we'll use the broom and propensity packages.
+broom's `augment()` function extracts prediction-related information from the model and joins it to the data.
+propensity's `wt_ate()` function calculates the inverse probability weight given the propensity score and exposure.
+
+For inverse probability weighting, the ATE weight is the probability of receiving the treatment you actually received.
+In other words, if you used a bed net, the ATE weight is the probability that you used a net, and if you did *not* use a net, it is the probability that you did not use a net.
+
+```{r}
+library(broom)
+library(propensity)
+net_data_wts <- propensity_model |> 
+  augment(type.predict = "response") |> 
+  # .fitted is the value predicted by the model 
+  # for a given observation
+  mutate(wts = wt_ate(.fitted, as.numeric(net)))
+
+net_data_wts |> 
+  select(net, .fitted, wts) |> 
+  head()
+```
 
 TODO: sensitivity analysis of sickle cell and ethnicity as a confounder.
 Add second dataset where these ARE confounders.
