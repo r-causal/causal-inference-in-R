@@ -4,6 +4,13 @@ bibliography: ../citations.bib
 
 # Whole Game: Mosquito Nets and Malaria
 
+```{r, include=FALSE}
+# TODO: remove in favor of DESCRIPTION file
+lapply(c('propensity', 'halfmoon'), function(pkg) {
+  if (system.file(package = pkg) == '') remotes::install_github(paste0("malcolmbarrett/", pkg))
+})
+```
+
 In this chapter, we'll analyze data using some of the techniques we'll learn in this book.
 We'll play the [whole game](https://www.gse.harvard.edu/news/uk/09/01/education-bat-seven-principles-educators) of causal analysis using a few key steps:
 
@@ -91,15 +98,42 @@ Because we're using simulated data, we'll have direct access to a variable that 
 We'll stick with this measure because we know the real effect size.
 We'll use simulated data, `net_data`, from the {causalworkshop} package (TODO: move this to causaldata?), which includes ten variables:
 
--   `id`: an ID variable
--   `net` and `net_num`: a binary variable indicating if the participant used a net (1) or didn't use a net (0)
--   `malaria_risk`: a risk of malaria scale ranging from 0-100
--   `income`: weekly income, measured in US dollars
--   `health`: a health score scale ranging from 0--100
--   `household`: number of people living in the household
--   `eligible`: a binary variable indicating if the household is eligible for the free net program.
--   `temperature`: the average temperature at night, in Celsius
--   `resistance`: Some strains of mosquitoes are more resistant to insecticide and thus pose a higher risk of infecting people with malaria. This is measured on a scale of 0--100, with higher values indicating higher resistance.
+`id`
+
+:   an ID variable
+
+`net` and `net_num`
+
+:   a binary variable indicating if the participant used a net (1) or didn't use a net (0)
+
+`malaria_risk`
+
+:   a risk of malaria scale ranging from 0-100
+
+`income`
+
+:   weekly income, measured in dollars
+
+`health`
+
+:   a health score scale ranging from 0--100
+
+`household`
+
+:   number of people living in the household
+
+`eligible`
+
+:   a binary variable indicating if the household is eligible for the free net program.
+
+`temperature`
+
+:   the average temperature at night, in Celsius
+
+`resistance`
+
+:   Insecticide resistance of local mosquitoes.
+    This is measured on a scale of 0--100, with higher values indicating higher resistance.
 
 The distribution of malaria risk appears to be quite different by net usage.
 
@@ -145,8 +179,8 @@ These diagrams, also called causal directed acyclic graphs (DAGs), visualize the
 
 Here's the DAG that we're proposing for this question.
 
-```{r, echo = FALSE}
-library(ggdag)
+```{r, echo = FALSE, fig.width=7}
+library(ggdag, warn.conflicts = FALSE)
 mosquito_dag <- dagify(
   malaria_risk ~ net + income + health + temperature + resistance,
   net ~ income + health + temperature + eligible + household,
@@ -186,15 +220,20 @@ mosquito_dag <- dagify(
     eligible = "Eligible for program", 
     household = "Number in household"
   )
-)
+) 
 
-ggdag_status(
-  mosquito_dag, 
-  use_labels = "label", 
-  text = FALSE
-) +
-  guides(color = "none") +
+mosquito_dag |> 
+  tidy_dagitty() |> 
+  node_status() |> 
+  ggplot(
+    aes(x, y, xend = xend, yend = yend, color = status)
+  ) +
+  geom_dag_edges() +
+  geom_dag_point() +
+  geom_dag_label_repel() +
+  scale_color_okabe_ito(na.value = "grey90") +
   theme_dag() +
+  theme(legend.position = "none") + 
   coord_cartesian(clip = "off")
 ```
 
@@ -225,23 +264,50 @@ The chief problem we're dealing with is that, when we analyze the data we're wor
 In DAG terminology, we have more than one open causal pathway.
 If this DAG is right, in fact, we have *eight* causal pathways: the path between net usage and malaria risk and seven other *confounding* pathways.
 
-```{r, echo = FALSE, fig.width=6}
+```{r, echo = FALSE, fig.width=14}
 ggdag_paths(
   mosquito_dag, text = FALSE, shadow = TRUE
 ) +
   theme_dag() +
-  theme(legend.position = "none") + 
-  coord_cartesian(clip = "off")
+  theme(
+    legend.position = "none", 
+    strip.text = element_blank()
+  ) + 
+  coord_cartesian(clip = "off") +
+  scale_color_okabe_ito(na.value = "grey90", order = 3) +
+  scale_edge_color_okabe_ito(na.value = "grey90", order = 3)
 ```
 
 When we calculate a naive linear regression that only includes net usage and malaria risk, the effect we see is incorrect because it is distorted by the seven other confounding pathways.
 In DAG terminology, we need to *block* these open pathways that are distorting the causal estimate we're after.
 (We can block paths through a number of techniques, including stratification, matching, weighting, and more. We'll see several techniques throughout the book.) Luckily, by specifying a DAG, we can determine exactly the set of variables we need to control for to do this.
 For this DAG, we need to control for three variables: `r glue::glue_collapse(as.list(dagitty::adjustmentSets(mosquito_dag))[[1]], sep = ", ", last = ", and ")`.
+These three variables are a *minimal adjustment set*, the minimum set (or sets) of variables that you need to block all confounding pathways.
+We'll discuss adjustment sets further in Chapter \@ref(TODO)
 
 To control for these variables, we'll use a technique called Inverse Probability Weighting (IPW), which we'll discuss in detail in Chapters \@ref(TODO).
+Briefly, we'll use logistic regression to predict the probability of treatment---the propensity score.
+Then, we'll calculate inverse probability weights to apply to the linear regression model we fit above.
+The propensity score model includes the exposure---net use---as the dependent variable and the minimal adjustment set as the independent variables.
 
-TODO: Mention pre-processing in variable prep but skip for now
+::: callout-tip
+## Modeling the functional form
+
+Generally speaking, we want to lean on domain expertise and good modeling practices to fit the propensity score model.
+For instance, we may want to allow continuous confounders to be non-linear using splines, or we may want to add important interactions between confounders.
+Because these data are simulated, we know that we don't need these extra parameters (so we'll skip them), but in practice, you often do.
+We'll discuss this more in Chapter \@ref(TODO)
+:::
+
+The propensity score model is a logistic regression model with the formula `net ~ income + health + temperature`, which predicts the probability of bed net usage based on the .
+
+```{r}
+propensity_model <- glm(
+  net ~ income + health + temperature, 
+  data = net_data, 
+  family = binomial()
+)
+```
 
 TODO: Mention ATE when calculating weights.
 
