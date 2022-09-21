@@ -44,8 +44,8 @@ options(
   htmltools.dir.version = FALSE, 
   width = 55, 
   digits = 4,
-  ggplot2.discrete.colour = scale_color_okabe_ito(),
-  ggplot2.discrete.fill = scale_fill_okabe_ito(),
+  ggplot2.discrete.colour = palette_okabe_ito(),
+  ggplot2.discrete.fill = palette_okabe_ito(),
   ggplot2.continuous.colour = "viridis",
   ggplot2.continuous.fill = "viridis"
 )

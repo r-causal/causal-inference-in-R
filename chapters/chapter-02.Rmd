@@ -144,8 +144,7 @@ library(ggokabeito)
 
 net_data |> 
   ggplot(aes(malaria_risk, fill = net)) +
-  geom_density(color = NA) + 
-  scale_fill_okabe_ito(alpha = .8)
+  geom_density(color = NA, alpha = .8)
 ```
 
 ```{r, echo=FALSE}
@@ -341,7 +340,7 @@ net_data_wts |>
 `wts` represents the amount that each observation will be up-weighted or down-weighted in the outcome model that we will soon fit.
 For instance, the first household used a bed net and had a predicted probability of `r round(net_data_wts$.fitted[[1]], digits = 2)`.
 That's a pretty low probability considering they did, in fact, use a net, so their weight is higher at `r round(net_data_wts$wts[[1]], digits = 2)`.
-In other words, this household will be upweighted almost 3 times compared to the naive linear model we fit above.
+In other words, this household will be up-weighted almost 3 times compared to the naive linear model we fit above.
 The second household did *not* use a bed net; they're predicted probability of net use was `r round(net_data_wts$.fitted[[2]], digits = 2)` (or put differently, a predicted probability of *not* using a net of `r 1 - round(net_data_wts$.fitted[[2]], digits = 2)`).
 That's more in line with they're observed value of `net`, but there's still some predicted probability of using a net, so their weight is `r round(net_data_wts$wts[[2]], digits = 2)`.
 
@@ -355,8 +354,8 @@ ggplot(net_data_wts, aes(.fitted)) +
     aes(fill = net),
     bins = 50
   ) + 
-  # TODO: shouldn't need this
-  ggokabeito::scale_fill_okabe_ito()
+  scale_y_continuous(labels = abs) +
+  labs(x = "propensity score")
 ```
 
 The weighted propensity score creates a pseudo-population where the distributions are much more similar:
@@ -372,9 +371,8 @@ ggplot(net_data_wts, aes(.fitted)) +
     bins = 50,
     alpha = .5
   ) + 
-  # TODO: shouldn't need this
-  ggokabeito::scale_fill_okabe_ito() +
-  scale_y_continuous(labels = abs)
+  scale_y_continuous(labels = abs) +
+  labs(x = "propensity score")
 ```
 
 In this example, the unweighted distributions is not awful, but the weighted distributions are much more similar.
