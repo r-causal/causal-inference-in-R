@@ -420,7 +420,7 @@ We'll also discuss several other types of weights that are less prone to this is
 ```{r}
 net_data_wts |> 
   ggplot(aes(wts)) + 
-  geom_density(fill = "#0072B2", color = NA)
+  geom_density(fill = "#CC79A7", color = NA, alpha = 0.8)
 ```
 
 The weights look pretty reasonable.
