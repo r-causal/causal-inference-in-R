@@ -331,12 +331,103 @@ net_data_wts <- propensity_model |>
   augment(type.predict = "response") |> 
   # .fitted is the value predicted by the model 
   # for a given observation
-  mutate(wts = wt_ate(.fitted, as.numeric(net)))
+  mutate(wts = wt_ate(.fitted, net))
 
 net_data_wts |> 
   select(net, .fitted, wts) |> 
   head()
 ```
+
+`wts` represents the amount that each observation will be up-weighted or down-weighted in the outcome model that we will soon fit.
+For instance, the first household used a bed net and had a predicted probability of `r round(net_data_wts$.fitted[[1]], digits = 2)`.
+That's a pretty low probability considering they did, in fact, use a net, so their weight is higher at `r round(net_data_wts$wts[[1]], digits = 2)`.
+In other words, this household will be upweighted almost 3 times compared to the naive linear model we fit above.
+The second household did *not* use a bed net; they're predicted probability of net use was `r round(net_data_wts$.fitted[[2]], digits = 2)` (or put differently, a predicted probability of *not* using a net of `r 1 - round(net_data_wts$.fitted[[2]], digits = 2)`).
+That's more in line with they're observed value of `net`, but there's still some predicted probability of using a net, so their weight is `r round(net_data_wts$wts[[2]], digits = 2)`.
+
+The goal of propensity score weighting is to weight the population of observations such that the distribution of confounders is balanced between the exposure groups.
+Here's the distribution of the propensity score by group, created by `geom_mirror_histogram()` from the halfmoon package for assessing balance in propensity score models:
+
+```{r}
+library(halfmoon)
+ggplot(net_data_wts, aes(.fitted)) + 
+  geom_mirror_histogram(
+    aes(fill = net),
+    bins = 50
+  ) + 
+  # TODO: shouldn't need this
+  ggokabeito::scale_fill_okabe_ito()
+```
+
+The weighted propensity score creates a pseudo-population where the distributions are much more similar:
+
+```{r}
+ggplot(net_data_wts, aes(.fitted)) + 
+  geom_mirror_histogram(
+    aes(group = net),
+    bins = 50
+  ) + 
+  geom_mirror_histogram(
+    aes(fill = net, weight = wts),
+    bins = 50,
+    alpha = .5
+  ) + 
+  # TODO: shouldn't need this
+  ggokabeito::scale_fill_okabe_ito() +
+  scale_y_continuous(labels = abs)
+```
+
+In this example, the unweighted distributions is not awful, but the weighted distributions are much more similar.
+
+::: callout-tip
+## Unmeasured confounding
+
+Propensity score weighting and most other causal inference techniques only help with *observed* confounders---ones that we model correctly, at that.
+Unfortunately, we still may have unmeasured confounding, which we'll discuss below.
+
+Randomization is one causal inference technique that *does* deal with unmeasured confounding, one of the reasons it is so powerful.
+:::
+
+We might also want to know how well balanced the groups are by confounder.
+One way to do this is to calculate the standardized mean differences (SMDs) for each confounder with and without weights.
+We'll calculate the SMDs with `tidy_smd()` then plot them with `geom_love()`.
+
+```{r}
+plot_df <- tidy_smd(
+  net_data_wts,
+  c(income, health, temperature),
+  .group = net,
+  .wts = wts
+)
+
+ggplot(
+  plot_df,
+  aes(
+    x = abs(smd),
+    y = variable,
+    group = weights,
+    color = weights
+  )
+) +
+  geom_love()
+```
+
+A common guideline is that balanced confounders should have an SMD of less than 0.1 on the absolute scale.
+This is just a rule of thumb, but if we follow it, then these variables are well-balanced after weighting (and unbalanced before weighting).
+
+Before we apply the weights to the outcome model, let's check their overall distribution for extreme weights.
+Extreme weights can destabilize the variance in the outcome model, so we want to be aware of it.
+We'll also discuss several other types of weights that are less prone to this issue in Chapter \@ref(TODO).
+
+```{r}
+net_data_wts |> 
+  ggplot(aes(wts)) + 
+  geom_density(fill = "#0072B2", color = NA)
+```
+
+The weights look pretty reasonable.
+If we saw extreme weights, we might try trimming or stabilizing them, which we'll discuss in Chapter \@ref(TODO).
+It doesn't look like we need to do that here, however.
 
 TODO: sensitivity analysis of sickle cell and ethnicity as a confounder.
 Add second dataset where these ARE confounders.
