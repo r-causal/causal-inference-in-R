@@ -77,6 +77,10 @@ geom_dag_label_repel <- function(...) {
       ...
     ) 
 }
+
+est_ci <- function(.df) {
+  glue::glue("{.df$estimate} (95% CI {.df$conf.low} - {.df$conf.high}")
+}
 ```
 
 ```{r child = 'frontmatter/preface.Rmd'}

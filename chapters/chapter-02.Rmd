@@ -327,7 +327,7 @@ In other words, if you used a bed net, the ATE weight is the probability that yo
 library(broom)
 library(propensity)
 net_data_wts <- propensity_model |> 
-  augment(type.predict = "response") |> 
+  augment(newdata = net_data, type.predict = "response") |> 
   # .fitted is the value predicted by the model 
   # for a given observation
   mutate(wts = wt_ate(.fitted, net))
@@ -377,7 +377,7 @@ ggplot(net_data_wts, aes(.fitted)) +
 
 In this example, the unweighted distributions is not awful, but the weighted distributions are much more similar.
 
-::: callout-tip
+::: callout-caution
 ## Unmeasured confounding
 
 Propensity score weighting and most other causal inference techniques only help with *observed* confounders---ones that we model correctly, at that.
@@ -426,6 +426,115 @@ net_data_wts |>
 The weights look pretty reasonable.
 If we saw extreme weights, we might try trimming or stabilizing them, which we'll discuss in Chapter \@ref(TODO).
 It doesn't look like we need to do that here, however.
+
+We're now ready to use the ATE weights to (attempt to) account for confounding in the naive linear regression model.
+Fitting such a model is pleasantly simple in this case: we fit the same model as before but with `weights = wts`, which will incorporate the inverse probability weights.
+
+```{r}
+net_data_wts |> 
+  lm(malaria_risk ~ net, data = _, weights = wts) |> 
+  tidy(conf.int = TRUE)
+```
+
+```{r, include=FALSE}
+estimates <- net_data_wts |> 
+  lm(malaria_risk ~ net, data = _, weights = wts) |> 
+  tidy(conf.int = TRUE) |> 
+  filter(term == "netTRUE") |> 
+  select(estimate, starts_with("conf")) |> 
+  mutate(across(everything(), round, digits = 1))
+```
+
+The estimate for the average treatment effect is `r est_ci(estimate)`.
+Unfortunately, the confidence intervals we're using are wrong because they don't account for the dependence in the weights!
+Generally, confidence intervals for propensity score weighted models will be too narrow unless we correct for this dependence.
+The nominal coverage of the confidence intervals will thus be wrong (they aren't actually 95% CIs) and may lead to misinterpretation.
+
+We've got several ways we can address this problem, which we'll discuss in detail in Chapter \@ref(TODO), including the bootstrap, robust standard errors, and manually accounting for the dependence with empirical sandwich estimators.
+For this example, we'll use the bootstrap, a flexible tool that calculates distributions of parameters using re-sampling.
+To work with bootstrap samples, we'll use the rsample package from the tidymodels ecosystem.
+
+::: callout-note
+## The Bootstrap
+
+The bootstrap is a simple but flexible algorithm for calculating statistics using re-sampling with replacement.
+It's particularly useful when a closed-form solution doesn't exist to calculate something, as is commonly the case in causal inference (particularly for standard errors), as well as when we suspect the parametric calculations are not valid for a given situation.
+
+Bootstrapping in R has a long tradition of writing functions to calculate the statistic of interest, starting with the classic boot package.
+We'll use rsample, a more modern alternative for re-sampling, throughout the book, but generally we start with writing a function to calculate the estimate we're interested in.
+
+Let's say we want to calculate `some_statistic()` for `this_data`.
+To bootstrap for *R* samples, we:
+
+1.  Re-sample `this_data` with replacement. The same row may appear multiple (or no) times in a given bootstrap sample, simulating the sampling process in the underlying population.
+
+    ``` r
+    indices <- sample(
+      # 1 through the number of rows
+      seq_len(nrow(this_data)), 
+      # sample a dataset that's the same length as `this_data`
+      size = nrow(this_data), 
+      replace = TRUE
+    )
+    bootstrap_sample <- this_data[indices, ]
+    ```
+
+2.  Fit `some_statistic()` on the `bootstrap_sample`
+
+    ``` r
+    estimate <- some_statistic(bootstrap_sample)
+    ```
+
+3.  Repeat *R* times
+
+We then end up with a distribution of `estimate`s, with which we can calculate population statistics with, such as point estimates, standard errors, and confidence intervals.
+:::
+
+Because the bootstrap is so flexible, we need to think carefully about the sources of uncertainty in the statistic we're calculating.
+It might be tempting to write a function like this to fit the statistic we're interested in (the point estimate for `netTRUE`):
+
+```{r, eval = FALSE}
+library(rsample)
+
+fit_ipw_not_quite_rightly <- function(split, ...) { 
+  # get bootstrapped data sample with `rsample::analysis()`
+  .df <- analysis(split)
+  
+  # fit ipw model
+  lm(malaria_risk ~ net, data = .df, weights = wts) |> 
+    tidy()
+}
+```
+
+This still won't give us the correct confidence intervals, though, because it treats the inverse probability weights as fixed values.
+They're not, of course; we just estimated them using logistic regression!
+We need to account for this uncertainty by bootstrapping the *entire modeling process*.
+That means, for every bootstrap sample, we need to fit the propensity score model, calculate the inverse probability weights, then fit the weighted outcome model.
+
+```{r}
+library(rsample)
+
+fit_ipw <- function(split, ...) { 
+  # get bootstrapped data sample with `rsample::analysis()`
+  .df <- analysis(split)
+  
+  # fit propensity score model
+  propensity_model <- glm(
+    net ~ income + health + temperature, 
+    data = .df, 
+    family = binomial()
+  )
+  
+  # calculate inverse probability weights
+  .df <- propensity_model |> 
+    augment(type.predict = "response", data = .df) |> 
+    mutate(wts = wt_ate(.fitted, net))
+  
+  # fit correctly bootsrapped ipw model
+  lm(malaria_risk ~ net, data = .df, weights = wts) |> 
+    tidy()
+}
+```
 
 TODO: sensitivity analysis of sickle cell and ethnicity as a confounder.
 Add second dataset where these ARE confounders.
