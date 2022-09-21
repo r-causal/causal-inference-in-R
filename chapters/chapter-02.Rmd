@@ -4,7 +4,8 @@ bibliography: ../citations.bib
 
 # Whole Game: Mosquito Nets and Malaria
 
-```{r, include=FALSE}
+```{r}
+#| include = FALSE
 # TODO: remove in favor of DESCRIPTION file
 lapply(c('propensity', 'halfmoon'), function(pkg) {
   if (system.file(package = pkg) == '') remotes::install_github(paste0("malcolmbarrett/", pkg))
@@ -147,7 +148,8 @@ net_data |>
   geom_density(color = NA, alpha = .8)
 ```
 
-```{r, echo=FALSE}
+```{r}
+#| echo = FALSE
 means <- net_data |>
   group_by(net) |> 
   summarize(malaria_risk = mean(malaria_risk)) |> 
@@ -178,7 +180,9 @@ These diagrams, also called causal directed acyclic graphs (DAGs), visualize the
 
 Here's the DAG that we're proposing for this question.
 
-```{r, echo = FALSE, fig.width=7}
+```{r}
+#| echo = FALSE,
+#| fig.width = 7
 library(ggdag, warn.conflicts = FALSE)
 mosquito_dag <- dagify(
   malaria_risk ~ net + income + health + temperature + resistance,
@@ -263,7 +267,9 @@ The chief problem we're dealing with is that, when we analyze the data we're wor
 In DAG terminology, we have more than one open causal pathway.
 If this DAG is right, in fact, we have *eight* causal pathways: the path between net usage and malaria risk and seven other *confounding* pathways.
 
-```{r, echo = FALSE, fig.width=14}
+```{r}
+#| echo = FALSE,
+#| fig.width = 14
 glyph <- function(data, params, size) {
   data$shape <- 15
   data$size <- 12
@@ -488,7 +494,8 @@ net_data_wts |>
   tidy(conf.int = TRUE)
 ```
 
-```{r, include=FALSE}
+```{r}
+#| include = FALSE
 estimates <- net_data_wts |> 
   lm(malaria_risk ~ net, data = _, weights = wts) |> 
   tidy(conf.int = TRUE) |> 
@@ -518,7 +525,8 @@ We'll use rsample, a more modern alternative for re-sampling, throughout the boo
 Let's say we want to calculate `some_statistic()` for `this_data`.
 To bootstrap for *R* samples, we:
 
-1.  Re-sample `this_data` with replacement. The same row may appear multiple (or no) times in a given bootstrap sample, simulating the sampling process in the underlying population.
+1.  Re-sample `this_data` with replacement.
+    The same row may appear multiple (or no) times in a given bootstrap sample, simulating the sampling process in the underlying population.
 
     ``` r
     indices <- sample(
@@ -547,7 +555,8 @@ We then end up with a distribution of `estimate`s, with which we can calculate p
 Because the bootstrap is so flexible, we need to think carefully about the sources of uncertainty in the statistic we're calculating.
 It might be tempting to write a function like this to fit the statistic we're interested in (the point estimate for `netTRUE`):
 
-```{r, eval = FALSE}
+```{r}
+#| eval = FALSE
 library(rsample)
 
 fit_ipw_not_quite_rightly <- function(split, ...) { 
@@ -584,7 +593,7 @@ fit_ipw <- function(split, ...) {
     augment(type.predict = "response", data = .df) |> 
     mutate(wts = wt_ate(.fitted, net))
   
-  # fit correctly bootsrapped ipw model
+  # fit correctly bootstrapped ipw model
   lm(malaria_risk ~ net, data = .df, weights = wts) |> 
     tidy()
 }
