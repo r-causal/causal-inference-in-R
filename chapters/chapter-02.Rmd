@@ -264,17 +264,69 @@ In DAG terminology, we have more than one open causal pathway.
 If this DAG is right, in fact, we have *eight* causal pathways: the path between net usage and malaria risk and seven other *confounding* pathways.
 
 ```{r, echo = FALSE, fig.width=14}
-ggdag_paths(
-  mosquito_dag, text = FALSE, shadow = TRUE
-) +
+glyph <- function(data, params, size) {
+  data$shape <- 15
+  data$size <- 12
+  ggplot2::draw_key_point(data, params, size)
+}
+
+mosquito_dag |>
+  dag_paths() |>
+  mutate(
+    effects = case_when(
+      set == "1" & path == "open path" ~ "true effect",
+      path == "open path" ~ "confounding effect",
+      TRUE ~ NA_character_
+    ),
+    effects = factor(effects, c("true effect", "confounding effect"))
+  ) |>
+  ggplot(aes(x = x, y = y, xend = xend, yend = yend, col = effects, alpha = path)) +
+  geom_dag_edges(aes(edge_alpha = path, edge_colour = effects), show.legend = FALSE) +
+  geom_dag_point(
+    data = function(.x) dplyr::filter(.x, is.na(path)), key_glyph = glyph
+  ) +
+  geom_dag_point(
+    data = function(.x) dplyr::filter(.x, !is.na(path)), key_glyph = glyph
+  ) +
+  facet_wrap(vars(fct_inorder(factor(set), ordered = TRUE))) +
+  expand_plot(
+    expand_x = expansion(c(0.25, 0.25)),
+    expand_y = expansion(c(0.1, 0.1))
+  ) +
   theme_dag() +
   theme(
-    legend.position = "none", 
+    legend.position = "top",
+    legend.spacing.x = unit(8, "mm"),
+    legend.text = element_text(size = rel(2.5)),
+    legend.box.margin = margin(b = 20),
     strip.text = element_blank()
-  ) + 
+  ) +
   coord_cartesian(clip = "off") +
-  scale_color_okabe_ito(na.value = "grey90", order = 3) +
-  scale_edge_color_okabe_ito(na.value = "grey90", order = 3)
+  scale_alpha_manual(
+    drop = FALSE,
+    values = c("open path" = 1),
+    na.value = .35,
+    breaks = "open path"
+  ) +
+  ggraph::scale_edge_alpha_manual(
+    drop = FALSE,
+    values = c("open path" = 1),
+    na.value = .35,
+    breaks = "open path"
+  ) +
+  scale_color_okabe_ito(
+    name = NULL,
+    na.value = "grey90",
+    order = c(3, 6),
+    breaks = c("true effect", "confounding effect")
+  ) +
+  scale_edge_color_okabe_ito(
+    name = NULL,
+    na.value = "grey90",
+    order = c(3, 6),
+    breaks = c("true effect", "confounding effect")
+  ) +
+  guides(alpha = "none", edge_alpha = "none")
 ```
 
 When we calculate a naive linear regression that only includes net usage and malaria risk, the effect we see is incorrect because it is distorted by the seven other confounding pathways.
@@ -445,7 +497,7 @@ estimates <- net_data_wts |>
   mutate(across(everything(), round, digits = 1))
 ```
 
-The estimate for the average treatment effect is `r est_ci(estimate)`.
+The estimate for the average treatment effect is `r est_ci(estimates)`.
 Unfortunately, the confidence intervals we're using are wrong because they don't account for the dependence in the weights!
 Generally, confidence intervals for propensity score weighted models will be too narrow unless we correct for this dependence.
 The nominal coverage of the confidence intervals will thus be wrong (they aren't actually 95% CIs) and may lead to misinterpretation.
@@ -470,9 +522,11 @@ To bootstrap for *R* samples, we:
 
     ``` r
     indices <- sample(
+      # create a vector of indices:
       # 1 through the number of rows
       seq_len(nrow(this_data)), 
-      # sample a dataset that's the same length as `this_data`
+      # sample a vector indices 
+      # that's the same length as `this_data`
       size = nrow(this_data), 
       replace = TRUE
     )
