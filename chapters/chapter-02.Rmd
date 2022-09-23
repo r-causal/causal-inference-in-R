@@ -22,6 +22,8 @@ We'll play the [whole game](https://www.gse.harvard.edu/news/uk/09/01/education-
 5.  Estimate the causal effect
 6.  Conduct sensitivity analysis on the effect estimate
 
+## Specify a causal question
+
 In this guided exercise, we'll attempt to answer a causal question: does using a bed net reduce risk of malaria?
 
 Malaria remains a serious public health issue.
@@ -173,7 +175,9 @@ net_data |>
   tidy()
 ```
 
-The problem here is that other factors may be responsible for the effect we're seeing.
+## Draw our assumptions using a causal diagram
+
+The problem that we face is that other factors may be responsible for the effect we're seeing.
 In this example, we'll focus on confounding: a common cause of net usage and malaria will bias the effect we see unless we account for it some way.
 One of the best ways to determine which variables we need to account for is to use a causal diagram.
 These diagrams, also called causal directed acyclic graphs (DAGs), visualize the assumptions that we're making about the causal relationships between the exposure, outcome, and other variables we think might be related.
@@ -311,13 +315,13 @@ mosquito_dag |>
   scale_alpha_manual(
     drop = FALSE,
     values = c("open path" = 1),
-    na.value = .35,
+    na.value = .5,
     breaks = "open path"
   ) +
   ggraph::scale_edge_alpha_manual(
     drop = FALSE,
     values = c("open path" = 1),
-    na.value = .35,
+    na.value = .5,
     breaks = "open path"
   ) +
   scale_color_okabe_ito(
@@ -342,6 +346,9 @@ For this DAG, we need to control for three variables: `r glue::glue_collapse(as.
 These three variables are a *minimal adjustment set*, the minimum set (or sets) of variables that you need to block all confounding pathways.
 We'll discuss adjustment sets further in Chapter \@ref(TODO)
 
+## Model our assumptions
+
+\
 To control for these variables, we'll use a technique called Inverse Probability Weighting (IPW), which we'll discuss in detail in Chapters \@ref(TODO).
 Briefly, we'll use logistic regression to predict the probability of treatment---the propensity score.
 Then, we'll calculate inverse probability weights to apply to the linear regression model we fit above.
@@ -401,6 +408,8 @@ That's a pretty low probability considering they did, in fact, use a net, so the
 In other words, this household will be up-weighted almost 3 times compared to the naive linear model we fit above.
 The second household did *not* use a bed net; they're predicted probability of net use was `r round(net_data_wts$.fitted[[2]], digits = 2)` (or put differently, a predicted probability of *not* using a net of `r 1 - round(net_data_wts$.fitted[[2]], digits = 2)`).
 That's more in line with they're observed value of `net`, but there's still some predicted probability of using a net, so their weight is `r round(net_data_wts$wts[[2]], digits = 2)`.
+
+## Diagnose our models
 
 The goal of propensity score weighting is to weight the population of observations such that the distribution of confounders is balanced between the exposure groups.
 Here's the distribution of the propensity score by group, created by `geom_mirror_histogram()` from the halfmoon package for assessing balance in propensity score models:
@@ -484,6 +493,8 @@ net_data_wts |>
 The weights look pretty reasonable.
 If we saw extreme weights, we might try trimming or stabilizing them, which we'll discuss in Chapter \@ref(TODO).
 It doesn't look like we need to do that here, however.
+
+## Estimate the causal effect
 
 We're now ready to use the ATE weights to (attempt to) account for confounding in the naive linear regression model.
 Fitting such a model is pleasantly simple in this case: we fit the same model as before but with `weights = wts`, which will incorporate the inverse probability weights.
@@ -599,15 +610,146 @@ fit_ipw <- function(split, ...) {
 }
 ```
 
-TODO: sensitivity analysis of sickle cell and ethnicity as a confounder.
-Add second dataset where these ARE confounders.
-Show tipr first with data where this is true then show what it is with lm() etc.
-See Lucy's blog post.
-
-TODO: Maybe use sickle cell as example of precision variable
+Now that we know exactly how we're going to calculate the estimate for each iteration, let's create the bootstrapped dataset with rsample's `bootstraps()` function.
+The `times` argument determines how many bootstrapped datasets to create; we'll do 1,000.
 
 ```{r}
-# real dag:
+bootstrapped_net_data <- bootstraps(
+  net_data, 
+  times = 1000, 
+  # required to later calculate CIs
+  apparent = TRUE
+)
+
+bootstrapped_net_data
+```
+
+The result is a nested data frame: each `splits` object contains metadata that rsample uses to subset the bootstrap samples for each of the 1,000 samples.
+Next, we'll run `fit_ipw()` 1,000 times to create a distribution for `estimate`.
+At it's heart, the calculation we're doing is
+
+``` r
+fit_ipw(bootstrapped_net_data$splits[[n]])
+```
+
+Where *n* is one of 1,000.
+We'll use purrr's `map()` function to iterate across each `split` object.
+
+```{r}
+ipw_results <- bootstrapped_net_data |> 
+  mutate(boot_fits = map(splits, fit_ipw))
+
+ipw_results
+```
+
+The result is another nested data frame, this time with a new column, `boot_fits`.
+Each element of `boot_fits` is the result of the IPW for the bootstrapped dataset.
+For example, in the first bootstrapped data set, the IPW results were:
+
+```{r}
+ipw_results$boot_fits[[1]]
+```
+
+Now we have a distribution of estimates:
+
+```{r}
+#| message: FALSE
+#| warning: FALSE
+ipw_results |> 
+  mutate(
+    estimate = map_dbl(
+    boot_fits, 
+    # pull the `estimate` for `netTRUE` for each fit
+    \(.fit) .fit |> filter(term == "netTRUE") |> pull(estimate)
+    )
+  ) |> 
+  ggplot(aes(estimate)) +
+  geom_histogram(fill = "#D55E00FF", color = "white", alpha = 0.8)
+```
+
+This gives a sense of the variation in `estimate`, but let's calculate 95% confidence intervals from the bootstrapped distribution using rsample's `int_t()` :
+
+```{r}
+boot_estimate <- ipw_results |> 
+  # calculate T-statistic based CIs
+  int_t(boot_fits) |> 
+  filter(term == "netTRUE")
+
+boot_estimate
+```
+
+Now we have a confounder-adjusted estimate with correct standard errors.
+The estimate of the effect of *all* households using bed nets versus *no* households using bed nets on malaria risk is `r est_ci(boot_estimate, rsample = TRUE)`.
+Bed nets do indeed seem to reduce malaria risk in this study.
+
+## Conduct sensitivity analysis on the effect estimate
+
+We've laid out a roadmap for taking observational data, thinking critically about the causal question we want to ask, identifying the assumptions we need to get there, then applying those assumptions to a statistical model.
+Getting the correct answer to the causal question relies on getting our assumptions more or less right.
+But what if we're more on the less right side?
+
+Spoiler alert: the answer we just calculated is **wrong**.
+After all that effort!
+
+When conducting a causal analysis, it's a good idea to use sensitivity analyses to test your assumptions.
+They're a lot of potential sources of bias in any study, and many sensitivity analyses to go along with them; we'll focus on the assumption of no counfounding.
+
+Let's start with a broad sensitivity analysis, then we'll ask questions about specific unmeasured confounders.
+When we have less information about unmeausured confounders, we can use tipping point analysis to ask the question: how much confounding would it take to tip my estimate to the null?
+In other words, what would the strength of the unmeasured confounder have to be to completely explain away our results?
+The tipr package is a toolkit for conducting sensitivity analyses.
+Let's examine the tipping point for an unknown, normally-distrubted confounder.
+The `tip_coef()` function takes an estimate (a beta coefficient from a regression model) and the either 1) the scaled differences in means of the confounder between exposure groups or 2) the effect of the confounder on the outcome.
+For the estimate, we'll use `conf.high`, which is closer to 0 (the null) and ask: how much would the confounder have to affect malaria risk to have an unbiased upper confidence interval of 0?
+We'll use tipr to calculate this answer for 5 scenarios, where the mean difference in the confounder between exposure groups is 1, 2, 3, 4, or 5.
+
+```{r tip-coef-net}
+#| fig.cap: "A tipping point analaysis under several counfounding scenarios where the unmeasured confounder is a normally-distrubuted continuous variable. The line represents the strength of counfounding necessary to tip the upper confidence interval of the causal effect estimate to 0. The x-axis represents the coefficient of the confounder-outcome relationship adjusted for the exposure and the set of measured confounders. The y-axis represents the scaled mean difference of the confounder between exposure groups."
+library(tipr)
+tipping_points <- tip_coef(estimates$conf.high, exposure_confounder_effect = 1:5)
+
+tipping_points |> 
+  ggplot(aes(confounder_outcome_effect, exposure_confounder_effect)) + 
+  geom_line(color = "#009E73", size = 1.1) + 
+  geom_point(fill = "#009E73", color = "white", size = 2.5, shape = 21) + 
+  labs(
+    x = "Confounder-Outcome Effect",
+    y = "Scaled mean differences in\n confounder between exposure groups"
+  )
+```
+
+If we had an unmeasured confounder where the average difference between exposure groups was 1, the confounder would need to decrease malaria risk by about `r round(tipping_points$exposure_confounder_effect[[1]], digits = 1)`.
+That's pretty strong relative to other effects, but it may be feasible if we have an idea of something we might have missed.
+Conversely, if the relationship between net use and the unmeasured confounder is very strong, with a mean scaled difference of 5, the confounder-malaria relationship only needs to be `r round(tipping_points$exposure_confounder_effect[[5]], digits = 1)` .
+Now we have to consider: which of these scenarios are plausible given our domain knowledge and the effects we see in this analysis?
+
+Now let's consider a much more specific sensitivity analysis.
+There are some ethnic groups, such as the Fulani, who have a genetic resistance to malaria [@arama2015].
+Let's say that in our simulated data, there is an unnamed ethnic group who shares this genetic resistance to malaria.
+For historic reasons, bed net use in this fictional group is also very high.
+We don't have this variable in `net_data`, but let's say we know from the literature that in this sample, we can estimate at:
+
+1.  People with this genetic resistance have, on average, about -10 lower malaria risk.
+2.  About 25% of people who use nets in our study have this genetic resistance.
+3.  About 5% of people who don't use nets have this genetic resistance. <!--TODO: Need to circle back to this after tipr supports linear coefs with binary exp--> With this amount of information, we can use tipr to adjust the estimates we calculated for the unmeasured confounder. We'll use `adjust_coef_with_binary()` to calculate the adjusted estimates.
+
+```{r}
+adjusted_estimates <- adjust_coef_with_binary(
+  unlist(estimates), 
+  exposed_confounder_prev = 0.25, 
+  unexposed_confounder_prev = 0.05, 
+  confounder_outcome_effect = -10
+)
+
+adjusted_estimates
+```
+
+The adjusted estimate for a situation where genetic resistance to malaria is a confounder is `r est_ci(adjusted_estimates$effect_adjusted)`.
+
+In fact, these data were simulated with just such a confounder.
+The true effect of net use on malaria is about -10, and the true DAG that generated these data is:
+
+```{r, echo = FALSE}
 mosquito_dag_full <- dagify(
   malaria_risk ~ net + income + health + temperature + insecticide_resistance + genetic_resistance,
   net ~ income + health + temperature + eligible + household + genetic_resistance,
@@ -627,9 +769,77 @@ mosquito_dag_full <- dagify(
              )
 )
 
-ggdag_status(mosquito_dag, use_labels = "label", text = FALSE) +
-  guides(fill = "none", color = "none") +  # Disable the legend
-  theme_dag()
-
-dagitty::adjustmentSets(mosquito_dag_full)
+mosquito_dag_full |> 
+  tidy_dagitty() |> 
+  node_status() |> 
+  ggplot(
+    aes(x, y, xend = xend, yend = yend, color = status)
+  ) +
+  geom_dag_edges() +
+  geom_dag_point() +
+  geom_dag_label_repel() +
+  scale_color_okabe_ito(na.value = "grey90") +
+  theme_dag() +
+  theme(legend.position = "none") + 
+  coord_cartesian(clip = "off")
 ```
+
+```{r, include=FALSE}
+fit_ipw_full <- function(split, ...) { 
+  # get bootstrapped data sample with `rsample::analysis()`
+  .df <- analysis(split)
+  
+  # fit propensity score model
+  propensity_model <- glm(
+    net ~ income + health + temperature + genetic_resistance, 
+    data = .df, 
+    family = binomial()
+  )
+  
+  # calculate inverse probability weights
+  .df <- propensity_model |> 
+    augment(type.predict = "response", data = .df) |> 
+    mutate(wts = wt_ate(.fitted, net))
+  
+  # fit correctly bootstrapped ipw model
+  lm(malaria_risk ~ net, data = .df, weights = wts) |> 
+    tidy()
+}
+
+bootstrapped_net_data_full <- bootstraps(
+  net_data_full, 
+  times = 1000, 
+  # required to later calculate CIs
+  apparent = TRUE
+)
+
+ipw_results_full <- bootstrapped_net_data_full |> 
+    mutate(boot_fits = map(splits, fit_ipw_full))
+
+boot_estimate_full <- ipw_results_full |> 
+    # calculate T-statistic based CIs
+    int_t(boot_fits) |> 
+    filter(term == "netTRUE")
+```
+
+The unmeasured confounder is available in the dataset `net_data_full` as `genetic_resistance`.
+If we recalculate the IPW estimate of the average treatment effect of nets on malaria risk, we get `r est_ci(boot_estimate_full, rsample = TRUE)`, much closer to the true answer of -10.
+
+What do you think?
+Is this estimate reliable?
+Did we do a good job addressing the assumptions we need to make for a causal effect, particularly that there is no confounding?
+How might you criticize this model, and what would you do differently?
+Ok, we know that -10 is the right answer because the data are simulated, but in practice, we can never be sure, so we need need to continue probing our assumptions until we're confident that they are robust.
+<!-- TODO: Maybe use sickle cell as example of precision variable in the variable selection section later in the book. Interesting example because it's not possible for sickle cell to be downstream. Consider in context of overadjustment. -->
+
+To calculate this effect, we:
+
+1.  Specified a causal question (for the average treatment effect)
+2.  Drew our assumptions using a causal diagram (using DAGs)
+3.  Modeled our assumptions (using propensity score weighting)
+4.  Diagnosed our models (by checking confounder balance after weighting)
+5.  Estimated the causal effect (using inverse probability weighting)
+6.  Conducted sensitivity analysis on the effect estimate (using tipping point analysis)
+
+Throughout the rest of the book, we'll follow these broad steps in several examples from medicine, economics, and industry.
+We'll dive more deeply into propensity score techniques, explore alternative methods for calculating causal effects, and, most importantly, make sure, over and over again, that the assumptions we're making are reasonable---even if we'll never know for sure.
