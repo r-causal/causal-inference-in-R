@@ -7,7 +7,9 @@ bibliography: ../citations.bib
 ```{r}
 #| include = FALSE
 # TODO: remove in favor of DESCRIPTION file
-lapply(c('propensity', 'halfmoon'), function(pkg) {
+install.packages("remotes")
+remotes::install_github("lucymcgowan/tipr")
+lapply(c('propensity', 'halfmoon', 'causalworkshop'), function(pkg) {
   if (system.file(package = pkg) == '') remotes::install_github(paste0("malcolmbarrett/", pkg))
 })
 ```

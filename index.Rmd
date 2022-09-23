@@ -21,7 +21,7 @@ graphics: yes
 
 ```{r setup, include=FALSE}
 # Install the packages needed by this book
-lapply(c('tidyverse', 'ggdag'), function(pkg) {
+lapply(c('tidyverse', 'ggdag'. 'ggokabeito', 'broom', 'rsample'), function(pkg) {
   if (system.file(package = pkg) == '') install.packages(pkg)
 })
 
