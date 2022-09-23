@@ -20,13 +20,6 @@ graphics: yes
 ---
 
 ```{r setup, include=FALSE}
-# Install the packages needed by this book
-lapply(c('tidyverse', 'ggdag', 'ggokabeito', 'broom', 'rsample', 'remotes'), function(pkg) {
-  if (system.file(package = pkg) == '') install.packages(pkg)
-})
-
-library(ggokabeito)
-
 knitr::opts_chunk$set(
   echo = TRUE, 
   dev = "ragg_png",
@@ -45,8 +38,8 @@ options(
   htmltools.dir.version = FALSE, 
   width = 55, 
   digits = 4,
-  ggplot2.discrete.colour = palette_okabe_ito(),
-  ggplot2.discrete.fill = palette_okabe_ito(),
+  ggplot2.discrete.colour = ggokabeito::palette_okabe_ito(),
+  ggplot2.discrete.fill = ggokabeito::palette_okabe_ito(),
   ggplot2.continuous.colour = "viridis",
   ggplot2.continuous.fill = "viridis"
 )

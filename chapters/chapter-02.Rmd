@@ -4,18 +4,6 @@ bibliography: ../citations.bib
 
 # Whole Game: Mosquito Nets and Malaria
 
-```{r}
-#| include = FALSE
-# TODO: remove in favor of DESCRIPTION file
-if (system.file(package = "tipr") == '') {
-  remotes::install_github("lucymcgowan/tipr")
-}
-
-lapply(c('propensity', 'halfmoon', 'causalworkshop'), function(pkg) {
-  if (system.file(package = pkg) == '') remotes::install_github(paste0("malcolmbarrett/", pkg))
-})
-```
-
 In this chapter, we'll analyze data using techniques we learn in this book.
 We'll play the [whole game](https://www.gse.harvard.edu/news/uk/09/01/education-bat-seven-principles-educators) of causal analysis using a few key steps:
 
