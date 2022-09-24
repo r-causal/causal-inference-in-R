@@ -735,7 +735,7 @@ Let's say that in our simulated data, an unnamed ethnic group shares this geneti
 For historical reasons, bed net use in this fictional group is also very high.
 We don't have this variable in `net_data`, but let's say we know from the literature that in this sample, we can estimate at:
 
-1.  People with this genetic resistance have, on average, about -10 lower malaria risk.
+1.  People with this genetic resistance have, on average, about -8 lower malaria risk.
 2.  About 25% of people who use nets in our study have this genetic resistance.
 3.  About 5% of people who don't use nets have this genetic resistance. <!--TODO: We need to come back to this after tipr supports linear coefs with binary exp--> With this amount of information, we can use tipr to adjust the estimates we calculated for the unmeasured confounder. We'll use `adjust_coef_with_binary()` to calculate the adjusted estimates.
 
@@ -744,7 +744,7 @@ adjusted_estimates <- adjust_coef_with_binary(
   unlist(estimates), 
   exposed_confounder_prev = 0.25, 
   unexposed_confounder_prev = 0.05, 
-  confounder_outcome_effect = -10
+  confounder_outcome_effect = -8
 )
 
 adjusted_estimates
