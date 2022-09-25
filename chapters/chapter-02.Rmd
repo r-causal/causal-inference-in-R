@@ -711,7 +711,7 @@ We'll use tipr to calculate this answer for 5 scenarios, where the mean differen
 ```{r tip-coef-net}
 #| fig.cap: "A tipping point analysis under several confounding scenarios where the unmeasured confounder is a normally-distributed continuous variable. The line represents the strength of confounding necessary to tip the upper confidence interval of the causal effect estimate to 0. The x-axis represents the coefficient of the confounder-outcome relationship adjusted for the exposure and the set of measured confounders. The y-axis represents the scaled mean difference of the confounder between exposure groups."
 library(tipr)
-tipping_points <- tip_coef(estimates$conf.high, exposure_confounder_effect = 1:5)
+tipping_points <- tip_coef(boot_estimate$.upper, exposure_confounder_effect = 1:5)
 
 tipping_points |> 
   ggplot(aes(confounder_outcome_effect, exposure_confounder_effect)) + 
@@ -735,16 +735,16 @@ Let's say that in our simulated data, an unnamed ethnic group shares this geneti
 For historical reasons, bed net use in this fictional group is also very high.
 We don't have this variable in `net_data`, but let's say we know from the literature that in this sample, we can estimate at:
 
-1.  People with this genetic resistance have, on average, about -8 lower malaria risk.
-2.  About 25% of people who use nets in our study have this genetic resistance.
+1.  People with this genetic resistance have, on average, about 10 lower malaria risk.
+2.  About 26% of people who use nets in our study have this genetic resistance.
 3.  About 5% of people who don't use nets have this genetic resistance. <!--TODO: We need to come back to this after tipr supports linear coefs with binary exp--> With this amount of information, we can use tipr to adjust the estimates we calculated for the unmeasured confounder. We'll use `adjust_coef_with_binary()` to calculate the adjusted estimates.
 
 ```{r}
 adjusted_estimates <- adjust_coef_with_binary(
-  unlist(estimates), 
-  exposed_confounder_prev = 0.25, 
+  boot_estimate$.estimate, 
+  exposed_confounder_prev = 0.26, 
   unexposed_confounder_prev = 0.05, 
-  confounder_outcome_effect = -8
+  confounder_outcome_effect = -10
 )
 
 adjusted_estimates
