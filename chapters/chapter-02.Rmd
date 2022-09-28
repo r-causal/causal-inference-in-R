@@ -162,7 +162,7 @@ net_data |>
   summarize(malaria_risk = mean(malaria_risk))
 ```
 
-And that's what we see with simple linear regression, as well.
+And that's what we see with simple linear regression, as well, as we would expect.
 
 ```{r}
 library(broom)
