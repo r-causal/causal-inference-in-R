@@ -211,21 +211,33 @@ The weights here are changing the distribution of the variables by weighting eac
 Also notice that the distribution of variables in the weighted table now matches the Overall column of the unweighted table.
 That is what ATE weights do -- they make the distribution of variables included in the propensity score for each exposure group look like the overall distribution across the whole sample.
 
+Let's look at another visualization that can help us understand the weighted psuedopopulation that is created by the ATE weights: a mirrored histogram.
+We will plot the distribution of the propensity score for the days in the "exposure" group (days with extra magic hours in the morning) on the top half of the plot, then we will mirror the distribution of the propensity score for the days in the "unexposed" group below it.
+This allows us to easily visually compare the two distributions.
+Then we will overlay weighted histograms to demonstrate how these distributions differ after incorporating the weights.
+The {halfmoon} package includes a function `geom_mirror_histogram` to assist with this visualization.
+
 ```{r}
 library(halfmoon)
 ggplot(seven_dwarfs_wts, aes(.fitted, group = extra_magic_morning)) +
  geom_mirror_histogram(
-   bins = 50
+   bins = 25
  ) + 
   geom_mirror_histogram(
     aes(fill = factor(extra_magic_morning), weight = w_ate),
-    bins = 50,
+    bins = 25,
     alpha = 0.5
   ) + 
   scale_y_continuous(labels = abs) +
   labs(x = "propensity score",
        fill = "Extra Magic Morning")
 ```
+
+We can learn a few things from this figure.
+First, we can readily see that there are more "unexposed" days, that is days without extra magic hours in the morning, compared to "exposed" in the observed population.
+We can see this by examining the darker histograms, which show the distributions in the observed sample.
+In the same vein, the exposed days are "upweighted" to a stronger degree, as evidenced by the amount of light blue we see on the top.
+We can also see that after weighting the two distributions look similar, that is the shape of the blue weighted distribution on top looks similar to the red weighted distribution below.
 
 ### Average treatment effect among the treated
 
@@ -236,12 +248,58 @@ $$E[Y(1) - Y(0) | X = 1]$$
 
 Example research questions where the ATT is of interest could include "Should we stop our marketing campaign to those currently receiving it?" or "Should medical providers stop recommending treatment for those currently receiving it?"[@greifer2021choosing]
 
-Let's add the ATT weights to the `seven_dwarfs_wts` data frame.
+Let's add the ATT weights to the `seven_dwarfs_wts` data frame and look at their distribution
 
 ```{r}
 seven_dwarfs_wts <- seven_dwarfs_wts |>
   mutate(w_att = wt_att(.fitted, extra_magic_morning))
+
+ggplot(seven_dwarfs_wts, aes(w_att)) +
+  geom_histogram(bins = 25)
 ```
+
+Compared to the ATE weights, these weights look more *stable*, that is, the distribution of the weights is not heavily skewed and the range is small, from around zero to a bit over one, with many at exactly one.
+These weights are exactly one for all days in the exposed group.
+Theoretically, for unexposed days these weights can range from zero to infinity, but because we have many more unexposed days compared to exposed in this particular sample, the range is much smaller, meaning the vast majority of unexposed days are "down weighted" to match the variable distribution of the exposed days.
+Let's take a look at the weighted table to see this a bit more clearly.
+
+```{r}
+seven_dwarfs_svy <- svydesign(
+  ids = ~ 1,
+  data = seven_dwarfs_wts,
+  weights = ~w_att
+)
+tbl_svysummary(seven_dwarfs_svy, 
+            by = extra_magic_morning, 
+            include = c(wdw_ticket_season, close, weather_wdwhigh)) |>
+  add_overall() # add an overall column to the table
+```
+
+We again acheive balance between groups, but the target values differ.
+Recall in our ATE weighted table, when looking at the `wdw_ticket_season` variable we saw the weighted percent in the peak season balanced close to 22%, the overall percent of peak days in the observed sample.
+Now, we again see balance, but the weighted percent of peak season days is 30% in the exposed and unexposed groups, reflecting the percent in the unweighted exposure group.
+Comparing this weighted table to our unweighted table, all columns are attempting to match the exposed column from the unweighted table, that is the "target" population is the exposed group, the days with extra magic hours in the morning.
+
+We can again create a mirrored histogram to observe the weighted psuedopopulation.
+
+```{r}
+ggplot(seven_dwarfs_wts, aes(.fitted, group = extra_magic_morning)) +
+ geom_mirror_histogram(
+   bins = 25
+ ) + 
+  geom_mirror_histogram(
+    aes(fill = factor(extra_magic_morning), weight = w_att),
+    bins = 25,
+    alpha = 0.5
+  ) + 
+  scale_y_continuous(labels = abs) +
+  labs(x = "propensity score",
+       fill = "Extra Magic Morning")
+```
+
+Since every day in the exposed group has a weight of 1, the distribution of the propensity scores (the dark bars above 0 on the graph) exactly overlap with the weighted distribution overlaid in blue.
+In the unexposed population, we see that almost all observations are *down weighted*, that is the dark red distribution is smaller than the distribution of the propensity scores and more closely matches the exposed distribution above it.
+When there are many more observations in the unexposed group compared to the exposed, as we see here, the ATT is easier to estimate.
 
 ### Average treatment effect among the controls
 
