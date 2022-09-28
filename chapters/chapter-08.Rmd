@@ -248,6 +248,10 @@ $$E[Y(1) - Y(0) | X = 1]$$
 
 Example research questions where the ATT is of interest could include "Should we stop our marketing campaign to those currently receiving it?" or "Should medical providers stop recommending treatment for those currently receiving it?"[@greifer2021choosing]
 
+The ATT weight is estimated by:
+
+$$w_{ATT} = X + \frac{(1 - X)p}{1 - p}$$
+
 Let's add the ATT weights to the `seven_dwarfs_wts` data frame and look at their distribution
 
 ```{r}
@@ -310,7 +314,9 @@ $$E[Y(1) - Y(0) | X = 0]$$
 
 Example research questions where the ATC is of interest could include "Should we send our marketing campaign to those not currently receiving it?" or "Should medical providers begin recommending treatment for those not currently receiving it?"[@greifer2021choosing]
 
-Let's add the ATU weights to the `seven_dwarfs_wts` data frame and look at their distribution.
+The ATU weight is estimated by:
+
+$$w_{ATU} = \frac{X(1-p)}{p}+ (1-X)$$ Let's add the ATU weights to the `seven_dwarfs_wts` data frame and look at their distribution.
 
 ```{r}
 seven_dwarfs_wts <- seven_dwarfs_wts |>
@@ -368,6 +374,10 @@ The causal estimand conditions on those deemed "evenly matchable" by some distan
 $$E[Y(1) - Y(0) | M_d = 1]$$
 
 Here $d$ denotes a distance measure and $M_d=1$ indicates that a unit is evenly matchable under that distance measure.[@samuels2017aspects; @d2018improving] Example research questions where the ATM is of interest could include "Should those at clinical equipoise receive the exposure?"[@greifer2021choosing]
+
+The ATM weight is estimated by:
+
+$$w_{ATM} = \frac{\min \{p, 1-p\}}{Xp + (1-X)(1-p)}$$
 
 Let's add the ATM weights to the `seven_dwarfs_wts` data frame and look at their distribution.
 
@@ -427,6 +437,10 @@ The target population to estimate the average treatment effect among the overlap
 Example research questions where the ATO is of interest are the same as those for the ATM, such as "Should those at clinical equipoise receive the exposure?"[@greifer2021choosing]
 
 These weights, again, are quite similar to the ATM weights but are slightly attenuated, yielding improved variance properties.
+
+The ATO weight is estimated by:
+
+$$w_{ATO} = X(1-p) + (1-X)p$$
 
 Let's add the ATO weights to the `seven_dwarfs_wts` data frame and look at their distribution.
 
