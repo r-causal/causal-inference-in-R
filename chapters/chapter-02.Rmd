@@ -483,7 +483,7 @@ A standard guideline is that balanced confounders should have an SMD of less tha
 0.1 is just a rule of thumb, but if we follow it, these variables are well-balanced after weighting (and unbalanced before weighting).
 
 Before we apply the weights to the outcome model, let's check their overall distribution for extreme weights.
-Extreme weights can destabilize the variance in the outcome model and induce finite sample bias---a problem where even large samples can produce the wrong effect---so we want to be aware of it.
+Extreme weights can destabilize the estimate and variance in the outcome model, so we want to be aware of it.
 We'll also discuss several other types of weights that are less prone to this issue in Chapter \@ref(TODO).
 
 ```{r ate-density-net-data}
