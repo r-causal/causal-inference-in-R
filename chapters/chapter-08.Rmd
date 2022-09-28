@@ -301,14 +301,64 @@ Since every day in the exposed group has a weight of 1, the distribution of the 
 In the unexposed population, we see that almost all observations are *down weighted*, that is the dark red distribution is smaller than the distribution of the propensity scores and more closely matches the exposed distribution above it.
 When there are many more observations in the unexposed group compared to the exposed, as we see here, the ATT is easier to estimate.
 
-### Average treatment effect among the controls
+### Average treatment effect among the unexposed
 
-The target population to estimate the average treatment effect among the control (unexposed) (ATC / ATU) is the *unexposed* (control) population.
+The target population to estimate the average treatment effect among the unexposed (control) (ATU / ATC) is the *unexposed* (control) population.
 The causal estimand conditions on those in the unexposed group.
 
 $$E[Y(1) - Y(0) | X = 0]$$
 
 Example research questions where the ATC is of interest could include "Should we send our marketing campaign to those not currently receiving it?" or "Should medical providers begin recommending treatment for those not currently receiving it?"[@greifer2021choosing]
+
+Let's add the ATU weights to the `seven_dwarfs_wts` data frame and look at their distribution.
+
+```{r}
+seven_dwarfs_wts <- seven_dwarfs_wts |>
+  mutate(w_atu = wt_atu(.fitted, extra_magic_morning))
+
+ggplot(seven_dwarfs_wts, aes(w_atu)) +
+  geom_histogram(bins = 25)
+```
+
+The distribution of these weights looks very similar to what we saw with the ATE weights -- several around 1, with a long tail.
+These weights will be 1 for all observations in the unexposed group; they can range from 0 to infinity for the exposed group.
+Because we have more observations in our unexposed group, our exposed observations are forced to be "up weighted" to match their distribution.
+
+Now let's take a look at the weighted table.
+
+```{r}
+seven_dwarfs_svy <- svydesign(
+  ids = ~ 1,
+  data = seven_dwarfs_wts,
+  weights = ~w_atu
+)
+tbl_svysummary(seven_dwarfs_svy, 
+            by = extra_magic_morning, 
+            include = c(wdw_ticket_season, close, weather_wdwhigh)) |>
+  add_overall() # add an overall column to the table
+```
+
+Now the exposed column of this table is weighted to match the unexposed column of the unweighted table.
+
+We can again create a mirrored histogram to observe the weighted psuedopopulation.
+
+```{r}
+ggplot(seven_dwarfs_wts, aes(.fitted, group = extra_magic_morning)) +
+ geom_mirror_histogram(
+   bins = 25
+ ) + 
+  geom_mirror_histogram(
+    aes(fill = factor(extra_magic_morning), weight = w_atu),
+    bins = 25,
+    alpha = 0.5
+  ) + 
+  scale_y_continuous(labels = abs) +
+  labs(x = "propensity score",
+       fill = "Extra Magic Morning")
+```
+
+The weights for the unexposed days are all 1, so the distribution of the propensity scores for this group exactly overlays the weighted pseudopopulation in red.
+The blue bars indicate that the exposed population is largely "up weighted" to match the unexposed distribution.
 
 ### Average treatment effect among the evenly matchable
 
@@ -318,3 +368,112 @@ The causal estimand conditions on those deemed "evenly matchable" by some distan
 $$E[Y(1) - Y(0) | M_d = 1]$$
 
 Here $d$ denotes a distance measure and $M_d=1$ indicates that a unit is evenly matchable under that distance measure.[@samuels2017aspects; @d2018improving] Example research questions where the ATM is of interest could include "Should those at clinical equipoise receive the exposure?"[@greifer2021choosing]
+
+Let's add the ATM weights to the `seven_dwarfs_wts` data frame and look at their distribution.
+
+```{r}
+seven_dwarfs_wts <- seven_dwarfs_wts |>
+  mutate(w_atm = wt_atm(.fitted, extra_magic_morning))
+
+ggplot(seven_dwarfs_wts, aes(w_atm)) +
+  geom_histogram(bins = 25)
+```
+
+The distribution of these weights looks very similar to what we saw with the ATT weights.
+That is because in this particular sample, there are many more unexposed observations compared to exposed.
+These weights have the nice property that they range from 0 to 1, making them *always* stable, regardless of the imbalance between exposure groups.
+
+Now let's take a look at the weighted table.
+
+```{r}
+seven_dwarfs_svy <- svydesign(
+  ids = ~ 1,
+  data = seven_dwarfs_wts,
+  weights = ~w_atm
+)
+tbl_svysummary(seven_dwarfs_svy, 
+            by = extra_magic_morning, 
+            include = c(wdw_ticket_season, close, weather_wdwhigh)) |>
+  add_overall() # add an overall column to the table
+```
+
+In this particular sample, the ATM weights resemble the ATT weights, so this table looks similar to the ATT weighted table.
+This is not guaranteed, and in fact the ATM pseudopopulation can look different from the overall, exposed, and unexposed unweighted populations.
+This makes it particularly important to examine the weighted table when using ATM weights to be sure to understand what population inference will ultimately be drawn on.
+
+We can again create a mirrored histogram to observe the ATM weighted psuedopopulation.
+
+```{r}
+ggplot(seven_dwarfs_wts, aes(.fitted, group = extra_magic_morning)) +
+ geom_mirror_histogram(
+   bins = 25
+ ) + 
+  geom_mirror_histogram(
+    aes(fill = factor(extra_magic_morning), weight = w_atm),
+    bins = 25,
+    alpha = 0.5
+  ) + 
+  scale_y_continuous(labels = abs) +
+  labs(x = "propensity score",
+       fill = "Extra Magic Morning")
+```
+
+Again, the ATM weights are bounded by 0 and 1, meaning that all observations will be *down weighted*.
+This removes the potential for finite sample bias due to large weights in small samples as well as has improved variance properities.
+
+### Average treatment effect among the overlap population
+
+The target population to estimate the average treatment effect among the overlap population (ATO) is the overlap -- this is very similar to the "even matchable" from above.
+Example research questions where the ATO is of interest are the same as those for the ATM, such as "Should those at clinical equipoise receive the exposure?"[@greifer2021choosing]
+
+These weights, again, are quite similar to the ATM weights but are slightly attenuated, yielding improved variance properties.
+
+Let's add the ATO weights to the `seven_dwarfs_wts` data frame and look at their distribution.
+
+```{r}
+seven_dwarfs_wts <- seven_dwarfs_wts |>
+  mutate(w_ato = wt_ato(.fitted, extra_magic_morning))
+
+ggplot(seven_dwarfs_wts, aes(w_ato)) +
+  geom_histogram(bins = 25)
+```
+
+Like the ATM weights, the ATO weights are bounded by 0 and 1, making them more stable than the ATE, ATT, and ATU, regardless of the exposed and unexposed imbalance.
+
+Now let's take a look at the weighted table.
+
+```{r}
+seven_dwarfs_svy <- svydesign(
+  ids = ~ 1,
+  data = seven_dwarfs_wts,
+  weights = ~w_ato
+)
+tbl_svysummary(seven_dwarfs_svy, 
+            by = extra_magic_morning, 
+            include = c(wdw_ticket_season, close, weather_wdwhigh)) |>
+  add_overall() # add an overall column to the table
+```
+
+Like the ATM weights, the ATO pseudopopulation may not resemble the overall, exposed, or unexposed unweighted populations, so it is important to examine these weighted tables to gain a deeper understanding about the population on whom we will be drawing inference.
+
+We can again create a mirrored histogram to observe the ATO weighted psuedopopulation.
+
+```{r}
+ggplot(seven_dwarfs_wts, aes(.fitted, group = extra_magic_morning)) +
+ geom_mirror_histogram(
+   bins = 25
+ ) + 
+  geom_mirror_histogram(
+    aes(fill = factor(extra_magic_morning), weight = w_ato),
+    bins = 25,
+    alpha = 0.5
+  ) + 
+  scale_y_continuous(labels = abs) +
+  labs(x = "propensity score",
+       fill = "Extra Magic Morning")
+```
+
+This looks similar to the ATM pseudopopulation, with slight attenuation, as evidenced by the increased down weighting in the exposed population.
+In general, the authors prefer using the ATO weights when the overlap (or evenly matchable) population is the target, as they have improved variance properties.
+They additionally have the benefit that any variables included in the propensity score model (if fit via logistic regression) will be perfectly balanced on the mean.
+We will discuss this further in future chapters.
