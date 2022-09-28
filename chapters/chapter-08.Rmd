@@ -168,9 +168,9 @@ The median temperature on days with extra magic hour mornings is a bit lower (79
 Now let's construct our propensity score weight to estimate the ATE.
 
 ```{r}
+library(propensity)
 seven_dwarfs_with_ps <- seven_dwarfs_with_ps |>
-  mutate(w_ate = extra_magic_morning / .fitted + 
-           (1 - extra_magic_morning) / (1 - .fitted))
+  mutate(w_ate = wt_ate(.fitted, extra_magic_morning))
 ```
 
 The {gtsummary} package allows the creation of *weighted* tables.
@@ -192,25 +192,27 @@ tbl_svysummary(seven_dwarfs_svy,
   add_overall() # add an overall column to the table
 ```
 
+Notice in this weighted table, the variables are more **balanced** between the groups.
+For example, looking at the variable `wdw_ticket_season`, in the unweighted table we see that a higher percent of the days with extra magic hours in the mornings were during the peak season (30%) compared to the percent of days without extra magic hours in the morning (21%).
+In the weighted table this is balanced, with a weighted percent of 21% peak days in the extra magic morning group and 22% in the no extra magic morning group.
+The weights here are changing the distribution of the variables by up or down weighting each of the observations so that the two groups appear balanced.
+Also notice that the distribution of variables in the weighted table now matches the Overall column of the unweighted table.
+That is what ATE weights do -- they make the distribution of variables included in the propensity score for each exposure group look like the overall distribution across the whole sample.
+
 ```{r}
-ggplot() +
-  geom_histogram(
-    data = seven_dwarfs_with_ps |> filter(extra_magic_morning == 1),
-    aes(x = .fitted),
-    fill = "orange",
-    bins = 40
-  ) +
-  geom_histogram(
-    data = seven_dwarfs_with_ps |> filter(extra_magic_morning == 0),
-    aes(
-      x = .fitted,
-      y = -after_stat(count)
-    ),
-    fill = "cornflower blue",
-    bins = 40
-  ) +
-  scale_y_continuous("Count", labels = abs) +
-  scale_x_continuous("Propensity Score")
+library(halfmoon)
+ggplot(seven_dwarfs_with_ps, aes(.fitted, group = extra_magic_morning)) +
+ geom_mirror_histogram(
+   bins = 50
+ ) + 
+  geom_mirror_histogram(
+    aes(fill = factor(extra_magic_morning), weight = w_ate),
+    bins = 50,
+    alpha = 0.5
+  ) + 
+  scale_y_continuous(labels = abs) +
+  labs(x = "propensity score",
+       fill = "Extra Magic Morning")
 ```
 
 ### Average treatment effect among the treated
