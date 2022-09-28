@@ -138,7 +138,11 @@ library(broom)
 library(touringplans)
 
 seven_dwarfs <- seven_dwarfs_train_2018 |>
-  filter(hour == 17)
+  filter(hour == 17) |> 
+  mutate(extra_magic_morning = factor(
+    extra_magic_morning, 
+    labels = c("No Magic Hours", "Extra Magic Hours")
+  ))
 
 seven_dwarfs_with_ps <- glm(
   extra_magic_morning ~ wdw_ticket_season + close + weather_wdwhigh,
@@ -150,9 +154,17 @@ seven_dwarfs_with_ps <- glm(
 
 Let's examine a table of the variables of interest in this data frame.
 To do so, we are going to use the `tbl_summary()` function from the {gtsummary} package.
+(We'll also use the {labelled} package to clean up the variable names for the table.)
 
 ```{r}
 library(gtsummary)
+library(labelled)
+seven_dwarfs_with_ps <- seven_dwarfs_with_ps |> 
+  set_variable_labels(
+    wdw_ticket_season = "Ticket Season",
+    close = "Close Time",
+    weather_wdwhigh = "Historic High Temperature"
+  )
 
 tbl_summary(seven_dwarfs_with_ps, 
             by = extra_magic_morning, 
@@ -179,7 +191,7 @@ Let's look at a distribution of these weights
 
 ```{r}
 ggplot(seven_dwarfs_wts, aes(x = w_ate)) +
-  geom_histogram(bins = 25)
+  geom_histogram(bins = 50)
 ```
 
 Here we see that many weights are close to 1 (the smallest possible value for an ATE weight) with a long tail leading to the largest weight (around 24).
@@ -191,7 +203,7 @@ Recall that the {survey} package is currently the best way to incorporate weight
 This has a historical explanation, as the techniques needed to incorporate weights historically were used for survey analyses.
 Even though we are not doing a survey analysis, the same techniques are useful for our propensity score weights.
 
-```{r}
+```{r, message=FALSE}
 library(survey)
 seven_dwarfs_svy <- svydesign(
   ids = ~ 1,
@@ -221,11 +233,11 @@ The {halfmoon} package includes a function `geom_mirror_histogram` to assist wit
 library(halfmoon)
 ggplot(seven_dwarfs_wts, aes(.fitted, group = extra_magic_morning)) +
  geom_mirror_histogram(
-   bins = 25
+   bins = 50
  ) + 
   geom_mirror_histogram(
     aes(fill = factor(extra_magic_morning), weight = w_ate),
-    bins = 25,
+    bins = 50,
     alpha = 0.5
   ) + 
   scale_y_continuous(labels = abs) +
@@ -259,7 +271,7 @@ seven_dwarfs_wts <- seven_dwarfs_wts |>
   mutate(w_att = wt_att(.fitted, extra_magic_morning))
 
 ggplot(seven_dwarfs_wts, aes(w_att)) +
-  geom_histogram(bins = 25)
+  geom_histogram(bins = 50)
 ```
 
 Compared to the ATE weights, these weights look more *stable*, that is, the distribution of the weights is not heavily skewed and the range is small, from around zero to a bit over one, with many at exactly one.
@@ -289,11 +301,11 @@ We can again create a mirrored histogram to observe the weighted psuedopopulatio
 ```{r}
 ggplot(seven_dwarfs_wts, aes(.fitted, group = extra_magic_morning)) +
  geom_mirror_histogram(
-   bins = 25
+   bins = 50
  ) + 
   geom_mirror_histogram(
     aes(fill = factor(extra_magic_morning), weight = w_att),
-    bins = 25,
+    bins = 50,
     alpha = 0.5
   ) + 
   scale_y_continuous(labels = abs) +
@@ -323,7 +335,7 @@ seven_dwarfs_wts <- seven_dwarfs_wts |>
   mutate(w_atu = wt_atu(.fitted, extra_magic_morning))
 
 ggplot(seven_dwarfs_wts, aes(w_atu)) +
-  geom_histogram(bins = 25)
+  geom_histogram(bins = 50)
 ```
 
 The distribution of these weights looks very similar to what we saw with the ATE weights -- several around 1, with a long tail.
@@ -351,11 +363,11 @@ We can again create a mirrored histogram to observe the weighted psuedopopulatio
 ```{r}
 ggplot(seven_dwarfs_wts, aes(.fitted, group = extra_magic_morning)) +
  geom_mirror_histogram(
-   bins = 25
+   bins = 50
  ) + 
   geom_mirror_histogram(
     aes(fill = factor(extra_magic_morning), weight = w_atu),
-    bins = 25,
+    bins = 50,
     alpha = 0.5
   ) + 
   scale_y_continuous(labels = abs) +
@@ -386,7 +398,7 @@ seven_dwarfs_wts <- seven_dwarfs_wts |>
   mutate(w_atm = wt_atm(.fitted, extra_magic_morning))
 
 ggplot(seven_dwarfs_wts, aes(w_atm)) +
-  geom_histogram(bins = 25)
+  geom_histogram(bins = 50)
 ```
 
 The distribution of these weights looks very similar to what we saw with the ATT weights.
@@ -416,11 +428,11 @@ We can again create a mirrored histogram to observe the ATM weighted psuedopopul
 ```{r}
 ggplot(seven_dwarfs_wts, aes(.fitted, group = extra_magic_morning)) +
  geom_mirror_histogram(
-   bins = 25
+   bins = 50
  ) + 
   geom_mirror_histogram(
     aes(fill = factor(extra_magic_morning), weight = w_atm),
-    bins = 25,
+    bins = 50,
     alpha = 0.5
   ) + 
   scale_y_continuous(labels = abs) +
@@ -449,7 +461,7 @@ seven_dwarfs_wts <- seven_dwarfs_wts |>
   mutate(w_ato = wt_ato(.fitted, extra_magic_morning))
 
 ggplot(seven_dwarfs_wts, aes(w_ato)) +
-  geom_histogram(bins = 25)
+  geom_histogram(bins = 50)
 ```
 
 Like the ATM weights, the ATO weights are bounded by 0 and 1, making them more stable than the ATE, ATT, and ATU, regardless of the exposed and unexposed imbalance.
@@ -475,11 +487,11 @@ We can again create a mirrored histogram to observe the ATO weighted psuedopopul
 ```{r}
 ggplot(seven_dwarfs_wts, aes(.fitted, group = extra_magic_morning)) +
  geom_mirror_histogram(
-   bins = 25
+   bins = 50
  ) + 
   geom_mirror_histogram(
     aes(fill = factor(extra_magic_morning), weight = w_ato),
-    bins = 25,
+    bins = 50,
     alpha = 0.5
   ) + 
   scale_y_continuous(labels = abs) +
