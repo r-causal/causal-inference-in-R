@@ -41,14 +41,14 @@ rct <- tibble(
   x = rbinom(100, 1, 0.5),
   y = x + rnorm(100)
 )
-rct %>%
+rct |>
   summarise(
     n_exposed = sum(x),
     n_unexposed = sum(1 - x),
     estimate = sum(
     (y * x) / n_exposed - 
       y * (1 - x) / n_unexposed
-  )) %>% pull(estimate) -> estimate
+  )) |> pull(estimate) -> estimate
 ```
 
 ```{r}
@@ -56,7 +56,7 @@ rct
 ```
 
 ```{r}
-rct %>%
+rct |>
   summarise(
     n_exposed = sum(x),
     n_unexposed = sum(1 - x),
@@ -65,12 +65,12 @@ rct %>%
       y * (1 - x) / n_unexposed
   ))
 
-rct %>%
-  group_by(x) %>%
-  summarise(avg_y = mean(y)) %>%
+rct |>
+  group_by(x) |>
+  summarise(avg_y = mean(y)) |>
   pivot_wider(names_from = x, 
               values_from = avg_y, 
-              names_prefix = "x_") %>%
+              names_prefix = "x_") |>
   summarise(estimate = x_1 - x_0)
 ```
 
@@ -90,7 +90,7 @@ rct <- tibble(
   y = x + rnorm(100000)
 )
 
-rct %>%
+rct |>
   summarise(
     n_exposed = sum(x),
     n_unexposed = sum(1 - x),
@@ -137,14 +137,14 @@ Let's reconstruct our data set, `seven_dwarfs` and fit the same propensity score
 library(broom)
 library(touringplans)
 
-seven_dwarfs <- seven_dwarfs_train_2018 %>%
+seven_dwarfs <- seven_dwarfs_train_2018 |>
   filter(hour == 17)
 
 seven_dwarfs_with_ps <- glm(
   extra_magic_morning ~ wdw_ticket_season + close + weather_wdwhigh,
   data = seven_dwarfs,
   family = binomial()
-) %>%
+) |>
   augment(type.predict = "response", data = seven_dwarfs)
 ```
 
@@ -156,7 +156,7 @@ library(gtsummary)
 
 tbl_summary(seven_dwarfs_with_ps, 
             by = extra_magic_morning, 
-            include = c(wdw_ticket_season, close, weather_wdwhigh)) %>%
+            include = c(wdw_ticket_season, close, weather_wdwhigh)) |>
   add_overall() # add an overall column to the table
 ```
 
@@ -168,7 +168,7 @@ The median temperature on days with extra magic hour mornings is a bit lower (79
 Now let's construct our propensity score weight to estimate the ATE.
 
 ```{r}
-seven_dwarfs_with_ps <- seven_dwarfs_with_ps %>%
+seven_dwarfs_with_ps <- seven_dwarfs_with_ps |>
   mutate(w_ate = extra_magic_morning / .fitted + 
            (1 - extra_magic_morning) / (1 - .fitted))
 ```
@@ -176,7 +176,7 @@ seven_dwarfs_with_ps <- seven_dwarfs_with_ps %>%
 The {gtsummary} package allows the creation of *weighted* tables.
 To do this, we need to load the {survey} package and create a survey design object.
 Recall that the {survey} package is currently the best way to incorporate weights in various R functions.
-This has a historical explanation, as the techniques needed to incoporate weights historically were used for survey analyses.
+This has a historical explanation, as the techniques needed to incorporate weights historically were used for survey analyses.
 Even though we are not doing a survey analysis, the same techniques are useful for our propensity score weights.
 
 ```{r}
@@ -188,20 +188,20 @@ seven_dwarfs_svy <- svydesign(
 )
 tbl_svysummary(seven_dwarfs_svy, 
             by = extra_magic_morning, 
-            include = c(wdw_ticket_season, close, weather_wdwhigh)) %>%
+            include = c(wdw_ticket_season, close, weather_wdwhigh)) |>
   add_overall() # add an overall column to the table
 ```
 
 ```{r}
 ggplot() +
   geom_histogram(
-    data = seven_dwarfs_with_ps %>% filter(extra_magic_morning == 1),
+    data = seven_dwarfs_with_ps |> filter(extra_magic_morning == 1),
     aes(x = .fitted),
     fill = "orange",
     bins = 40
   ) +
   geom_histogram(
-    data = seven_dwarfs_with_ps %>% filter(extra_magic_morning == 0),
+    data = seven_dwarfs_with_ps |> filter(extra_magic_morning == 0),
     aes(
       x = .fitted,
       y = -after_stat(count)
