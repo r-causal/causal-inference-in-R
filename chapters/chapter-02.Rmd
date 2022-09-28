@@ -483,7 +483,7 @@ A standard guideline is that balanced confounders should have an SMD of less tha
 0.1 is just a rule of thumb, but if we follow it, these variables are well-balanced after weighting (and unbalanced before weighting).
 
 Before we apply the weights to the outcome model, let's check their overall distribution for extreme weights.
-Extreme weights can destabilize the variance in the outcome model, so we want to be aware of it.
+Extreme weights can destabilize the variance in the outcome model and induce finite sample bias---a problem where even large samples can produce the wrong effect---so we want to be aware of it.
 We'll also discuss several other types of weights that are less prone to this issue in Chapter \@ref(TODO).
 
 ```{r ate-density-net-data}
@@ -494,7 +494,7 @@ net_data_wts |>
 ```
 
 The weights are skewed, but there's not an outrageous values.
-If we saw extreme weights, we might try trimming or stabilizing them, which we'll discuss in Chapter \@ref(TODO).
+If we saw extreme weights, we might try trimming or stabilizing them, or consider calculating an effect for a different estimand, which we'll discuss in Chapter \@ref(TODO).
 It doesn't look like we need to do that here, however.
 
 ## Estimate the causal effect
@@ -703,7 +703,7 @@ When we have less information about unmeasured confounders, we can use tipping p
 In other words, what would the strength of the unmeasured confounder have to be to explain our results away?
 The tipr package is a toolkit for conducting sensitivity analyses.
 Let's examine the tipping point for an unknown, normally-distributed confounder.
-The `tip_coef()` function takes an estimate (a beta coefficient from a regression model).
+The `tip_coef()` function takes an estimate (a beta coefficient from a regression model, or the upper or lower bound of the coefficient).
 It further requires either the 1) scaled differences in means of the confounder between exposure groups or 2) effect of the confounder on the outcome.
 For the estimate, we'll use `conf.high`, which is closer to 0 (the null), and ask: how much would the confounder have to affect malaria risk to have an unbiased upper confidence interval of 0?
 We'll use tipr to calculate this answer for 5 scenarios, where the mean difference in the confounder between exposure groups is 1, 2, 3, 4, or 5.
