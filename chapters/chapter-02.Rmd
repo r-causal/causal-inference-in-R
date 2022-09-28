@@ -410,7 +410,7 @@ That's more in line with their observed value of `net`, but there's still some p
 ## Diagnose our models
 
 The goal of propensity score weighting is to weight the population of observations such that the distribution of confounders is balanced between the exposure groups.
-Here's the distribution of the propensity score by group, created by `geom_mirror_histogram()` from the halfmoon package for assessing balance in propensity score models:
+Here's the distribution of the propensity score by group, created by `geom_mirror_histogram()` from the halfmoon package for assessing balance in propensity score models (as well as visualizing the pseudo-population the weights simulate):
 
 ```{r mirror-histogram-net-data-unweighted}
 #| fig.cap = "A mirrored histogram of the propensity scores of those who used nets (top, blue) versus those who who did not use nets (bottom, light orange). The range of propensity scores is similar between groups, with those who used nets slightly to the left of those who didn't, but the shapes of the distribution are different."
