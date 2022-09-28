@@ -166,13 +166,25 @@ Additionally, days that had extra magic mornings were more likely to close at 6p
 The median temperature on days with extra magic hour mornings is a bit lower (79 degrees) compared to non-extra magic hour morning days.
 
 Now let's construct our propensity score weight to estimate the ATE.
+The {propensity} package has helper functions to allow you to estimate weights.
+The `wt_ate` function will calculate ATE weights.
 
 ```{r}
 library(propensity)
-seven_dwarfs_with_ps <- seven_dwarfs_with_ps |>
+seven_dwarfs_wts <- seven_dwarfs_with_ps |>
   mutate(w_ate = wt_ate(.fitted, extra_magic_morning))
 ```
 
+Let's look at a distribution of these weights
+
+```{r}
+ggplot(seven_dwarfs_wts, aes(x = w_ate)) +
+  geom_histogram(bins = 25)
+```
+
+Here we see that many weights are close to 1 (the smallest possible value for an ATE weight) with a long tail leading to the largest weight (around 24).
+This distribution highlights a potential problem with ATE weights.
+They range from 1 to infinity; in small samples, if your weights are too large this can lead to bias in your estimates (known as finite sample bias).
 The {gtsummary} package allows the creation of *weighted* tables.
 To do this, we need to load the {survey} package and create a survey design object.
 Recall that the {survey} package is currently the best way to incorporate weights in various R functions.
@@ -183,7 +195,7 @@ Even though we are not doing a survey analysis, the same techniques are useful f
 library(survey)
 seven_dwarfs_svy <- svydesign(
   ids = ~ 1,
-  data = seven_dwarfs_with_ps,
+  data = seven_dwarfs_wts,
   weights = ~w_ate
 )
 tbl_svysummary(seven_dwarfs_svy, 
@@ -195,13 +207,13 @@ tbl_svysummary(seven_dwarfs_svy,
 Notice in this weighted table, the variables are more **balanced** between the groups.
 For example, looking at the variable `wdw_ticket_season`, in the unweighted table we see that a higher percent of the days with extra magic hours in the mornings were during the peak season (30%) compared to the percent of days without extra magic hours in the morning (21%).
 In the weighted table this is balanced, with a weighted percent of 21% peak days in the extra magic morning group and 22% in the no extra magic morning group.
-The weights here are changing the distribution of the variables by up or down weighting each of the observations so that the two groups appear balanced.
+The weights here are changing the distribution of the variables by weighting each of the observations so that the two groups appear balanced.
 Also notice that the distribution of variables in the weighted table now matches the Overall column of the unweighted table.
 That is what ATE weights do -- they make the distribution of variables included in the propensity score for each exposure group look like the overall distribution across the whole sample.
 
 ```{r}
 library(halfmoon)
-ggplot(seven_dwarfs_with_ps, aes(.fitted, group = extra_magic_morning)) +
+ggplot(seven_dwarfs_wts, aes(.fitted, group = extra_magic_morning)) +
  geom_mirror_histogram(
    bins = 50
  ) + 
@@ -223,6 +235,13 @@ The causal estimand conditions on those in the exposed group.
 $$E[Y(1) - Y(0) | X = 1]$$
 
 Example research questions where the ATT is of interest could include "Should we stop our marketing campaign to those currently receiving it?" or "Should medical providers stop recommending treatment for those currently receiving it?"[@greifer2021choosing]
+
+Let's add the ATT weights to the `seven_dwarfs_wts` data frame.
+
+```{r}
+seven_dwarfs_wts <- seven_dwarfs_wts |>
+  mutate(w_att = wt_att(.fitted, extra_magic_morning))
+```
 
 ### Average treatment effect among the controls
 
