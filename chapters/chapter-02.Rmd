@@ -442,7 +442,7 @@ ggplot(net_data_wts, aes(.fitted)) +
   labs(x = "propensity score")
 ```
 
-In this example, the unweighted distributions are not awful, but the weighted distributions are much more similar.
+In this example, the unweighted distributions are not awful---the shapes are fairly similar here---but the weighted distributions are much more similar.
 
 ::: callout-caution
 ## Unmeasured confounding
