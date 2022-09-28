@@ -185,6 +185,7 @@ Here's the DAG that we're proposing for this question.
 #| fig.width = 7,
 #| fig.cap = "A proposed causal diagram of the effect of bed net use on malaria. This directed acyclic graph (DAG) states our assumption that bed net use causes a reduction in malaria risk. It also says that we assume: malaria risk is impacted by net usage, income, health, temperature, and insecticide resistance; net usage is impacted by income, health, temperature, eligibility for the free net program, and the number of people in a household; eligibility for the free net programs is impacted by income and the number of people in a household; and health is impacted by income."
 library(ggdag, warn.conflicts = FALSE)
+library(ggokabeito)
 mosquito_dag <- dagify(
   malaria_risk ~ net + income + health + temperature + resistance,
   net ~ income + health + temperature + eligible + household,
@@ -759,7 +760,6 @@ The true effect of net use on malaria is about -10, and the true DAG that genera
 ```{r net-data-true-dag}
 #| echo = FALSE,
 #| fig.cap = "The true causal diagram for `net_data`. This DAG is identical to the one we proposed with one addition: genetic resistance to malaria causally reduces the risk of malaria and impacts net use. It's thus a confounder and a part of the minimal adjustment set required to get an unbiased effect estimate. In otherwords, by not including it, we've calculated the wrong effect."
-library(ggokabeito)
 mosquito_dag_full <- dagify(
   malaria_risk ~ net + income + health + temperature + insecticide_resistance + genetic_resistance,
   net ~ income + health + temperature + eligible + household + genetic_resistance,
