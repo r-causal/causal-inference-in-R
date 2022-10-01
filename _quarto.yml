@@ -7,6 +7,7 @@ project:
       using R.
   repo-url: https://github.com/malcolmbarrett/causal-inference-in-r
   repo-actions: [edit, issue]
+  callout-appearance: simple
   
 execute:
   freeze: auto  
@@ -33,13 +34,16 @@ book:
     - chapters/chapter-08.qmd
     - chapters/references-99.qmd
 bibliography: citations.bib
+csl: aje.csl
 
 format:
   html:
-    theme: cosmo
+    code-link: true
+    theme:
+      - cosmo
+      - style.scss
   pdf:
     documentclass: krantz
-    biblio-style: apalike
     link-citations: true
     colorlinks: true
     lot: true

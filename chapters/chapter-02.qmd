@@ -284,6 +284,7 @@ If this DAG is correct, we have *eight* causal pathways: the path between net us
 #| label: net-data-confounding
 #| echo: false
 #| fig.width: 14
+#| fig.height: 8
 #| fig.cap: >
 #|   In the proposed DAG, there are eight open pathways that contribute to the
 #|   causal effect seen in the naive regression: the true effect (in green) of

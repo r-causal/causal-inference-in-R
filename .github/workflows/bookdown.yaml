@@ -21,6 +21,9 @@ jobs:
       - name: Setup R
         uses: r-lib/actions/setup-r@v1
         
+      - name: Set up Quarto
+        uses: quarto-dev/quarto-actions/setup@v2
+        
       - name: Install system dependencies 
         run: brew install pandoc harfbuzz freetype2 fribidi
 
@@ -49,13 +52,6 @@ jobs:
         run: |
           git config --local user.name "$GITHUB_ACTOR"
           git config --local user.email "$GITHUB_ACTOR@users.noreply.github.com"
-          
-      - name: Cache bookdown results
-        uses: actions/cache@v2
-        with:
-          path: _bookdown_files
-          key: bookdown-${{ hashFiles('**/*Rmd') }}
-          restore-keys: bookdown-
 
       - name: Install Package Dependencies
         run: |-
@@ -63,9 +59,9 @@ jobs:
           install.packages('remotes')
           remotes::install_deps(dependencies = TRUE)
         shell: Rscript {0}
-
-      - name: Build site
-        run: Rscript -e 'bookdown::render_book("index.Rmd", quiet = TRUE)'
+        
+      - name: Render Quarto Project
+        uses: quarto-dev/quarto-actions/render@v2
 
       - name: Deploy to Netlify
         if: contains(env.isExtPR, 'false')
