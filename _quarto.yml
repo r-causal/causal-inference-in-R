@@ -7,7 +7,8 @@ project:
       using R.
   repo-url: https://github.com/malcolmbarrett/causal-inference-in-r
   repo-actions: [edit, issue]
-  callout-appearance: simple
+
+callout-appearance: simple
   
 execute:
   freeze: auto  

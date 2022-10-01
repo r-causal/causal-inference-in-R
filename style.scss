@@ -4,3 +4,24 @@
 $font-family-base: "Karla" !default;
 $font-family-code: "Roboto Mono" !default;
 $headings-font-family: "Darker Grotesque" !default;
+
+/*-- scss:rules --*/
+p.caption {
+  color: #777;
+  margin-top: 10px;
+}
+p code {
+  white-space: inherit;
+}
+pre {
+  word-break: normal;
+  word-wrap: normal;
+}
+pre code {
+  white-space: inherit;
+}
+
+.inline-figure {
+    border: 0;
+    margin-bottom: 1rem;
+}
