@@ -15,6 +15,7 @@ Imports:
     bookdown,
     broom,
     ggdag,
+    ggtext,
     gtsummary,
     MatchIt,
     ragg,
