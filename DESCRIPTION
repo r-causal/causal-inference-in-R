@@ -17,6 +17,7 @@ Imports:
     causalworkshop (>= 0.1.0),
     ggdag,
     ggokabeito,
+    ggtext,
     gtsummary,
     halfmoon (>= 0.0.0.9000),
     MatchIt,

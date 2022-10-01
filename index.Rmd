@@ -23,11 +23,11 @@ graphics: yes
 knitr::opts_chunk$set(
   echo = TRUE, 
   dev = "ragg_png",
-  dpi = 320, 
+  dpi = 740, 
   out.width = "80%",
   fig.width = 6,
   fig.asp = 0.618,
-  fig.retina = 2,
+  fig.retina =3,
   fig.align = "center",
   fig.show = "hold"
 )
@@ -100,4 +100,7 @@ est_ci <- function(.df, rsample = FALSE) {
 ```
 
 ```{r child = 'chapters/chapter-04.Rmd'}
+```
+
+```{r child = 'chapters/chapter-08.Rmd'}
 ```
