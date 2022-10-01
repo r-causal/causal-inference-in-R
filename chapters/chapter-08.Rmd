@@ -221,7 +221,7 @@ For example, looking at the variable `wdw_ticket_season`, in the unweighted tabl
 In the weighted table this is balanced, with a weighted percent of 21% peak days in the extra magic morning group and 22% in the no extra magic morning group.
 The weights here are changing the distribution of the variables by weighting each of the observations so that the two groups appear balanced.
 Also notice that the distribution of variables in the weighted table now matches the Overall column of the unweighted table.
-That is what ATE weights do -- they make the distribution of variables included in the propensity score for each exposure group look like the overall distribution across the whole sample.
+That is what ATE weights do: they make the distribution of variables included in the propensity score for each exposure group look like the overall distribution across the whole sample.
 
 Let's look at another visualization that can help us understand the weighted psuedopopulation that is created by the ATE weights: a mirrored histogram.
 We will plot the distribution of the propensity score for the days in the "exposure" group (days with extra magic hours in the morning) on the top half of the plot, then we will mirror the distribution of the propensity score for the days in the "unexposed" group below it.
