@@ -76,7 +76,7 @@ rct |>
 
 Because $X$, the exposure, was randomly assigned, this estimator results in an unbiased estimate of our estimand of interest.
 
-Notice here that while the "true" causal effect is 1, this estimate is not exactly 1, it is `r round(estimate, 3)`.
+What do we mean by unbiased, though? Notice here that while the "true" causal effect is 1, this estimate is not exactly 1, it is `r round(estimate, 3)`.
 Why the difference?
 This randomized controlled trial was run on a sample of 100 participants, not the whole population.
 As that sample increases, our estimate will get closer to the truth.
