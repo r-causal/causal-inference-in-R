@@ -39,7 +39,8 @@ Below is pseudo-code.
 The first argument is the model, with the exposure on the left side and the confounders on the right.
 The data frame is passed to the `data` argument and the `family = binomial()` argument to denote the model should be fit using logistic regression (as opposed to a different generalized linear model).
 
-```{r, eval = FALSE}
+```{r}
+#| eval: false
 glm(
   exposure ~ confounder_1 + confounder_2,
   data = df,
@@ -55,7 +56,8 @@ The `data` argument contains the original data frame.
 This code will output a new data frame consisting of all components in `df` with six additional columns corresponding to the logistic regression model that was fit.
 The `.fitted` column is the propensity score.
 
-```{r, eval = FALSE}
+```{r}
+#| eval: false
 glm(
   exposure ~ confounder_1 + confounder_2,
   data = df,
@@ -75,7 +77,8 @@ Typically, each day Magic Kingdom may or may not be selected to have these "Extr
 We are interested in examining the relationship between whether there were "Extra Magic Hours" in the morning and the average wait time for the Seven Dwarfs Mine Train the same day between 5pm and 6pm.
 Below is a proposed DAG for this question.
 
-```{r dag-magic-hours-wait}
+```{r}
+#| label: dag-magic-hours-wait
 #| echo: false
 #| message: false
 #| warning: false
@@ -161,7 +164,8 @@ We can examine the distribution of propensity scores by exposure group.
 A nice way to visualize this is via "mirrored histograms".
 The code below creates two histograms of the propensity scores, one on the "top" for the exposed group (the dates with Extra Magic Hours in the morning) and one on the "bottom" for the unexposed group.
 
-```{r mirrored-ps}
+```{r}
+#| label: mirrored-ps
 #| fig.cap: >
 #|   Mirrored histograms of estimated propensity scores for
 #|   Extra Magic Hour days (exposed group) and days without
@@ -226,7 +230,8 @@ We also have a limited amount of data on the observed, actual times.
 The question that we will consider is this: Do posted wait times for the Seven Dwarves Mine Train at 8 am affect actual wait times at 9 am?
 Here's our DAG:
 
-```{r dag-avg-wait}
+```{r}
+#| label: dag-avg-wait
 #|  echo: false
 #|  message: false
 #|  warning: false
@@ -279,7 +284,8 @@ The model is similar to the binary exposure case, but we need to use linear regr
 Since we're not using probabilities, we'll instead calculate denominators for our weights from a normal density.
 We then calculate the denominator using the `dnorm()` function, which calculates the normal density for the `exposure`, using `.fitted` as the mean and `mean(.sigma)` as the SD.
 
-```{r, eval = FALSE}
+```{r}
+#| eval: false
 lm(
   exposure ~ confounder_1 + confounder_2,
   data = df
@@ -302,7 +308,8 @@ Extreme weights can be an issue for any time of weight (including those for bina
 Bounded weights like the ATO (which are bounded to 0 and 1) do not have this problem, however--one of their many benefits.
 :::
 
-```{r, eval = FALSE}
+```{r}
+#| eval: false
 # for continuous exposures
 lm(
   exposure ~ 1,

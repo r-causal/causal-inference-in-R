@@ -21,7 +21,8 @@ $$\sum_{i=1}^{N}\frac{Y_i\times X_i}{N_{\textrm{exposed}}} - \frac{Y_i\times (1-
 Where $X$ is just an indicator for exposure ($X = 1$ for the exposed and $X = 0$ for the unexposed.) Suppose we have some randomized controlled trial data for 100 participants in a dataset called `rct`.
 Here is some code to simulate such a data set.
 
-```{r, eval = FALSE}
+```{r}
+#| eval: false
 set.seed(928)
 rct <- tibble(
   # generate the exposure, x, from a binomial distribution
@@ -37,7 +38,8 @@ rct <- tibble(
 Here the exposure is `x` and the outcome is `y`.
 The true average treatment effect is 1.
 
-```{r, echo = FALSE}
+```{r}
+#| echo: false
 set.seed(928)
 rct <- tibble(
   x = rbinom(100, 1, 0.5),
@@ -219,7 +221,8 @@ The {survey} package has great support for calculating statistics and models usi
 Historically, the techniques needed to incorporate weights were used for survey analyses.
 Even though we are not doing a survey analysis, the same techniques are useful for our propensity score weights.
 
-```{r, message=FALSE}
+```{r}
+#| message: false
 library(survey)
 seven_dwarfs_svy <- svydesign(
   ids = ~1,

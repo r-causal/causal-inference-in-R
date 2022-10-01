@@ -19,7 +19,9 @@ graphics: yes
 # bookdown::render_book(output_format = "bookdown::pdf_book")
 ---
 
-```{r setup, include=FALSE}
+```{r}
+#| label: setup
+#| include: false
 knitr::opts_chunk$set(
   echo = TRUE, 
   dev = "ragg_png",
@@ -87,20 +89,26 @@ est_ci <- function(.df, rsample = FALSE) {
 }
 ```
 
-```{r child = 'frontmatter/preface.Rmd'}
+```{r}
+#| child: frontmatter/preface.Rmd
 ```
 
-```{r child = 'chapters/chapter-01.Rmd'}
+```{r}
+#| child: chapters/chapter-01.Rmd
 ```
 
-```{r child = 'chapters/chapter-02.Rmd'}
+```{r}
+#| child: chapters/chapter-02.Rmd
 ```
 
-```{r child = 'chapters/chapter-03.Rmd'}
+```{r}
+#| child: chapters/chapter-03.Rmd
 ```
 
-```{r child = 'chapters/chapter-04.Rmd'}
+```{r}
+#| child: chapters/chapter-04.Rmd
 ```
 
-```{r child = 'chapters/chapter-08.Rmd'}
+```{r}
+#| child: chapters/chapter-08.Rmd
 ```
