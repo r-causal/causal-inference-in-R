@@ -169,7 +169,7 @@ seven_dwarfs_with_ps <- seven_dwarfs_with_ps |>
 tbl_summary(seven_dwarfs_with_ps, 
             by = extra_magic_morning, 
             include = c(wdw_ticket_season, close, weather_wdwhigh)) |>
-  add_overall() # add an overall column to the table
+  add_overall(last = TRUE) # add an overall column to the table
 ```
 
 From this table, there were 291 days that did not have extra magic hours in the morning and 56 that did.
