@@ -500,6 +500,6 @@ ggplot(seven_dwarfs_wts, aes(.fitted, group = extra_magic_morning)) +
 ```
 
 This looks similar to the ATM pseudopopulation, with slight attenuation, as evidenced by the increased down weighting in the exposed population.
-In general, the authors prefer using the ATO weights when the overlap (or evenly matchable) population is the target, as they have improved variance properties.
+We generally prefer using the ATO weights when the overlap (or evenly matchable) population is the target, as they have improved variance properties.
 They additionally have the benefit that any variables included in the propensity score model (if fit via logistic regression) will be perfectly balanced on the mean.
 We will discuss this further in future chapters.
