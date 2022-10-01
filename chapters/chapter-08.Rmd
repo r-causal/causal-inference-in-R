@@ -217,7 +217,7 @@ tbl_svysummary(seven_dwarfs_svy,
 ```
 
 Notice in this weighted table, the variables are more **balanced** between the groups.
-For example, looking at the variable `wdw_ticket_season`, in the unweighted table we see that a higher percent of the days with extra magic hours in the mornings were during the peak season (30%) compared to the percent of days without extra magic hours in the morning (21%).
+For example, looking at the variable `wdw_ticket_season`, in the unweighted table we see that a higher percent of the days with extra magic hours in the mornings were during the peak season (30%) compared to the percent of days without extra magic hours in the morning (21%). TODO: Switch to cross reference for tables
 In the weighted table this is balanced, with a weighted percent of 21% peak days in the extra magic morning group and 22% in the no extra magic morning group.
 The weights here are changing the distribution of the variables by weighting each of the observations so that the two groups appear balanced.
 Also notice that the distribution of variables in the weighted table now matches the Overall column of the unweighted table.
