@@ -208,7 +208,7 @@ library(survey)
 seven_dwarfs_svy <- svydesign(
   ids = ~ 1,
   data = seven_dwarfs_wts,
-  weights = ~w_ate
+  weights = ~ w_ate
 )
 tbl_svysummary(seven_dwarfs_svy, 
             by = extra_magic_morning, 
