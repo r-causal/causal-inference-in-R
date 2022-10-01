@@ -1,0 +1,14 @@
+{
+  "hash": "a9d0c48aa0610887e3bc451ec1f2a12b",
+  "result": {
+    "markdown": "# Preparing data to answer causal questions\n\n\n\n\n\nText for chapter 3.\n\n\n::: {.cell}\n\n```{.r .cell-code}\nx <- 1:5\nx\n```\n\n::: {.cell-output .cell-output-stdout}\n```\n[1] 1 2 3 4 5\n```\n:::\n:::\n",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}

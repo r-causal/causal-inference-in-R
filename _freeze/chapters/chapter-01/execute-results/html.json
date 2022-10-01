@@ -1,0 +1,14 @@
+{
+  "hash": "84ec083927e70092a9f192be5c1b9728",
+  "result": {
+    "markdown": "\\mainmatter\n\n# What is a causal question?\n\n\n\n\n\nText for chapter 1.\n\n\n::: {.cell}\n\n```{.r .cell-code}\nrnorm(5)\n```\n\n::: {.cell-output .cell-output-stdout}\n```\n[1] -0.8746 -0.2795  0.3158 -0.8489  0.9255\n```\n:::\n:::\n",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}

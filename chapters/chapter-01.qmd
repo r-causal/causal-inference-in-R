@@ -2,6 +2,8 @@
 
 # What is a causal question?
 
+{{< include 00-setup.qmd >}}
+
 Text for chapter 1.
 
 ```{r}

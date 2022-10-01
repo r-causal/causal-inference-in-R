@@ -1,5 +1,7 @@
 # Building propensity score models
 
+{{< include 00-setup.qmd >}}
+
 Often we are interested in how some *exposure* (or treatment) impacts an outcome.
 For example, we could assess how an ad campaign (exposure) impacts sales (outcome), whether a certain medication (exposure) improves patient survival (outcome), or whether opening a theme park early to some visitors (exposure) reduces wait times later in the day (outcome).
 As defined in the previous chapter, <!--TODO make sure that this is defined in the previous chapter --> an exposure in the context of this book is often a modifiable event or condition that occurs prior to the outcome.
@@ -62,7 +64,7 @@ glm(
   exposure ~ confounder_1 + confounder_2,
   data = df,
   family = binomial()
-) %>%
+) |>
   augment(type.predict = "response", data = df)
 ```
 
@@ -84,7 +86,7 @@ Below is a proposed DAG for this question.
 #| warning: false
 #| fig.cap: >
 #|   Proposed DAG for the relationship between Extra Magic Hours
-#|   in the morning at a particular park and the average wait 
+#|   in the morning at a particular park and the average wait
 #|   time between 5pm and 6pm.
 
 library(tidyverse)
@@ -108,15 +110,17 @@ dagify(
   x ~ weather + close + Season,
   coords = coord_dag,
   labels = labels
-) %>%
+) |>
   ggdag(use_labels = "label", text = FALSE) +
   theme_void() +
   scale_x_continuous(
-    limits = c(-1.25, 2.25), 
-    breaks = c(-1, 0, 1, 2), 
+    limits = c(-1.25, 2.25),
+    breaks = c(-1, 0, 1, 2),
     labels = c(
-      "\n(one year ago)", "\n(6 months ago)",
-      "\n(3 months ago)", "5pm - 6pm\n(Today)"
+      "\n(one year ago)",
+      "\n(6 months ago)",
+      "\n(3 months ago)",
+      "5pm - 6pm\n(Today)"
     )
   ) +
   theme(axis.text.x = element_text())
@@ -133,14 +137,14 @@ We'll add the propensity scores to the data frame (in a column called `.fitted` 
 library(broom)
 library(touringplans)
 
-seven_dwarfs_17 <- seven_dwarfs_train_2018 %>%
+seven_dwarfs_17 <- seven_dwarfs_train_2018 |>
   filter(hour == 17)
 
 seven_dwarfs_17_with_ps <- glm(
   extra_magic_morning ~ wdw_ticket_season + close + weather_wdwhigh,
   data = seven_dwarfs_17,
   family = binomial()
-) %>%
+) |>
   augment(type.predict = "response", data = seven_dwarfs_17)
 ```
 
@@ -151,12 +155,16 @@ For example, on January 1, 2018 there was a 30.4% chance that there would be Ext
 On this particular day, there were *not* Extra Magic Hours in the morning (as indicated by the 0 in the first row of the `extra_magic_morning` column).
 
 ```{r}
-seven_dwarfs_17_with_ps %>%
+seven_dwarfs_17_with_ps |>
   select(
-    date, extra_magic_morning, wdw_ticket_season, 
-    close, weather_wdwhigh, .fitted
-  ) %>%
-  head() %>%
+    date,
+    extra_magic_morning,
+    wdw_ticket_season,
+    close,
+    weather_wdwhigh,
+    .fitted
+  ) |>
+  head() |>
   knitr::kable()
 ```
 
@@ -172,13 +180,13 @@ The code below creates two histograms of the propensity scores, one on the "top"
 #|   Extra Magic hours (unexposed group)
 ggplot() +
   geom_histogram(
-    data = seven_dwarfs_17_with_ps %>% filter(extra_magic_morning == 1),
+    data = seven_dwarfs_17_with_ps |> filter(extra_magic_morning == 1),
     aes(x = .fitted),
     fill = "orange",
     bins = 40
   ) +
   geom_histogram(
-    data = seven_dwarfs_17_with_ps %>% filter(extra_magic_morning == 0),
+    data = seven_dwarfs_17_with_ps |> filter(extra_magic_morning == 0),
     aes(
       x = .fitted,
       y = -after_stat(count)
@@ -187,14 +195,14 @@ ggplot() +
     bins = 40
   ) +
   scale_y_continuous("Count", labels = abs) +
-  scale_x_continuous("Propensity Score") + 
+  scale_x_continuous("Propensity Score") +
   # The remaining lines are for plot theme formatting/aesthetics.
   labs(
     title = "Mirrored propensity score histograms for the
-    <b style='color:orange'>exposed</b> and 
+    <b style='color:orange'>exposed</b> and
     <b style='color:#6495ED'>unexposed</b>"
-  ) + 
-  theme_light() + 
+  ) +
+  theme_light() +
   theme(
     plot.title = ggtext::element_markdown(),
     plot.title.position = "plot"
@@ -232,12 +240,12 @@ Here's our DAG:
 
 ```{r}
 #| label: dag-avg-wait
-#|  echo: false
-#|  message: false
-#|  warning: false
-#|  fig.cap: >
-#|    Proposed DAG for the relationship between posted wait 
-#|    in the morning at a particular park and the average 
+#| echo: false
+#| message: false
+#| warning: false
+#| fig.cap: >
+#|    Proposed DAG for the relationship between posted wait
+#|    in the morning at a particular park and the average
 #|    wait time between 5pm and 6pm.
 
 library(tidyverse)
@@ -262,15 +270,18 @@ dagify(
   x ~ weather + close + Season + extra,
   coords = coord_dag,
   labels = labels
-) %>%
+) |>
   ggdag(use_labels = "label", text = FALSE) +
   theme_void() +
   scale_x_continuous(
-    limits = c(-2.25, 2.25), 
-    breaks = c(-2, -1, 0, 1, 2), 
+    limits = c(-2.25, 2.25),
+    breaks = c(-2, -1, 0, 1, 2),
     labels = c(
-      "\n(one year ago)", "\n(6 months ago)", "\n(3 months ago)",
-      "8am-9am\n(Today)", "9am-10am\n(Today)"
+      "\n(one year ago)",
+      "\n(6 months ago)",
+      "\n(3 months ago)",
+      "8am-9am\n(Today)",
+      "9am-10am\n(Today)"
     )
   ) +
   theme(axis.text.x = element_text())
@@ -289,8 +300,8 @@ We then calculate the denominator using the `dnorm()` function, which calculates
 lm(
   exposure ~ confounder_1 + confounder_2,
   data = df
-) %>%
-  augment(data = df) %>% 
+) |>
+  augment(data = df) |>
   mutate(
     denominator = dnorm(exposure, .fitted, mean(.sigma, na.rm = TRUE))
   )
@@ -314,8 +325,8 @@ Bounded weights like the ATO (which are bounded to 0 and 1) do not have this pro
 lm(
   exposure ~ 1,
   data = df
-) %>%
-  augment(data = df) %>% 
+) |>
+  augment(data = df) |>
   transmute(
     numerator = dnorm(exposure, .fitted, mean(.sigma, na.rm = TRUE))
   )
@@ -325,8 +336,8 @@ glm(
   exposure ~ 1,
   data = df,
   family = binomial()
-) %>%
-  augment(type.predict = "response", data = df) %>% 
+) |>
+  augment(type.predict = "response", data = df) |>
   select(numerator = .fitted)
 ```
 
@@ -337,16 +348,16 @@ We'll join the baseline data (all covariates and posted wait time at 8) with the
 We also have a lot of missingness for `avg_sactmin`, so we'll drop unobserved values for now.
 
 ```{r}
-eight <- seven_dwarfs_train_2018 %>% 
-  filter(hour == 8) %>% 
+eight <- seven_dwarfs_train_2018 |>
+  filter(hour == 8) |>
   select(-avg_sactmin)
 
-nine <- seven_dwarfs_train_2018 %>% 
-  filter(hour == 9) %>% 
+nine <- seven_dwarfs_train_2018 |>
+  filter(hour == 9) |>
   select(date, avg_sactmin)
 
-wait_times <- eight %>% 
-  left_join(nine, by = "date") %>% 
+wait_times <- eight |>
+  left_join(nine, by = "date") |>
   drop_na(avg_sactmin)
 ```
 
@@ -355,30 +366,32 @@ We'll fit a model using `lm()` for `avg_spostmin` with our covariates, then use 
 
 ```{r}
 denominator_model <- lm(
-  avg_spostmin ~ 
-    close + extra_magic_morning + weather_wdwhigh + wdw_ticket_season, 
+  avg_spostmin ~
+    close + extra_magic_morning + weather_wdwhigh + wdw_ticket_season,
   data = wait_times
 )
 
-denominators <- denominator_model %>% 
-  augment(data = wait_times) %>% 
+denominators <- denominator_model |>
+  augment(data = wait_times) |>
   mutate(
     denominator = dnorm(
-      avg_spostmin, .fitted, mean(.sigma, na.rm = TRUE)
+      avg_spostmin,
+      .fitted,
+      mean(.sigma, na.rm = TRUE)
     )
-  ) %>% 
+  ) |>
   select(date, denominator)
 ```
 
 When we just use the inverted values of `denominator`, we end up with several extreme weights:
 
 ```{r}
-denominators %>% 
-  mutate(wts = 1 / denominator) %>% 
+denominators |>
+  mutate(wts = 1 / denominator) |>
   ggplot(aes(wts)) +
-  geom_density(col = "#E69F00", fill = "#E69F0095") + 
-  scale_x_log10() + 
-  theme_minimal(base_size = 20) + 
+  geom_density(col = "#E69F00", fill = "#E69F0095") +
+  scale_x_log10() +
+  theme_minimal(base_size = 20) +
   xlab("Weights")
 ```
 
@@ -386,26 +399,28 @@ Let's now fit the marginal density to use for stabilized weights:
 
 ```{r}
 numerator_model <- lm(
-  avg_spostmin ~ 1, 
+  avg_spostmin ~ 1,
   data = wait_times
 )
 
-numerators <- numerator_model %>% 
-  augment(data = wait_times) %>% 
+numerators <- numerator_model |>
+  augment(data = wait_times) |>
   mutate(
     numerator = dnorm(
-      avg_spostmin, .fitted, mean(.sigma, na.rm = TRUE)
+      avg_spostmin,
+      .fitted,
+      mean(.sigma, na.rm = TRUE)
     )
-  ) %>% 
+  ) |>
   select(date, numerator)
 ```
 
 We also need to join the fitted values back to our original data set by date, then calculate the stabilized weights (`swts`) using `numerator / denominator`.
 
 ```{r}
-wait_times_wts <- wait_times %>% 
-  left_join(numerators, by = "date") %>% 
-  left_join(denominators, by = "date") %>% 
+wait_times_wts <- wait_times |>
+  left_join(numerators, by = "date") |>
+  left_join(denominators, by = "date") |>
   mutate(swts = numerator / denominator)
 ```
 
@@ -415,9 +430,9 @@ If the mean is far from 1, we may have issues with model mispecification or viol
 
 ```{r}
 ggplot(wait_times_wts, aes(swts)) +
-  geom_density(col = "#E69F00", fill = "#E69F0095") + 
-  scale_x_log10() + 
-  theme_minimal(base_size = 20) + 
+  geom_density(col = "#E69F00", fill = "#E69F0095") +
+  scale_x_log10() +
+  theme_minimal(base_size = 20) +
   xlab("Stabilized Weights")
 ```
 
@@ -426,20 +441,20 @@ Is this a problem, or is this a valid data point?
 
 ```{r}
 ggplot(wait_times_wts, aes(avg_spostmin, swts)) +
-  geom_point() + 
+  geom_point() +
   geom_point(
-    data = function(x) filter(x, swts > 10), 
+    data = function(x) filter(x, swts > 10),
     color = "firebrick"
   ) +
   geom_text(
-    data = function(x) filter(x, swts > 10), 
+    data = function(x) filter(x, swts > 10),
     aes(label = date),
     hjust = 0,
-    nudge_x = -14, 
+    nudge_x = -14,
     color = "firebrick"
   ) +
-  theme_minimal(base_size = 20) + 
-  scale_y_log10() + 
+  theme_minimal(base_size = 20) +
+  scale_y_log10() +
   labs(x = "Average Posted Wait", y = "Stabilized Weights")
 ```
 

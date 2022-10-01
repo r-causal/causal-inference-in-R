@@ -1,27 +1,52 @@
 project:
   type: book
-
+  pre-render: R/setup.R
+  description: > 
+      This book covers causal inference techniques to help statisticians, 
+      epidemiologists, economists, and data scientists implement best practices 
+      using R.
+  repo-url: https://github.com/malcolmbarrett/causal-inference-in-r
+  repo-actions: [edit, issue]
+  
+execute:
+  freeze: auto  
+  echo: true 
+  dev: "ragg_png"
+  dpi: 740 
+  out.width: "80%"
+  fig.width: 6
+  fig.asp: 0.618
+  fig.retina: 3
+  fig.align: "center"
+  fig.show: "hold"
+  
 book:
-  title: "qbook"
-  author: "Jane Doe"
-  date: "9/17/2022"
+  title: "Causal Inference in R"
+  author: "Malcolm Barrett, Lucy D'Agostino McGowan, Travis Gerke"
+  date: "today"
   chapters:
     - index.qmd
-    - frontmatter/preface.qmd
     - chapters/chapter-01.qmd
     - chapters/chapter-02.qmd
     - chapters/chapter-03.qmd
     - chapters/chapter-04.qmd
     - chapters/chapter-08.qmd
     - chapters/references-99.qmd
-
-bibliography: references.bib
+bibliography: citations.bib
 
 format:
   html:
     theme: cosmo
   pdf:
-    documentclass: scrreprt
-
+    documentclass: krantz
+    biblio-style: apalike
+    link-citations: true
+    colorlinks: true
+    lot: true
+    lof: true
+    includes:
+      in_header: latex/preamble.tex
+      before_body: latex/before_body.tex
+      after_body: latex/after_body.tex
 editor: visual
 

@@ -1,8 +1,3 @@
-# Preface {.unnumbered}
-
-```{r}
-#| label: setup
-#| include: false
 options(
   tidyverse.quiet = TRUE, 
   tipr.verbose = FALSE,
@@ -30,24 +25,24 @@ theme_dag <- function() {
 
 geom_dag_label_repel <- function(...) {
   ggdag::geom_dag_label_repel(
-      aes(x, y, label = label),
-      box.padding = 3.5, 
-      inherit.aes = FALSE,
-      max.overlaps = Inf, 
-      family = "Open Sans",
-      seed = 10,
-      label.size = NA, 
-      label.padding = 0.1,
-      size = 4,
-      ...
-    ) 
+    aes(x, y, label = label),
+    box.padding = 3.5, 
+    inherit.aes = FALSE,
+    max.overlaps = Inf, 
+    family = "Open Sans",
+    seed = 10,
+    label.size = NA, 
+    label.padding = 0.1,
+    size = 4,
+    ...
+  ) 
 }
 
 est_ci <- function(.df, rsample = FALSE) {
   if (!is.data.frame(.df) && is.numeric(.df)) {
     return(
       glue::glue("{round(.df[[1]], digits = 1)} (95% CI {round(.df[[2]], digits = 1)}, {round(.df[[3]], digits = 1)})")
-      )
+    )
   }
   
   if (rsample) {
@@ -56,4 +51,3 @@ est_ci <- function(.df, rsample = FALSE) {
     glue::glue("{.df$estimate} (95% CI {.df$conf.low}, {.df$conf.high})")
   }
 }
-```

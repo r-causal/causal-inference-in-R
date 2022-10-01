@@ -1,6 +1,8 @@
 # Preparing data to answer causal questions
 
-Text for chapter 3. 
+{{< include 00-setup.qmd >}}
+
+Text for chapter 3.
 
 ```{r}
 x <- 1:5

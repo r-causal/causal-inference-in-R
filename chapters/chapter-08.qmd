@@ -1,5 +1,7 @@
 # Causal estimands
 
+{{< include 00-setup.qmd >}}
+
 ## Estimands, Estimators, Estimates
 
 When we're conducting an analysis in order to make causal inferences, we need to keep the causal question close to our chest.
@@ -23,6 +25,7 @@ Here is some code to simulate such a data set.
 
 ```{r}
 #| eval: false
+library(tidyverse)
 set.seed(928)
 rct <- tibble(
   # generate the exposure, x, from a binomial distribution
