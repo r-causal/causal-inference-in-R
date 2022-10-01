@@ -24,9 +24,9 @@ Here is some code to simulate such a data set.
 ```{r, eval = FALSE}
 set.seed(928)
 rct <- tibble(
-  # generate the exposure, x, from a binomial distribution 
-  # with the probability exposure (the probability x = 1) of 0.5 
-  x = rbinom(100, 1, 0.5), 
+  # generate the exposure, x, from a binomial distribution
+  # with the probability exposure (the probability x = 1) of 0.5
+  x = rbinom(100, 1, 0.5),
   # generate the "true" average treatment effect of 1
   # we use rnorm(100) to add the random error term that is normally
   # distributed with a mean of 0 and a standard deviation of 1
@@ -48,9 +48,10 @@ rct |>
     n_exposed = sum(x),
     n_unexposed = sum(1 - x),
     estimate = sum(
-    (y * x) / n_exposed - 
-      y * (1 - x) / n_unexposed
-  )) |> 
+      (y * x) / n_exposed -
+        y * (1 - x) / n_unexposed
+    )
+  ) |>
   pull(estimate) -> estimate
 ```
 
@@ -67,9 +68,10 @@ rct |>
     n_exposed = sum(x),
     n_unexposed = sum(1 - x),
     estimate = sum(
-    (y * x) / n_exposed - 
-      y * (1 - x) / n_unexposed
-  ))
+      (y * x) / n_exposed -
+        y * (1 - x) / n_unexposed
+    )
+  )
 ```
 
 Alternatively, we can `group_by()` `x` and `summarize()` the means of `y` for each group, then pivot the results to take their difference.
@@ -78,9 +80,11 @@ Alternatively, we can `group_by()` `x` and `summarize()` the means of `y` for ea
 rct |>
   group_by(x) |>
   summarise(avg_y = mean(y)) |>
-  pivot_wider(names_from = x, 
-              values_from = avg_y, 
-              names_prefix = "x_") |>
+  pivot_wider(
+    names_from = x,
+    values_from = avg_y,
+    names_prefix = "x_"
+  ) |>
   summarise(estimate = x_1 - x_0)
 ```
 
@@ -97,7 +101,7 @@ Let's simulate the data again, but increase the sample size from 100 to 100,000
 ```{r}
 set.seed(928)
 rct <- tibble(
-  x = rbinom(100000, 1, 0.5), 
+  x = rbinom(100000, 1, 0.5),
   y = x + rnorm(100000)
 )
 
@@ -106,9 +110,10 @@ rct |>
     n_exposed = sum(x),
     n_unexposed = sum(1 - x),
     estimate = sum(
-    (y * x) / n_exposed - 
-      y * (1 - x) / n_unexposed
-  ))
+      (y * x) / n_exposed -
+        y * (1 - x) / n_unexposed
+    )
+  )
 ```
 
 Notice now the estimate is 1.01, much closer to the true average treatment effect, 1.
@@ -147,9 +152,9 @@ library(broom)
 library(touringplans)
 
 seven_dwarfs <- seven_dwarfs_train_2018 |>
-  filter(hour == 17) |> 
+  filter(hour == 17) |>
   mutate(extra_magic_morning = factor(
-    extra_magic_morning, 
+    extra_magic_morning,
     labels = c("No Magic Hours", "Extra Magic Hours")
   ))
 
@@ -168,16 +173,17 @@ To do so, we are going to use the `tbl_summary()` function from the {gtsummary} 
 ```{r}
 library(gtsummary)
 library(labelled)
-seven_dwarfs_with_ps <- seven_dwarfs_with_ps |> 
+seven_dwarfs_with_ps <- seven_dwarfs_with_ps |>
   set_variable_labels(
     wdw_ticket_season = "Ticket Season",
     close = "Close Time",
     weather_wdwhigh = "Historic High Temperature"
   )
 
-tbl_summary(seven_dwarfs_with_ps, 
-            by = extra_magic_morning, 
-            include = c(wdw_ticket_season, close, weather_wdwhigh)) |>
+tbl_summary(seven_dwarfs_with_ps,
+  by = extra_magic_morning,
+  include = c(wdw_ticket_season, close, weather_wdwhigh)
+) |>
   add_overall(last = TRUE) # add an overall column to the table
 ```
 
@@ -216,14 +222,15 @@ Even though we are not doing a survey analysis, the same techniques are useful f
 ```{r, message=FALSE}
 library(survey)
 seven_dwarfs_svy <- svydesign(
-  ids = ~ 1,
+  ids = ~1,
   data = seven_dwarfs_wts,
-  weights = ~ w_ate
+  weights = ~w_ate
 )
-tbl_svysummary(seven_dwarfs_svy, 
-            by = extra_magic_morning, 
-            include = c(wdw_ticket_season, close, weather_wdwhigh)) |>
-  add_overall() # add an overall column to the table
+tbl_svysummary(seven_dwarfs_svy,
+  by = extra_magic_morning,
+  include = c(wdw_ticket_season, close, weather_wdwhigh)
+) |>
+  add_overall(last = TRUE) # add an overall column to the table
 ```
 
 Notice in this weighted table, the variables are more **balanced** between the groups.
@@ -242,17 +249,19 @@ The {halfmoon} package includes a function `geom_mirror_histogram` to assist wit
 ```{r}
 library(halfmoon)
 ggplot(seven_dwarfs_wts, aes(.fitted, group = extra_magic_morning)) +
- geom_mirror_histogram(
-   bins = 50
- ) + 
+  geom_mirror_histogram(
+    bins = 50
+  ) +
   geom_mirror_histogram(
     aes(fill = factor(extra_magic_morning), weight = w_ate),
     bins = 50,
     alpha = 0.5
-  ) + 
+  ) +
   scale_y_continuous(labels = abs) +
-  labs(x = "propensity score",
-       fill = "Extra Magic Morning")
+  labs(
+    x = "propensity score",
+    fill = "Extra Magic Morning"
+  )
 ```
 
 We can learn a few things from this figure.
@@ -291,14 +300,15 @@ Let's take a look at the weighted table to see this a bit more clearly.
 
 ```{r}
 seven_dwarfs_svy <- svydesign(
-  ids = ~ 1,
+  ids = ~1,
   data = seven_dwarfs_wts,
   weights = ~w_att
 )
-tbl_svysummary(seven_dwarfs_svy, 
-            by = extra_magic_morning, 
-            include = c(wdw_ticket_season, close, weather_wdwhigh)) |>
-  add_overall() # add an overall column to the table
+tbl_svysummary(seven_dwarfs_svy,
+  by = extra_magic_morning,
+  include = c(wdw_ticket_season, close, weather_wdwhigh)
+) |>
+  add_overall(last = TRUE) # add an overall column to the table
 ```
 
 We again acheive balance between groups, but the target values differ.
@@ -310,17 +320,19 @@ We can again create a mirrored histogram to observe the weighted psuedopopulatio
 
 ```{r}
 ggplot(seven_dwarfs_wts, aes(.fitted, group = extra_magic_morning)) +
- geom_mirror_histogram(
-   bins = 50
- ) + 
+  geom_mirror_histogram(
+    bins = 50
+  ) +
   geom_mirror_histogram(
     aes(fill = factor(extra_magic_morning), weight = w_att),
     bins = 50,
     alpha = 0.5
-  ) + 
+  ) +
   scale_y_continuous(labels = abs) +
-  labs(x = "propensity score",
-       fill = "Extra Magic Morning")
+  labs(
+    x = "propensity score",
+    fill = "Extra Magic Morning"
+  )
 ```
 
 Since every day in the exposed group has a weight of 1, the distribution of the propensity scores (the dark bars above 0 on the graph) exactly overlap with the weighted distribution overlaid in blue.
@@ -356,14 +368,15 @@ Now let's take a look at the weighted table.
 
 ```{r}
 seven_dwarfs_svy <- svydesign(
-  ids = ~ 1,
+  ids = ~1,
   data = seven_dwarfs_wts,
   weights = ~w_atu
 )
-tbl_svysummary(seven_dwarfs_svy, 
-            by = extra_magic_morning, 
-            include = c(wdw_ticket_season, close, weather_wdwhigh)) |>
-  add_overall() # add an overall column to the table
+tbl_svysummary(seven_dwarfs_svy,
+  by = extra_magic_morning,
+  include = c(wdw_ticket_season, close, weather_wdwhigh)
+) |>
+  add_overall(last = TRUE) # add an overall column to the table
 ```
 
 Now the exposed column of this table is weighted to match the unexposed column of the unweighted table.
@@ -372,17 +385,19 @@ We can again create a mirrored histogram to observe the weighted psuedopopulatio
 
 ```{r}
 ggplot(seven_dwarfs_wts, aes(.fitted, group = extra_magic_morning)) +
- geom_mirror_histogram(
-   bins = 50
- ) + 
+  geom_mirror_histogram(
+    bins = 50
+  ) +
   geom_mirror_histogram(
     aes(fill = factor(extra_magic_morning), weight = w_atu),
     bins = 50,
     alpha = 0.5
-  ) + 
+  ) +
   scale_y_continuous(labels = abs) +
-  labs(x = "propensity score",
-       fill = "Extra Magic Morning")
+  labs(
+    x = "propensity score",
+    fill = "Extra Magic Morning"
+  )
 ```
 
 The weights for the unexposed days are all 1, so the distribution of the propensity scores for this group exactly overlays the weighted pseudopopulation in red.
@@ -419,14 +434,15 @@ Now let's take a look at the weighted table.
 
 ```{r}
 seven_dwarfs_svy <- svydesign(
-  ids = ~ 1,
+  ids = ~1,
   data = seven_dwarfs_wts,
   weights = ~w_atm
 )
-tbl_svysummary(seven_dwarfs_svy, 
-            by = extra_magic_morning, 
-            include = c(wdw_ticket_season, close, weather_wdwhigh)) |>
-  add_overall() # add an overall column to the table
+tbl_svysummary(seven_dwarfs_svy,
+  by = extra_magic_morning,
+  include = c(wdw_ticket_season, close, weather_wdwhigh)
+) |>
+  add_overall(last = TRUE) # add an overall column to the table
 ```
 
 In this particular sample, the ATM weights resemble the ATT weights, so this table looks similar to the ATT weighted table.
@@ -437,17 +453,19 @@ We can again create a mirrored histogram to observe the ATM weighted psuedopopul
 
 ```{r}
 ggplot(seven_dwarfs_wts, aes(.fitted, group = extra_magic_morning)) +
- geom_mirror_histogram(
-   bins = 50
- ) + 
+  geom_mirror_histogram(
+    bins = 50
+  ) +
   geom_mirror_histogram(
     aes(fill = factor(extra_magic_morning), weight = w_atm),
     bins = 50,
     alpha = 0.5
-  ) + 
+  ) +
   scale_y_continuous(labels = abs) +
-  labs(x = "propensity score",
-       fill = "Extra Magic Morning")
+  labs(
+    x = "propensity score",
+    fill = "Extra Magic Morning"
+  )
 ```
 
 Again, the ATM weights are bounded by 0 and 1, meaning that all observations will be *down weighted*.
@@ -480,14 +498,15 @@ Now let's take a look at the weighted table.
 
 ```{r}
 seven_dwarfs_svy <- svydesign(
-  ids = ~ 1,
+  ids = ~1,
   data = seven_dwarfs_wts,
   weights = ~w_ato
 )
-tbl_svysummary(seven_dwarfs_svy, 
-            by = extra_magic_morning, 
-            include = c(wdw_ticket_season, close, weather_wdwhigh)) |>
-  add_overall() # add an overall column to the table
+tbl_svysummary(seven_dwarfs_svy,
+  by = extra_magic_morning,
+  include = c(wdw_ticket_season, close, weather_wdwhigh)
+) |>
+  add_overall(last = TRUE) # add an overall column to the table
 ```
 
 Like the ATM weights, the ATO pseudopopulation may not resemble the overall, exposed, or unexposed unweighted populations, so it is important to examine these weighted tables to gain a deeper understanding about the population on whom we will be drawing inference.
@@ -496,17 +515,19 @@ We can again create a mirrored histogram to observe the ATO weighted psuedopopul
 
 ```{r}
 ggplot(seven_dwarfs_wts, aes(.fitted, group = extra_magic_morning)) +
- geom_mirror_histogram(
-   bins = 50
- ) + 
+  geom_mirror_histogram(
+    bins = 50
+  ) +
   geom_mirror_histogram(
     aes(fill = factor(extra_magic_morning), weight = w_ato),
     bins = 50,
     alpha = 0.5
-  ) + 
+  ) +
   scale_y_continuous(labels = abs) +
-  labs(x = "propensity score",
-       fill = "Extra Magic Morning")
+  labs(
+    x = "propensity score",
+    fill = "Extra Magic Morning"
+  )
 ```
 
 This looks similar to the ATM pseudopopulation, with slight attenuation, as evidenced by the increased down weighting in the exposed population.
