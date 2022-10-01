@@ -2,6 +2,9 @@
 
 ## Estimands, Estimators, Estimates
 
+When we're conducting an analysis in order to make causal inferences, we need to keep the causal question close to our chest.
+The causal question helps guide not just the assumptions we need to make but also how we will go about answering the question.
+This chapter deals with three ideas that are closely related to how we answer causal questions: the estimand, the estimator, and the estimate.
 The **estimand** is the *target of interest*, the **estimator** is the method by which we approximate this estimand using data, and the **estimate** is the value we get when we plug our data into the estimator.
 You can think of the **estimand** as glossy picture of a beautiful cake that we are trying to bake, the **estimator** as the recipe, and the **estimate** as the cake that we actually pull out of our oven.
 
@@ -76,7 +79,8 @@ rct |>
 
 Because $X$, the exposure, was randomly assigned, this estimator results in an unbiased estimate of our estimand of interest.
 
-What do we mean by unbiased, though? Notice here that while the "true" causal effect is 1, this estimate is not exactly 1, it is `r round(estimate, 3)`.
+What do we mean by unbiased, though?
+Notice here that while the "true" causal effect is 1, this estimate is not exactly 1, it is `r round(estimate, 3)`.
 Why the difference?
 This randomized controlled trial was run on a sample of 100 participants, not the whole population.
 As that sample increases, our estimate will get closer to the truth.
@@ -108,9 +112,7 @@ For example, we could use the following *estimator* to *estimate* our average tr
 $$\frac{\sum_{i=1}^NY_i\times X_i\times w_i}{\sum_{i=1}^NX_i\times w_i}-\frac{\sum_{i=1}^NY_i\times(1-X_i)\times w_i}{\sum_{i=1}^N(1-X_i)\times w_i}$$
 
 Depending on the goal of the study, or the causal question at hand, we may want to estimate different *estimands*.
-Here, we will outline the most common causal estimands, their target populations, the causal questions they may help answer, and the methods used to estimate them.[@greifer2021choosing]
-### Estimating different types of treatment effects
-### Average treatment effect
+Here, we will outline the most common causal estimands, their target populations, the causal questions they may help answer, and the methods used to estimate them.[@greifer2021choosing] \### Estimating different types of treatment effects \### Average treatment effect
 
 A common estimand is the average treatment effect (ATE).
 The target population is the *full sample* or population of interest.
@@ -217,8 +219,8 @@ tbl_svysummary(seven_dwarfs_svy,
 ```
 
 Notice in this weighted table, the variables are more **balanced** between the groups.
-For example, looking at the variable `wdw_ticket_season`, in the unweighted table we see that a higher percent of the days with extra magic hours in the mornings were during the peak season (30%) compared to the percent of days without extra magic hours in the morning (21%). TODO: Switch to cross reference for tables
-In the weighted table this is balanced, with a weighted percent of 21% peak days in the extra magic morning group and 22% in the no extra magic morning group.
+For example, looking at the variable `wdw_ticket_season`, in the unweighted table we see that a higher percent of the days with extra magic hours in the mornings were during the peak season (30%) compared to the percent of days without extra magic hours in the morning (21%).
+TODO: Switch to cross reference for tables In the weighted table this is balanced, with a weighted percent of 21% peak days in the extra magic morning group and 22% in the no extra magic morning group.
 The weights here are changing the distribution of the variables by weighting each of the observations so that the two groups appear balanced.
 Also notice that the distribution of variables in the weighted table now matches the Overall column of the unweighted table.
 That is what ATE weights do: they make the distribution of variables included in the propensity score for each exposure group look like the overall distribution across the whole sample.
