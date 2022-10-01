@@ -109,7 +109,7 @@ $$\frac{\sum_{i=1}^NY_i\times X_i\times w_i}{\sum_{i=1}^NX_i\times w_i}-\frac{\s
 
 Depending on the goal of the study, or the causal question at hand, we may want to estimate different *estimands*.
 Here, we will outline the most common causal estimands, their target populations, the causal questions they may help answer, and the methods used to estimate them.[@greifer2021choosing]
-
+### Estimating different types of treatment effects
 ### Average treatment effect
 
 A common estimand is the average treatment effect (ATE).
