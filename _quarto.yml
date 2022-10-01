@@ -1,0 +1,27 @@
+project:
+  type: book
+
+book:
+  title: "qbook"
+  author: "Jane Doe"
+  date: "9/17/2022"
+  chapters:
+    - index.qmd
+    - frontmatter/preface.qmd
+    - chapters/chapter-01.qmd
+    - chapters/chapter-02.qmd
+    - chapters/chapter-03.qmd
+    - chapters/chapter-04.qmd
+    - chapters/chapter-08.qmd
+    - chapters/references-99.qmd
+
+bibliography: references.bib
+
+format:
+  html:
+    theme: cosmo
+  pdf:
+    documentclass: scrreprt
+
+editor: visual
+
