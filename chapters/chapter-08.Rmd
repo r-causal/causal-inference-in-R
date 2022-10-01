@@ -36,7 +36,6 @@ rct <- tibble(
 
 Here the exposure is `x` and the outcome is `y`.
 The true average treatment effect is 1.
-Below are two ways to estimate this in R.
 
 ```{r, echo = FALSE}
 set.seed(928)
@@ -51,12 +50,16 @@ rct |>
     estimate = sum(
     (y * x) / n_exposed - 
       y * (1 - x) / n_unexposed
-  )) |> pull(estimate) -> estimate
+  )) |> 
+  pull(estimate) -> estimate
 ```
 
 ```{r}
 rct
 ```
+
+Below are two ways to estimate this in R.
+In the first example, we calculate the difference in `y` between exposure values using a formula approach
 
 ```{r}
 rct |>
@@ -67,7 +70,11 @@ rct |>
     (y * x) / n_exposed - 
       y * (1 - x) / n_unexposed
   ))
+```
 
+Alternatively, we can `group_by()` `x` and `summarize()` the means of `y` for each group, then pivot the results to take their difference.
+
+```{r}
 rct |>
   group_by(x) |>
   summarise(avg_y = mean(y)) |>
@@ -199,10 +206,11 @@ ggplot(seven_dwarfs_wts, aes(x = w_ate)) +
 Here we see that many weights are close to 1 (the smallest possible value for an ATE weight) with a long tail leading to the largest weight (around 24).
 This distribution highlights a potential problem with ATE weights.
 They range from 1 to infinity; in small samples, if your weights are too large this can lead to bias in your estimates (known as finite sample bias).
-The {gtsummary} package allows the creation of *weighted* tables.
+
+The {gtsummary} package allows the creation of *weighted* tables, which can help us build an intuition for the psuedopopulation created by the weights.
 To do this, we need to load the {survey} package and create a survey design object.
-Recall that the {survey} package is currently the best way to incorporate weights in various R functions.
-This has a historical explanation, as the techniques needed to incorporate weights historically were used for survey analyses.
+The {survey} package has great support for calculating statistics and models using weights.
+Historically, the techniques needed to incorporate weights were used for survey analyses.
 Even though we are not doing a survey analysis, the same techniques are useful for our propensity score weights.
 
 ```{r, message=FALSE}
