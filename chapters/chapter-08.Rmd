@@ -130,7 +130,7 @@ In other words, the weight is one over the propensity score for those in the exp
 Intuitively, this weight equates to the inverse probability of being in the exposure group that you were observed to be in.
 
 Let's dig a bit deeper into this causal estimand using the Touring Plans data.
-Recall in Chapter 4 we examined the relationship between whether there were "Extra Magic Hours" in the morning and the average wait time for the Seven Dwarfs Mine Train the same day between 5pm and 6pm.
+Recall in Chapter \ref(TODO) we examined the relationship between whether there were "Extra Magic Hours" in the morning and the average wait time for the Seven Dwarfs Mine Train the same day between 5pm and 6pm.
 Let's reconstruct our data set, `seven_dwarfs` and fit the same propensity score model specified previously.
 
 ```{r}
