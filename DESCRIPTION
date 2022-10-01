@@ -14,23 +14,31 @@ License: MIT + file LICENSE
 Imports: 
     bookdown,
     broom,
+    causalworkshop (>= 0.1.0),
     ggdag,
+    ggokabeito,
     ggtext,
     gtsummary,
+    halfmoon (>= 0.0.0.9000),
     MatchIt,
+    propensity (>= 0.0.0.9000),
     ragg,
     rsample (>= 0.0.5),
     smd,
     survey,
     tidyverse,
-    tipr,
+    tipr (>= 1.0.1),
     touringplans (>= 0.0.0.9000)
 Suggests: 
     grkstyle (>= 0.0.3),
     styler
 Remotes: 
     gadenbuie/grkstyle,
-    LucyMcGowan/touringplans
+    LucyMcGowan/touringplans,
+    malcolmbarrett/propensity,
+    malcolmbarrett/halfmoon,
+    malcolmbarrett/causalworkshop,
+    LucyMcGowan/tipr
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)

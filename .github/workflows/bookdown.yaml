@@ -24,6 +24,12 @@ jobs:
       - name: Install system dependencies 
         run: brew install pandoc harfbuzz freetype2 fribidi
 
+      - name: Install Google Fonts
+        run: |
+          brew tap homebrew/cask
+          brew tap homebrew/cask-fonts
+          brew install font-open-sans
+
       - name: Query dependencies
         run: |
           options(repos = 'https://packagemanager.rstudio.com/all/latest')
