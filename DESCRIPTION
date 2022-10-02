@@ -12,7 +12,6 @@ Authors@R: c(
 Description: Causal Inference in R.
 License: MIT + file LICENSE
 Imports: 
-    bookdown,
     broom,
     causalworkshop (>= 0.1.0),
     ggdag,

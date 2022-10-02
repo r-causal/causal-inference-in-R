@@ -1,7 +1,7 @@
 {
-  "hash": "3a60680f87efaf099e8423aad9ba384b",
+  "hash": "dc879faefba794d9ed64b1f46d4f380e",
   "result": {
-    "markdown": "\\mainmatter\n\n# What is a causal question?\n\n\n\n\n\n\n\n## Description, prediction, and explanation\n\n\n\n::: {.cell}\n\n```{.r .cell-code}\nrnorm(5)\n```\n\n::: {.cell-output .cell-output-stdout}\n```\n[1] -0.8063  0.6306  0.3531  0.3806 -2.1462\n```\n:::\n:::\n\n\n\n## Causal Assumptions\n\n## When do standard methods succeed and fail?\n",
+    "markdown": "\\mainmatter\n\n# What is a causal question? {#sec-causal-question}\n\n\n\n\n\n\n\n## Description, prediction, and explanation\n\n\n\n::: {.cell}\n\n```{.r .cell-code}\nrnorm(5)\n```\n\n::: {.cell-output .cell-output-stdout}\n```\n[1] -0.6136  0.2271  0.3189  0.3852 -0.7840\n```\n:::\n:::\n\n\n\n## Causal Assumptions\n\n## When do standard methods succeed and fail?\n",
     "supporting": [
       "chapter-01_files"
     ],
