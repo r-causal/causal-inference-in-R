@@ -1,4 +1,4 @@
-# Estimating counterfactuals
+# Estimating counterfactuals {#sec-counterfactuals}
 
 {{< include 00-setup.qmd >}}
 

@@ -1,4 +1,4 @@
-# Categorical Exposures
+# Categorical exposures
 
 {{< include 00-setup.qmd >}}
 

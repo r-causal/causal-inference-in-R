@@ -1,4 +1,4 @@
-# Using the propensity score
+# Using the propensity score {#sec-using-ps}
 
 {{< include 00-setup.qmd >}}
 

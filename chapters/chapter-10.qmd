@@ -1,4 +1,4 @@
-# Causal estimands
+# Causal estimands {#sec-estimands}
 
 {{< include 00-setup.qmd >}}
 
@@ -131,7 +131,9 @@ $$\frac{\sum_{i=1}^NY_i\times X_i\times w_i}{\sum_{i=1}^NX_i\times w_i}-\frac{\s
 ## Estimating treatment effects with specific targets in mind
 
 Depending on the goal of the study, or the causal question at hand, we may want to estimate different *estimands*.
-Here, we will outline the most common causal estimands, their target populations, the causal questions they may help answer, and the methods used to estimate them.[@greifer2021choosing] \### Estimating different types of treatment effects \### Average treatment effect
+Here, we will outline the most common causal estimands, their target populations, the causal questions they may help answer, and the methods used to estimate them [@greifer2021choosing].
+
+### Average treatment effect
 
 A common estimand is the average treatment effect (ATE).
 The target population is the *full sample* or population of interest.
@@ -139,7 +141,7 @@ The **estimand** here is the expected value of the difference in potential outco
 
 $$E[Y(1) - Y(0)]$$
 
-An example research question is "Should a policy be applied to all eligible patients?"[@greifer2021choosing]
+An example research question is "Should a policy be applied to all eligible patients?" [@greifer2021choosing].
 
 Most randomized controlled trials are designed with the ATE as the target estimand.
 In a non-randomized setting, the ATE can be estimated using full matching, where each observation in the exposed group is matched to at least one observation in the control group (and vice versa) without replacement.
@@ -151,7 +153,7 @@ In other words, the weight is one over the propensity score for those in the exp
 Intuitively, this weight equates to the inverse probability of being in the exposure group that you were observed to be in.
 
 Let's dig a bit deeper into this causal estimand using the Touring Plans data.
-Recall in Chapter \ref(TODO) we examined the relationship between whether there were "Extra Magic Hours" in the morning and the average wait time for the Seven Dwarfs Mine Train the same day between 5pm and 6pm.
+Recall in @sec-using-ps we examined the relationship between whether there were "Extra Magic Hours" in the morning and the average wait time for the Seven Dwarfs Mine Train the same day between 5pm and 6pm.
 Let's reconstruct our data set, `seven_dwarfs` and fit the same propensity score model specified previously.
 
 ```{r}
@@ -178,6 +180,8 @@ To do so, we are going to use the `tbl_summary()` function from the {gtsummary} 
 (We'll also use the {labelled} package to clean up the variable names for the table.)
 
 ```{r}
+#| label: tbl-unweighted-gtsummary
+#| tbl-cap: A descriptive table of Extra Magic Morning in the touringplans dataset. This table shows the distributions of these variables in the observed population.
 library(gtsummary)
 library(labelled)
 seven_dwarfs_with_ps <- seven_dwarfs_with_ps |>
@@ -194,7 +198,7 @@ tbl_summary(seven_dwarfs_with_ps,
   add_overall(last = TRUE) # add an overall column to the table
 ```
 
-From this table, there were 291 days that did not have extra magic hours in the morning and 56 that did.
+From @tbl-unweighted-gtsummary, there were 291 days that did not have extra magic hours in the morning and 56 that did.
 We also see 30% of the extra magic mornings were during peak season compared to 21% of the non-extra magic mornings that were during peak season.
 Additionally, days that had extra magic mornings were more likely to close at 6pm (18:00:00) compared to non-magic hour mornings.
 The median temperature on days with extra magic hour mornings is a bit lower (79 degrees) compared to non-extra magic hour morning days.
@@ -227,6 +231,8 @@ Historically, the techniques needed to incorporate weights were used for survey 
 Even though we are not doing a survey analysis, the same techniques are useful for our propensity score weights.
 
 ```{r}
+#| label: tbl-weighted-gtsummary
+#| tbl-cap: A descriptive table of Extra Magic Morning hours weighted by the Average Treatment Effect Weights. This table shows the distributions of these variables in the psuedopopulation created by these weights.
 #| message: false
 library(survey)
 seven_dwarfs_svy <- svydesign(
@@ -241,11 +247,11 @@ tbl_svysummary(seven_dwarfs_svy,
   add_overall(last = TRUE) # add an overall column to the table
 ```
 
-Notice in this weighted table, the variables are more **balanced** between the groups.
-For example, looking at the variable `wdw_ticket_season`, in the unweighted table we see that a higher percent of the days with extra magic hours in the mornings were during the peak season (30%) compared to the percent of days without extra magic hours in the morning (21%).
-TODO: Switch to cross reference for tables In the weighted table this is balanced, with a weighted percent of 21% peak days in the extra magic morning group and 22% in the no extra magic morning group.
+Notice in @tbl-weighted-gtsummary, the variables are more **balanced** between the groups.
+For example, looking at the variable `wdw_ticket_season`, in @tbl-unweighted-gtsummary we see that a higher percent of the days with extra magic hours in the mornings were during the peak season (30%) compared to the percent of days without extra magic hours in the morning (21%).
+In @tbl-weighted-gtsummary this is balanced, with a weighted percent of 21% peak days in the extra magic morning group and 22% in the no extra magic morning group.
 The weights here are changing the distribution of the variables by weighting each of the observations so that the two groups appear balanced.
-Also notice that the distribution of variables in the weighted table now matches the Overall column of the unweighted table.
+Also notice that the distribution of variables in @tbl-weighted-gtsummary now matches the Overall column of @tbl-unweighted-gtsummary.
 That is what ATE weights do: they make the distribution of variables included in the propensity score for each exposure group look like the overall distribution across the whole sample.
 
 Let's look at another visualization that can help us understand the weighted psuedopopulation that is created by the ATE weights: a mirrored histogram.
@@ -307,6 +313,9 @@ Theoretically, for unexposed days these weights can range from zero to infinity,
 Let's take a look at the weighted table to see this a bit more clearly.
 
 ```{r}
+#| label: tbl-weighted-att
+#| tbl-cap: A descriptive table of Extra Magic Morning hours weighted by the Average Treatment Effect among the Treated Weights. This table shows the distributions of these variables in the psuedopopulation created by these weights.
+#| message: false
 seven_dwarfs_svy <- svydesign(
   ids = ~1,
   data = seven_dwarfs_wts,
@@ -319,10 +328,10 @@ tbl_svysummary(seven_dwarfs_svy,
   add_overall(last = TRUE) # add an overall column to the table
 ```
 
-We again acheive balance between groups, but the target values differ.
-Recall in our ATE weighted table, when looking at the `wdw_ticket_season` variable we saw the weighted percent in the peak season balanced close to 22%, the overall percent of peak days in the observed sample.
+We again acheive balance between groups, but the target values in @tbl-weighted-att differ from the previous tables.
+Recall in our ATE weighted table (@tbl-weighted-gtsummary), when looking at the `wdw_ticket_season` variable we saw the weighted percent in the peak season balanced close to 22%, the overall percent of peak days in the observed sample.
 Now, we again see balance, but the weighted percent of peak season days is 30% in the exposed and unexposed groups, reflecting the percent in the unweighted exposure group.
-Comparing this weighted table to our unweighted table, all columns are attempting to match the exposed column from the unweighted table, that is the "target" population is the exposed group, the days with extra magic hours in the morning.
+Comparing this weighted table to our unweighted table (@tbl-unweighted-gtsummary), all columns are attempting to match the exposed column from the unweighted table, that is the "target" population is the exposed group, the days with extra magic hours in the morning.
 
 We can again create a mirrored histogram to observe the weighted psuedopopulation.
 
@@ -375,6 +384,9 @@ Because we have more observations in our unexposed group, our exposed observatio
 Now let's take a look at the weighted table.
 
 ```{r}
+#| label: tbl-weighted-atu
+#| tbl-cap: A descriptive table of Extra Magic Morning hours weighted by the Average Treatment Effect among the Untreated Weights. This table shows the distributions of these variables in the psuedopopulation created by these weights.
+
 seven_dwarfs_svy <- svydesign(
   ids = ~1,
   data = seven_dwarfs_wts,
@@ -387,7 +399,7 @@ tbl_svysummary(seven_dwarfs_svy,
   add_overall(last = TRUE) # add an overall column to the table
 ```
 
-Now the exposed column of this table is weighted to match the unexposed column of the unweighted table.
+Now the exposed column of @tbl-weighted-atu is weighted to match the unexposed column of the unweighted table.
 
 We can again create a mirrored histogram to observe the weighted psuedopopulation.
 
@@ -441,6 +453,9 @@ These weights have the nice property that they range from 0 to 1, making them *a
 Now let's take a look at the weighted table.
 
 ```{r}
+#| label: tbl-weighted-atm
+#| tbl-cap: A descriptive table of Extra Magic Morning hours weighted by the Average Treatment Effect among the Evenly Matchable Weights. This table shows the distributions of these variables in the psuedopopulation created by these weights.
+
 seven_dwarfs_svy <- svydesign(
   ids = ~1,
   data = seven_dwarfs_wts,
@@ -505,6 +520,9 @@ Like the ATM weights, the ATO weights are bounded by 0 and 1, making them more s
 Now let's take a look at the weighted table.
 
 ```{r}
+#| label: tbl-weighted-ato
+#| tbl-cap: A descriptive table of Extra Magic Morning hours weighted by the Average Treatment Effect among the Overlap Population Weights. This table shows the distributions of these variables in the psuedopopulation created by these weights.
+
 seven_dwarfs_svy <- svydesign(
   ids = ~1,
   data = seven_dwarfs_wts,

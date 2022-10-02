@@ -1,7 +1,7 @@
 {
-  "hash": "77ddf9911c5945e3c5794f7aa4a06005",
+  "hash": "1d5c11e4eb1e56d478902dc918373b89",
   "result": {
-    "markdown": "# Categorical Exposures\n\n---\ncsl: ../aje.csl\n---\n\n\n\n\n\n## Calculating propensity scores for categorical exposures\n\n\n::: {.cell}\n\n```{.r .cell-code}\nrnorm(5)\n```\n\n::: {.cell-output .cell-output-stdout}\n```\n[1] -0.7465 -1.1342  1.1099  1.1125 -1.9800\n```\n:::\n:::\n\n\n## Diagnostics with many categories\n\n## Fitting the outcome model again\n",
+    "markdown": "# Categorical exposures\n\n\n\n\n\n## Calculating propensity scores for categorical exposures\n\n\n::: {.cell}\n\n```{.r .cell-code}\nrnorm(5)\n```\n\n::: {.cell-output .cell-output-stdout}\n```\n[1] 0.9094 2.3394 0.7357 0.9740 0.3747\n```\n:::\n:::\n\n\n## Diagnostics with many categories\n\n## Fitting the outcome model again\n",
     "supporting": [],
     "filters": [
       "rmarkdown/pagebreak.lua"

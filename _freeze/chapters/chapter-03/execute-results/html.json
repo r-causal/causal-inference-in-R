@@ -1,8 +1,10 @@
 {
-  "hash": "4c6352d4768dc3b71a6c2205764922e6",
+  "hash": "34a6b943aa5b8445425d655c5aebc95b",
   "result": {
-    "markdown": "# Expressing causal questions as DAGs\n\n\n\n\n\n## Visualizing Causal Assumptions\n\n\n::: {.cell}\n\n```{.r .cell-code}\nx <- 1:5\nx\n```\n\n::: {.cell-output .cell-output-stdout}\n```\n[1] 1 2 3 4 5\n```\n:::\n:::\n\n\n## DAGs in R\n\n## Common Structures of Bias\n",
-    "supporting": [],
+    "markdown": "# Expressing causal questions as DAGs {#sec-dags}\n\n\n\n\n\n## Visualizing Causal Assumptions\n\n\n::: {.cell}\n\n```{.r .cell-code}\nx <- 1:5\nx\n```\n\n::: {.cell-output .cell-output-stdout}\n```\n[1] 1 2 3 4 5\n```\n:::\n:::\n\n\n## DAGs in R\n\n## Common Structures of Bias\n",
+    "supporting": [
+      "chapter-03_files"
+    ],
     "filters": [
       "rmarkdown/pagebreak.lua"
     ],

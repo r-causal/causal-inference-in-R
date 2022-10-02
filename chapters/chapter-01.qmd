@@ -1,6 +1,6 @@
 \mainmatter
 
-# What is a causal question?
+# What is a causal question? {#sec-causal-question}
 
 {{< include 00-setup.qmd >}}
 

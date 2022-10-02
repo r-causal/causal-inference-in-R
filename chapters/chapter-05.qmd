@@ -1,4 +1,4 @@
-# Causal Inference with `group_by()` and `summarize()`
+# Causal inference with `group_by()` and `summarize()`
 
 {{< include 00-setup.qmd >}}
 

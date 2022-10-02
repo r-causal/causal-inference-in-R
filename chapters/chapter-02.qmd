@@ -1,4 +1,4 @@
-# Whole Game: Mosquito Nets and Malaria
+# The whole game: mosquito nets and malaria
 
 {{< include 00-setup.qmd >}}
 
@@ -32,7 +32,7 @@ Herodotus, the 5th century BC Greek author of *The Histories*, observed Egyptian
 Many modern nets are also treated with insecticide, dating back to Russian soldiers in World War II [@nevill1996], although some people still use them as fishing nets [@gettleman2015].
 
 It's easy to imagine a randomized trial that deals with this question: participants in a study are randomly assigned to use a bed net, and we follow them over time to see if there is a difference in malaria risk between groups.
-Randomization is often the best way to estimate a causal effect of an intervention because it reduces the number of assumptions we need to make for that estimate to be valid (we'll discuss the assumptions we need to make for causal inference in Chapter \@ref(TODO)).
+Randomization is often the best way to estimate a causal effect of an intervention because it reduces the number of assumptions we need to make for that estimate to be valid (we discussed the assumptions we need to make for causal inference in @sec-causal-question).
 In particular, randomization addresses confounding very well, accounting for confounders about which we may not even know.
 
 Several landmark trials have studied the effects of bed net use on malaria risk, with several essential studies in the 1990s.
@@ -60,7 +60,7 @@ Still, let's consider some conditions where observational causal inference helps
 -   We may also want to estimate a different effect or the effect for another population than in previous trials.
     For example, both randomized and observational studies helped us better understand that insecticide-based nets improve malaria resistance in the entire community, not just among those who use nets, so long as net usage is high enough [@howard2000; @hawley2003].
 
-As we'll see in chapters (TODO: precision) and (TODO: loss to follow up), the causal inference techniques that we'll discuss in this book are often beneficial even when we're able to randomize.
+As we saw in @sec-causal-question and we'll see in @sec-g-comp, the causal inference techniques that we'll discuss in this book are often beneficial even when we're able to randomize.
 
 When we conduct an observational study, it's still helpful to think through the randomized trial we would run were it possible.
 The trial we're trying to emulate in this causal analysis is the *target trial.* Considering the target trial helps us make our causal question more accurate.
@@ -136,7 +136,7 @@ We'll use simulated data, `net_data`, from the {causalworkshop} package (TODO: m
 The distribution of malaria risk appears to be quite different by net usage.
 
 ```{r}
-#| label: malaria-risk-density
+#| label: fig-malaria-risk-density
 #| fig.cap: >
 #|   A density plot of malaria risk for those who did and did not use nets.
 #|   The risk of malaria is lower for those who use nets.
@@ -155,6 +155,7 @@ means <- net_data |>
   pull(malaria_risk)
 ```
 
+In @fig-malaria-risk-density, the density of those who used nets is to the left of those who did not use nets.
 The mean difference in malaria risk is about `r round(means[[1]] - means[[2]], digits = 1)`, suggesting net use might be protective against malaria.
 
 ```{r}
@@ -182,7 +183,7 @@ These diagrams, also called causal directed acyclic graphs (DAGs), visualize the
 Here's the DAG that we're proposing for this question.
 
 ```{r}
-#| label: net-data-dag
+#| label: fig-net-data-dag
 #| echo: false
 #| fig.width: 7
 #| fig.cap: >
@@ -253,11 +254,11 @@ mosquito_dag |>
   coord_cartesian(clip = "off")
 ```
 
-(We'll explore how to create and analyze DAGs in R in Chapter TODO).
+(We'll explore how to create and analyze DAGs in R in @sec-dags).
 
 In DAGs, each point represents a variable, and each arrow represents a cause.
 In other words, this diagram declares what we think the causal relationships are between these variables.
-We're saying that we believe:
+In @fig-net-data-dag, we're saying that we believe:
 
 -   Malaria risk is causally impacted by net usage, income, health, temperature, and insecticide resistance.
 -   Net usage is causally impacted by income, health, temperature, eligibility for the free net program, and the number of people in a household.
@@ -281,7 +282,7 @@ In DAG terminology, we have more than one open causal pathway.
 If this DAG is correct, we have *eight* causal pathways: the path between net usage and malaria risk and seven other *confounding* pathways.
 
 ```{r}
-#| label: net-data-confounding
+#| label: fig-net-data-confounding
 #| echo: false
 #| fig.width: 14
 #| fig.height: 10
@@ -357,17 +358,16 @@ mosquito_dag |>
   guides(alpha = "none", edge_alpha = "none")
 ```
 
-When we calculate a naive linear regression that only includes net usage and malaria risk, the effect we see is incorrect because the seven other confounding pathways distort it.
+When we calculate a naive linear regression that only includes net usage and malaria risk, the effect we see is incorrect because the seven other confounding pathways in @fig-net-data-confounding distort it.
 In DAG terminology, we need to *block* these open pathways that distort the causal estimate we're after.
 (We can block paths through several techniques, including stratification, matching, weighting, and more. We'll see several methods throughout the book.) Luckily, by specifying a DAG, we can precisely determine the variables we need to control for.
 For this DAG, we need to control for three variables: `r glue::glue_collapse(as.list(dagitty::adjustmentSets(mosquito_dag))[[1]], sep = ", ", last = ", and ")`.
 These three variables are a *minimal adjustment set*, the minimum set (or sets) of variables you need to block all confounding pathways.
-We'll discuss adjustment sets further in Chapter \@ref(TODO)
+We'll discuss adjustment sets further in @sec-dags.
 
 ## Model our assumptions
 
-\
-We'll use a technique called Inverse Probability Weighting (IPW) to control for these variables, which we'll discuss in detail in Chapters \@ref(TODO).
+We'll use a technique called Inverse Probability Weighting (IPW) to control for these variables, which we'll discuss in detail in @sec-using-ps.
 We'll use logistic regression to predict the probability of treatment---the propensity score.
 Then, we'll calculate inverse probability weights to apply to the linear regression model we fit above.
 The propensity score model includes the exposure---net use---as the dependent variable and the minimal adjustment set as the independent variables.
@@ -378,7 +378,7 @@ The propensity score model includes the exposure---net use---as the dependent va
 Generally speaking, we want to lean on domain expertise and good modeling practices to fit the propensity score model.
 For instance, we may want to allow continuous confounders to be non-linear using splines, or we may want to add essential interactions between confounders.
 Because these are simulated data, we know we don't need these extra parameters (so we'll skip them), but in practice, you often do.
-We'll discuss this more in Chapter \@ref(TODO)
+We'll discuss this more in @sec-using-ps.
 :::
 
 The propensity score model is a logistic regression model with the formula `net ~ income + health + temperature`, which predicts the probability of bed net usage based on the confounders income, health, and temperature.
@@ -433,7 +433,7 @@ The goal of propensity score weighting is to weight the population of observatio
 Here's the distribution of the propensity score by group, created by `geom_mirror_histogram()` from the halfmoon package for assessing balance in propensity score models (as well as visualizing the pseudo-population the weights simulate):
 
 ```{r}
-#| label: mirror-histogram-net-data-unweighted
+#| label: fig-mirror-histogram-net-data-unweighted
 #| fig.cap: >
 #|   A mirrored histogram of the propensity scores of those who used nets (top, blue) versus those who who did not use nets (bottom, light orange). The range of propensity scores is similar between groups, with those who used nets slightly to the left of those who didn't, but the shapes of the distribution are different.
 library(halfmoon)
@@ -449,7 +449,7 @@ ggplot(net_data_wts, aes(.fitted)) +
 The weighted propensity score creates a pseudo-population where the distributions are much more similar:
 
 ```{r}
-#| label: mirror-histogram-net-data-weighted
+#| label: fig-mirror-histogram-net-data-weighted
 #| fig.cap: >
 #|   A mirrored histogram of the propensity scores of those who used nets (top, blue) versus those who who did not use nets (bottom, light orange). The shaded region represents the unweighted distribution, and the colored region represents the weighted distributions. The ATE weights up-weight the groups to be similar in range and shape of the distribution of propensity scores.
 ggplot(net_data_wts, aes(.fitted)) +
@@ -466,7 +466,7 @@ ggplot(net_data_wts, aes(.fitted)) +
   labs(x = "propensity score")
 ```
 
-In this example, the unweighted distributions are not awful---the shapes are fairly similar here---but the weighted distributions are much more similar.
+In this example, the unweighted distributions are not awful---the shapes are fairly similar here---but the weighted distributions in @fig-mirror-histogram-net-data-weighted are much more similar.
 
 ::: callout-caution
 ## Unmeasured confounding
@@ -482,7 +482,7 @@ One way to do this is to calculate the standardized mean differences (SMDs) for 
 We'll calculate the SMDs with `tidy_smd()` then plot them with `geom_love()`.
 
 ```{r}
-#| label: love-plot-net-data
+#| label: fig-love-plot-net-data
 #| fig.cap: >
 #|   A love plot representing the standardized mean differences (SMD) between exposure groups of three confounders: temperature, income, and health. Before weighting, there is considerable differences in the groups. After weighting, the confounders are much more balanced between groups.
 plot_df <- tidy_smd(
@@ -505,14 +505,14 @@ ggplot(
 ```
 
 A standard guideline is that balanced confounders should have an SMD of less than 0.1 on the absolute scale.
-0.1 is just a rule of thumb, but if we follow it, these variables are well-balanced after weighting (and unbalanced before weighting).
+0.1 is just a rule of thumb, but if we follow it, the variables in @fig-love-plot-net-data are well-balanced after weighting (and unbalanced before weighting).
 
 Before we apply the weights to the outcome model, let's check their overall distribution for extreme weights.
 Extreme weights can destabilize the estimate and variance in the outcome model, so we want to be aware of it.
-We'll also discuss several other types of weights that are less prone to this issue in Chapter \@ref(TODO).
+We'll also discuss several other types of weights that are less prone to this issue in @sec-estimands.
 
 ```{r}
-#| label: ate-density-net-data
+#| label: fig-ate-density-net-data
 #| fig.cap: >
 #|   A density plot of the average treatment effect (ATE) weights. The plot is skewed, with higher values towards 8. This may indicate a problem with the model, but the weights aren't so extreme to destabilize the variance of the estimate.
 net_data_wts |>
@@ -520,8 +520,8 @@ net_data_wts |>
   geom_density(fill = "#CC79A7", color = NA, alpha = 0.8)
 ```
 
-The weights are skewed, but there's not an outrageous values.
-If we saw extreme weights, we might try trimming or stabilizing them, or consider calculating an effect for a different estimand, which we'll discuss in Chapter \@ref(TODO).
+The weights in @fig-ate-density-net-data are skewed, but there are no outrageous values.
+If we saw extreme weights, we might try trimming or stabilizing them, or consider calculating an effect for a different estimand, which we'll discuss in @sec-estimands.
 It doesn't look like we need to do that here, however.
 
 ## Estimate the causal effect
@@ -550,7 +550,7 @@ Unfortunately, the confidence intervals we're using are wrong because they don't
 Generally, confidence intervals for propensity score weighted models will be too narrow unless we correct for this dependence.
 The nominal coverage of the confidence intervals will thus be wrong (they aren't 95% CIs because their coverage is much lower than 95%) and may lead to misinterpretation.
 
-We've got several ways to address this problem, which we'll discuss in detail in Chapter \@ref(TODO), including the bootstrap, robust standard errors, and manually accounting for the dependence with empirical sandwich estimators.
+We've got several ways to address this problem, which we'll discuss in detail in @sec-outcome-model, including the bootstrap, robust standard errors, and manually accounting for the dependence with empirical sandwich estimators.
 For this example, we'll use the bootstrap, a flexible tool that calculates distributions of parameters using re-sampling.
 We'll use the rsample package from the tidymodels ecosystem to work with bootstrap samples.
 
@@ -683,7 +683,7 @@ ipw_results$boot_fits[[1]]
 Now we have a distribution of estimates:
 
 ```{r}
-#| label: bootstrap-estimates-net-data
+#| label: fig-bootstrap-estimates-net-data
 #| message: false
 #| warning: false
 #| fig.cap: >
@@ -702,7 +702,7 @@ ipw_results |>
   geom_histogram(fill = "#D55E00FF", color = "white", alpha = 0.8)
 ```
 
-This plot gives a sense of the variation in `estimate`, but let's calculate 95% confidence intervals from the bootstrapped distribution using rsample's `int_t()` :
+@fig-bootstrap-estimates-net-data gives a sense of the variation in `estimate`, but let's calculate 95% confidence intervals from the bootstrapped distribution using rsample's `int_t()` :
 
 ```{r}
 boot_estimate <- ipw_results |>
@@ -740,7 +740,7 @@ For the estimate, we'll use `conf.high`, which is closer to 0 (the null), and as
 We'll use tipr to calculate this answer for 5 scenarios, where the mean difference in the confounder between exposure groups is 1, 2, 3, 4, or 5.
 
 ```{r}
-#| label: tip-coef-net
+#| label: fig-tip-coef-net
 #| fig.cap: >
 #|   A tipping point analysis under several confounding scenarios where the unmeasured confounder is a normally-distributed continuous variable. The line represents the strength of confounding necessary to tip the upper confidence interval of the causal effect estimate to 0. The x-axis represents the coefficient of the confounder-outcome relationship adjusted for the exposure and the set of measured confounders. The y-axis represents the scaled mean difference of the confounder between exposure groups.
 library(tipr)
@@ -770,7 +770,10 @@ We don't have this variable in `net_data`, but let's say we know from the litera
 
 1.  People with this genetic resistance have, on average, about 10 lower malaria risk.
 2.  About 26% of people who use nets in our study have this genetic resistance.
-3.  About 5% of people who don't use nets have this genetic resistance. <!--TODO: We need to come back to this after tipr supports linear coefs with binary exp--> With this amount of information, we can use tipr to adjust the estimates we calculated for the unmeasured confounder. We'll use `adjust_coef_with_binary()` to calculate the adjusted estimates.
+3.  About 5% of people who don't use nets have this genetic resistance.
+
+With this amount of information, we can use tipr to adjust the estimates we calculated for the unmeasured confounder.
+We'll use `adjust_coef_with_binary()` to calculate the adjusted estimates.
 
 ```{r}
 adjusted_estimates <- boot_estimate |>
@@ -791,7 +794,7 @@ In fact, these data were simulated with just such a confounder.
 The true effect of net use on malaria is about -10, and the true DAG that generated these data is:
 
 ```{r}
-#| label: net-data-true-dag
+#| label: fig-net-data-true-dag
 #| echo: false
 #| fig.cap: >
 #|   The true causal diagram for `net_data`. This DAG is identical to the one we proposed with one addition: genetic resistance to malaria causally reduces the risk of malaria and impacts net use. It's thus a confounder and a part of the minimal adjustment set required to get an unbiased effect estimate. In otherwords, by not including it, we've calculated the wrong effect.
@@ -893,7 +896,7 @@ boot_estimate_full <- ipw_results_full |>
   filter(term == "netTRUE")
 ```
 
-The unmeasured confounder is available in the dataset `net_data_full` as `genetic_resistance`.
+The unmeasured confounder in @fig-net-data-true-dag is available in the dataset `net_data_full` as `genetic_resistance`.
 If we recalculate the IPW estimate of the average treatment effect of nets on malaria risk, we get `r est_ci(boot_estimate_full, rsample = TRUE)`, much closer to the actual answer of -10.
 
 What do you think?

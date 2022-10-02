@@ -1,7 +1,7 @@
 {
-  "hash": "3a60680f87efaf099e8423aad9ba384b",
+  "hash": "dc879faefba794d9ed64b1f46d4f380e",
   "result": {
-    "markdown": "\\mainmatter\n\n# What is a causal question?\n\n\n\n\n\n## Description, prediction, and explanation\n\n\n::: {.cell}\n\n```{.r .cell-code}\nrnorm(5)\n```\n\n::: {.cell-output .cell-output-stdout}\n```\n[1] -0.1123 -0.6070 -0.8701  2.4373  1.2043\n```\n:::\n:::\n\n\n## Causal Assumptions\n\n## When do standard methods succeed and fail?\n",
+    "markdown": "\\mainmatter\n\n# What is a causal question? {#sec-causal-question}\n\n\n\n\n\n## Description, prediction, and explanation\n\n\n::: {.cell}\n\n```{.r .cell-code}\nrnorm(5)\n```\n\n::: {.cell-output .cell-output-stdout}\n```\n[1] -0.6864  0.9786  0.3295 -2.5342 -0.9088\n```\n:::\n:::\n\n\n## Causal Assumptions\n\n## When do standard methods succeed and fail?\n",
     "supporting": [],
     "filters": [
       "rmarkdown/pagebreak.lua"

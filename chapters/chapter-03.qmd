@@ -1,4 +1,4 @@
-# Expressing causal questions as DAGs
+# Expressing causal questions as DAGs {#sec-dags}
 
 {{< include 00-setup.qmd >}}
 

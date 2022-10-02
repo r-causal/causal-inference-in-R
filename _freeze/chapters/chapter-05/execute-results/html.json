@@ -1,8 +1,10 @@
 {
-  "hash": "24f96fbc7857d9ff6d0d0f6c0a33b334",
+  "hash": "b66fa4a3923b227d16e9f8e1cda07ed7",
   "result": {
-    "markdown": "# Causal Inference with `group_by()` and `summarize()`\n\n---\ncsl: ../aje.csl\n---\n\n\n\n\n::: {.cell}\n\n```{.r .cell-code}\nrnorm(5)\n```\n\n::: {.cell-output .cell-output-stdout}\n```\n[1] -0.59031 -0.05068  0.37331  0.30699 -0.28234\n```\n:::\n:::\n",
-    "supporting": [],
+    "markdown": "# Causal inference with `group_by()` and `summarize()`\n\n\n\n\n::: {.cell}\n\n```{.r .cell-code}\nrnorm(5)\n```\n\n::: {.cell-output .cell-output-stdout}\n```\n[1] -0.4470  0.5375 -0.6133  0.5083 -1.8566\n```\n:::\n:::\n",
+    "supporting": [
+      "chapter-05_files"
+    ],
     "filters": [
       "rmarkdown/pagebreak.lua"
     ],
