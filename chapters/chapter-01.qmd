@@ -4,8 +4,12 @@
 
 {{< include 00-setup.qmd >}}
 
-Text for chapter 1.
+## Description, prediction, and explanation
 
 ```{r}
 rnorm(5)
 ```
+
+## Causal Assumptions
+
+## When do standard methods succeed and fail?

@@ -1,7 +1,7 @@
 {
-  "hash": "d6746241f8997f5a5f629892a70ec2f7",
+  "hash": "13ee6c6e7fb0b91cea55f7c042557eed",
   "result": {
-    "markdown": "# References {-}\n\n::: {#refs}\n:::\n",
+    "markdown": "# References {.unnumbered}\n\n---\ncsl: ../aje.csl\n---\n\n\n\n\n\n::: {#refs}\n:::\n",
     "supporting": [],
     "filters": [
       "rmarkdown/pagebreak.lua"

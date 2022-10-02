@@ -1,0 +1,14 @@
+{
+  "hash": "2376debed27759a720f940a6594498b6",
+  "result": {
+    "markdown": "# Using the propensity score\n\n\n\n\n\n## Matching\n\n\n::: {.cell}\n\n```{.r .cell-code}\nrnorm(5)\n```\n\n::: {.cell-output .cell-output-stdout}\n```\n[1] -0.4032 -1.0832  0.5077  0.2945 -0.6832\n```\n:::\n:::\n\n\n## Weighting\n",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}

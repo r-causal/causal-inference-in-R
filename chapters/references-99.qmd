@@ -1,4 +1,6 @@
 # References {.unnumbered}
 
+{{< include 00-setup.qmd >}}
+
 ::: {#refs}
 :::

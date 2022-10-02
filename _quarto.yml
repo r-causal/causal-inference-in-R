@@ -28,14 +28,39 @@ book:
   date: "today"
   chapters:
     - index.qmd
-    - chapters/chapter-01.qmd
-    - chapters/chapter-02.qmd
-    - chapters/chapter-03.qmd
-    - chapters/chapter-04.qmd
-    - chapters/chapter-08.qmd
+    
+    - part: Asking Causal Questions
+      chapters: 
+      - chapters/chapter-01.qmd
+      - chapters/chapter-02.qmd
+      - chapters/chapter-03.qmd
+      - chapters/chapter-04.qmd
+      - chapters/chapter-05.qmd
+      - chapters/chapter-06.qmd
+      
+    - part: The Design Phase 
+      chapters: 
+      - chapters/chapter-07.qmd
+      - chapters/chapter-08.qmd
+      - chapters/chapter-09.qmd
+      - chapters/chapter-10.qmd
+      - chapters/chapter-11.qmd
+      
+    - part: Estimating Causal Effects 
+      chapters: 
+      - chapters/chapter-12.qmd
+      - chapters/chapter-13.qmd
+      - chapters/chapter-14.qmd
+      - chapters/chapter-15.qmd
+      - chapters/chapter-16.qmd
+      - chapters/chapter-17.qmd
+      - chapters/chapter-18.qmd
+      - chapters/chapter-19.qmd
+      - chapters/chapter-20.qmd
+      
     - chapters/references-99.qmd
+      
 bibliography: citations.bib
-csl: aje.csl
 
 format:
   html:

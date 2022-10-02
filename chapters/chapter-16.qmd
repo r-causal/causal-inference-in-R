@@ -1,0 +1,13 @@
+# G-Computation
+
+{{< include 00-setup.qmd >}}
+
+## The Parametric G-Formula
+
+```{r}
+rnorm(5)
+```
+
+## Calculating estimates with G-Computation
+
+## The Natural Course

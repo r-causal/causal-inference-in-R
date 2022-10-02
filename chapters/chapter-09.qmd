@@ -1,0 +1,11 @@
+# Using the propensity score
+
+{{< include 00-setup.qmd >}}
+
+## Matching
+
+```{r}
+rnorm(5)
+```
+
+## Weighting

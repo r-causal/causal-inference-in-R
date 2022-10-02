@@ -1,0 +1,17 @@
+# Preparing data to answer causal questions
+
+{{< include 00-setup.qmd >}}
+
+## Data wrangling and recipes
+
+```{r}
+rnorm(5)
+```
+
+## Recognizing missing data
+
+## Working with multiple data sources
+
+## Exploring and visualizing data and assumptions
+
+## Presenting descriptive statistics

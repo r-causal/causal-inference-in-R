@@ -1,0 +1,7 @@
+# Causal Inference with `group_by()` and `summarize()`
+
+{{< include 00-setup.qmd >}}
+
+```{r}
+rnorm(5)
+```

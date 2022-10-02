@@ -1,10 +1,14 @@
-# Preparing data to answer causal questions
+# Expressing causal questions as DAGs
 
 {{< include 00-setup.qmd >}}
 
-Text for chapter 3.
+## Visualizing Causal Assumptions
 
 ```{r}
 x <- 1:5
 x
 ```
+
+## DAGs in R
+
+## Common Structures of Bias

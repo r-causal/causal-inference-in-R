@@ -1,0 +1,14 @@
+{
+  "hash": "e048fceeeb7a0c5e7ada95e14bb9e9e4",
+  "result": {
+    "markdown": "# Other approaches to causal inference\n\n---\ncsl: ../aje.csl\n---\n\n\n\n\n\n## Targeted Learning\n\n\n::: {.cell}\n\n```{.r .cell-code}\nrnorm(5)\n```\n\n::: {.cell-output .cell-output-stdout}\n```\n[1] -0.8271 -0.1409  0.2142 -0.2718 -0.3598\n```\n:::\n:::\n\n\n## Instrumental variable analysis\n\n## Regression discontinuity\n\n## Difference-in-Difference\n",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}

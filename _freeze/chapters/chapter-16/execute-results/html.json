@@ -1,0 +1,14 @@
+{
+  "hash": "6c9132e23ee13bbc9d516619318f7829",
+  "result": {
+    "markdown": "# G-Computation\n\n---\ncsl: ../aje.csl\n---\n\n\n\n\n\n## The Parametric G-Formula\n\n\n::: {.cell}\n\n```{.r .cell-code}\nrnorm(5)\n```\n\n::: {.cell-output .cell-output-stdout}\n```\n[1] -0.03946 -0.37011  1.40821  0.18703  0.89987\n```\n:::\n:::\n\n\n## Calculating estimates with G-Computation\n\n## The Natural Course\n",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}

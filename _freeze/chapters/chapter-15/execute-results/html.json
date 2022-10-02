@@ -1,0 +1,14 @@
+{
+  "hash": "22032a0e6e14411b69033ee514dc2692",
+  "result": {
+    "markdown": "# Missingness\n\n---\ncsl: ../aje.csl\n---\n\n\n\n\n\n## Missingness as structural bias\n\n\n::: {.cell}\n\n```{.r .cell-code}\nrnorm(5)\n```\n\n::: {.cell-output .cell-output-stdout}\n```\n[1] -0.533120  0.193643 -0.081832 -0.003758  0.036268\n```\n:::\n:::\n\n\n## Multiple Imputation\n\n## Combining MICE and IPW\n",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}

@@ -1,0 +1,13 @@
+# Causal survival analysis
+
+{{< include 00-setup.qmd >}}
+
+## Preparing data for survival analysis
+
+```{r}
+rnorm(5)
+```
+
+## Pooled logistic regression
+
+## Confidence intervals for causal survival models
