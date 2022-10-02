@@ -1,12 +1,6 @@
 project:
   type: book
   pre-render: R/setup.R
-  description: > 
-      This book covers causal inference techniques to help statisticians, 
-      epidemiologists, economists, and data scientists implement best practices 
-      using R.
-  repo-url: https://github.com/malcolmbarrett/causal-inference-in-r
-  repo-actions: [edit, issue]
 
 callout-appearance: simple
   
@@ -26,6 +20,12 @@ book:
   title: "Causal Inference in R"
   author: "Malcolm Barrett, Lucy D'Agostino McGowan, Travis Gerke"
   date: "today"
+  description: > 
+      This book covers causal inference techniques to help statisticians, 
+      epidemiologists, economists, and data scientists implement best practices 
+      using R.
+  repo-url: https://github.com/malcolmbarrett/causal-inference-in-r
+  repo-actions: [edit, issue]
   chapters:
     - index.qmd
     
