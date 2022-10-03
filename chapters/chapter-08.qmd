@@ -3,43 +3,45 @@
 {{< include 00-setup.qmd >}}
 
 Often we are interested in how some *exposure* (or treatment) impacts an outcome.
-For example, we could assess how an ad campaign (exposure) impacts sales (outcome), whether a certain medication (exposure) improves patient survival (outcome), or whether opening a theme park early to some visitors (exposure) reduces wait times later in the day (outcome).
-As defined in the @sec-counterfactuals, <!--TODO make sure that this is defined in the previous chapter --> an exposure in the context of this book is often a modifiable event or condition that occurs prior to the outcome.
-In an ideal world, we would simply be able to estimate the correlation between the exposure and outcome as the causal effect of the exposure.
-Randomized trials are the best practical examples of this idealized scenario: participants are randomly assigned to exposure groups and, if all goes well, this allows for an unbiased estimate of the causal effect between the exposure and outcome.
-In the "real world", outside this randomized trial setting, we are often *exposed* to something based on other factors.
+For example, we could assess how an ad campaign (exposure) impacts sales (outcome), whether a particular medication (exposure) improves patient survival (outcome), or whether opening a theme park early to some visitors (exposure) reduces wait times later in the day (outcome).
+As defined in the @sec-counterfactuals, <!--TODO make sure that this is correct --> an exposure in the context of this book is often a modifiable event or condition that occurs before the outcome.
+In an ideal world, we would simply estimate the correlation between the exposure and outcome as the causal effect of the exposure.
+Randomized trials are the best practical examples of this idealized scenario: participants are randomly assigned to exposure groups.
+If all goes well, this allows for an unbiased estimate of the causal effect between the exposure and outcome.
+In the "real world," outside this randomized trial setting, we are often *exposed* to something based on other factors.
 For example, when deciding what medication to give a diabetic patient, a doctor may consider the patient's medical history, their likelihood to adhere to certain medications, and the severity of their disease.
-The medication they are given is no longer random; it is *conditional* on factors about that patient, also known as the patient's *covariates*.
+The treatment is no longer random; it is *conditional* on factors about that patient, also known as the patient's *covariates*.
 If these covariates also affect the outcome, they are *confounders*.
 
 ::: def-box
 A **confounder** is a common cause of exposure and outcome.
 :::
 
-If we could collect information about all of these factors, we could determine each patient's probability of exposure and use this to inform an analysis assessing the relationship between that exposure and some outcome.
-This is the propensity score!
+Suppose we could collect information about all of these factors.
+In that case, we could determine each patient's probability of exposure and use this to inform an analysis assessing the relationship between that exposure and some outcome.
+This probability is the propensity score!
 When used appropriately, modeling with a propensity score can simulate what the relationship between exposure and outcome would have looked like if we had run a randomized trial.
-That is, the correlation between exposure and outcome will be an estimate of the causal effect after we have applied a propensity score.
+The correlation between exposure and outcome will estimate the causal effect after applying a propensity score.
 When fitting a *propensity score model* we want to condition on all known confounders.
 
 ::: def-box
 A **propensity score** is the probability of being in the exposure group, conditioned on observed covariates.
 :::
 
-@rosenbaum1983central showed in observational studies, conditioning on propensity scores can lead to unbiased estimates of the exposure effect as long as certain assumptions hold:
+@rosenbaum1983central showed in observational studies conditioning on propensity scores can lead to unbiased estimates of the exposure effect as long as certain assumptions hold:
 
 1.  There are no unmeasured confounders
 2.  Every subject has a nonzero probability of receiving either exposure
 
 ## Logistic Regression
 
-There are many ways to estimate the propensity score; typically people use logistic regression for binary exposures.
-This is done by fitting a logistic regression model predicting the exposure using known confounders.
+There are many ways to estimate the propensity score; typically, people use logistic regression for binary exposures.
+The logistic regression model predicts the exposure using known confounders.
 Each individual's predicted value is the propensity score.
-In R, a logistic regression model can be fit using the `glm()` function.
+The `glm()` function will fit a logistic regression model in R.
 Below is pseudo-code.
 The first argument is the model, with the exposure on the left side and the confounders on the right.
-The data frame is passed to the `data` argument and the `family = binomial()` argument to denote the model should be fit using logistic regression (as opposed to a different generalized linear model).
+The `data` argument takes the data frame, and the `family = binomial()` argument denotes the model should be fit using logistic regression (as opposed to a different generalized linear model).
 
 ```{r}
 #| eval: false
@@ -72,11 +74,10 @@ Let's look at an example.
 
 ### Example
 
-Historically, guests who stayed in a Walt Disney World resort hotel were able to access the park during "Extra Magic Hours" during which the park was closed to all other guests.
+Historically, guests who stayed in a Walt Disney World resort hotel could access the park during "Extra Magic Hours," during which the park was closed to all other guests.
 These extra hours could be in the morning or evening.
 The Seven Dwarfs Mine Train is a ride at Walt Disney World's Magic Kingdom.
-Typically, each day Magic Kingdom may or may not be selected to have these "Extra Magic Hours".
-We are interested in examining the relationship between whether there were "Extra Magic Hours" in the morning and the average wait time for the Seven Dwarfs Mine Train the same day between 5pm and 6pm.
+Magic Kingdom may or may not be selected each day to have these "Extra Magic Hours." We are interested in examining the relationship between whether there were "Extra Magic Hours" in the morning and the average wait time for the Seven Dwarfs Mine Train on the same day between 5 pm and 6 pm.
 Below is a proposed DAG for this question.
 
 ```{r}
@@ -87,7 +88,7 @@ Below is a proposed DAG for this question.
 #| fig.cap: >
 #|   Proposed DAG for the relationship between Extra Magic Hours
 #|   in the morning at a particular park and the average wait
-#|   time between 5pm and 6pm.
+#|   time between 5 pm and 6 pm.
 
 library(tidyverse)
 library(ggdag)
@@ -126,50 +127,41 @@ dagify(
   theme(axis.text.x = element_text())
 ```
 
-Here we are proposing that there are three confounders: the historic high temperature on the day, the time the park closed, and the ticket season: value, regular, or peak.
+Here we propose three confounders: the historic high temperature on the day, the time the park closed, and the ticket season: value, regular, or peak.
 We can build a propensity score model using the `seven_dwarfs_train_2018` data set from the [{`touringplans`}](https://lucymcgowan.github.io/touringplans/) package.
-Each row of this dataset contains information about the Seven Dwarfs Mine Train during a certain hour on a given day.
-First we need to subset the data to only include average wait times between 5 and 6 pm.
+Each row of this dataset contains information about the Seven Dwarfs Mine Train during a particular hour on a given day.
+First, we need to subset the data to only include average wait times between 5 and 6 pm.
 Then we will use the `glm()` function to fit the propensity score model, predicting `extra_magic_morning` using the four confounders specified above.
 We'll add the propensity scores to the data frame (in a column called `.fitted` as set by the `augment()` function in the {`broom`} package).
 
-```{r}
-library(broom)
-library(touringplans)
+"\`{r} library(broom) library(touringplans)
 
-seven_dwarfs_17 <- seven_dwarfs_train_2018 |>
-  filter(hour == 17)
+seven_dwarfs_17 \<- seven_dwarfs_train_2018 \|\> filter(hour == 17)
 
-seven_dwarfs_17_with_ps <- glm(
-  extra_magic_morning ~ wdw_ticket_season + close + weather_wdwhigh,
-  data = seven_dwarfs_17,
-  family = binomial()
-) |>
-  augment(type.predict = "response", data = seven_dwarfs_17)
-```
+seven_dwarfs_17_with_ps \<- glm( extra_magic_morning \~ wdw_ticket_season + close + weather_wdwhigh, data = seven_dwarfs_17, family = binomial() ) \|\> augment(type.predict = "response", data = seven_dwarfs_17)
 
-Let's take a look at these propensity scores.
-Below, the propensity scores are shown in the `.fitted` column for the first 6 observations.
-The propensity score here is the probability that a given date will have Extra Magic Hours in the morning given the observed confounders, in this case the historical high temperatures on a given date, the time the park closed, and Ticket Season.
-For example, on January 1, 2018 there was a 30.4% chance that there would be Extra Magic Hours at the Magic Kingdom given the Ticket Season (peak in this case), time of park closure (11pm), and the historic high temperature on this date (70.3 degrees).
-On this particular day, there were *not* Extra Magic Hours in the morning (as indicated by the 0 in the first row of the `extra_magic_morning` column).
 
-```{r}
-seven_dwarfs_17_with_ps |>
-  select(
-    date,
-    extra_magic_morning,
-    wdw_ticket_season,
-    close,
-    weather_wdwhigh,
-    .fitted
-  ) |>
-  head() |>
-  knitr::kable()
-```
+    Let's take a look at these propensity scores.
+    Below are the propensity scores (in the `.fitted` column) for the first six observations.
+    The propensity score here is the probability that a given date will have Extra Magic Hours in the morning given the observed confounders, in this case, the historical high temperatures on a given date, the time the park closed, and Ticket Season.
+    For example, on January 1, 2018, there was a 30.4% chance that there would be Extra Magic Hours at the Magic Kingdom given the Ticket Season (peak in this case), time of park closure (11 pm), and the historic high temperature on this date (70.3 degrees).
+    On this particular day, there were *not* Extra Magic Hours in the morning (as indicated by the 0 in the first row of the `extra_magic_morning` column).
+
+    "`{r}
+    seven_dwarfs_17_with_ps |>
+      select(
+        date,
+        extra_magic_morning,
+        wdw_ticket_season,
+        close,
+        weather_wdwhigh,
+        .fitted
+      ) |>
+      head() |>
+      knitr::kable()
 
 We can examine the distribution of propensity scores by exposure group.
-A nice way to visualize this is via "mirrored histograms".
+A nice way to visualize this is via mirrored histograms.
 The code below creates two histograms of the propensity scores, one on the "top" for the exposed group (the dates with Extra Magic Hours in the morning) and one on the "bottom" for the unexposed group.
 
 ```{r}
@@ -211,16 +203,18 @@ ggplot() +
 
 In the code above, the first `geom_histogram()` call creates the top histogram by subsetting the `seven_dwarfs_with_ps` data frame to only include those in the exposure group, where `extra_magic_morning == 1`.
 The x-axis for the histogram is the propensity score, which lives in the `.fitted` column of the data frame.
-The second `geom_histogram()` call creates the bottom histogram, subsetting to only those in the unexposed group, where `extra_magic_morning == 0`.
-Here, we use the `y` argument to *flip* the histogram by setting this to `-after_stat(count)`.
-`after_stat()` allows you to work with values created internally by ggplot2, such as `count`, the frequency counts for the histogram.
-Finally, we need to edit the y-axis to show the absolute value (rather than negative values below 0) so the correct numbers are displayed; this is accomplished by setting `label = abs` in the `scale_y_continuous()` function.
+The second `geom_histogram()` call creates the bottom histogram, subsetting only those in the unexposed group, where `extra_magic_morning == 0`.
+Here, we use the `y' argument to *flip* the histogram by setting this to`-after_stat(count)`.`after_stat()`allows you to work with values created internally by ggplot2, such as`count`, the frequency counts for the histogram. Finally, we need to edit the y-axis to show the absolute value (rather than negative values below 0), so the axis displays the correct numbers; we'll do this by setting`label = abs`in the`scale_y\_continuous()\` function.
 
 Here are some diagnostic insights we gain from Figure \@ref(fig:mirrored-ps).
 
-1.  Look for lack of overlap as a potential positivity problem. But too much overlap may be indicative of a poor model(? not necessarily. depends on the relative covariate distributions in the two groups).
-2.  Avg treatment effect among treated easier to estimate with precision (because of higher counts) than the control group.
-3.  A single outlier in either group with respect to range could be a problem and warrant data inspection (TODO: do this here?) *look at the model coefs here*.
+TODO: This section needs to be clarified 1.
+Look for lack of overlap as a potential positivity problem.
+But too much overlap may indicate a poor model (TODO: not necessarily. depends on the relative covariate distributions in the two groups).
+2.
+Avg treatment effect among treated is easier to estimate with precision (because of higher counts) than in the control group.
+3.
+A single outlier in either group concerning range could be a problem and warrant data inspection (TODO: do this here?) *look at the model coefs here*.
 
 *TODO* This may be a "nice" example -- should we also show a bad model (maybe only with ticket season or possibly overspecifying it)
 
@@ -236,49 +230,42 @@ Accurately specifying a DAG improves our ability to add the correct variables to
 However, confounders are not the only necessary type of variable to consider.
 For example, variables that are predictors of the *outcome* *but not the exposure* can improve the precision of propensity score models.
 Conversely, including variables that are predictors of the *exposure but not the outcome* (instrumental variables) can bias the model.
-Luckily, in practice, it seems that this bias is relatively negligible, especially compared to the risk of confounding bias [@Myers2011].
+Luckily, this bias seems relatively negligible in practice, especially compared to the risk of confounding bias [@Myers2011].
 
-Another type of variable to be wary of is a *collider*, a variable that is a descendant of both the exposure and the outcome.
+Another variable to be wary of is a *collider*, a descendant of both the exposure and outcome.
 If you specify your DAG correctly, you can avoid colliders by only using adjustment sets that completely close backdoor paths from the exposure to the outcome.
 However, some circumstances make this difficult: some colliders are inherently stratified by the study's design or the nature of follow-up.
 For example, loss-to-follow-up is a common source of collider-stratification bias; in Chapter XX, we'll discuss this further.
 
 A variable can also be both a confounder and a collider, as in the case of so-called butterfly bias:
 
-```{r}
-ggdag(butterfly_bias())
-```
+"\`{r} ggdag(butterfly_bias()) \`\`\`
 
-If we have all the variables measured well, we can avoid adjusting form by adjusting for either `a` or `b`.
-However, what should we do if we don't have those variables?
-Adjusting for `m` opens a biasing pathway that we cannot block through `a` and `b` (collider stratification bias), but `m` is also a confounder for `x` and `y`.
-As in the case above, it appears that confounding bias is often the worse of the two options, so we should adjust for `m` unless we have reason to believe it will cause more problems than it solves [@DingMiratrix2015].
+If we have all the variables measured well, we can avoid adjusting form by adjusting for either `a' or`b`. However, what should we do if we don't have those variables? Adjusting for`m' opens a biasing pathway that we cannot block through `a' and`b`(collider stratification bias), but`m' is also a confounder for `x` and `y'. As in the case above, it appears that confounding bias is often the worse of the two options, so we should adjust for`m' unless we have reason to believe it will cause more problems than it solves [@DingMiratrix2015].
 
 ### Don't use prediction metrics for causal modeling
 
 By and large, metrics commonly used for building prediction models are inappropriate for building causal models.
 Researchers and data scientists often make decisions about models using metrics like R^2^, AUC, accuracy, and (often inappropriately) p-values.
-However, a causal model's goal is not to predict as much about the outcome as possible [@hernán2021]; the goal is to accurately estimate the relationship between the exposure and outcome.
+However, a causal model's goal is not to predict as much about the outcome as possible [@hernán2021]; the goal is to estimate the relationship between the exposure and outcome accurately.
 A causal model needn't predict particularly well to be unbiased.
 
-Where these metrics serve a role is identifying the best *functional form* of a model.
+These metrics, however, may help identify a model's best *functional form*.
 Generally, we'll use DAGs and our domain knowledge to build the model itself.
 However, we may be unsure of the mathematical relationship between a confounder and the outcome or exposure.
 For instance, we may not know if the relationship is linear.
 Misspecifying this relationship can lead to residual confounding: we may only partially account for the confounder in question, leaving some bias in the estimate.
-Testing different functional forms using prediction-focused metrics can help improve the accuracy of the model itself, potentially allowing for better control.
+Testing different functional forms using prediction-focused metrics can help improve the model's accuracy, potentially allowing for better control.
 
-Another technique researchers sometimes use to determine confounders is to add a variable and determine the percent change in the coefficient between the outcome and exposure.
-For instance, we first model `y ~ x` to estimate the relationship between `x` and `y`.
-Then, we model `y ~ x + z` and see how much the coefficient on `x` has changed.
-A common rule is to add a variable if it changes the coefficient of `x` by 10%.
+Another technique researchers sometimes use to determine confounders is to add a variable, then calculate the percent change in the coefficient between the outcome and exposure.
+For instance, we first model `y ~ x` to estimate the relationship between `x` and `y'. Then, we model`y \~ x + z`and see how much the coefficient on`x`has changed. A common rule is to add a variable if it changes the coefficient of`x\` by 10%.
 
 Unfortunately, this technique is unreliable.
-As we've discussed, controlling for mediators, colliders, and instrumental variables all affect the estimate of the relationship between `x` and `y`, and usually they result in bias.
-In other words, there are many other types of variables besides confounders that can cause a change in the coefficient of the exposure.
-As we discuss above, confounding bias is often the most important factor, but systematically searching your variables for anything that changes the coefficient of the exposure can compound many types of bias.
+As we've discussed, controlling for mediators, colliders, and instrumental variables all affect the estimate of the relationship between `x` and \`y', and usually, they result in bias.
+In other words, there are many different types of variables besides confounders that can cause a change in the coefficient of the exposure.
+As discussed above, confounding bias is often the most crucial factor, but systematically searching your variables for anything that changes the exposure coefficient can compound many types of bias.
 
 ::: def-box
-Some types of estimates, such as the odds ratio and hazard ratio, suffer from an additional problem called *non-collapsibility*.
-For these types of estimates, adding noise variables (that is, variables that are not related to the exposure or outcome) don't reduce precision: they can bias the estimate as well--more the reason to avoid data-driven approaches to selecting variables for causal models.
+Some estimates, such as the odds and hazard ratios, suffer from an additional problem called *non-collapsibility*.
+For these estimates, adding noise variables (variables unrelated to the exposure or outcome) doesn't reduce precision: they can bias the estimate as well--more the reason to avoid data-driven approaches to selecting variables for causal models.
 :::
