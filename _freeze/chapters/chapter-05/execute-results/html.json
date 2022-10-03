@@ -1,10 +1,8 @@
 {
   "hash": "b66fa4a3923b227d16e9f8e1cda07ed7",
   "result": {
-    "markdown": "# Causal inference with `group_by()` and `summarize()`\n\n\n\n\n::: {.cell}\n\n```{.r .cell-code}\nrnorm(5)\n```\n\n::: {.cell-output .cell-output-stdout}\n```\n[1] -0.4470  0.5375 -0.6133  0.5083 -1.8566\n```\n:::\n:::\n",
-    "supporting": [
-      "chapter-05_files"
-    ],
+    "markdown": "# Causal inference with `group_by()` and `summarize()`\n\n\n\n\n::: {.cell}\n\n```{.r .cell-code}\nrnorm(5)\n```\n\n::: {.cell-output .cell-output-stdout}\n```\n[1]  0.30276 -0.25923  0.02967  0.91630  0.20728\n```\n:::\n:::\n",
+    "supporting": [],
     "filters": [
       "rmarkdown/pagebreak.lua"
     ],

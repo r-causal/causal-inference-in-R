@@ -7,20 +7,25 @@ options(
   ggplot2.discrete.colour = ggokabeito::palette_okabe_ito(),
   ggplot2.discrete.fill = ggokabeito::palette_okabe_ito(),
   ggplot2.continuous.colour = "viridis",
-  ggplot2.continuous.fill = "viridis"
+  ggplot2.continuous.fill = "viridis",
+  book.base_family = "sans",
+  book.base_size = 14
 )
 
 library(ggplot2)
 
 theme_set(
-  theme_minimal(base_size = 12, base_family = "Open Sans") %+replace% 
+  theme_minimal(
+    base_size = getOption("book.base_size"), 
+    base_family = getOption("book.base_family")
+  ) %+replace% 
     theme(
       panel.grid.minor = element_blank()
     )
 )
 
 theme_dag <- function() {
-  ggdag::theme_dag(base_family = "Open Sans")
+  ggdag::theme_dag(base_family = getOption("book.base_family"))
 }
 
 geom_dag_label_repel <- function(...) {
@@ -29,11 +34,11 @@ geom_dag_label_repel <- function(...) {
     box.padding = 3.5, 
     inherit.aes = FALSE,
     max.overlaps = Inf, 
-    family = "Open Sans",
+    family = getOption("book.base_family"),
     seed = 10,
     label.size = NA, 
     label.padding = 0.1,
-    size = 4,
+    size = getOption("book.base_size") / 3,
     ...
   ) 
 }

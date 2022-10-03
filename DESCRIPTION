@@ -29,8 +29,10 @@ Imports:
     tipr (>= 1.0.1),
     touringplans (>= 0.0.0.9000)
 Suggests: 
+    downlit,
     grkstyle (>= 0.0.3),
-    styler
+    styler,
+    xml2
 Remotes: 
     gadenbuie/grkstyle,
     LucyMcGowan/touringplans,

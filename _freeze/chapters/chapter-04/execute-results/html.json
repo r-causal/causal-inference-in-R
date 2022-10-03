@@ -1,7 +1,7 @@
 {
-  "hash": "e814a9cd3d20e98370124983059d621a",
+  "hash": "0e074a89e72cb6aa20bfab165ebeffde",
   "result": {
-    "markdown": "# Estimating counterfactuals\n\n\n\n\n\n## What is a counterfactual?\n\n## Target Trials\n",
+    "markdown": "# Estimating counterfactuals {#sec-counterfactuals}\n\n\n\n\n\n## What is a counterfactual?\n\n## Target Trials\n",
     "supporting": [],
     "filters": [
       "rmarkdown/pagebreak.lua"

@@ -1,7 +1,7 @@
 {
   "hash": "809af215d387cf211f090b48f3124dfa",
   "result": {
-    "markdown": "# Evaluating your propensity score model\n\n---\ncsl: ../aje.csl\n---\n\n\n\n\n::: {.cell}\n\n```{.r .cell-code}\nrnorm(5)\n```\n\n::: {.cell-output .cell-output-stdout}\n```\n[1] -0.4102  0.6096 -1.7782 -0.8000  0.4452\n```\n:::\n:::\n\n\n## Calculating the standardized mean difference\n\n## Visualizing balance via Love Plots, boxplots, and eCDF plots\n",
+    "markdown": "# Evaluating your propensity score model\n\n\n\n\n::: {.cell}\n\n```{.r .cell-code}\nrnorm(5)\n```\n\n::: {.cell-output .cell-output-stdout}\n```\n[1]  0.5360 -0.3277  0.7232 -0.1437 -0.8859\n```\n:::\n:::\n\n\n## Calculating the standardized mean difference\n\n## Visualizing balance via Love Plots, boxplots, and eCDF plots\n",
     "supporting": [],
     "filters": [
       "rmarkdown/pagebreak.lua"

@@ -1,0 +1,20 @@
+{
+  "hash": "34a6b943aa5b8445425d655c5aebc95b",
+  "result": {
+    "markdown": "# Expressing causal questions as DAGs {#sec-dags}\n\n\n\n\n\n\n\n## Visualizing Causal Assumptions\n\n\n\n::: {.cell}\n\n```{.r .cell-code}\nx <- 1:5\nx\n```\n\n::: {.cell-output .cell-output-stdout}\n```\n[1] 1 2 3 4 5\n```\n:::\n:::\n\n\n\n## DAGs in R\n\n## Common Structures of Bias\n",
+    "supporting": [
+      "chapter-03_files"
+    ],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {
+      "knitr": [
+        "{\"type\":\"list\",\"attributes\":{},\"value\":[]}"
+      ]
+    },
+    "preserve": null,
+    "postProcess": false
+  }
+}
