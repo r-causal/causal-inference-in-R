@@ -1,8 +1,0 @@
-# Preparing data to answer causal questions
-
-Text for chapter 3. 
-
-```{r}
-x <- 1:5
-x
-```

@@ -1,0 +1,15 @@
+# Other approaches to causal inference
+
+{{< include 00-setup.qmd >}}
+
+## Targeted Learning
+
+```{r}
+rnorm(5)
+```
+
+## Instrumental variable analysis
+
+## Regression discontinuity
+
+## Difference-in-Difference

@@ -1,0 +1,14 @@
+# Expressing causal questions as DAGs {#sec-dags}
+
+{{< include 00-setup.qmd >}}
+
+## Visualizing Causal Assumptions
+
+```{r}
+x <- 1:5
+x
+```
+
+## DAGs in R
+
+## Common Structures of Bias

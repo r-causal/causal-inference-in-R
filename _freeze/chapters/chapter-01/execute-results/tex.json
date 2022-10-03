@@ -1,0 +1,20 @@
+{
+  "hash": "dc879faefba794d9ed64b1f46d4f380e",
+  "result": {
+    "markdown": "\\mainmatter\n\n# What is a causal question? {#sec-causal-question}\n\n\n\n\n\n\n\n## Description, prediction, and explanation\n\n\n\n::: {.cell}\n\n```{.r .cell-code}\nrnorm(5)\n```\n\n::: {.cell-output .cell-output-stdout}\n```\n[1] -1.8159  0.7840  0.1965 -0.6607  1.0943\n```\n:::\n:::\n\n\n\n## Causal Assumptions\n\n## When do standard methods succeed and fail?\n",
+    "supporting": [
+      "chapter-01_files"
+    ],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {
+      "knitr": [
+        "{\"type\":\"list\",\"attributes\":{},\"value\":[]}"
+      ]
+    },
+    "preserve": null,
+    "postProcess": false
+  }
+}

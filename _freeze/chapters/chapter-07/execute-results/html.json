@@ -1,0 +1,14 @@
+{
+  "hash": "7b51db47c2e7694be8b029971feffdcd",
+  "result": {
+    "markdown": "# Preparing data to answer causal questions\n\n\n\n\n\n## Data wrangling and recipes\n\n\n::: {.cell}\n\n```{.r .cell-code}\nrnorm(5)\n```\n\n::: {.cell-output .cell-output-stdout}\n```\n[1]  0.4082 -0.2159 -0.3677 -1.3871 -1.0305\n```\n:::\n:::\n\n\n## Recognizing missing data\n\n## Working with multiple data sources\n\n## Exploring and visualizing data and assumptions\n\n## Presenting descriptive statistics\n",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "hash": "0c4033870d4c2666b8e9a897aaa34986",
+  "result": {
+    "markdown": "# Causal survival analysis\n\n\n\n\n\n\n\n## Preparing data for survival analysis\n\n\n\n::: {.cell}\n\n```{.r .cell-code}\nrnorm(5)\n```\n\n::: {.cell-output .cell-output-stdout}\n```\n[1]  1.312368 -0.006481  0.951797 -0.824272  1.195522\n```\n:::\n:::\n\n\n\n## Pooled logistic regression\n\n## Confidence intervals for causal survival models\n",
+    "supporting": [
+      "chapter-17_files"
+    ],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {
+      "knitr": [
+        "{\"type\":\"list\",\"attributes\":{},\"value\":[]}"
+      ]
+    },
+    "preserve": null,
+    "postProcess": false
+  }
+}

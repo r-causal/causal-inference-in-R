@@ -1,0 +1,7 @@
+# An introduction to touringplans
+
+{{< include 00-setup.qmd >}}
+
+```{r}
+rnorm(5)
+```

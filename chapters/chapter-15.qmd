@@ -1,0 +1,13 @@
+# Missingness
+
+{{< include 00-setup.qmd >}}
+
+## Missingness as structural bias
+
+```{r}
+rnorm(5)
+```
+
+## Multiple Imputation
+
+## Combining MICE and IPW

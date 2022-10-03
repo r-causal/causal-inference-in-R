@@ -1,0 +1,15 @@
+\mainmatter
+
+# What is a causal question? {#sec-causal-question}
+
+{{< include 00-setup.qmd >}}
+
+## Description, prediction, and explanation
+
+```{r}
+rnorm(5)
+```
+
+## Causal Assumptions
+
+## When do standard methods succeed and fail?

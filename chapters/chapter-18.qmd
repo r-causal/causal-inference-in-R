@@ -1,0 +1,13 @@
+# Causal mediation analysis
+
+{{< include 00-setup.qmd >}}
+
+## Estimating direct effects
+
+```{r}
+rnorm(5)
+```
+
+## Estimating indirect effects
+
+## Allowing for interactions

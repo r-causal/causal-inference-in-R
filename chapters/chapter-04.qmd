@@ -1,0 +1,7 @@
+# Estimating counterfactuals {#sec-counterfactuals}
+
+{{< include 00-setup.qmd >}}
+
+## What is a counterfactual?
+
+## Target Trials

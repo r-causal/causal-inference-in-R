@@ -1,0 +1,83 @@
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+name: quarto
+
+jobs:
+  build:
+    runs-on: macOS-latest
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+      isExtPR: ${{ github.event.pull_request.head.repo.fork == true }}
+      NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+
+      - name: Setup R
+        uses: r-lib/actions/setup-r@v1
+        
+      - name: Set up Quarto
+        uses: quarto-dev/quarto-actions/setup@v2
+        with:
+          version: 1.1.251
+        
+      - name: Install system dependencies 
+        run: brew install pandoc harfbuzz freetype2 fribidi
+
+      - name: Install Google Fonts
+        run: |
+          brew tap homebrew/cask
+          brew tap homebrew/cask-fonts
+          brew install font-open-sans
+
+      - name: Query dependencies
+        run: |
+          options(repos = 'https://packagemanager.rstudio.com/all/latest')
+          install.packages('remotes')
+          saveRDS(remotes::dev_package_deps(dependencies = TRUE), ".github/depends.Rds", version = 2)
+          writeLines(sprintf("R-%i.%i", getRversion()$major, getRversion()$minor), ".github/R-version")
+        shell: Rscript {0}
+
+      - name: Cache R packages
+        uses: actions/cache@v2
+        with:
+          path: ${{ env.R_LIBS_USER }}
+          key: ${{ hashFiles('.github/R-version') }}-1-${{ hashFiles('.github/depends.Rds') }}
+          restore-keys: ${{ hashFiles('.github/R-version') }}-1-
+
+      - name: Configure Git user
+        run: |
+          git config --local user.name "$GITHUB_ACTOR"
+          git config --local user.email "$GITHUB_ACTOR@users.noreply.github.com"
+
+      - name: Install Package Dependencies
+        run: |-
+          options(repos = 'https://packagemanager.rstudio.com/all/latest')
+          install.packages('remotes')
+          remotes::install_deps(dependencies = TRUE)
+        shell: Rscript {0}
+        
+      - name: Render Quarto Project
+        uses: quarto-dev/quarto-actions/render@v2
+
+      - name: Deploy to Netlify
+        if: contains(env.isExtPR, 'false')
+        id: netlify-deploy
+        uses: nwtgck/actions-netlify@v1.1
+        with:
+          publish-dir: './_book'
+          production-branch: main
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          deploy-message:
+            'Deploy from GHA: ${{ github.event.pull_request.title || github.event.head_commit.message }} (${{ github.sha }})'
+          # these all default to 'true'
+          enable-pull-request-comment: false
+          enable-commit-comment: false
+          # enable-commit-status: true
+          # overwrites-pull-request-comment: true
+        timeout-minutes: 1

@@ -1,0 +1,11 @@
+# Evaluating your propensity score model
+
+{{< include 00-setup.qmd >}}
+
+```{r}
+rnorm(5)
+```
+
+## Calculating the standardized mean difference
+
+## Visualizing balance via Love Plots, boxplots, and eCDF plots

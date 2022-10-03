@@ -1,0 +1,82 @@
+project:
+  type: book
+  pre-render: R/setup.R
+
+callout-appearance: simple
+  
+execute:
+  freeze: auto  
+  echo: true 
+  dev: "ragg_png"
+  dpi: 740 
+  out.width: "80%"
+  fig.width: 6
+  fig.asp: 0.618
+  fig.retina: 3
+  fig.align: "center"
+  fig.show: "hold"
+  
+book:
+  title: "Causal Inference in R"
+  author: "Malcolm Barrett, Lucy D'Agostino McGowan, Travis Gerke"
+  date: "today"
+  description: > 
+      This book covers causal inference techniques to help statisticians, 
+      epidemiologists, economists, and data scientists implement best practices 
+      using R.
+  repo-url: https://github.com/malcolmbarrett/causal-inference-in-r
+  repo-actions: [edit, issue]
+  chapters:
+    - index.qmd
+    
+    - part: Asking Causal Questions
+      chapters: 
+      - chapters/chapter-01.qmd
+      - chapters/chapter-02.qmd
+      - chapters/chapter-03.qmd
+      - chapters/chapter-04.qmd
+      - chapters/chapter-05.qmd
+      - chapters/chapter-06.qmd
+      
+    - part: The Design Phase 
+      chapters: 
+      - chapters/chapter-07.qmd
+      - chapters/chapter-08.qmd
+      - chapters/chapter-09.qmd
+      - chapters/chapter-10.qmd
+      - chapters/chapter-11.qmd
+      
+    - part: Estimating Causal Effects 
+      chapters: 
+      - chapters/chapter-12.qmd
+      - chapters/chapter-13.qmd
+      - chapters/chapter-14.qmd
+      - chapters/chapter-15.qmd
+      - chapters/chapter-16.qmd
+      - chapters/chapter-17.qmd
+      - chapters/chapter-18.qmd
+      - chapters/chapter-19.qmd
+      - chapters/chapter-20.qmd
+      
+    - chapters/references-99.qmd
+      
+bibliography: citations.bib
+
+format:
+  html:
+    code-link: true
+    theme:
+      - cosmo
+      - style.scss
+  # pdf:
+  #   documentclass: krantz
+  #   link-citations: true
+  #   colorlinks: true
+  #   lot: true
+  #   lof: true
+  #   includes:
+  #     in_header: latex/preamble.tex
+  #     before_body: latex/before_body.tex
+  #     after_body: latex/after_body.tex
+editor: visual
+

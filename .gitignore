@@ -6,3 +6,5 @@ _book
 rsconnect
 _bookdown_files
 .DS_Store
+
+/.quarto/

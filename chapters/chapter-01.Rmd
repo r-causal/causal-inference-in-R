@@ -1,9 +1,0 @@
-\mainmatter
-
-# What is a causal question?
-
-Text for chapter 1.
-
-```{r}
-rnorm(5)
-```

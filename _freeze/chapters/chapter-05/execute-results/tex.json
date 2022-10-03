@@ -1,0 +1,20 @@
+{
+  "hash": "b66fa4a3923b227d16e9f8e1cda07ed7",
+  "result": {
+    "markdown": "# Causal inference with `group_by()` and `summarize()`\n\n\n\n\n::: {.cell}\n\n```{.r .cell-code}\nrnorm(5)\n```\n\n::: {.cell-output .cell-output-stdout}\n```\n[1] -0.02887 -0.80302  0.36840  0.33042 -1.40393\n```\n:::\n:::\n",
+    "supporting": [
+      "chapter-05_files"
+    ],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {
+      "knitr": [
+        "{\"type\":\"list\",\"attributes\":{},\"value\":[]}"
+      ]
+    },
+    "preserve": null,
+    "postProcess": false
+  }
+}

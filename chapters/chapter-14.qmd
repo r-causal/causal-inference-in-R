@@ -1,0 +1,13 @@
+# Categorical exposures
+
+{{< include 00-setup.qmd >}}
+
+## Calculating propensity scores for categorical exposures
+
+```{r}
+rnorm(5)
+```
+
+## Diagnostics with many categories
+
+## Fitting the outcome model again

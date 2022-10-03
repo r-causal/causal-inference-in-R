@@ -1,0 +1,20 @@
+{
+  "hash": "22032a0e6e14411b69033ee514dc2692",
+  "result": {
+    "markdown": "# Missingness\n\n\n\n\n\n\n\n## Missingness as structural bias\n\n\n\n::: {.cell}\n\n```{.r .cell-code}\nrnorm(5)\n```\n\n::: {.cell-output .cell-output-stdout}\n```\n[1] -0.2327  1.3771 -1.3351 -1.2544 -0.5897\n```\n:::\n:::\n\n\n\n## Multiple Imputation\n\n## Combining MICE and IPW\n",
+    "supporting": [
+      "chapter-15_files"
+    ],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {
+      "knitr": [
+        "{\"type\":\"list\",\"attributes\":{},\"value\":[]}"
+      ]
+    },
+    "preserve": null,
+    "postProcess": false
+  }
+}

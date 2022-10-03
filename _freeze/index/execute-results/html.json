@@ -1,0 +1,14 @@
+{
+  "hash": "113be549bc2fc4b47879236d0b69597f",
+  "result": {
+    "markdown": "# Preface {.unnumbered}\n\n\n\n",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "hash": "6c3e89b488fc46dbeef2059c5052a2b4",
+  "result": {
+    "markdown": "# An introduction to touringplans\n\n\n\n\n::: {.cell}\n\n```{.r .cell-code}\nrnorm(5)\n```\n\n::: {.cell-output .cell-output-stdout}\n```\n[1] -1.1448  0.3385  0.8950  1.1600 -1.8249\n```\n:::\n:::\n",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}
