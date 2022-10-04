@@ -4,13 +4,13 @@
 
 ## Estimands, Estimators, Estimates
 
-When we're conducting an analysis in order to make causal inferences, we need to keep the causal question close to our chest.
+When analyzing to make causal inferences, we need to keep the causal question that we're interested in close to our chest.
 The causal question helps guide not just the assumptions we need to make but also how we will go about answering the question.
-This chapter deals with three ideas that are closely related to how we answer causal questions: the estimand, the estimator, and the estimate.
+This chapter deals with three ideas closely related to answering causal questions: the estimand, the estimator, and the estimate.
 The **estimand** is the *target of interest*, the **estimator** is the method by which we approximate this estimand using data, and the **estimate** is the value we get when we plug our data into the estimator.
-You can think of the **estimand** as glossy picture of a beautiful cake that we are trying to bake, the **estimator** as the recipe, and the **estimate** as the cake that we actually pull out of our oven.
+You can think of the **estimand** as a glossy picture of a beautiful cake we are trying to bake, the **estimator** as the recipe, and the **estimate** as the cake we pull out of our oven.
 
-So far we have been estimating the average treatment effect, that is the effect of the exposure of interest averaged across the whole population.
+So far, we have been estimating the average treatment effect, the effect of the exposure of interest averaged across the whole population.
 The **estimand** here is the expected value of the difference in potential outcomes across all individuals:
 
 $$E[Y(1) - Y(0)]$$
@@ -20,7 +20,7 @@ For example, in a randomized controlled trial, our estimator could just be the a
 
 $$\sum_{i=1}^{N}\frac{Y_i\times X_i}{N_{\textrm{exposed}}} - \frac{Y_i\times (1-X_i)}{N_{\textrm{unexposed}}}$$
 
-Where $X$ is just an indicator for exposure ($X = 1$ for the exposed and $X = 0$ for the unexposed.) Suppose we have some randomized controlled trial data for 100 participants in a dataset called `rct`.
+Where $X$ is just an indicator for exposure ($X = 1$ for the exposed and $X = 0$ for the unexposed.) Suppose we have randomized controlled trial data for 100 participants in a dataset called `rct`.
 Here is some code to simulate such a data set.
 
 ```{r}
@@ -38,7 +38,7 @@ rct <- tibble(
 )
 ```
 
-Here the exposure is `x` and the outcome is `y`.
+Here the exposure is `x`, and the outcome is \`y'.
 The true average treatment effect is 1.
 
 ```{r}
@@ -65,7 +65,7 @@ rct
 ```
 
 Below are two ways to estimate this in R.
-In the first example, we calculate the difference in `y` between exposure values using a formula approach
+Using a formula approach, we calculate the difference in \`y' between exposure values in the first example.
 
 ```{r}
 rct |>
@@ -96,12 +96,12 @@ rct |>
 Because $X$, the exposure, was randomly assigned, this estimator results in an unbiased estimate of our estimand of interest.
 
 What do we mean by unbiased, though?
-Notice here that while the "true" causal effect is 1, this estimate is not exactly 1, it is `r round(estimate, 3)`.
+Notice that while the "true" causal effect is 1, this estimate is not precisely 1; it is `r round(estimate, 3)`.
 Why the difference?
-This randomized controlled trial was run on a sample of 100 participants, not the whole population.
+This randomized controlled trial included a sample of 100 participants, not the whole population.
 As that sample increases, our estimate will get closer to the truth.
 Let's try that.
-Let's simulate the data again, but increase the sample size from 100 to 100,000
+Let's simulate the data again but increase the sample size from 100 to 100,000
 
 ```{r}
 set.seed(928)
@@ -121,22 +121,23 @@ rct |>
   )
 ```
 
-Notice now the estimate is 1.01, much closer to the true average treatment effect, 1.
+Notice how the estimate is 1.01, much closer to the actual average treatment effect, 1.
 
-If $X$ had not been randomly assigned, we could use the pre-exposure covariates to estimate the conditional probability of $X$ (the propensity score), and incorporate this probability in a *weight* $(w_i)$ to estimate this causal effect.
+Suppose $X$ had not been randomly assigned.
+In that case, we could use the pre-exposure covariates to estimate the conditional probability of $X$ (the propensity score) and incorporate this probability in a *weight* $(w_i)$ to estimate this causal effect.
 For example, we could use the following *estimator* to *estimate* our average treatment effect *estimand*:
 
 $$\frac{\sum_{i=1}^NY_i\times X_i\times w_i}{\sum_{i=1}^NX_i\times w_i}-\frac{\sum_{i=1}^NY_i\times(1-X_i)\times w_i}{\sum_{i=1}^N(1-X_i)\times w_i}$$
 
 ## Estimating treatment effects with specific targets in mind
 
-Depending on the goal of the study, or the causal question at hand, we may want to estimate different *estimands*.
+Depending on the study's goal, or the causal question, we may want to estimate different *estimands*.
 Here, we will outline the most common causal estimands, their target populations, the causal questions they may help answer, and the methods used to estimate them [@greifer2021choosing].
 
 ### Average treatment effect
 
 A common estimand is the average treatment effect (ATE).
-The target population is the *full sample* or population of interest.
+The target population is the *total sample* or population of interest.
 The **estimand** here is the expected value of the difference in potential outcomes across all individuals:
 
 $$E[Y(1) - Y(0)]$$
@@ -144,16 +145,17 @@ $$E[Y(1) - Y(0)]$$
 An example research question is "Should a policy be applied to all eligible patients?" [@greifer2021choosing].
 
 Most randomized controlled trials are designed with the ATE as the target estimand.
-In a non-randomized setting, the ATE can be estimated using full matching, where each observation in the exposed group is matched to at least one observation in the control group (and vice versa) without replacement.
-Alternatively, the following inverse probability weight will allow for the ATE to be estimated using propensity score weighting.
+In a non-randomized setting, you can estimate the ATE using full matching.
+Each observation in the exposed group is matched to at least one observation in the control group (and vice versa) without replacement.
+Alternatively, the following inverse probability weight will allow you to estimate the ATE using propensity score weighting.
 
 $$w_{ATE} = \frac{X}{p} + \frac{(1 - X)}{1 - p}$$
 
 In other words, the weight is one over the propensity score for those in the exposure group and one over one minus the propensity score for the control group.
-Intuitively, this weight equates to the inverse probability of being in the exposure group that you were observed to be in.
+Intuitively, this weight equates to the inverse probability of being in the exposure group in which you actually were.
 
-Let's dig a bit deeper into this causal estimand using the Touring Plans data.
-Recall in @sec-using-ps we examined the relationship between whether there were "Extra Magic Hours" in the morning and the average wait time for the Seven Dwarfs Mine Train the same day between 5pm and 6pm.
+Let's dig deeper into this causal estimand using the Touring Plans data.
+Recall that in @sec-using-ps, we examined the relationship between whether there were "Extra Magic Hours" in the morning and the average wait time for the Seven Dwarfs Mine Train the same day between 5 pm and 6 pm.
 Let's reconstruct our data set, `seven_dwarfs` and fit the same propensity score model specified previously.
 
 ```{r}
@@ -198,13 +200,13 @@ tbl_summary(seven_dwarfs_with_ps,
   add_overall(last = TRUE) # add an overall column to the table
 ```
 
-From @tbl-unweighted-gtsummary, there were 291 days that did not have extra magic hours in the morning and 56 that did.
-We also see 30% of the extra magic mornings were during peak season compared to 21% of the non-extra magic mornings that were during peak season.
-Additionally, days that had extra magic mornings were more likely to close at 6pm (18:00:00) compared to non-magic hour mornings.
-The median temperature on days with extra magic hour mornings is a bit lower (79 degrees) compared to non-extra magic hour morning days.
+From @tbl-unweighted-gtsummary, 291 days did not have extra magic hours in the morning, and 56 did.
+We also see that 30% of the extra magic mornings were during peak season compared to 21% of the non-extra magic mornings.
+Additionally, days with extra magic mornings were more likely to close at 6 pm (18:00:00) compared to non-magic hour mornings.
+The median temperature on days with extra magic hour mornings is slightly lower (79 degrees) compared to non-extra magic hour morning days.
 
 Now let's construct our propensity score weight to estimate the ATE.
-The {propensity} package has helper functions to allow you to estimate weights.
+The {propensity} package has helper functions to estimate weights.
 The `wt_ate` function will calculate ATE weights.
 
 ```{r}
@@ -213,22 +215,22 @@ seven_dwarfs_wts <- seven_dwarfs_with_ps |>
   mutate(w_ate = wt_ate(.fitted, extra_magic_morning))
 ```
 
-Let's look at a distribution of these weights
+Let's look at a distribution of these weights.
 
 ```{r}
 ggplot(seven_dwarfs_wts, aes(x = w_ate)) +
   geom_histogram(bins = 50)
 ```
 
-Here we see that many weights are close to 1 (the smallest possible value for an ATE weight) with a long tail leading to the largest weight (around 24).
+Here we see that many weights are close to 1 (the smallest possible value for an ATE weight), with a long tail leading to the largest weight (around 24).
 This distribution highlights a potential problem with ATE weights.
-They range from 1 to infinity; in small samples, if your weights are too large this can lead to bias in your estimates (known as finite sample bias).
+They range from 1 to infinity; if your weights are too large in small samples, this can lead to bias in your estimates (known as finite sample bias).
 
 The {gtsummary} package allows the creation of *weighted* tables, which can help us build an intuition for the psuedopopulation created by the weights.
-To do this, we need to load the {survey} package and create a survey design object.
-The {survey} package has great support for calculating statistics and models using weights.
-Historically, the techniques needed to incorporate weights were used for survey analyses.
-Even though we are not doing a survey analysis, the same techniques are useful for our propensity score weights.
+First, we must load the {survey} package and create a survey design object.
+The {survey} package supports calculating statistics and models using weights.
+Historically, many researchers applied techniques incorporating weights to survey analyses.
+Even though we are not doing a survey analysis, the same techniques are helpful for our propensity score weights.
 
 ```{r}
 #| label: tbl-weighted-gtsummary
@@ -247,18 +249,15 @@ tbl_svysummary(seven_dwarfs_svy,
   add_overall(last = TRUE) # add an overall column to the table
 ```
 
-Notice in @tbl-weighted-gtsummary, the variables are more **balanced** between the groups.
-For example, looking at the variable `wdw_ticket_season`, in @tbl-unweighted-gtsummary we see that a higher percent of the days with extra magic hours in the mornings were during the peak season (30%) compared to the percent of days without extra magic hours in the morning (21%).
+Notice in @tbl-weighted-gtsummary that the variables are more **balanced** between the groups.
+For example, looking at the variable `wdw_ticket_season`, in @tbl-unweighted-gtsummary we see that a higher percentage of the days with extra magic hours in the mornings were during the peak season (30%) compared to the percent of days without extra magic hours in the morning (21%).
 In @tbl-weighted-gtsummary this is balanced, with a weighted percent of 21% peak days in the extra magic morning group and 22% in the no extra magic morning group.
-The weights here are changing the distribution of the variables by weighting each of the observations so that the two groups appear balanced.
-Also notice that the distribution of variables in @tbl-weighted-gtsummary now matches the Overall column of @tbl-unweighted-gtsummary.
+The weights change the variables' distribution by weighting each observation so that the two groups appear balanced.
+Also, notice that the distribution of variables in @tbl-weighted-gtsummary now matches the Overall column of @tbl-unweighted-gtsummary.
 That is what ATE weights do: they make the distribution of variables included in the propensity score for each exposure group look like the overall distribution across the whole sample.
 
-Let's look at another visualization that can help us understand the weighted psuedopopulation that is created by the ATE weights: a mirrored histogram.
-We will plot the distribution of the propensity score for the days in the "exposure" group (days with extra magic hours in the morning) on the top half of the plot, then we will mirror the distribution of the propensity score for the days in the "unexposed" group below it.
-This allows us to easily visually compare the two distributions.
-Then we will overlay weighted histograms to demonstrate how these distributions differ after incorporating the weights.
-The {halfmoon} package includes a function `geom_mirror_histogram` to assist with this visualization.
+Let's look at another visualization that can help us understand the weighted psuedopopulation created by the ATE weights: a mirrored histogram.
+We will plot the distribution of the propensity score for the days in the exposure group (days with extra magic hours in the morning) on the top half of the plot; then, we will mirror the distribution of the propensity score for the days in the"unexposed group below it. This visualization allows us to compare the two distributions quickly. Then we will overlay weighted histograms to demonstrate how these distributions differ after incorporating the weights. The {halfmoon} package includes a function `geom_mirror_histogram` to assist with this visualization.
 
 ```{r}
 library(halfmoon)
@@ -279,25 +278,25 @@ ggplot(seven_dwarfs_wts, aes(.fitted, group = extra_magic_morning)) +
 ```
 
 We can learn a few things from this figure.
-First, we can readily see that there are more "unexposed" days, that is days without extra magic hours in the morning, compared to "exposed" in the observed population.
+First, we can readily see that there are more "unexposed" days---days without extra magic hours in the morning---compared to "exposed" in the observed population.
 We can see this by examining the darker histograms, which show the distributions in the observed sample.
-In the same vein, the exposed days are "upweighted" to a stronger degree, as evidenced by the amount of light blue we see on the top.
-We can also see that after weighting the two distributions look similar, that is the shape of the blue weighted distribution on top looks similar to the red weighted distribution below.
+Similarly, the exposed days are upweighted more substantially, as evidenced by the light blue we see on the top.
+We can also see that after weighting, the two distributions look similar; the shape of the blue weighted distribution on top looks comparable to the red weighted distribution below.
 
 ### Average treatment effect among the treated
 
 The target population to estimate the average treatment effect among the treated (ATT) is the *exposed* (treated) population.
-The causal estimand conditions on those in the exposed group.
+This causal estimand conditions on those in the exposed group:
 
 $$E[Y(1) - Y(0) | X = 1]$$
 
-Example research questions where the ATT is of interest could include "Should we stop our marketing campaign to those currently receiving it?" or "Should medical providers stop recommending treatment for those currently receiving it?"[@greifer2021choosing]
+Example research questions where the ATT is of interest could include "Should we stop our marketing campaign to those currently receiving it?" or "Should medical providers stop recommending treatment for those currently receiving it?" [@greifer2021choosing]
 
 The ATT weight is estimated by:
 
 $$w_{ATT} = X + \frac{(1 - X)p}{1 - p}$$
 
-Let's add the ATT weights to the `seven_dwarfs_wts` data frame and look at their distribution
+Let's add the ATT weights to the `seven_dwarfs_wts` data frame and look at their distribution.
 
 ```{r}
 seven_dwarfs_wts <- seven_dwarfs_wts |>
@@ -307,9 +306,10 @@ ggplot(seven_dwarfs_wts, aes(w_att)) +
   geom_histogram(bins = 50)
 ```
 
-Compared to the ATE weights, these weights look more *stable*, that is, the distribution of the weights is not heavily skewed and the range is small, from around zero to a bit over one, with many at exactly one.
+Compared to the ATE weights, these weights look more *stable*; the distribution of the weights is not heavily skewed, and the range is small, from ground zero to a bit over one, with many at precisely one.
 These weights are exactly one for all days in the exposed group.
-Theoretically, for unexposed days these weights can range from zero to infinity, but because we have many more unexposed days compared to exposed in this particular sample, the range is much smaller, meaning the vast majority of unexposed days are "down weighted" to match the variable distribution of the exposed days.
+Theoretically, for unexposed days these weights can range from zero to infinity.
+Still, because we have many more unexposed days compared to exposed in this particular sample, the range is much smaller, meaning the vast majority of unexposed days are "down-weighted" to match the variable distribution of the exposed days.
 Let's take a look at the weighted table to see this a bit more clearly.
 
 ```{r}
@@ -328,10 +328,11 @@ tbl_svysummary(seven_dwarfs_svy,
   add_overall(last = TRUE) # add an overall column to the table
 ```
 
-We again acheive balance between groups, but the target values in @tbl-weighted-att differ from the previous tables.
-Recall in our ATE weighted table (@tbl-weighted-gtsummary), when looking at the `wdw_ticket_season` variable we saw the weighted percent in the peak season balanced close to 22%, the overall percent of peak days in the observed sample.
-Now, we again see balance, but the weighted percent of peak season days is 30% in the exposed and unexposed groups, reflecting the percent in the unweighted exposure group.
-Comparing this weighted table to our unweighted table (@tbl-unweighted-gtsummary), all columns are attempting to match the exposed column from the unweighted table, that is the "target" population is the exposed group, the days with extra magic hours in the morning.
+We again achieve a balance between groups, but the target values in @tbl-weighted-att differ from the previous tables.
+Recall in our ATE weighted table (@tbl-weighted-gtsummary), when looking at the `wdw_ticket_season` variable, we saw the weighted percent in the peak season balanced close to 22%, the overall percent of peak days in the observed sample.
+We again see balance, but the weighted percent of peak season days is 30% in the exposed and unexposed groups, reflecting the percent in the unweighted exposure group.
+If you compare @tbl-weighted-att to our unweighted table (@tbl-unweighted-gtsummary), you might notice that the columns are most similar to the exposed column from the unweighted table.
+This is because the "target" population is the exposed group, the days with extra magic hours in the morning, so we're trying to make the comparison group (no magic hours) as similar to that group as possible.
 
 We can again create a mirrored histogram to observe the weighted psuedopopulation.
 
@@ -352,18 +353,18 @@ ggplot(seven_dwarfs_wts, aes(.fitted, group = extra_magic_morning)) +
   )
 ```
 
-Since every day in the exposed group has a weight of 1, the distribution of the propensity scores (the dark bars above 0 on the graph) exactly overlap with the weighted distribution overlaid in blue.
-In the unexposed population, we see that almost all observations are *down weighted*, that is the dark red distribution is smaller than the distribution of the propensity scores and more closely matches the exposed distribution above it.
-When there are many more observations in the unexposed group compared to the exposed, as we see here, the ATT is easier to estimate.
+Since every day in the exposed group has a weight of 1, the distribution of the propensity scores (the dark bars above 0 on the graph) overlaps exactly with the weighted distribution overlaid in blue.
+In the unexposed population, we see that almost all observations are *down weighted*; the dark red distribution is smaller than the distribution of the propensity scores and more closely matches the exposed distribution above it.
+The ATT is easier to estimate when there are many more observations in the unexposed group compared to the exposed one.
 
 ### Average treatment effect among the unexposed
 
 The target population to estimate the average treatment effect among the unexposed (control) (ATU / ATC) is the *unexposed* (control) population.
-The causal estimand conditions on those in the unexposed group.
+This causal estimand conditions on those in the unexposed group.
 
 $$E[Y(1) - Y(0) | X = 0]$$
 
-Example research questions where the ATC is of interest could include "Should we send our marketing campaign to those not currently receiving it?" or "Should medical providers begin recommending treatment for those not currently receiving it?"[@greifer2021choosing]
+Example research questions where the ATC is of interest could include "Should we send our marketing campaign to those not currently receiving it?" or "Should medical providers begin recommending treatment for those not currently receiving it?" [@greifer2021choosing]
 
 The ATU weight is estimated by:
 
@@ -379,7 +380,7 @@ ggplot(seven_dwarfs_wts, aes(w_atu)) +
 
 The distribution of these weights looks very similar to what we saw with the ATE weights -- several around 1, with a long tail.
 These weights will be 1 for all observations in the unexposed group; they can range from 0 to infinity for the exposed group.
-Because we have more observations in our unexposed group, our exposed observations are forced to be "up weighted" to match their distribution.
+Because we have more observations in our unexposed group, our exposed observations are upweighted to match their distribution.
 
 Now let's take a look at the weighted table.
 
@@ -420,17 +421,17 @@ ggplot(seven_dwarfs_wts, aes(.fitted, group = extra_magic_morning)) +
   )
 ```
 
-The weights for the unexposed days are all 1, so the distribution of the propensity scores for this group exactly overlays the weighted pseudopopulation in red.
-The blue bars indicate that the exposed population is largely "up weighted" to match the unexposed distribution.
+The weights for the unexposed days are all 1, so the distribution of the propensity scores for this group exactly overlaps the weighted pseudopopulation in red.
+The blue bars indicate that the exposed population is largely upweighted to match the unexposed distribution.
 
 ### Average treatment effect among the evenly matchable
 
 The target population to estimate the average treatment effect among the evenly matchable (ATM) is the evenly matchable.
-The causal estimand conditions on those deemed "evenly matchable" by some distance metric.
+This causal estimand conditions on those deemed "evenly matchable" by some distance metric.
 
 $$E[Y(1) - Y(0) | M_d = 1]$$
 
-Here $d$ denotes a distance measure and $M_d=1$ indicates that a unit is evenly matchable under that distance measure.[@samuels2017aspects; @d2018improving] Example research questions where the ATM is of interest could include "Should those at clinical equipoise receive the exposure?"[@greifer2021choosing]
+Here $d$ denotes a distance measure, and $M_d=1$ indicates that a unit is evenly matchable under that distance measure.[@samuels2017aspects; @d2018improving] Example research questions where the ATM is of interest could include "Should those at clinical equipoise receive the exposure?" [@greifer2021choosing]
 
 The ATM weight is estimated by:
 
@@ -447,7 +448,7 @@ ggplot(seven_dwarfs_wts, aes(w_atm)) +
 ```
 
 The distribution of these weights looks very similar to what we saw with the ATT weights.
-That is because in this particular sample, there are many more unexposed observations compared to exposed.
+That is because, in this particular sample, there are many more unexposed observations compared to exposed ones.
 These weights have the nice property that they range from 0 to 1, making them *always* stable, regardless of the imbalance between exposure groups.
 
 Now let's take a look at the weighted table.
@@ -469,8 +470,8 @@ tbl_svysummary(seven_dwarfs_svy,
 ```
 
 In this particular sample, the ATM weights resemble the ATT weights, so this table looks similar to the ATT weighted table.
-This is not guaranteed, and in fact the ATM pseudopopulation can look different from the overall, exposed, and unexposed unweighted populations.
-This makes it particularly important to examine the weighted table when using ATM weights to be sure to understand what population inference will ultimately be drawn on.
+This similarity is not guaranteed, and the ATM pseudopopulation can look different from the overall, exposed, and unexposed unweighted populations.
+It's thus essential to examine the weighted table when using ATM weights to understand what population inference will ultimately be drawn on.
 
 We can again create a mirrored histogram to observe the ATM weighted psuedopopulation.
 
@@ -492,14 +493,14 @@ ggplot(seven_dwarfs_wts, aes(.fitted, group = extra_magic_morning)) +
 ```
 
 Again, the ATM weights are bounded by 0 and 1, meaning that all observations will be *down weighted*.
-This removes the potential for finite sample bias due to large weights in small samples as well as has improved variance properities.
+This removes the potential for finite sample bias due to large weights in small samples and has improved variance properties.
 
 ### Average treatment effect among the overlap population
 
 The target population to estimate the average treatment effect among the overlap population (ATO) is the overlap -- this is very similar to the "even matchable" from above.
-Example research questions where the ATO is of interest are the same as those for the ATM, such as "Should those at clinical equipoise receive the exposure?"[@greifer2021choosing]
+Example research questions where the ATO is of interest are the same as those for the ATM, such as "Should those at clinical equipoise receive the exposure?" [@greifer2021choosing]
 
-These weights, again, are quite similar to the ATM weights but are slightly attenuated, yielding improved variance properties.
+These weights, again, are pretty similar to the ATM weights but are slightly attenuated, yielding improved variance properties.
 
 The ATO weight is estimated by:
 
@@ -535,7 +536,7 @@ tbl_svysummary(seven_dwarfs_svy,
   add_overall(last = TRUE) # add an overall column to the table
 ```
 
-Like the ATM weights, the ATO pseudopopulation may not resemble the overall, exposed, or unexposed unweighted populations, so it is important to examine these weighted tables to gain a deeper understanding about the population on whom we will be drawing inference.
+Like the ATM weights, the ATO pseudopopulation may not resemble the overall, exposed, or unexposed unweighted populations, so it is essential to examine these weighted tables to understand the population on whom we will draw inferences.
 
 We can again create a mirrored histogram to observe the ATO weighted psuedopopulation.
 
@@ -556,9 +557,9 @@ ggplot(seven_dwarfs_wts, aes(.fitted, group = extra_magic_morning)) +
   )
 ```
 
-This looks similar to the ATM pseudopopulation, with slight attenuation, as evidenced by the increased down weighting in the exposed population.
-We generally prefer using the ATO weights when the overlap (or evenly matchable) population is the target, as they have improved variance properties.
-They additionally have the benefit that any variables included in the propensity score model (if fit via logistic regression) will be perfectly balanced on the mean.
+This (TODO ref) looks similar to the ATM pseudopopulation, with slight attenuation, as evidenced by the increased down weighting in the exposed population.
+We prefer using the ATO weights when the overlap (or evenly matchable) population is the target, as they have improved variance properties.
+They also benefit that any variables included in the propensity score model (if fit via logistic regression) will be perfectly balanced on the mean.
 We will discuss this further in future chapters.
 
 ## Choosing estimands
