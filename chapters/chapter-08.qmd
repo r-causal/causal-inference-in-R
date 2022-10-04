@@ -134,71 +134,69 @@ First, we need to subset the data to only include average wait times between 5 a
 Then we will use the `glm()` function to fit the propensity score model, predicting `extra_magic_morning` using the four confounders specified above.
 We'll add the propensity scores to the data frame (in a column called `.fitted` as set by the `augment()` function in the {`broom`} package).
 
-"\`{r} library(broom) library(touringplans)
+```{r}
+library(broom) 
+library(touringplans)
 
-seven_dwarfs_17 \<- seven_dwarfs_train_2018 \|\> filter(hour == 17)
+seven_dwarfs_17 <- seven_dwarfs_train_2018 |> filter(hour == 17)
 
-seven_dwarfs_17_with_ps \<- glm( extra_magic_morning \~ wdw_ticket_season + close + weather_wdwhigh, data = seven_dwarfs_17, family = binomial() ) \|\> augment(type.predict = "response", data = seven_dwarfs_17)
+seven_dwarfs_17_with_ps <- 
+  glm( 
+    extra_magic_morning ~ wdw_ticket_season + close + weather_wdwhigh, 
+    data = seven_dwarfs_17, 
+    family = binomial() 
+  ) |> 
+  augment(type.predict = "response", data = seven_dwarfs_17)
+```
 
+Let's take a look at these propensity scores.
+Below are the propensity scores (in the `.fitted` column) for the first six observations.
+The propensity score here is the probability that a given date will have Extra Magic Hours in the morning given the observed confounders, in this case, the historical high temperatures on a given date, the time the park closed, and Ticket Season.
+For example, on January 1, 2018, there was a 30.4% chance that there would be Extra Magic Hours at the Magic Kingdom given the Ticket Season (peak in this case), time of park closure (11 pm), and the historic high temperature on this date (70.3 degrees).
+On this particular day, there were *not* Extra Magic Hours in the morning (as indicated by the 0 in the first row of the `extra_magic_morning` column).
 
-    Let's take a look at these propensity scores.
-    Below are the propensity scores (in the `.fitted` column) for the first six observations.
-    The propensity score here is the probability that a given date will have Extra Magic Hours in the morning given the observed confounders, in this case, the historical high temperatures on a given date, the time the park closed, and Ticket Season.
-    For example, on January 1, 2018, there was a 30.4% chance that there would be Extra Magic Hours at the Magic Kingdom given the Ticket Season (peak in this case), time of park closure (11 pm), and the historic high temperature on this date (70.3 degrees).
-    On this particular day, there were *not* Extra Magic Hours in the morning (as indicated by the 0 in the first row of the `extra_magic_morning` column).
-
-    "`{r}
-    seven_dwarfs_17_with_ps |>
-      select(
-        date,
-        extra_magic_morning,
-        wdw_ticket_season,
-        close,
-        weather_wdwhigh,
-        .fitted
-      ) |>
-      head() |>
-      knitr::kable()
+```{r}
+seven_dwarfs_17_with_ps |> 
+  select( 
+    date, extra_magic_morning, wdw_ticket_season, 
+    close, weather_wdwhigh, .fitted
+    ) |>
+  head() |> 
+  knitr::kable()
+```
 
 We can examine the distribution of propensity scores by exposure group.
 A nice way to visualize this is via mirrored histograms.
 The code below creates two histograms of the propensity scores, one on the "top" for the exposed group (the dates with Extra Magic Hours in the morning) and one on the "bottom" for the unexposed group.
 
 ```{r}
-#| label: mirrored-ps
-#| fig.cap: >
+#| label: mirrored-ps 
+#| fig.cap: > 
 #|   Mirrored histograms of estimated propensity scores for
-#|   Extra Magic Hour days (exposed group) and days without
-#|   Extra Magic hours (unexposed group)
-ggplot() +
-  geom_histogram(
-    data = seven_dwarfs_17_with_ps |> filter(extra_magic_morning == 1),
-    aes(x = .fitted),
-    fill = "orange",
-    bins = 40
-  ) +
-  geom_histogram(
-    data = seven_dwarfs_17_with_ps |> filter(extra_magic_morning == 0),
-    aes(
-      x = .fitted,
-      y = -after_stat(count)
-    ),
-    fill = "cornflower blue",
-    bins = 40
-  ) +
-  scale_y_continuous("Count", labels = abs) +
-  scale_x_continuous("Propensity Score") +
+#|   Extra Magic Hour days (exposed group) and days without 
+#|   Extra Magic hours (unexposed group) 
+ggplot() + 
+  geom_histogram( 
+    data = seven_dwarfs_17_with_ps |> filter(extra_magic_morning == 1), 
+    aes(x = .fitted), 
+    fill = "orange", 
+    bins = 40 
+  ) + 
+  geom_histogram( 
+    data = seven_dwarfs_17_with_ps |> filter(extra_magic_morning == 0), 
+    aes(x = .fitted, y = -after_stat(count)), 
+    fill = "cornflower blue", 
+    bins = 40 
+  ) + 
+  scale_y_continuous("Count", labels = abs) + 
+  scale_x_continuous("Propensity Score") + 
   # The remaining lines are for plot theme formatting/aesthetics.
-  labs(
-    title = "Mirrored propensity score histograms for the
-    <b style='color:orange'>exposed</b> and
-    <b style='color:#6495ED'>unexposed</b>"
-  ) +
-  theme_light() +
-  theme(
-    plot.title = ggtext::element_markdown(),
-    plot.title.position = "plot"
-  )
+  labs( title = "Mirrored propensity score histograms for the <b style='color:orange'>exposed</b> and <b style='color:#6495ED'>unexposed</b>" ) + 
+  theme_light() + 
+  theme( 
+    plot.title = ggtext::element_markdown(), 
+    plot.title.position = "plot" 
+  ) 
 ```
 
 In the code above, the first `geom_histogram()` call creates the top histogram by subsetting the `seven_dwarfs_with_ps` data frame to only include those in the exposure group, where `extra_magic_morning == 1`.
@@ -239,7 +237,9 @@ For example, loss-to-follow-up is a common source of collider-stratification bia
 
 A variable can also be both a confounder and a collider, as in the case of so-called butterfly bias:
 
-"\`{r} ggdag(butterfly_bias()) \`\`\`
+```{r}
+ggdag(butterfly_bias()) 
+```
 
 If we have all the variables measured well, we can avoid adjusting form by adjusting for either `a' or`b`. However, what should we do if we don't have those variables? Adjusting for`m' opens a biasing pathway that we cannot block through `a' and`b`(collider stratification bias), but`m' is also a confounder for `x` and `y'. As in the case above, it appears that confounding bias is often the worse of the two options, so we should adjust for`m' unless we have reason to believe it will cause more problems than it solves [@DingMiratrix2015].
 
