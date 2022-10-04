@@ -72,7 +72,7 @@ glm(
 
 Let's look at an example.
 
-### Example
+### Extra Magic Hours at Magic Kingdom
 
 Historically, guests who stayed in a Walt Disney World resort hotel could access the park during "Extra Magic Hours," during which the park was closed to all other guests.
 These extra hours could be in the morning or evening.
@@ -92,10 +92,11 @@ Below is a proposed DAG for this question.
 
 library(tidyverse)
 library(ggdag)
+library(ggokabeito)
 
 coord_dag <- list(
   x = c(Season = 0, close = 0, weather = -1, x = 1, y = 2),
-  y = c(Season = -1, close = 1, weather = 0.25, x = 0, y = 0)
+  y = c(Season = -1, close = 1, weather = 0, x = 0, y = 0)
 )
 
 labels <- c(
@@ -110,10 +111,25 @@ dagify(
   y ~ x + close + Season + weather,
   x ~ weather + close + Season,
   coords = coord_dag,
-  labels = labels
-) |>
-  ggdag(use_labels = "label", text = FALSE) +
-  theme_void() +
+  labels = labels,
+  exposure = "x",
+  outcome = "y"
+) |>  
+  tidy_dagitty() |>
+  node_status() |>
+  ggplot(
+    aes(x, y, xend = xend, yend = yend, color = status)
+  ) +
+  geom_dag_edges_arc(curvature = c(rep(0, 5), .2)) +
+  geom_dag_point() +
+  geom_dag_label_repel(seed = 1630) +
+  scale_color_okabe_ito(na.value = "grey90") +
+  theme_dag() +
+  theme(
+    legend.position = "none", 
+    axis.text.x = element_text()
+  ) +
+  coord_cartesian(clip = "off") +
   scale_x_continuous(
     limits = c(-1.25, 2.25),
     breaks = c(-1, 0, 1, 2),
@@ -123,8 +139,7 @@ dagify(
       "\n(3 months ago)",
       "5pm - 6pm\n(Today)"
     )
-  ) +
-  theme(axis.text.x = element_text())
+  ) 
 ```
 
 Here we propose three confounders: the historic high temperature on the day, the time the park closed, and the ticket season: value, regular, or peak.
@@ -170,7 +185,7 @@ A nice way to visualize this is via mirrored histograms.
 The code below creates two histograms of the propensity scores, one on the "top" for the exposed group (the dates with Extra Magic Hours in the morning) and one on the "bottom" for the unexposed group.
 
 ```{r}
-#| label: mirrored-ps 
+#| label: fig-mirrored-ps 
 #| fig.cap: > 
 #|   Mirrored histograms of estimated propensity scores for
 #|   Extra Magic Hour days (exposed group) and days without 
@@ -202,17 +217,20 @@ ggplot() +
 In the code above, the first `geom_histogram()` call creates the top histogram by subsetting the `seven_dwarfs_with_ps` data frame to only include those in the exposure group, where `extra_magic_morning == 1`.
 The x-axis for the histogram is the propensity score, which lives in the `.fitted` column of the data frame.
 The second `geom_histogram()` call creates the bottom histogram, subsetting only those in the unexposed group, where `extra_magic_morning == 0`.
-Here, we use the `y' argument to *flip* the histogram by setting this to`-after_stat(count)`.`after_stat()`allows you to work with values created internally by ggplot2, such as`count`, the frequency counts for the histogram. Finally, we need to edit the y-axis to show the absolute value (rather than negative values below 0), so the axis displays the correct numbers; we'll do this by setting`label = abs`in the`scale_y\_continuous()\` function.
+Here, we use the `y` argument to *flip* the histogram by setting this to `-after_stat(count)`.
+`after_stat()`allows you to work with values created internally by ggplot2, such as`count`, the frequency counts for the histogram.
+Finally, we need to edit the y-axis to show the absolute value (rather than negative values below 0), so the axis displays the correct numbers; we'll do this by setting`label = abs`in the`scale_y_continuous()` function.
 
-Here are some diagnostic insights we gain from Figure \@ref(fig:mirrored-ps).
+Here are some diagnostic insights we gain from @fig-mirrored-ps.
 
-TODO: This section needs to be clarified 1.
-Look for lack of overlap as a potential positivity problem.
-But too much overlap may indicate a poor model (TODO: not necessarily. depends on the relative covariate distributions in the two groups).
-2.
-Avg treatment effect among treated is easier to estimate with precision (because of higher counts) than in the control group.
-3.
-A single outlier in either group concerning range could be a problem and warrant data inspection (TODO: do this here?) *look at the model coefs here*.
+TODO: This section needs to be clarified
+
+1.  Look for lack of overlap as a potential positivity problem.
+    But too much overlap may indicate a poor model (TODO: not necessarily. depends on the relative covariate distributions in the two groups).
+
+2.  Avg treatment effect among treated is easier to estimate with precision (because of higher counts) than in the control group.
+
+3.  A single outlier in either group concerning range could be a problem and warrant data inspection (TODO: do this here?) *look at the model coefs here*.
 
 *TODO* This may be a "nice" example -- should we also show a bad model (maybe only with ticket season or possibly overspecifying it)
 
@@ -238,10 +256,14 @@ For example, loss-to-follow-up is a common source of collider-stratification bia
 A variable can also be both a confounder and a collider, as in the case of so-called butterfly bias:
 
 ```{r}
-ggdag(butterfly_bias()) 
+ggdag(butterfly_bias()) + 
+  theme_dag()
 ```
 
-If we have all the variables measured well, we can avoid adjusting form by adjusting for either `a' or`b`. However, what should we do if we don't have those variables? Adjusting for`m' opens a biasing pathway that we cannot block through `a' and`b`(collider stratification bias), but`m' is also a confounder for `x` and `y'. As in the case above, it appears that confounding bias is often the worse of the two options, so we should adjust for`m' unless we have reason to believe it will cause more problems than it solves [@DingMiratrix2015].
+If we have all the variables measured well, we can avoid adjusting form by adjusting for either `a` or `b`.
+However, what should we do if we don't have those variables?
+Adjusting for `m` opens a biasing pathway that we cannot block through `a` and `b`(collider stratification bias), but `m` is also a confounder for `x` and `y`.
+As in the case above, it appears that confounding bias is often the worse of the two options, so we should adjust for `m` unless we have reason to believe it will cause more problems than it solves [@DingMiratrix2015].
 
 ### Don't use prediction metrics for causal modeling
 
@@ -258,7 +280,9 @@ Misspecifying this relationship can lead to residual confounding: we may only pa
 Testing different functional forms using prediction-focused metrics can help improve the model's accuracy, potentially allowing for better control.
 
 Another technique researchers sometimes use to determine confounders is to add a variable, then calculate the percent change in the coefficient between the outcome and exposure.
-For instance, we first model `y ~ x` to estimate the relationship between `x` and `y'. Then, we model`y \~ x + z`and see how much the coefficient on`x`has changed. A common rule is to add a variable if it changes the coefficient of`x\` by 10%.
+For instance, we first model `y ~ x` to estimate the relationship between `x` and `y`.
+Then, we model`y ~ x + z` and see how much the coefficient on `x`has changed.
+A common rule is to add a variable if it changes the coefficient of`x` by 10%.
 
 Unfortunately, this technique is unreliable.
 As we've discussed, controlling for mediators, colliders, and instrumental variables all affect the estimate of the relationship between `x` and \`y', and usually, they result in bias.
