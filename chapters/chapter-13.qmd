@@ -91,10 +91,10 @@ When some observations have extreme weights, the propensities are *destabilized,
 We can stabilize them using the marginal distribution of the exposure.
 A common way to calculate the marginal distribution for propensity scores is to use a regression model with no predictors.
 
-::: def-box
+::: callout-caution
 Extreme weights destabilize estimates, resulting in wider confidence intervals.
 Extreme weights can be an issue for any time of weight (including those for binary and other types of exposures) that is not bounded.
-Bounded weights like the ATO (which are bounded to 0 and 1) do not have this problem, however--one of their many benefits.
+Bounded weights like the ATO (which are bounded to 0 and 1) do not have this problem, however---one of their many benefits.
 :::
 
 ```{r}

@@ -13,7 +13,7 @@ For example, when deciding what medication to give a diabetic patient, a doctor 
 The treatment is no longer random; it is *conditional* on factors about that patient, also known as the patient's *covariates*.
 If these covariates also affect the outcome, they are *confounders*.
 
-::: def-box
+::: callout-note
 A **confounder** is a common cause of exposure and outcome.
 :::
 
@@ -24,7 +24,7 @@ When used appropriately, modeling with a propensity score can simulate what the 
 The correlation between exposure and outcome will estimate the causal effect after applying a propensity score.
 When fitting a *propensity score model* we want to condition on all known confounders.
 
-::: def-box
+::: callout-note
 A **propensity score** is the probability of being in the exposure group, conditioned on observed covariates.
 :::
 
@@ -289,7 +289,7 @@ As we've discussed, controlling for mediators, colliders, and instrumental varia
 In other words, there are many different types of variables besides confounders that can cause a change in the coefficient of the exposure.
 As discussed above, confounding bias is often the most crucial factor, but systematically searching your variables for anything that changes the exposure coefficient can compound many types of bias.
 
-::: def-box
+::: callout-note
 Some estimates, such as the odds and hazard ratios, suffer from an additional problem called *non-collapsibility*.
 For these estimates, adding noise variables (variables unrelated to the exposure or outcome) doesn't reduce precision: they can bias the estimate as well--more the reason to avoid data-driven approaches to selecting variables for causal models.
 :::
