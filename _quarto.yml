@@ -65,10 +65,12 @@ bibliography: citations.bib
 format:
   html:
     code-link: true
+    tbl-cap-location: bottom
     theme:
       - cosmo
       - style.scss
   # pdf:
+  #   tbl-cap-location: bottom
   #   documentclass: krantz
   #   link-citations: true
   #   colorlinks: true
