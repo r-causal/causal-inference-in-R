@@ -38,7 +38,7 @@ rct <- tibble(
 )
 ```
 
-Here the exposure is `x`, and the outcome is \`y'.
+Here the exposure is `x`, and the outcome is `y`.
 The true average treatment effect is 1.
 
 ```{r}
@@ -65,7 +65,7 @@ rct
 ```
 
 Below are two ways to estimate this in R.
-Using a formula approach, we calculate the difference in \`y' between exposure values in the first example.
+Using a formula approach, we calculate the difference in `y` between exposure values in the first example.
 
 ```{r}
 rct |>
@@ -193,11 +193,13 @@ seven_dwarfs_with_ps <- seven_dwarfs_with_ps |>
     weather_wdwhigh = "Historic High Temperature"
   )
 
-tbl_summary(seven_dwarfs_with_ps,
+tbl_summary(
+  seven_dwarfs_with_ps,
   by = extra_magic_morning,
   include = c(wdw_ticket_season, close, weather_wdwhigh)
 ) |>
-  add_overall(last = TRUE) # add an overall column to the table
+  # add an overall column to the table
+  add_overall(last = TRUE)
 ```
 
 From @tbl-unweighted-gtsummary, 291 days did not have extra magic hours in the morning, and 56 did.
@@ -242,11 +244,12 @@ seven_dwarfs_svy <- svydesign(
   data = seven_dwarfs_wts,
   weights = ~w_ate
 )
-tbl_svysummary(seven_dwarfs_svy,
+tbl_svysummary(
+  seven_dwarfs_svy,
   by = extra_magic_morning,
   include = c(wdw_ticket_season, close, weather_wdwhigh)
 ) |>
-  add_overall(last = TRUE) # add an overall column to the table
+  add_overall(last = TRUE)
 ```
 
 Notice in @tbl-weighted-gtsummary that the variables are more **balanced** between the groups.
@@ -319,7 +322,8 @@ seven_dwarfs_svy <- svydesign(
   data = seven_dwarfs_wts,
   weights = ~w_att
 )
-tbl_svysummary(seven_dwarfs_svy,
+tbl_svysummary(
+  seven_dwarfs_svy,
   by = extra_magic_morning,
   include = c(wdw_ticket_season, close, weather_wdwhigh)
 ) |>
@@ -389,7 +393,8 @@ seven_dwarfs_svy <- svydesign(
   data = seven_dwarfs_wts,
   weights = ~w_atu
 )
-tbl_svysummary(seven_dwarfs_svy,
+tbl_svysummary(
+  seven_dwarfs_svy,
   by = extra_magic_morning,
   include = c(wdw_ticket_season, close, weather_wdwhigh)
 ) |>
@@ -456,11 +461,12 @@ seven_dwarfs_svy <- svydesign(
   data = seven_dwarfs_wts,
   weights = ~w_atm
 )
-tbl_svysummary(seven_dwarfs_svy,
+tbl_svysummary(
+  seven_dwarfs_svy,
   by = extra_magic_morning,
   include = c(wdw_ticket_season, close, weather_wdwhigh)
 ) |>
-  add_overall(last = TRUE) 
+  add_overall(last = TRUE)
 ```
 
 In this particular sample, the ATM weights resemble the ATT weights, so this table looks similar to the ATT weighted table.
@@ -521,7 +527,8 @@ seven_dwarfs_svy <- svydesign(
   data = seven_dwarfs_wts,
   weights = ~w_ato
 )
-tbl_svysummary(seven_dwarfs_svy,
+tbl_svysummary(
+  seven_dwarfs_svy,
   by = extra_magic_morning,
   include = c(wdw_ticket_season, close, weather_wdwhigh)
 ) |>

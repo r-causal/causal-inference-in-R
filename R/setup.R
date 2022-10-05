@@ -1,5 +1,6 @@
 options(
   tidyverse.quiet = TRUE, 
+  propensity.quiet = TRUE,
   tipr.verbose = FALSE,
   htmltools.dir.version = FALSE, 
   width = 55, 
