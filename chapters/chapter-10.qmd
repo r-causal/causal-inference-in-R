@@ -209,7 +209,7 @@ The median temperature on days with extra magic hour mornings is slightly lower 
 
 Now let's construct our propensity score weight to estimate the ATE.
 The {propensity} package has helper functions to estimate weights.
-The `wt_ate` function will calculate ATE weights.
+The `wt_ate()` function will calculate ATE weights.
 
 ```{r}
 library(propensity)
@@ -220,11 +220,14 @@ seven_dwarfs_wts <- seven_dwarfs_with_ps |>
 Let's look at a distribution of these weights.
 
 ```{r}
+#| label: fig-sd-ate-hist
+#| fig.cap: >
+#|   A histogram of the average treatment effect (ATE) weights for whether or not a day had extra magic hours. ATE weights can range from 1 to infinity, so paying attention to the actual range of weights is important.
 ggplot(seven_dwarfs_wts, aes(x = w_ate)) +
   geom_histogram(bins = 50)
 ```
 
-Here we see that many weights are close to 1 (the smallest possible value for an ATE weight), with a long tail leading to the largest weight (around 24).
+Many weights in @fig-sd-ate-hist are close to 1 (the smallest possible value for an ATE weight), with a long tail leading to the largest weight (around 24).
 This distribution highlights a potential problem with ATE weights.
 They range from 1 to infinity; if your weights are too large in small samples, this can lead to bias in your estimates (known as finite sample bias).
 
@@ -260,9 +263,12 @@ Also, notice that the distribution of variables in @tbl-weighted-gtsummary now m
 That is what ATE weights do: they make the distribution of variables included in the propensity score for each exposure group look like the overall distribution across the whole sample.
 
 Let's look at another visualization that can help us understand the weighted psuedopopulation created by the ATE weights: a mirrored histogram.
-We will plot the distribution of the propensity score for the days in the exposure group (days with extra magic hours in the morning) on the top half of the plot; then, we will mirror the distribution of the propensity score for the days in the"unexposed group below it. This visualization allows us to compare the two distributions quickly. Then we will overlay weighted histograms to demonstrate how these distributions differ after incorporating the weights. The {halfmoon} package includes a function `geom_mirror_histogram` to assist with this visualization.
+We will plot the distribution of the propensity score for the days in the exposure group (days with extra magic hours in the morning) on the top half of the plot; then, we will mirror the distribution of the propensity score for the days in the"unexposed group below it. This visualization allows us to compare the two distributions quickly. Then we will overlay weighted histograms to demonstrate how these distributions differ after incorporating the weights. The {halfmoon} package includes a function `geom_mirror_histogram()` to assist with this visualization.
 
 ```{r}
+#| label: fig-sd-mirror-hist-ate
+#| fig.cap: >
+#|   A mirrored histogram of the distribution of propensity scores between exposure groups. The dark bars represent the unweighted distribution, and the colored bars represent the distribution weighted by the average treatment effect (ATE) weight.
 library(halfmoon)
 ggplot(seven_dwarfs_wts, aes(.fitted, group = extra_magic_morning)) +
   geom_mirror_histogram(bins = 50) +
@@ -278,11 +284,11 @@ ggplot(seven_dwarfs_wts, aes(.fitted, group = extra_magic_morning)) +
   )
 ```
 
-We can learn a few things from this figure.
-First, we can readily see that there are more "unexposed" days---days without extra magic hours in the morning---compared to "exposed" in the observed population.
+We can learn a few things from @fig-sd-mirror-hist-ate.
+First, we can see that there are more "unexposed" days---days without extra magic hours in the morning---compared to "exposed" in the observed population.
 We can see this by examining the darker histograms, which show the distributions in the observed sample.
 Similarly, the exposed days are upweighted more substantially, as evidenced by the light blue we see on the top.
-We can also see that after weighting, the two distributions look similar; the shape of the blue weighted distribution on top looks comparable to the red weighted distribution below.
+We can also see that after weighting, the two distributions look similar; the shape of the blue weighted distribution on top looks comparable to the orange weighted distribution below.
 
 ### Average treatment effect among the treated
 
@@ -300,6 +306,9 @@ $$w_{ATT} = X + \frac{(1 - X)p}{1 - p}$$
 Let's add the ATT weights to the `seven_dwarfs_wts` data frame and look at their distribution.
 
 ```{r}
+#| label: fig-sd-att-hist
+#| fig.cap : >
+#|   A histogram of the average treatment effect among the treated (ATT) weights. The range of the ATT weights in this example is more stable than the ATE weights: the range is much smaller.
 seven_dwarfs_wts <- seven_dwarfs_wts |>
   mutate(w_att = wt_att(.fitted, extra_magic_morning))
 
@@ -307,7 +316,7 @@ ggplot(seven_dwarfs_wts, aes(w_att)) +
   geom_histogram(bins = 50)
 ```
 
-Compared to the ATE weights, these weights look more *stable*; the distribution of the weights is not heavily skewed, and the range is small, from ground zero to a bit over one, with many at precisely one.
+Compared to the ATE weights, the weights in @fig-sd-att-hist look more *stable*; the distribution of the weights is not heavily skewed, and the range is small, from ground zero to a bit over one, with many at precisely one.
 These weights are exactly one for all days in the exposed group.
 Theoretically, for unexposed days these weights can range from zero to infinity.
 Still, because we have many more unexposed days compared to exposed in this particular sample, the range is much smaller, meaning the vast majority of unexposed days are "down-weighted" to match the variable distribution of the exposed days.
@@ -339,6 +348,9 @@ This is because the "target" population is the exposed group, the days with extr
 We can again create a mirrored histogram to observe the weighted psuedopopulation.
 
 ```{r}
+#| label: fig-sd-mirror-hist-att
+#| fig.cap: >
+#|   A mirrored histogram of the distribution of propensity scores between exposure groups. The dark bars represent the unweighted distribution, and the colored bars represent the distribution weighted by the average treatment effect among the treated (ATT) weight.
 ggplot(seven_dwarfs_wts, aes(.fitted, group = extra_magic_morning)) +
   geom_mirror_histogram(bins = 50) +
   geom_mirror_histogram(
@@ -353,8 +365,8 @@ ggplot(seven_dwarfs_wts, aes(.fitted, group = extra_magic_morning)) +
   )
 ```
 
-Since every day in the exposed group has a weight of 1, the distribution of the propensity scores (the dark bars above 0 on the graph) overlaps exactly with the weighted distribution overlaid in blue.
-In the unexposed population, we see that almost all observations are *down weighted*; the dark red distribution is smaller than the distribution of the propensity scores and more closely matches the exposed distribution above it.
+Since every day in the exposed group has a weight of 1, the distribution of the propensity scores (the dark bars above 0 on the graph) in @fig-sd-mirror-hist-att overlaps exactly with the weighted distribution overlaid in blue.
+In the unexposed population, we see that almost all observations are *down weighted*; the dark orange distribution is smaller than the distribution of the propensity scores and more closely matches the exposed distribution above it.
 The ATT is easier to estimate when there are many more observations in the unexposed group compared to the exposed one.
 
 ### Average treatment effect among the unexposed
@@ -371,6 +383,9 @@ The ATU weight is estimated by:
 $$w_{ATU} = \frac{X(1-p)}{p}+ (1-X)$$ Let's add the ATU weights to the `seven_dwarfs_wts` data frame and look at their distribution.
 
 ```{r}
+#| label: fig-sd-atu-hist
+#| fig.cap : >
+#|   A histogram of the average treatment effect among the unexposed (ATU) weights. The range of the ATU weights in this example is very similar to the ATE weights.
 seven_dwarfs_wts <- seven_dwarfs_wts |>
   mutate(w_atu = wt_atu(.fitted, extra_magic_morning))
 
@@ -378,7 +393,7 @@ ggplot(seven_dwarfs_wts, aes(w_atu)) +
   geom_histogram(bins = 50)
 ```
 
-The distribution of these weights looks very similar to what we saw with the ATE weights -- several around 1, with a long tail.
+The distribution of the weights in @fig-sd-atu-hist weights looks very similar to what we saw with the ATE weights---several around 1, with a long tail.
 These weights will be 1 for all observations in the unexposed group; they can range from 0 to infinity for the exposed group.
 Because we have more observations in our unexposed group, our exposed observations are upweighted to match their distribution.
 
@@ -386,7 +401,7 @@ Now let's take a look at the weighted table.
 
 ```{r}
 #| label: tbl-weighted-atu
-#| tbl-cap: A descriptive table of Extra Magic Morning hours weighted by the Average Treatment Effect among the Untreated Weights. This table shows the distributions of these variables in the psuedopopulation created by these weights.
+#| tbl-cap: A descriptive table of Extra Magic Morning hours weighted by the Average Treatment Effect among the Unexposed Weights. This table shows the distributions of these variables in the psuedopopulation created by these weights.
 
 seven_dwarfs_svy <- svydesign(
   ids = ~1,
@@ -406,6 +421,9 @@ Now the exposed column of @tbl-weighted-atu is weighted to match the unexposed c
 We can again create a mirrored histogram to observe the weighted psuedopopulation.
 
 ```{r}
+#| label: fig-sd-mirror-hist-atu
+#| fig.cap: >
+#|   A mirrored histogram of the distribution of propensity scores between exposure groups. The dark bars represent the unweighted distribution, and the colored bars represent the distribution weighted by the average treatment effect among the unexposed (ATU) weight.
 ggplot(seven_dwarfs_wts, aes(.fitted, group = extra_magic_morning)) +
   geom_mirror_histogram(bins = 50) +
   geom_mirror_histogram(
@@ -420,7 +438,7 @@ ggplot(seven_dwarfs_wts, aes(.fitted, group = extra_magic_morning)) +
   )
 ```
 
-The weights for the unexposed days are all 1, so the distribution of the propensity scores for this group exactly overlaps the weighted pseudopopulation in red.
+The weights for the unexposed days are all 1, so the distribution of the propensity scores for this group exactly overlaps the weighted pseudopopulation in orange.
 The blue bars indicate that the exposed population is largely upweighted to match the unexposed distribution.
 
 ### Average treatment effect among the evenly matchable
@@ -439,6 +457,9 @@ $$w_{ATM} = \frac{\min \{p, 1-p\}}{Xp + (1-X)(1-p)}$$
 Let's add the ATM weights to the `seven_dwarfs_wts` data frame and look at their distribution.
 
 ```{r}
+#| label: fig-sd-atm-hist
+#| fig.cap: >
+#|   A histogram of the average treatment effect among the evenly matchable (ATM) weights for whether or not a day had extra magic hours. ATM weights can range from 0 to 1, so they are always stable.
 seven_dwarfs_wts <- seven_dwarfs_wts |>
   mutate(w_atm = wt_atm(.fitted, extra_magic_morning))
 
@@ -446,7 +467,7 @@ ggplot(seven_dwarfs_wts, aes(w_atm)) +
   geom_histogram(bins = 50)
 ```
 
-The distribution of these weights looks very similar to what we saw with the ATT weights.
+The distribution of the weights in @fig-sd-atm-hist looks very similar to what we saw with the ATT weights.
 That is because, in this particular sample, there are many more unexposed observations compared to exposed ones.
 These weights have the nice property that they range from 0 to 1, making them *always* stable, regardless of the imbalance between exposure groups.
 
@@ -476,6 +497,9 @@ It's thus essential to examine the weighted table when using ATM weights to unde
 We can again create a mirrored histogram to observe the ATM weighted psuedopopulation.
 
 ```{r}
+#| label: fig-sd-mirror-hist-atm
+#| fig.cap: >
+#|   A mirrored histogram of the distribution of propensity scores between exposure groups. The dark bars represent the unweighted distribution, and the colored bars represent the distribution weighted by the average treatment effect among the evenly matchable (ATM) weight.
 ggplot(seven_dwarfs_wts, aes(.fitted, group = extra_magic_morning)) +
   geom_mirror_histogram(bins = 50) +
   geom_mirror_histogram(
@@ -507,6 +531,9 @@ $$w_{ATO} = X(1-p) + (1-X)p$$
 Let's add the ATO weights to the `seven_dwarfs_wts` data frame and look at their distribution.
 
 ```{r}
+#| label: fig-sd-ato-hist
+#| fig.cap: >
+#|   A histogram of the average treatment effect among the overlap population (ATO) weights for whether or not a day had extra magic hours. Like ATM weights, ATO weights can range from 0 to 1, so they are always stable. ATO weights also have improved variance properties compared to the ATM weights.
 seven_dwarfs_wts <- seven_dwarfs_wts |>
   mutate(w_ato = wt_ato(.fitted, extra_magic_morning))
 
@@ -540,6 +567,9 @@ Like the ATM weights, the ATO pseudopopulation may not resemble the overall, exp
 We can again create a mirrored histogram to observe the ATO weighted psuedopopulation.
 
 ```{r}
+#| label: fig-sd-mirror-hist-ato
+#| fig.cap: >
+#|   A mirrored histogram of the distribution of propensity scores between exposure groups. The dark bars represent the unweighted distribution, and the colored bars represent the distribution weighted by the average treatment effect among the overlap population (ATO) weight.
 ggplot(seven_dwarfs_wts, aes(.fitted, group = extra_magic_morning)) +
   geom_mirror_histogram(bins = 50) +
   geom_mirror_histogram(
@@ -554,9 +584,9 @@ ggplot(seven_dwarfs_wts, aes(.fitted, group = extra_magic_morning)) +
   )
 ```
 
-This (TODO ref) looks similar to the ATM pseudopopulation, with slight attenuation, as evidenced by the increased down weighting in the exposed population.
+@fig-sd-mirror-hist-ato looks similar to the ATM pseudopopulation, with slight attenuation, as evidenced by the increased down weighting in the exposed population.
 We prefer using the ATO weights when the overlap (or evenly matchable) population is the target, as they have improved variance properties.
-They also benefit that any variables included in the propensity score model (if fit via logistic regression) will be perfectly balanced on the mean.
-We will discuss this further in future chapters.
+Another benefit is that any variables included in the propensity score model (if fit via logistic regression) will be perfectly balanced on the mean.
+We will discuss this further in @sec-eval-ps-model.
 
 ## Choosing estimands
