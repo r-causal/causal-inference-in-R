@@ -203,8 +203,7 @@ ggplot(
 ) + 
   geom_mirror_histogram(bins = 50) +
   scale_y_continuous(labels = abs) +
-  labs(x = "propensity score", fill = "extra magic morning") +
-  theme(legend.position = "bottom")
+  labs(x = "propensity score", fill = "extra magic morning") 
 ```
 
 Here are some questions to ask to gain diagnostic insights we gain from @fig-mirrored-ps.

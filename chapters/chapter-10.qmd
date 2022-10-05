@@ -262,11 +262,9 @@ We will plot the distribution of the propensity score for the days in the exposu
 ```{r}
 library(halfmoon)
 ggplot(seven_dwarfs_wts, aes(.fitted, group = extra_magic_morning)) +
+  geom_mirror_histogram(bins = 50) +
   geom_mirror_histogram(
-    bins = 50
-  ) +
-  geom_mirror_histogram(
-    aes(fill = factor(extra_magic_morning), weight = w_ate),
+    aes(fill = extra_magic_morning, weight = w_ate),
     bins = 50,
     alpha = 0.5
   ) +
@@ -325,7 +323,7 @@ tbl_svysummary(seven_dwarfs_svy,
   by = extra_magic_morning,
   include = c(wdw_ticket_season, close, weather_wdwhigh)
 ) |>
-  add_overall(last = TRUE) # add an overall column to the table
+  add_overall(last = TRUE)
 ```
 
 We again achieve a balance between groups, but the target values in @tbl-weighted-att differ from the previous tables.
@@ -338,11 +336,9 @@ We can again create a mirrored histogram to observe the weighted psuedopopulatio
 
 ```{r}
 ggplot(seven_dwarfs_wts, aes(.fitted, group = extra_magic_morning)) +
+  geom_mirror_histogram(bins = 50) +
   geom_mirror_histogram(
-    bins = 50
-  ) +
-  geom_mirror_histogram(
-    aes(fill = factor(extra_magic_morning), weight = w_att),
+    aes(fill = extra_magic_morning, weight = w_att),
     bins = 50,
     alpha = 0.5
   ) +
@@ -397,7 +393,7 @@ tbl_svysummary(seven_dwarfs_svy,
   by = extra_magic_morning,
   include = c(wdw_ticket_season, close, weather_wdwhigh)
 ) |>
-  add_overall(last = TRUE) # add an overall column to the table
+  add_overall(last = TRUE)
 ```
 
 Now the exposed column of @tbl-weighted-atu is weighted to match the unexposed column of the unweighted table.
@@ -406,11 +402,9 @@ We can again create a mirrored histogram to observe the weighted psuedopopulatio
 
 ```{r}
 ggplot(seven_dwarfs_wts, aes(.fitted, group = extra_magic_morning)) +
+  geom_mirror_histogram(bins = 50) +
   geom_mirror_histogram(
-    bins = 50
-  ) +
-  geom_mirror_histogram(
-    aes(fill = factor(extra_magic_morning), weight = w_atu),
+    aes(fill = extra_magic_morning, weight = w_atu),
     bins = 50,
     alpha = 0.5
   ) +
@@ -466,7 +460,7 @@ tbl_svysummary(seven_dwarfs_svy,
   by = extra_magic_morning,
   include = c(wdw_ticket_season, close, weather_wdwhigh)
 ) |>
-  add_overall(last = TRUE) # add an overall column to the table
+  add_overall(last = TRUE) 
 ```
 
 In this particular sample, the ATM weights resemble the ATT weights, so this table looks similar to the ATT weighted table.
@@ -477,11 +471,9 @@ We can again create a mirrored histogram to observe the ATM weighted psuedopopul
 
 ```{r}
 ggplot(seven_dwarfs_wts, aes(.fitted, group = extra_magic_morning)) +
+  geom_mirror_histogram(bins = 50) +
   geom_mirror_histogram(
-    bins = 50
-  ) +
-  geom_mirror_histogram(
-    aes(fill = factor(extra_magic_morning), weight = w_atm),
+    aes(fill = extra_magic_morning, weight = w_atm),
     bins = 50,
     alpha = 0.5
   ) +
@@ -533,7 +525,7 @@ tbl_svysummary(seven_dwarfs_svy,
   by = extra_magic_morning,
   include = c(wdw_ticket_season, close, weather_wdwhigh)
 ) |>
-  add_overall(last = TRUE) # add an overall column to the table
+  add_overall(last = TRUE)
 ```
 
 Like the ATM weights, the ATO pseudopopulation may not resemble the overall, exposed, or unexposed unweighted populations, so it is essential to examine these weighted tables to understand the population on whom we will draw inferences.
@@ -542,11 +534,9 @@ We can again create a mirrored histogram to observe the ATO weighted psuedopopul
 
 ```{r}
 ggplot(seven_dwarfs_wts, aes(.fitted, group = extra_magic_morning)) +
+  geom_mirror_histogram(bins = 50) +
   geom_mirror_histogram(
-    bins = 50
-  ) +
-  geom_mirror_histogram(
-    aes(fill = factor(extra_magic_morning), weight = w_ato),
+    aes(fill = extra_magic_morning, weight = w_ato),
     bins = 50,
     alpha = 0.5
   ) +

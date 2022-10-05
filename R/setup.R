@@ -20,7 +20,8 @@ theme_set(
     base_family = getOption("book.base_family")
   ) %+replace% 
     theme(
-      panel.grid.minor = element_blank()
+      panel.grid.minor = element_blank(),
+      legend.position = "bottom"
     )
 )
 
