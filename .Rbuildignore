@@ -3,3 +3,4 @@
 ^\.github$
 ^.*\.Rproj$
 ^\.Rproj\.user$
+^README\.Rmd$

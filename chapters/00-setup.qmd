@@ -1,6 +1,5 @@
 ```{r}
-#| include: false 
-print(unique(systemfonts::system_fonts()$name))
+#| include: false
 source(here::here("R/setup.R"))
 library(tidyverse)
 ```

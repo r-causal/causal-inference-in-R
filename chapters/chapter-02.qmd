@@ -307,7 +307,7 @@ mosquito_dag |>
     ),
     effects = factor(effects, c("true effect", "confounding effect"))
   ) |>
-  ggplot(aes(x = x, y = y, xend = xend, yend = yend, col = effects, alpha = path)) +
+  ggplot(aes(x = x, y = y, xend = xend, yend = yend, color = effects, alpha = path)) +
   geom_dag_edges(aes(edge_alpha = path, edge_colour = effects), show.legend = FALSE) +
   geom_dag_point(
     data = function(.x) dplyr::filter(.x, is.na(path)),
