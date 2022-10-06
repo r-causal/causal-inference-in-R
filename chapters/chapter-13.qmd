@@ -1,5 +1,7 @@
 # Continuous exposures
 
+{{< include 00-setup.qmd >}}
+
 ## Calculating propensity scores for continuous exposures
 
 Propensity scores generalize to many other types of exposures, including continuous exposures.
@@ -15,7 +17,7 @@ The question we will consider is this: Do posted wait times for the Seven Dwarve
 Here's our DAG:
 
 ```{r}
-#| label: dag-avg-wait
+#| label: fig-dag-avg-wait
 #| echo: false
 #| message: false
 #| warning: false
@@ -26,10 +28,11 @@ Here's our DAG:
 
 library(tidyverse)
 library(ggdag)
+library(ggokabeito)
 
 coord_dag <- list(
   x = c(Season = -1, close = -1, weather = -2, extra = 0, x = 1, y = 2),
-  y = c(Season = -1, close = 1, weather = 0.25, extra = 0, x = 0, y = 0)
+  y = c(Season = -1, close = 1, weather = 0, extra = 0, x = 0, y = 0)
 )
 
 labels <- c(
@@ -45,10 +48,25 @@ dagify(
   y ~ x + close + Season + weather + extra,
   x ~ weather + close + Season + extra,
   coords = coord_dag,
-  labels = labels
+  labels = labels,
+  exposure = "x",
+  outcome = "y"
 ) |>
-  ggdag(use_labels = "label", text = FALSE) +
-  theme_void() +
+  tidy_dagitty() |>
+  node_status() |>
+  ggplot(
+    aes(x, y, xend = xend, yend = yend, color = status)
+  ) +
+  geom_dag_edges_arc(curvature = c(rep(0, 5), rep(.2, 3), 0)) +
+  geom_dag_point() +
+  geom_dag_label_repel(seed = 1602) + 
+  scale_color_okabe_ito(na.value = "grey90") +
+  theme_dag() +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text()
+  ) +
+  coord_cartesian(clip = "off") +
   scale_x_continuous(
     limits = c(-2.25, 2.25),
     breaks = c(-2, -1, 0, 1, 2),
@@ -59,11 +77,10 @@ dagify(
       "8am-9am\n(Today)",
       "9am-10am\n(Today)"
     )
-  ) +
-  theme(axis.text.x = element_text())
+  )
 ```
 
-We're assuming that our primary confounders are when the park closes, historic high temperatures, whether or not the ride has extra magic morning hours, and the ticket season.
+In @fig-dag-avg-wait, we're assuming that our primary confounders are when the park closes, historic high temperatures, whether or not the ride has extra magic morning hours, and the ticket season.
 The confounders precede the exposure and outcome, and (by definition) the exposure precedes the outcome.
 The average posted wait time is, in theory, a manipulable exposure because the park could post a time different from what they expect.
 
@@ -161,20 +178,23 @@ denominators <- denominator_model |>
       mean(.sigma, na.rm = TRUE)
     )
   ) |>
-  select(date, denominator)
+  select(date, denominator, .fitted)
 ```
 
 When we only use the inverted values of `denominator`, we end up with several extreme weights:
 
 ```{r}
+#| label: fig-hist-sd-unstable
+#| fig.cap: >
+#|   A histogram of the inverse probability weights for posted waiting time. Weights for continuous exposures are prone to extreme values, which can unstabilize estimates and variance.
 denominators |>
   mutate(wts = 1 / denominator) |>
   ggplot(aes(wts)) +
-  geom_density(col = "#E69F00", fill = "#E69F0095") +
-  scale_x_log10() +
-  theme_minimal(base_size = 20) +
-  xlab("Weights")
+  geom_histogram(fill = "#E69F00", color = "white", bins = 50) +
+  scale_x_log10(name = "weights") 
 ```
+
+In @fig-hist-sd-unstable, we see several weights over 100 and one over 10,000; these extreme weights will put undue stress on specific points, complicating the results we will estimate.
 
 Let's now fit the marginal density to use for stabilized weights:
 
@@ -210,36 +230,52 @@ Stabilized weights should have a mean close to 1 (in this example, it is `round(
 If the mean is far from 1, we may have issues with model misspecification or positivity violations [@hernán2021].
 
 ```{r}
+#| label: fig-hist-sd-stable
+#| fig.cap: >
+#|   A histogram of the stabilized inverse probability weights for posted waiting time. These weights are much more reasonable and will allow the outcome model to behave better.
 ggplot(wait_times_wts, aes(swts)) +
-  geom_density(col = "#E69F00", fill = "#E69F0095") +
-  scale_x_log10() +
-  theme_minimal(base_size = 20) +
-  xlab("Stabilized Weights")
+  geom_histogram(fill = "#E69F00", color = "white", bins = 50) +
+  scale_x_log10(name = "weights") 
 ```
 
-When we compare the exposure--average posted wait times--to the standardized weights, we still have one exceptionally high weight.
+When we compare the exposure---average posted wait times---to the standardized weights, we still have one exceptionally high weight.
 Is this a problem, or is this a valid data point?
 
 ```{r}
+#| label: fig-stabilized-wts-scatter
+#| fig.cap: >
+#|   A scatter of the stabilized inverse probability weights for posted waiting time vs. posted waiting times. Days with more values of `avg_spostmin` farther from the mean appear to be downweighted, with a few exceptions. The most unusual weight is for June 23, 2018.
 ggplot(wait_times_wts, aes(avg_spostmin, swts)) +
-  geom_point() +
+  geom_point(size = 3, color = "grey80", alpha = 0.7) +
   geom_point(
     data = function(x) filter(x, swts > 10),
-    color = "firebrick"
+    color = "firebrick",
+    size = 3
   ) +
   geom_text(
     data = function(x) filter(x, swts > 10),
     aes(label = date),
+    size = 5,
     hjust = 0,
-    nudge_x = -14,
+    nudge_x = -15.5,
     color = "firebrick"
   ) +
-  theme_minimal(base_size = 20) +
   scale_y_log10() +
   labs(x = "Average Posted Wait", y = "Stabilized Weights")
 ```
 
-It turns out that on June 23, 2018, the ride had an [interactive queue](https://disneyparks.disney.go.com/blog/2018/06/disney-doodle-pluto-sniffs-out-fun-at-seven-dwarfs-mine-train/).
-Our model predicted a much lower wait time, so this date was upweighted.
+```{r}
+wait_times_wts |> 
+  filter(swts > 10) |> 
+  select(
+    date, avg_spostmin, .fitted, 
+    close, extra_magic_morning, 
+    weather_wdwhigh, wdw_ticket_season
+  ) |>
+  knitr::kable()
+```
+
+Our model predicted a much lower posted wait time than observed, so this date was upweighted.
+We don't know why the posted time was so high (the actual time was much lower), but we did find an artist rendering from that date of [Pluto digging for Seven Dwarfs Mine Train treasure](https://disneyparks.disney.go.com/blog/2018/06/disney-doodle-pluto-sniffs-out-fun-at-seven-dwarfs-mine-train/).
 
 ## Fitting the outcome model for continuous exposures
