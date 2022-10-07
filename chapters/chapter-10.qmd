@@ -14,7 +14,7 @@ The **estimator** we use depends on the method we've chosen. For example, in an 
 
 $$\sum_{i=1}^{N}\frac{Y_i\times X_i}{N_{\textrm{A}}} - \frac{Y_i\times (1-X_i)}{N_{\textrm{B}}}$$
 
-Where $X$ is just an indicator for exposure A ($X = 1$ for exposure A and $X = 0$ for exposure B), $N_A$ is the total number in group A and $N_B$ is the total number in group B such that $N_A + N_B = N$. Suppose we have A/B testing data for 100 participants in a dataset called `ab`. Here is some code to simulate such a data set.
+Where $X$ is just an indicator for exposure A ($X = 1$ for exposure A and $X = 0$ for exposure B), $N_A$ is the total number in group A and $N_B$ is the total number in group B such that $N_A + N_B = N$. Let's motivate this example a bit more. Suppose we have a blue button on our website and we are interested in assessing whether changing the color to blue increases the average number of items a user purchases. We can create an A/B test where we randomly assign a subset of users to see the new greed button (group A) or the blue button (group B). Suppose we have A/B testing data for 100 participants in a dataset called `ab`. Here is some code to simulate such a data set.
 
 ```{r}
 #| eval: false
@@ -31,7 +31,7 @@ ab <- tibble(
 )
 ```
 
-Here the exposure is `x`, and the outcome is `y`. The true average treatment effect is 1.
+Here the exposure is `x`, and the outcome is `y`. The true average treatment effect is 1, implying that on average seeing the green button increases the number of items purchased by 1.
 
 ```{r}
 #| echo: false
