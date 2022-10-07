@@ -45,44 +45,47 @@ labels <- c(
 )
 
 dagify(
-  y ~ x + close + Season + weather + extra,
-  x ~ weather + close + Season + extra,
-  coords = coord_dag,
-  labels = labels,
-  exposure = "x",
-  outcome = "y"
+    y ~ x + close + Season + weather + extra,
+    x ~ weather + close + Season + extra,
+    extra ~ weather + close + Season,
+    coords = coord_dag,
+    labels = labels,
+    exposure = "x",
+    outcome = "y"
 ) |>
-  tidy_dagitty() |>
-  node_status() |>
-  ggplot(
-    aes(x, y, xend = xend, yend = yend, color = status)
-  ) +
-  geom_dag_edges_arc(curvature = c(rep(0, 5), rep(.2, 3), 0)) +
-  geom_dag_point() +
-  geom_dag_label_repel(seed = 1602) + 
-  scale_color_okabe_ito(na.value = "grey90") +
-  theme_dag() +
-  theme(
-    legend.position = "none",
-    axis.text.x = element_text()
-  ) +
-  coord_cartesian(clip = "off") +
-  scale_x_continuous(
-    limits = c(-2.25, 2.25),
-    breaks = c(-2, -1, 0, 1, 2),
-    labels = c(
-      "\n(one year ago)",
-      "\n(6 months ago)",
-      "\n(3 months ago)",
-      "8am-9am\n(Today)",
-      "9am-10am\n(Today)"
+    tidy_dagitty() |>
+    node_status() |>
+    ggplot(
+        aes(x, y, xend = xend, yend = yend, color = status)
+    ) +
+    geom_dag_edges_arc(curvature = c(rep(0, 7), .2, 0, .2, .2, 0), edge_colour = "grey70") +
+    geom_dag_point() +
+    geom_dag_label_repel(seed = 1602) + 
+    scale_color_okabe_ito(na.value = "grey90") +
+    theme_dag() +
+    theme(
+        legend.position = "none",
+        axis.text.x = element_text()
+    ) +
+    coord_cartesian(clip = "off") +
+    scale_x_continuous(
+        limits = c(-2.25, 2.25),
+        breaks = c(-2, -1, 0, 1, 2),
+        labels = c(
+            "\n(one year ago)",
+            "\n(6 months ago)",
+            "\n(3 months ago)",
+            "8am-9am\n(Today)",
+            "9am-10am\n(Today)"
+        )
     )
-  )
 ```
 
 In @fig-dag-avg-wait, we're assuming that our primary confounders are when the park closes, historic high temperatures, whether or not the ride has extra magic morning hours, and the ticket season.
+This is the only minimal adjustment set in the DAG, as well.
 The confounders precede the exposure and outcome, and (by definition) the exposure precedes the outcome.
 The average posted wait time is, in theory, a manipulable exposure because the park could post a time different from what they expect.
+The adjustment set
 
 The model is similar to the binary exposure case, but we need to use linear regression, as the posted time is a continuous variable.
 Since we're not using probabilities, we'll calculate denominators for our weights from a normal density.
