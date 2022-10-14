@@ -648,7 +648,7 @@ ggplot(seven_dwarfs_wts, aes(w_ato)) +
 
 Like the ATM weights, the ATO weights are bounded by 0 and 1, making them more stable than the ATE, ATT, and ATU, regardless of the exposed and unexposed imbalance.
 
-::: callout-warning
+::: {.callout-warning collapse="false"}
 
 ## Finite sample bias - revisited
 
