@@ -305,7 +305,7 @@ sim <- function(n) {
   )
 }
 
-## Examine 5 different sample sizes, simulate each 100 times
+## Examine 5 different sample sizes, simulate each 1000 times
 set.seed(1)
 o <- map_df(rep(c(50, 100, 500, 1000, 5000, 10000), 
                 each = 1000), sim)
@@ -687,7 +687,7 @@ sim <- function(n) {
   )
 }
 
-## Examine 5 different sample sizes, simulate each 100 times
+## Examine 5 different sample sizes, simulate each 1000 times
 set.seed(1)
 o <- map_df(rep(c(50, 100, 500, 1000, 5000, 10000), 
                 each = 1000), sim)
@@ -701,7 +701,7 @@ Let's plot our results:
 
 ```{r}
 #| label: fig-finite-sample-bias-2
-#| fig-cap: "Finite sample bias with ATE weights () and ATO weights () created using correctly specified propensity score model, varying the sample size from n = 50 to n = 10,000"
+#| fig-cap: "Finite sample bias with ATE weights (orange) and ATO weights (blue) created using correctly specified propensity score model, varying the sample size from n = 50 to n = 10,000"
 ggplot(bias, aes(x = n, y = bias, color = weight)) +
   geom_point() + 
   geom_line() + 
