@@ -16,20 +16,24 @@ The **estimand** here is the expected value of the difference in potential outco
 $$E[Y(1) - Y(0)]$$
 
 The **estimator** we use depends on the method we've chosen.
-For example, in a randomized controlled trial, our estimator could just be the average outcome among those who received the exposure minus the average outcome among those who did not.
+For example, in an A/B test or randomized controlled trial, our estimator could just be the average outcome among those who received the exposure A minus the average outcome among those who receive exposure B.
 
-$$\sum_{i=1}^{N}\frac{Y_i\times X_i}{N_{\textrm{exposed}}} - \frac{Y_i\times (1-X_i)}{N_{\textrm{unexposed}}}$$
+$$\sum_{i=1}^{N}\frac{Y_i\times X_i}{N_{\textrm{A}}} - \frac{Y_i\times (1-X_i)}{N_{\textrm{B}}}$$
 
-Where $X$ is just an indicator for exposure ($X = 1$ for the exposed and $X = 0$ for the unexposed.) Suppose we have randomized controlled trial data for 100 participants in a dataset called `rct`.
+Where $X$ is just an indicator for exposure A ($X = 1$ for exposure A and $X = 0$ for exposure B), $N_A$ is the total number in group A and $N_B$ is the total number in group B such that $N_A + N_B = N$.
+Let's motivate this example a bit more.
+Suppose we have two different designs for a call-to-action (often abbreviated as CTA, a written directive for a marketing campaign) and want to assess whether they lead to a different average number of items a user purchases.
+We can create an A/B test where we randomly assign a subset of users to see design A or design B.
+Suppose we have A/B testing data for 100 participants in a dataset called `ab`.
 Here is some code to simulate such a data set.
 
 ```{r}
 #| eval: false
 library(tidyverse)
 set.seed(928)
-rct <- tibble(
+ab <- tibble(
   # generate the exposure, x, from a binomial distribution
-  # with the probability exposure (the probability x = 1) of 0.5
+  # with the probability exposure A of 0.5
   x = rbinom(100, 1, 0.5),
   # generate the "true" average treatment effect of 1
   # we use rnorm(100) to add the random error term that is normally
@@ -39,42 +43,42 @@ rct <- tibble(
 ```
 
 Here the exposure is `x`, and the outcome is `y`.
-The true average treatment effect is 1.
+The true average treatment effect is 1, implying that on average seeing call-to-action A increases the number of items purchased by 1.
 
 ```{r}
 #| echo: false
 set.seed(928)
-rct <- tibble(
+ab <- tibble(
   x = rbinom(100, 1, 0.5),
   y = x + rnorm(100)
 )
-rct |>
+ab |>
   summarise(
-    n_exposed = sum(x),
-    n_unexposed = sum(1 - x),
+    n_a = sum(x),
+    n_b = sum(1 - x),
     estimate = sum(
-      (y * x) / n_exposed -
-        y * (1 - x) / n_unexposed
+      (y * x) / n_a -
+        y * (1 - x) / n_b
     )
   ) |>
   pull(estimate) -> estimate
 ```
 
 ```{r}
-rct
+ab
 ```
 
 Below are two ways to estimate this in R.
 Using a formula approach, we calculate the difference in `y` between exposure values in the first example.
 
 ```{r}
-rct |>
+ab |>
   summarise(
-    n_exposed = sum(x),
-    n_unexposed = sum(1 - x),
+    n_a = sum(x),
+    n_b = sum(1 - x),
     estimate = sum(
-      (y * x) / n_exposed -
-        y * (1 - x) / n_unexposed
+      (y * x) / n_a -
+        y * (1 - x) / n_b
     )
   )
 ```
@@ -82,7 +86,7 @@ rct |>
 Alternatively, we can `group_by()` `x` and `summarize()` the means of `y` for each group, then pivot the results to take their difference.
 
 ```{r}
-rct |>
+ab |>
   group_by(x) |>
   summarise(avg_y = mean(y)) |>
   pivot_wider(
@@ -98,25 +102,25 @@ Because $X$, the exposure, was randomly assigned, this estimator results in an u
 What do we mean by unbiased, though?
 Notice that while the "true" causal effect is 1, this estimate is not precisely 1; it is `r round(estimate, 3)`.
 Why the difference?
-This randomized controlled trial included a sample of 100 participants, not the whole population.
+This A/B test included a sample of 100 participants, not the whole population.
 As that sample increases, our estimate will get closer to the truth.
 Let's try that.
-Let's simulate the data again but increase the sample size from 100 to 100,000
+Let's simulate the data again but increase the sample size from 100 to 100,000:
 
 ```{r}
 set.seed(928)
-rct <- tibble(
+ab <- tibble(
   x = rbinom(100000, 1, 0.5),
   y = x + rnorm(100000)
 )
 
-rct |>
+ab |>
   summarise(
-    n_exposed = sum(x),
-    n_unexposed = sum(1 - x),
+    n_a = sum(x),
+    n_b = sum(1 - x),
     estimate = sum(
-      (y * x) / n_exposed -
-        y * (1 - x) / n_unexposed
+      (y * x) / n_a -
+        y * (1 - x) / n_b
     )
   )
 ```
