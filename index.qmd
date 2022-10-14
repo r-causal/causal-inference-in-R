@@ -2,11 +2,17 @@
 
 Welcome to *Causal Inference in R*.
 This book teaches you strategies for making valid causal inferences from different data types.
-By its end, we hope to help you: Ask better causal questions.
-Understand the assumptions needed for causal inference Identify the target population for which you want to make inferences Fit causal models and check their problems Conduct sensitivity analyses where the techniques we use might be imperfect.
+By its end, we hope to help you: 
+
+1. Ask better causal questions.
+1. Understand the assumptions needed for causal inference 
+1. Identify the target population for which you want to make inferences 
+1. Fit causal models and check their problems 
+1. Conduct sensitivity analyses where the techniques we use might be imperfect
+
 This book is for both academic researchers and data scientists.
 Although the questions may differ between these settings, many techniques are the same: causal inference is as helpful for asking questions about cancer as it is about clicks.
-We use a mix of datasets from medicine, economics, and industry to demonstrate that you need a clear causal question and a willingness to be transparent about your assumptions.
+We use a mix of examples from medicine, economics, and tech to demonstrate that you need a clear causal question and a willingness to be transparent about your assumptions.
 
 You'll learn a lot in this book, but ironically, you won't learn much about conducting randomized trials, one of the best tools for causal inferences.
 Randomized trials, and their cousins, A/B tests (standard in the tech world), are compelling because they alleviate many of the assumptions we need to make for valid inferences.
@@ -50,7 +56,7 @@ See [R for Data Science's chapter on pipes](https://r4ds.hadley.nz/workflow-pipe
 
 Another modern R feature we use is the native lamda, a way of writing short functions that looks like `\(.x) do_something(.x)`.
 It is similar to purrr's `~` lamda notation.
-It's also helpful to realize the native lamda is identical to `function(.x) do_something()`, where `\` is shorthand for `function`.
+It's also helpful to realize the native lamda is identical to `function(.x) do_something(.x)`, where `\` is shorthand for `function`.
 See [R for Data Science's chapter on iteration](https://r4ds.hadley.nz/iteration.html) for more on this topic.
 
 ## Themeing
