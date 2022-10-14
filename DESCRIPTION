@@ -19,6 +19,7 @@ Imports:
     ggtext,
     gtsummary,
     halfmoon (>= 0.0.0.9000),
+    here,
     MatchIt,
     propensity (>= 0.0.0.9000),
     ragg,
