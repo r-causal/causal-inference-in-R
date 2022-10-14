@@ -235,7 +235,7 @@ Many weights in @fig-sd-ate-hist are close to 1 (the smallest possible value for
 This distribution highlights a potential problem with ATE weights.
 They range from 1 to infinity; if your weights are too large in small samples, this can lead to bias in your estimates (known as finite sample bias).
 
-::: callout-warning
+::: {.callout-warning collapse="false"}
 
 ## Finite sample bias
 
