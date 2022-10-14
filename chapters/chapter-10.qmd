@@ -239,7 +239,7 @@ They range from 1 to infinity; if your weights are too large in small samples, t
 
 ## Finite sample bias
 
-We know that not accounting for confounders can bias our causal estimates, but it turns out that even after accounting for all confounders, we may still get a biased estimate in finite samples. Many of the properties we tout in statistics rely on *large samples* -- how "large" is defined can be opaque. Let's look at a quick simulation. Here, we have and exposure, $X$, an outcome, $Y$, and one confounder, $Z$. I will simulate $Y$ such that it is only dependent on $Z$ (so the true treatment effect is 0), and $X$ such that it also depends on $Z$. 
+We know that not accounting for confounders can bias our causal estimates, but it turns out that even after accounting for all confounders, we may still get a biased estimate in finite samples. Many of the properties we tout in statistics rely on *large samples*---how "large" is defined can be opaque. Let's look at a quick simulation. Here, we have an exposure, $X$, an outcome, $Y$, and one confounder, $Z$. We will simulate $Y$, which is only dependent on $Z$ (so the true treatment effect is 0), and $X$, which also depends on $Z$. 
 
 
 ```{r}
