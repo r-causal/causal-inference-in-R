@@ -235,6 +235,107 @@ Many weights in @fig-sd-ate-hist are close to 1 (the smallest possible value for
 This distribution highlights a potential problem with ATE weights.
 They range from 1 to infinity; if your weights are too large in small samples, this can lead to bias in your estimates (known as finite sample bias).
 
+::: callout-warning
+
+## Finite sample bias
+
+We know that not accounting for confounders can bias our causal estimates, but it turns out that even after accounting for all confounders, we may still get a biased estimate in finite samples. Many of the properties we tout in statistics rely on *large samples* -- how "large" is defined can be opaque. Let's look at a quick simulation. Here, we have and exposure, $X$, an outcome, $Y$, and one confounder, $Z$. I will simulate $Y$ such that it is only dependent on $Z$ (so the true treatment effect is 0), and $X$ such that it also depends on $Z$. 
+
+
+```{r}
+set.seed(1)
+n <- 100
+d <- tibble(
+  # z is normally distributed with a mean: 0 and sd: 1
+  z = rnorm(n),
+  # x is defined from a probit selection model with normally distributed errors
+  x = case_when(
+    0.5 + z + rnorm(n) > 0 ~ 1,
+    TRUE ~ 0
+  ),
+  # y is continuous, dependent only on z with normally distrbuted errors
+  y = z + rnorm(n)
+)
+```
+
+If we fit a propensity score model using the one confounder $Z$ and calculate the weighted estimator, we should get an unbiased result (which in this case would be 0).
+
+```{r}
+## fit the propensity score model
+d_wts <- glm(x ~ z, data = d, family = binomial("probit")) |>
+  augment(newdata = d, type.predict = "response") |>
+  mutate(wts = wt_ate(.fitted, x))
+
+d_wts |>
+  summarize(
+    effect = sum(y * x * wts) / sum(x * wts) - 
+      sum(y * (1 - x) * wts) / sum((1 - x) * wts)
+  )
+```
+
+Ok, here, our effect of $X$ is pretty far from 0, although it's hard to know if this is really bias, or something we are just seeing by chance in this particular simulated sample. To explore the potential for finite sample bias, we can rerun this simulation many times at different sample sizes. Let's do that.
+
+```{r}
+#| label: sim-finite-sample-bias
+#| warning: false
+#| message: false
+#| cache: true
+sim <- function(n) {
+  ## create a simulated dataset
+  d <- tibble(
+    z = rnorm(n),
+    x = case_when(
+      0.5 + z + rnorm(n) > 0 ~ 1,
+      TRUE ~ 0
+    ),
+    y = z + rnorm(n)
+  )
+  d_wts <- glm(x ~ z, data = d, family = binomial("probit")) |>
+    augment(newdata = d, type.predict = "response") |>
+    mutate(wts = wt_ate(.fitted, x))
+  bias <- d_wts |>
+  summarize(
+    effect = sum(y * x * wts) / sum(x * wts) - 
+      sum(y * (1 - x) * wts) / sum((1 - x) * wts)
+  ) |> 
+    pull()
+  tibble(
+    n = n,
+    bias = bias
+  )
+}
+
+## Examine 5 different sample sizes, simulate each 100 times
+set.seed(1)
+o <- map_df(rep(c(50, 100, 500, 1000, 5000, 10000), 
+                each = 1000), sim)
+
+bias <- o %>%
+  group_by(n) %>%
+  summarise(bias = mean(bias))
+```
+
+Let's plot our results:
+
+```{r}
+#| label: fig-finite-sample-bias
+#| fig-cap: "Finite sample bias present with ATE weights created using correctly specified propensity score model, varying the sample size from n = 50 to n = 10,000"
+ggplot(bias, aes(x = n, y = bias)) +
+  geom_point() + 
+  geom_line() + 
+  geom_hline(yintercept = 0, lty = 2)
+```
+
+This is an example of finite sample bias. Notice here, even when the sample size is quite large (5,000) we still see some bias away from the "true" effect of 0. It isn't until a sample size of 10,000 that we start to see this bias disappearing.
+
+Estimands that utilize weights that are unbounded (i.e. that theoretically can be infinitely large) are more likely to suffer from finite sample bias. The likelihood of falling into finite sample bias depends on:   
+(1) the estimand you have chosen (i.e. are the weights bounded?)   
+(2) the distribution of the covariates in the exposed and unexposed groups (i.e. is there good overlap? Potential positivity violations, when there is poor overlap, are the regions where weights can become too large)  
+(3) the sample size.
+
+
+:::
+
 The {gtsummary} package allows the creation of *weighted* tables, which can help us build an intuition for the psuedopopulation created by the weights.
 First, we must load the {survey} package and create a survey design object.
 The {survey} package supports calculating statistics and models using weights.
@@ -546,6 +647,70 @@ ggplot(seven_dwarfs_wts, aes(w_ato)) +
 ```
 
 Like the ATM weights, the ATO weights are bounded by 0 and 1, making them more stable than the ATE, ATT, and ATU, regardless of the exposed and unexposed imbalance.
+
+::: callout-warning
+
+## Finite sample bias - revisited
+
+Let's revisit our finite sample bias simulation, adding in the ATO weights to examine whether they are impacted by this potential for bias.
+
+```{r}
+#| label: sim-finite-sample-bias-2
+#| warning: false
+#| message: false
+#| cache: true
+sim <- function(n) {
+  ## create a simulated dataset
+  d <- tibble(
+    z = rnorm(n),
+    x = case_when(
+      0.5 + z + rnorm(n) > 0 ~ 1,
+      TRUE ~ 0
+    ),
+    y = z + rnorm(n)
+  )
+  d_wts <- glm(x ~ z, data = d, family = binomial("probit")) |>
+    augment(newdata = d, type.predict = "response") |>
+    mutate(wts_ate = wt_ate(.fitted, x),
+           wts_ato = wt_ato(.fitted, x))
+  bias <- d_wts |>
+  summarize(
+    effect_ate = sum(y * x * wts_ate) / sum(x * wts_ate) - 
+      sum(y * (1 - x) * wts_ate) / sum((1 - x) * wts_ate),
+    effect_ato = sum(y * x * wts_ato) / sum(x * wts_ato) - 
+      sum(y * (1 - x) * wts_ato) / sum((1 - x) * wts_ato)
+  )
+  tibble(
+    n = n,
+    bias = c(bias$effect_ate, bias$effect_ato),
+    weight = c("ATE", "ATO")
+  )
+}
+
+## Examine 5 different sample sizes, simulate each 100 times
+set.seed(1)
+o <- map_df(rep(c(50, 100, 500, 1000, 5000, 10000), 
+                each = 1000), sim)
+
+bias <- o %>%
+  group_by(n, weight) %>%
+  summarise(bias = mean(bias))
+```
+
+Let's plot our results:
+
+```{r}
+#| label: fig-finite-sample-bias-2
+#| fig-cap: "Finite sample bias with ATE weights () and ATO weights () created using correctly specified propensity score model, varying the sample size from n = 50 to n = 10,000"
+ggplot(bias, aes(x = n, y = bias, color = weight)) +
+  geom_point() + 
+  geom_line() + 
+  geom_hline(yintercept = 0, lty = 2)
+```
+
+Notice here the estimate using the ATO weights is almost immediately unbiased, even in fairly small samples.
+
+:::
 
 Now let's take a look at the weighted table.
 
