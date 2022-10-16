@@ -245,7 +245,7 @@ We know that not accounting for confounders can bias our causal estimates, but i
 ```{r}
 set.seed(1)
 n <- 100
-d <- tibble(
+finite_sample <- tibble(
   # z is normally distributed with a mean: 0 and sd: 1
   z = rnorm(n),
   # x is defined from a probit selection model with normally distributed errors
@@ -262,11 +262,12 @@ If we fit a propensity score model using the one confounder $Z$ and calculate th
 
 ```{r}
 ## fit the propensity score model
-d_wts <- glm(x ~ z, data = d, family = binomial("probit")) |>
-  augment(newdata = d, type.predict = "response") |>
+finite_sample_wts <- glm(
+  x ~ z, data = finite_sample, family = binomial("probit")) |>
+  augment(newdata = finite_sample, type.predict = "response") |>
   mutate(wts = wt_ate(.fitted, x))
 
-d_wts |>
+finite_sample_wts |>
   summarize(
     effect = sum(y * x * wts) / sum(x * wts) - 
       sum(y * (1 - x) * wts) / sum((1 - x) * wts)
@@ -282,7 +283,7 @@ Ok, here, our effect of $X$ is pretty far from 0, although it's hard to know if 
 #| cache: true
 sim <- function(n) {
   ## create a simulated dataset
-  d <- tibble(
+  finite_sample <- tibble(
     z = rnorm(n),
     x = case_when(
       0.5 + z + rnorm(n) > 0 ~ 1,
@@ -290,14 +291,15 @@ sim <- function(n) {
     ),
     y = z + rnorm(n)
   )
-  d_wts <- glm(x ~ z, data = d, family = binomial("probit")) |>
-    augment(newdata = d, type.predict = "response") |>
+  finite_sample_wts <- glm(
+    x ~ z, data = finite_sample, family = binomial("probit")) |>
+    augment(newdata = finite_sample, type.predict = "response") |>
     mutate(wts = wt_ate(.fitted, x))
-  bias <- d_wts |>
-  summarize(
-    effect = sum(y * x * wts) / sum(x * wts) - 
-      sum(y * (1 - x) * wts) / sum((1 - x) * wts)
-  ) |> 
+  bias <- finite_sample_wts |>
+    summarize(
+      effect = sum(y * x * wts) / sum(x * wts) - 
+        sum(y * (1 - x) * wts) / sum((1 - x) * wts)
+    ) |> 
     pull()
   tibble(
     n = n,
@@ -307,10 +309,10 @@ sim <- function(n) {
 
 ## Examine 5 different sample sizes, simulate each 1000 times
 set.seed(1)
-o <- map_df(rep(c(50, 100, 500, 1000, 5000, 10000), 
-                each = 1000), sim)
+finite_sample_sims <- map_df(rep(c(50, 100, 500, 1000, 5000, 10000),
+                                 each = 1000), sim)
 
-bias <- o %>%
+bias <- finite_sample_sims %>%
   group_by(n) %>%
   summarise(bias = mean(bias))
 ```
@@ -661,7 +663,7 @@ Let's revisit our finite sample bias simulation, adding in the ATO weights to ex
 #| cache: true
 sim <- function(n) {
   ## create a simulated dataset
-  d <- tibble(
+  finite_sample <- tibble(
     z = rnorm(n),
     x = case_when(
       0.5 + z + rnorm(n) > 0 ~ 1,
@@ -669,17 +671,18 @@ sim <- function(n) {
     ),
     y = z + rnorm(n)
   )
-  d_wts <- glm(x ~ z, data = d, family = binomial("probit")) |>
-    augment(newdata = d, type.predict = "response") |>
+  finite_sample_wts <- glm(
+    x ~ z, data = finite_sample, family = binomial("probit")) |>
+    augment(newdata = finite_sample, type.predict = "response") |>
     mutate(wts_ate = wt_ate(.fitted, x),
            wts_ato = wt_ato(.fitted, x))
-  bias <- d_wts |>
-  summarize(
-    effect_ate = sum(y * x * wts_ate) / sum(x * wts_ate) - 
-      sum(y * (1 - x) * wts_ate) / sum((1 - x) * wts_ate),
-    effect_ato = sum(y * x * wts_ato) / sum(x * wts_ato) - 
-      sum(y * (1 - x) * wts_ato) / sum((1 - x) * wts_ato)
-  )
+  bias <- finite_sample_wts |>
+    summarize(
+      effect_ate = sum(y * x * wts_ate) / sum(x * wts_ate) - 
+        sum(y * (1 - x) * wts_ate) / sum((1 - x) * wts_ate),
+      effect_ato = sum(y * x * wts_ato) / sum(x * wts_ato) - 
+        sum(y * (1 - x) * wts_ato) / sum((1 - x) * wts_ato)
+    )
   tibble(
     n = n,
     bias = c(bias$effect_ate, bias$effect_ato),
@@ -689,10 +692,10 @@ sim <- function(n) {
 
 ## Examine 5 different sample sizes, simulate each 1000 times
 set.seed(1)
-o <- map_df(rep(c(50, 100, 500, 1000, 5000, 10000), 
-                each = 1000), sim)
+finite_sample_sims <- map_df(rep(c(50, 100, 500, 1000, 5000, 10000), 
+                                 each = 1000), sim)
 
-bias <- o %>%
+bias <- finite_sample_sims %>%
   group_by(n, weight) %>%
   summarise(bias = mean(bias))
 ```
