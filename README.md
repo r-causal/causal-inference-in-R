@@ -19,4 +19,4 @@ for this book with:
 remotes::install_deps(dependencies = TRUE)
 ```
 
-We use [Quarto](quarto.org/) to render this book.
+We use [Quarto](https://quarto.org/) to render this book.
