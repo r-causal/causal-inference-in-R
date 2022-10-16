@@ -3,6 +3,8 @@ project:
   pre-render: R/setup.R
 
 callout-appearance: simple
+# see this quarto discussion issue for info on lua filter
+# https://github.com/quarto-dev/quarto-cli/discussions/2869#discussioncomment-3886253
 filters: 
  - chapters/lua/callouts.lua
 
