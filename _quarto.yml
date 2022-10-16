@@ -3,7 +3,9 @@ project:
   pre-render: R/setup.R
 
 callout-appearance: simple
-  
+filters: 
+ - chapters/lua/callouts.lua
+
 execute:
   freeze: auto  
   echo: true 

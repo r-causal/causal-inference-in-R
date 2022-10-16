@@ -1,7 +1,7 @@
 {
   "hash": "dc879faefba794d9ed64b1f46d4f380e",
   "result": {
-    "markdown": "\\mainmatter\n\n# What is a causal question? {#sec-causal-question}\n\n\n\n\n\n## Description, prediction, and explanation\n\n\n::: {.cell}\n\n```{.r .cell-code}\nrnorm(5)\n```\n\n::: {.cell-output .cell-output-stdout}\n```\n[1]  1.165 -1.519 -1.019 -1.287 -1.775\n```\n:::\n:::\n\n\n## Causal Assumptions\n\n## When do standard methods succeed and fail?\n",
+    "markdown": "\\mainmatter\n\n# What is a causal question? {#sec-causal-question}\n\n---\n# see https://github.com/quarto-dev/quarto-cli/discussions/2869#discussioncomment-3886253\nfilters: \n - lua/callouts.lua\n - chapters/lua/callouts.lua\n - /Users/malcolmbarrett/core/active/reference/causal-inference-in-R/chapters/lua/callouts.lua\n---\n\n\n\n\n\n## Description, prediction, and explanation\n\n\n::: {.cell}\n\n```{.r .cell-code}\nrnorm(5)\n```\n\n::: {.cell-output .cell-output-stdout}\n```\n[1] 0.6155 0.1921 0.1901 1.6525 0.5883\n```\n:::\n:::\n\n\n## Causal Assumptions\n\n## When do standard methods succeed and fail?\n",
     "supporting": [],
     "filters": [
       "rmarkdown/pagebreak.lua"
