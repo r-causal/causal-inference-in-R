@@ -22,8 +22,8 @@ $$\sum_{i=1}^{N}\frac{Y_i\times X_i}{N_{\textrm{A}}} - \frac{Y_i\times (1-X_i)}{
 
 Where $X$ is just an indicator for exposure A ($X = 1$ for exposure A and $X = 0$ for exposure B), $N_A$ is the total number in group A and $N_B$ is the total number in group B such that $N_A + N_B = N$.
 Let's motivate this example a bit more.
-Suppose we have a blue button on our website and we are interested in assessing whether changing the color to blue increases the average number of items a user purchases.
-We can create an A/B test where we randomly assign a subset of users to see the new greed button (group A) or the blue button (group B).
+Suppose we have two different designs for a call-to-action (often abbreviated as CTA, a written directive for a marketing campaign) and want to assess whether they lead to a different average number of items a user purchases.
+We can create an A/B test where we randomly assign a subset of users to see design A or design B.
 Suppose we have A/B testing data for 100 participants in a dataset called `ab`.
 Here is some code to simulate such a data set.
 
@@ -43,7 +43,7 @@ ab <- tibble(
 ```
 
 Here the exposure is `x`, and the outcome is `y`.
-The true average treatment effect is 1, implying that on average seeing the green button increases the number of items purchased by 1.
+The true average treatment effect is 1, implying that on average seeing call-to-action A increases the number of items purchased by 1.
 
 ```{r}
 #| echo: false
@@ -105,7 +105,7 @@ Why the difference?
 This A/B test included a sample of 100 participants, not the whole population.
 As that sample increases, our estimate will get closer to the truth.
 Let's try that.
-Let's simulate the data again but increase the sample size from 100 to 100,000
+Let's simulate the data again but increase the sample size from 100 to 100,000:
 
 ```{r}
 set.seed(928)
@@ -235,12 +235,14 @@ Many weights in @fig-sd-ate-hist are close to 1 (the smallest possible value for
 This distribution highlights a potential problem with ATE weights.
 They range from 1 to infinity; if your weights are too large in small samples, this can lead to bias in your estimates (known as finite sample bias).
 
-::: {.callout-warning collapse="false"}
-
+::: {.callout-warning}
 ## Finite sample bias
 
-We know that not accounting for confounders can bias our causal estimates, but it turns out that even after accounting for all confounders, we may still get a biased estimate in finite samples. Many of the properties we tout in statistics rely on *large samples*---how "large" is defined can be opaque. Let's look at a quick simulation. Here, we have an exposure, $X$, an outcome, $Y$, and one confounder, $Z$. We will simulate $Y$, which is only dependent on $Z$ (so the true treatment effect is 0), and $X$, which also depends on $Z$. 
-
+We know that not accounting for confounders can bias our causal estimates, but it turns out that even after accounting for all confounders, we may still get a biased estimate in finite samples.
+Many of the properties we tout in statistics rely on *large samples*---how "large" is defined can be opaque.
+Let's look at a quick simulation.
+Here, we have an exposure, $X$, an outcome, $Y$, and one confounder, $Z$.
+We will simulate $Y$, which is only dependent on $Z$ (so the true treatment effect is 0), and $X$, which also depends on $Z$.
 
 ```{r}
 set.seed(1)
@@ -274,7 +276,9 @@ finite_sample_wts |>
   )
 ```
 
-Ok, here, our effect of $X$ is pretty far from 0, although it's hard to know if this is really bias, or something we are just seeing by chance in this particular simulated sample. To explore the potential for finite sample bias, we can rerun this simulation many times at different sample sizes. Let's do that.
+Ok, here, our effect of $X$ is pretty far from 0, although it's hard to know if this is really bias, or something we are just seeing by chance in this particular simulated sample.
+To explore the potential for finite sample bias, we can rerun this simulation many times at different sample sizes.
+Let's do that.
 
 ```{r}
 #| label: sim-finite-sample-bias
@@ -328,14 +332,15 @@ ggplot(bias, aes(x = n, y = bias)) +
   geom_hline(yintercept = 0, lty = 2)
 ```
 
-This is an example of finite sample bias. Notice here, even when the sample size is quite large (5,000) we still see some bias away from the "true" effect of 0. It isn't until a sample size larger than 10,000 that we see this bias disappear.
+This is an example of finite sample bias.
+Notice here, even when the sample size is quite large (5,000) we still see some bias away from the "true" effect of 0.
+It isn't until a sample size larger than 10,000 that we see this bias disappear.
 
-Estimands that utilize weights that are unbounded (i.e. that theoretically can be infinitely large) are more likely to suffer from finite sample bias. The likelihood of falling into finite sample bias depends on:   
-(1) the estimand you have chosen (i.e. are the weights bounded?)   
-(2) the distribution of the covariates in the exposed and unexposed groups (i.e. is there good overlap? Potential positivity violations, when there is poor overlap, are the regions where weights can become too large)  
+Estimands that utilize weights that are unbounded (i.e. that theoretically can be infinitely large) are more likely to suffer from finite sample bias.
+The likelihood of falling into finite sample bias depends on:\
+(1) the estimand you have chosen (i.e. are the weights bounded?)\
+(2) the distribution of the covariates in the exposed and unexposed groups (i.e. is there good overlap? Potential positivity violations, when there is poor overlap, are the regions where weights can become too large)\
 (3) the sample size.
-
-
 :::
 
 The {gtsummary} package allows the creation of *weighted* tables, which can help us build an intuition for the psuedopopulation created by the weights.
@@ -650,8 +655,7 @@ ggplot(seven_dwarfs_wts, aes(w_ato)) +
 
 Like the ATM weights, the ATO weights are bounded by 0 and 1, making them more stable than the ATE, ATT, and ATU, regardless of the exposed and unexposed imbalance.
 
-::: {.callout-warning collapse="false"}
-
+::: {.callout-warning}
 ## Finite sample bias - revisited
 
 Let's revisit our finite sample bias simulation, adding in the ATO weights to examine whether they are impacted by this potential for bias.
@@ -712,7 +716,6 @@ ggplot(bias, aes(x = n, y = bias, color = weight)) +
 ```
 
 Notice here the estimate using the ATO weights is almost immediately unbiased, even in fairly small samples.
-
 :::
 
 Now let's take a look at the weighted table.
