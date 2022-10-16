@@ -1,0 +1,14 @@
+{
+  "hash": "0e074a89e72cb6aa20bfab165ebeffde",
+  "result": {
+    "markdown": "# Estimating counterfactuals {#sec-counterfactuals}\n\n\n\n\n\n## What is a counterfactual?\n\n## Target Trials\n",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}
