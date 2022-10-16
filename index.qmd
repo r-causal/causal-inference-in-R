@@ -1,59 +1,120 @@
 # Preface {.unnumbered}
 
+Welcome to *Causal Inference in R*.
+This book teaches you strategies for making valid causal inferences from different data types.
+By its end, we hope to help you: 
+
+1. Ask better causal questions.
+1. Understand the assumptions needed for causal inference 
+1. Identify the target population for which you want to make inferences 
+1. Fit causal models and check their problems 
+1. Conduct sensitivity analyses where the techniques we use might be imperfect
+
+This book is for both academic researchers and data scientists.
+Although the questions may differ between these settings, many techniques are the same: causal inference is as helpful for asking questions about cancer as it is about clicks.
+We use a mix of examples from medicine, economics, and tech to demonstrate that you need a clear causal question and a willingness to be transparent about your assumptions.
+
+You'll learn a lot in this book, but ironically, you won't learn much about conducting randomized trials, one of the best tools for causal inferences.
+Randomized trials, and their cousins, A/B tests (standard in the tech world), are compelling because they alleviate many of the assumptions we need to make for valid inferences.
+They are also sufficiently complex in design to merit their own learning resources.
+Instead, we'll focus on observational data where we don't usually benefit from randomization.
+If you're interested in randomization techniques, don't put away this resource just yet: many causal inference techniques designed for observational data improve randomized analyses, too.
+
+We're making a few assumptions about you as a reader:
+
+1.  You're familiar with the [tidyverse](https://www.tidyverse.org/) ecosystem of R packages and their general philosophy. For instance, we use a lot of dplyr and ggplot2 in this book, but we won't explain their basic grammar. To learn more about starting with the tidyverse, we recommend [R for Data Science](https://r4ds.hadley.nz/).
+2.  You're familiar with basic statistical modeling in R. For instance, we'll fit many models with `lm()` and `glm()`, but we won't discuss how they work. If you want to learn more about R's powerful modeling functions, we recommend reading ["A Review of R Modeling Fundamentals"](https://www.tmwr.org/base-r.html) in [Tidy Modeling with R](https://www.tmwr.org).
+3.  We also assume you have familiarity with other R basics, such as [writing functions](https://r4ds.hadley.nz/functions.html). [R for Data Science](https://r4ds.hadley.nz/) is also a good resource for these topics. (For a deeper dive into the R programming language, we recommend [Advanced R](https://adv-r.hadley.nz/index.html), although we don't assume you have mastered its material for this book).
+
+We'll also use tools from the tidymodels ecosystem, a set of R packages for modeling related to the tidyverse.
+We don't assume you have used them before.
+tidymodels also focuses on predictive modeling, so many of its tools aren't appropriate for this book.
+Nevertheless, if you are interested in this topic, we recommend [Tidy Modeling with R](https://www.tmwr.org).
+
+There are also several other excellent books on causal inference.
+This book is different in its focus on R, but it's still helpful to see this area from other perspectives.
+A few books you might like:
+
+-   [*Causal Inference: What If?*](https://www.hsph.harvard.edu/miguel-hernan/causal-inference-book/)
+-   [*Causal Inference: The Mixtape*](https://mixtape.scunning.com/)
+-   [*The Effect*](https://theeffectbook.net/)
+
+The first book is focused on epidemiology.
+The latter two are focused on econometrics.
+We also recommend *The Book of Why* for more on causal diagrams.
+
+## Conventions
+
+### Modern R Features
+
+We use two modern R features in R 4.1.0 and above in this book.
+The first is the native pipe, `|>`.
+This R feature is similar to the tidyverse's `%>%`, with which you may be more familiar.
+In typical cases, the two work interchangeably.
+One notable difference is that `|>` uses the `_` symbol to direct the pipe's results, e.g., `.df |> lm(y ~ x, data = _)`.
+See [R for Data Science's chapter on pipes](https://r4ds.hadley.nz/workflow-pipes.html#magrittr-and-the-pipe) for more on this topic.
+
+Another modern R feature we use is the native lamda, a way of writing short functions that looks like `\(.x) do_something(.x)`.
+It is similar to purrr's `~` lamda notation.
+It's also helpful to realize the native lamda is identical to `function(.x) do_something(.x)`, where `\` is shorthand for `function`.
+See [R for Data Science's chapter on iteration](https://r4ds.hadley.nz/iteration.html) for more on this topic.
+
+## Themeing
+
+The plots in this book use a consistent theme that we don't include in every code chunk, meaning if you run the code for a visualization, you might get a slightly different-looking result.
+We set the following defaults related to ggplot2:
+
+<!-- TODO: make sure these are up to date -->
+
 ```{r}
-#| label: setup
-#| include: false
+#| eval: false
 options(
-  tidyverse.quiet = TRUE, 
-  tipr.verbose = FALSE,
-  htmltools.dir.version = FALSE, 
-  width = 55, 
-  digits = 4,
+  # set default colors in ggplot2 to colorblind-friendly 
+  # Okabe-Ito and Viridis palettes
   ggplot2.discrete.colour = ggokabeito::palette_okabe_ito(),
   ggplot2.discrete.fill = ggokabeito::palette_okabe_ito(),
   ggplot2.continuous.colour = "viridis",
-  ggplot2.continuous.fill = "viridis"
+  ggplot2.continuous.fill = "viridis",
+  # set theme font and size
+  book.base_family = "sans",
+  book.base_size = 14
 )
 
 library(ggplot2)
 
+# set default theme
 theme_set(
-  theme_minimal(base_size = 12, base_family = "Open Sans") %+replace% 
+  theme_minimal(
+    base_size = getOption("book.base_size"), 
+    base_family = getOption("book.base_family")
+  ) %+replace% 
     theme(
-      panel.grid.minor = element_blank()
+      panel.grid.minor = element_blank(),
+      legend.position = "bottom"
     )
 )
+```
 
+We also mask a few functions from ggdag that we like to customize:
+
+```{r}
+#| eval: false
 theme_dag <- function() {
-  ggdag::theme_dag(base_family = "Open Sans")
+  ggdag::theme_dag(base_family = getOption("book.base_family"))
 }
 
-geom_dag_label_repel <- function(...) {
+geom_dag_label_repel <- function(..., seed = 10) {
   ggdag::geom_dag_label_repel(
-      aes(x, y, label = label),
-      box.padding = 3.5, 
-      inherit.aes = FALSE,
-      max.overlaps = Inf, 
-      family = "Open Sans",
-      seed = 10,
-      label.size = NA, 
-      label.padding = 0.1,
-      size = 4,
-      ...
-    ) 
-}
-
-est_ci <- function(.df, rsample = FALSE) {
-  if (!is.data.frame(.df) && is.numeric(.df)) {
-    return(
-      glue::glue("{round(.df[[1]], digits = 1)} (95% CI {round(.df[[2]], digits = 1)}, {round(.df[[3]], digits = 1)})")
-      )
-  }
-  
-  if (rsample) {
-    glue::glue("{round(.df$.estimate, digits = 1)} (95% CI {round(.df$.lower, digits = 1)}, {round(.df$.upper, digits = 1)})")
-  } else {
-    glue::glue("{.df$estimate} (95% CI {.df$conf.low}, {.df$conf.high})")
-  }
+    aes(x, y, label = label),
+    box.padding = 3.5, 
+    inherit.aes = FALSE,
+    max.overlaps = Inf, 
+    family = getOption("book.base_family"),
+    seed = seed,
+    label.size = NA, 
+    label.padding = 0.1,
+    size = getOption("book.base_size") / 3,
+    ...
+  ) 
 }
 ```
