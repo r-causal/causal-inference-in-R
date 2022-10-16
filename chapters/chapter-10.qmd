@@ -328,7 +328,7 @@ ggplot(bias, aes(x = n, y = bias)) +
   geom_hline(yintercept = 0, lty = 2)
 ```
 
-This is an example of finite sample bias. Notice here, even when the sample size is quite large (5,000) we still see some bias away from the "true" effect of 0. It isn't until a sample size of 10,000 that we start to see this bias disappearing.
+This is an example of finite sample bias. Notice here, even when the sample size is quite large (5,000) we still see some bias away from the "true" effect of 0. It isn't until a sample size larger than 10,000 that we see this bias disappear.
 
 Estimands that utilize weights that are unbounded (i.e. that theoretically can be infinitely large) are more likely to suffer from finite sample bias. The likelihood of falling into finite sample bias depends on:   
 (1) the estimand you have chosen (i.e. are the weights bounded?)   
