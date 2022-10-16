@@ -378,7 +378,7 @@ This causal estimand conditions on those in the unexposed group.
 
 $$E[Y(1) - Y(0) | X = 0]$$
 
-Example research questions where the ATC is of interest could include "Should we send our marketing campaign to those not currently receiving it?" or "Should medical providers begin recommending treatment for those not currently receiving it?" [@greifer2021choosing]
+Example research questions where the ATU is of interest could include "Should we send our marketing campaign to those not currently receiving it?" or "Should medical providers begin recommending treatment for those not currently receiving it?" [@greifer2021choosing]
 
 The ATU can be estimated via matching; here, all unexposed observations are included and "matched" to exposed observations, some of which may be discarded.
 Alternatively, the ATU can be estimated via weighting.
