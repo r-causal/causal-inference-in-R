@@ -245,7 +245,7 @@ Here, we have an exposure, $X$, an outcome, $Y$, and one confounder, $Z$.
 We will simulate $Y$, which is only dependent on $Z$ (so the true treatment effect is 0), and $X$, which also depends on $Z$.
 
 ```{r}
-set.seed(1)
+set.seed(928)
 n <- 100
 finite_sample <- tibble(
   # z is normally distributed with a mean: 0 and sd: 1
