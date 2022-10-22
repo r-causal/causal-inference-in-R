@@ -12,7 +12,7 @@ We'll play the [whole game](https://www.gse.harvard.edu/news/uk/09/01/education-
 5.  Estimate the causal effect
 6.  Conduct sensitivity analysis on the effect estimate
 
-We'll focus on the broader ideas behind each step and what they look like all together; we don't expect you to fully digest each idea. We'll spend the rest of the book taking up each step in detail
+We'll focus on the broader ideas behind each step and what they look like all together; however, we don't expect you to fully digest each idea. We'll spend the rest of the book taking up each step in detail.
 
 ## Specify a causal question
 
