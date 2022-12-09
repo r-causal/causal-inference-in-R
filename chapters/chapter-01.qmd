@@ -4,11 +4,53 @@
 
 {{< include 00-setup.qmd >}}
 
-## Description, prediction, and explanation
+## Schrödinger's Causality
+
+The heart of causal analysis is the causal question; it dictates what data we analyze, how we analyze it, and to which populations we make inferences about. This book, being applied in nature, deals primarily with the analysis stage of causal inference. Relative to the complexity of specifying a good causal question, the analysis stage is considerably simpler. In the first six chapters of this book, we'll discuss what a causal question is, how to improve our questions, and consider some examples. 
+
+Causal questions are part of a broader set of questions we can ask with statistical techniques, related to the primary tasks of data science: description, prediction, and causal inference @CITATION. Unfortunately, these tasks are often muddled by both the techniques we use (regression, for instance, is useful for all three tasks) as well as the way we talk about them. When researchers are interested in causal inference from non-randomized data, we often use euphemistic language like "association" rather declaring our intent to estimate a causal effect @CITATION.
+
+In a recent study of the language of analyses in epidemiologic research, for instance, the most common root word describing the estimated effect was "associate", but many researchers also felt that "associate" implied at least *some* causal effect (@fig-word-ranking). Only around 1% of the studies analyzed used the root word "cause" at all. Yet, a third of studies had action recommendation, and researchers rated 80% of these recommendations as having at least some causal implication. Often, these studies have stronger action recommendations (implying causal effects) than the implied be the description of the effect (root words like "associate" and "compare"). Despite how many studies implied that the goal was causal inference, only about 4% used formal causal models like those discussed in the book, although most included some discussion of how such a cause might be justified by previous research or theory.
 
 ```{r}
-rnorm(5)
+#| label: "fig-word-ranking"
+#| fig.cap: "TODO"
+#| echo: false
+
+rankings <-  read_csv(here::here("data/word_rankings.csv"))
+
+lvls <- rankings |> 
+  filter(rating == "Strong") |>
+  arrange(desc(n)) |> 
+  mutate(root_word = fct_inorder(root_word)) |> 
+  pull(root_word) |> 
+  levels()
+
+rankings |>
+  mutate(root_word = factor(root_word, levels = lvls)) |> 
+  filter(!is.na(root_word)) |> 
+  group_by(rating) |> 
+  mutate(rank = n / sum(n)) |> 
+  ungroup() |> 
+  ggplot(aes(x = rank, y = root_word, fill = rating)) + 
+  geom_col(position = position_fill(reverse = TRUE)) +
+  scale_fill_viridis_d(option = "mako", direction = -1)  +
+  labs(y = "root word") 
 ```
+
+
+Instead of clear questions with obvious assumptions and goals, we end up with "Schrödinger's causal inference":
+
+> Our results suggest that
+"Schrödinger's causal inference," - where studies avoid stating (or
+even explicitly deny) an interest in estimating causal effects yet are otherwise embedded with
+causal intent, inference, implications, and recommendations - is common. @CITATION
+
+A good first step to address this problem is to recognize the questions about description, prediction, and explanation are fundamentally different. When we're clear about our goals, we can use the other approaches more effectively (as we'll see, both descriptive analysis and prediction models are useful when the goal is to make causal inferences). 
+
+## Description, prediction, and explanation
+
+
 
 ## Causal Assumptions
 
