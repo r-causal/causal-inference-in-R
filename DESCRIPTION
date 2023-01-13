@@ -11,10 +11,12 @@ Authors@R: c(
   )
 Description: Causal Inference in R.
 License: MIT + file LICENSE
+Depends: 
+    R (>= 4.1.0)
 Imports: 
     broom,
     causalworkshop (>= 0.1.0),
-    ggdag,
+    ggdag (>= 0.2.7),
     ggokabeito,
     ggtext,
     gtsummary,
@@ -36,11 +38,11 @@ Suggests:
     xml2
 Remotes: 
     gadenbuie/grkstyle,
+    LucyMcGowan/tipr,
     LucyMcGowan/touringplans,
-    malcolmbarrett/propensity,
-    malcolmbarrett/halfmoon,
     malcolmbarrett/causalworkshop,
-    LucyMcGowan/tipr
+    malcolmbarrett/halfmoon,
+    malcolmbarrett/propensity
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)

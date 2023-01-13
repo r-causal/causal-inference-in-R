@@ -319,7 +319,7 @@ mosquito_dag |>
     data = function(.x) dplyr::filter(.x, !is.na(path)),
     key_glyph = glyph
   ) +
-  facet_wrap(vars(fct_inorder(factor(set), ordered = TRUE))) +
+  facet_wrap(vars(fct_inorder(factor(set)))) +
   expand_plot(
     expand_x = expansion(c(0.25, 0.25)),
     expand_y = expansion(c(0.1, 0.1))

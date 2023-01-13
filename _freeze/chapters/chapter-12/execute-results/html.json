@@ -1,0 +1,14 @@
+{
+  "hash": "52cdc5c043504620e3c65dd4015038d2",
+  "result": {
+    "markdown": "# Fitting the outcome model {#sec-outcome-model}\n\n\n\n\n\n## Using matched data sets\n\n\n::: {.cell}\n\n```{.r .cell-code}\nrnorm(5)\n```\n\n::: {.cell-output .cell-output-stdout}\n```\n[1] -0.5107 -0.0993 -0.0774 -2.1271  0.5523\n```\n:::\n:::\n\n\n## Using weights in outcome models\n\n## Estimating uncertainty\n",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}
