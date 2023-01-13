@@ -19,7 +19,7 @@ Imports:
     ggdag (>= 0.2.7),
     ggokabeito,
     ggtext,
-    gtsummary,
+    gtsummary (>= 1.7.0),
     halfmoon (>= 0.0.0.9000),
     here,
     MatchIt,
