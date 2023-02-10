@@ -20,15 +20,28 @@ Under this simple scenario, there are two potential outcomes:
 -   $Y(0)$ the potential outcome if you are not exposed
 
 Only *one* of these potential outcomes will actually be realized, the one corresponding to the exposure that actually occurred, and therefore only one is observable.
-The *counterfactual* then is the value of the potential outcome corresponding to the exposure that did not occur.
+It is important to remember here that these exposures are defined at a particular instance in time, so only one can happen to any individual.
+This leaves one potential outcome as *observable* and one *missing.* This is why early causal inference methods were often framed as missing data problems -- we need to make certain assumptions about the *missing counterfactuals*, the value of the potential outcome corresponding to the exposure(s) that did not occur.
 
-Ultimately, our causal effect of interest is often some difference in potential outcomes $Y(1) - Y(0)$, in a particular population.
+Ultimately, our causal effect of interest is often some difference in potential outcomes $Y(1) - Y(0)$, averaged over a particular population.
 
 ### Counterfactuals
 
-Conceptually, a counterfactual outcome is one that would have occurred under a different set of circumstances.
+Conceptually, the missing counterfactual outcome is one that would have occurred under a different set of circumstances.
 In causal inference, we attempt to control for all factors that are related to an exposure and outcome such that we can construct a counterfactual outcome that would have occurred in the alternate universe where the exposure status for a given observation were flipped.
 
--   counterfactual: you have received a certain treatment and observe subsequently an outcome. What is the unrealized potential outcome if you had received the other treatment?
+Let's think about a specific example.
+Marielle has a fever and takes Tylenol.
+Her fever goes away.
+
+Insert timeline image here?
+
+\[time: t-1 Marielle has fever, time: t Marielle takes Tylenol, time t+1: Marielle does not have a fever\]
+
+If we want to truly estimate the causal effect of the Tylenol on Marielle's fever, we would need to observe her fever at time point `t+1` both if she takes Tylenol at time `t` and if she does not.
+Of course this is not possible, so what can we do?
+Perhaps we can find someone else who is exactly like Marielle who did not take Tylenol and see how they fare.
+Of course, Marielle is unique, it would be challenging to find someone exactly like her (maybe a twin? But did the twin have the exact same fever?), so instead of relying on a single individual, we could rely on many individuals.
+We could conduct an experiment where we *randomize* many individuals to receive Tylenol (or not) to treat their fevers and see how this impacts their outcomes *on average.* Essentially, we are relying on statistical techniques to help construct these unobservable counterfactuals.
 
 ## Target Trials
