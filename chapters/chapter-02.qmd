@@ -499,8 +499,8 @@ ggplot(
   aes(
     x = abs(smd),
     y = variable,
-    group = weights,
-    color = weights
+    group = method,
+    color = method
   )
 ) +
   geom_love()
