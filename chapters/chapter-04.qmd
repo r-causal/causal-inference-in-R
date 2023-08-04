@@ -60,7 +60,7 @@ The book begins by setting up all the ways Ice-T and his friend Spike were simil
 Then something happens -- Ice-T makes a decision to abandon criminal life and Spike makes the opposite decision.
 What happens next for Ice-T includes fame and fortune, while Spike ends up with 35 years to life in prison.
 This book is attempting a small study, two people who prior to some event were the same and after were different -- Spike's outcomes serve as the counterfactual to Ice-T's.
-Now, having this as a concrete example of an attempt to construct a counterfactual scenario in the "real-world" there are several issues that we can immediate see, highlighting the difficulty in drawing such inference.
+Now, having this as a concrete example of an attempt to construct a counterfactual scenario in the "real-world" there are several issues that we can immediately see, highlighting the difficulty in drawing such inference.
 First, while the set up implies that the two individuals were similar prior to the precipitating event that dictated their future opposite directions, we can easily identify factors in which perhaps they differed.
 For example, did Spike have Ice-T's musical talent?
 Can we really conclude that his life would have turned out exactly like Ice-T's if he had made the exact same choices as Ice-T?
