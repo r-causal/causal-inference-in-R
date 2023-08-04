@@ -62,7 +62,7 @@ What happens next for Ice-T includes fame and fortune, while Spike ends up with 
 This book is attempting a small study, two people who prior to some event were the same and after were different -- Spike's outcomes serve as the counterfactual to Ice-T's.
 Now, having this as a concrete example of an attempt to construct a counterfactual scenario in the "real-world" there are several issues that we can immediately see, highlighting the difficulty in drawing such inference.
 First, while the synopsis implies that the two individuals were similar prior to the precipitating event that dictated their future opposite directions, we can easily identify factors in which perhaps they differed.
-For example, did Spike have Ice-T's musical talent?
+Ice-T decided to leave his life of crime, but that wasn't the only factor in his success: he had enough musical talent to make a career of it. Did Spike have Ice-T's musical talent?
 Can we really conclude that his life would have turned out exactly like Ice-T's if he had made the exact same choices as Ice-T?
 If we want to truly estimate the causal effect of the decision to leave criminal life on Ice-T's future outcomes, we would need to observe his ultimate course both under making the decision and not.
 Of course this is not possible, so what can we do?
