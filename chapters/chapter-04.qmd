@@ -23,7 +23,7 @@ Only *one* of these potential outcomes will actually be realized, the one corres
 It is important to remember here that these exposures are defined at a particular instance in time, so only one can happen to any individual.
 In the case of a binary exposure, this leaves one potential outcome as *observable* and one *missing.* In fact, early causal inference methods were often framed as missing data problems; we need to make certain assumptions about the *missing counterfactuals*, the value of the potential outcome corresponding to the exposure(s) that did not occur.
 
-Ultimately, our causal effect of interest is often some difference in potential outcomes $Y(1) - Y(0)$, averaged over a particular population.
+Our causal effect of interest is often some difference in potential outcomes $Y(1) - Y(0)$, averaged over a particular population.
 
 ### Counterfactuals
 
