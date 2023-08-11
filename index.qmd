@@ -2,13 +2,13 @@
 
 Welcome to *Causal Inference in R*.
 This book teaches you strategies for making valid causal inferences from different data types.
-By its end, we hope to help you: 
+By its end, we hope to help you:
 
-1. Ask better causal questions.
-1. Understand the assumptions needed for causal inference 
-1. Identify the target population for which you want to make inferences 
-1. Fit causal models and check their problems 
-1. Conduct sensitivity analyses where the techniques we use might be imperfect
+1.  Ask better causal questions.
+2.  Understand the assumptions needed for causal inference
+3.  Identify the target population for which you want to make inferences
+4.  Fit causal models and check their problems
+5.  Conduct sensitivity analyses where the techniques we use might be imperfect
 
 This book is for both academic researchers and data scientists.
 Although the questions may differ between these settings, many techniques are the same: causal inference is as helpful for asking questions about cancer as it is about clicks.

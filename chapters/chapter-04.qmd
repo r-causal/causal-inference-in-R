@@ -4,4 +4,72 @@
 
 ## What is a counterfactual?
 
+### Potential Outcomes
+
+Before we talk about *counterfactuals,* let's begin by thinking about the philosophical concept of a *potential outcome.* Prior to some "cause" occurring, for example receiving some exposure, the *potential outcomes* are all of the potential things that could occur depending on what you end up exposed to.
+For simplicity, let's assume an exposure has two levels:
+
+-   $X=1$ if you are exposed
+
+-   $X=0$ if you are not exposed
+
+Under this simple scenario, there are two potential outcomes:
+
+-   $Y(1)$ the potential outcome if you are exposed
+
+-   $Y(0)$ the potential outcome if you are not exposed
+
+Only *one* of these potential outcomes will actually be realized, the one corresponding to the exposure that actually occurred, and therefore only one is observable.
+It is important to remember here that these exposures are defined at a particular instance in time, so only one can happen to any individual.
+In the case of a binary exposure, this leaves one potential outcome as *observable* and one *missing.* In fact, early causal inference methods were often framed as missing data problems; we need to make certain assumptions about the *missing counterfactuals*, the value of the potential outcome corresponding to the exposure(s) that did not occur.
+
+Our causal effect of interest is often some difference in potential outcomes $Y(1) - Y(0)$, averaged over a particular population.
+
+### Counterfactuals
+
+Conceptually, the missing counterfactual outcome is one that would have occurred under a different set of circumstances.
+In causal inference, we attempt to control for all factors that are related to an exposure and outcome such that we can construct a counterfactual outcome that would have occurred in the alternate universe where the exposure status for a given observation were flipped.
+
+Let's think about a specific example.
+Ice-T, best known as an American rapper and Fin on Law and Order: SVU, co-authored a book titled "Split Decision: Life Stories", published in 2022.
+Here is the synopsis:
+
+> **Award-winning actor, rapper, and producer Ice-T unveils a compelling memoir of his early life robbing jewelry stores until he found fame and fortune---while a handful of bad choices sent his former crime partner down an incredibly different path.**\
+> \
+> Ice-T rose to fame in the late 1980s, earning acclaim for his music before going on to enthrall television audiences as Odafin \"Fin\" Tutuola in *Law & Order: Special Victims Unit*.
+> But it could have gone much differently.\
+>
+> \
+> In this \"poignant and powerful\" (*Library Journal*, starred review) memoir, Ice-T and Spike, his former crime partner---collaborating with *New York Times* bestselling author Douglas Century---relate the shocking stories of their shared pasts, and how just a handful of decisions led to their incredibly different lives.
+> Both grew up in violent, gang-controlled Los Angeles neighborhoods and worked together to orchestrate a series of jewelry heists.\
+>
+> \
+> But while Ice-T was discovered rapping in a club and got his first record deal, Spike was caught for a jewelry robbery and did three years in prison.
+> As his music career began to take off, Ice made the decision to abandon the criminal life; Spike continued to plan increasingly ingenious and risky jewel heists.
+> And in 1992, after one of Spike\'s robberies ended tragically, he was sentenced to thirty-five years to life.
+> While he sat behind bars, he watched his former partner rise to fame in music, movies, and television.\
+>
+> \
+> \"Propulsive\" (*Publishers Weekly*, starred review), timely, and thoughtful, two men with two very different lives reveal how their paths might have very well been reversed if they made different choices.
+> All it took was a *split decision*.
+
+\[TODO: cite: https://www.simonandschuster.com/books/Split-Decision/Ice-T/9781982148775\]
+
+This premise is compelling because it implies that we are observing a *counterfactual*.
+The book begins by setting up all the ways Ice-T and his friend Spike were similar prior to some important moment (both grew up in Los Angeles neighborhoods, both were involved with gangs, both worked together to orchestrate a series of jewelry heists, etc).
+Then something happens -- Ice-T makes a decision to abandon criminal life and Spike makes the opposite decision.
+What happens next for Ice-T includes fame and fortune, while Spike ends up with 35 years to life in prison.
+This book is attempting a small study, two people who prior to some event were the same and after were different -- Spike's outcomes serve as the counterfactual to Ice-T's.
+Now, having this as a concrete example of an attempt to construct a counterfactual scenario in the "real-world" there are several issues that we can immediately see, highlighting the difficulty in drawing such inference.
+First, while the synopsis implies that the two individuals were similar prior to the precipitating event that dictated their future opposite directions, we can easily identify factors in which perhaps they differed.
+Ice-T decided to leave his life of crime, but that wasn't the only factor in his success: he had enough musical talent to make a career of it. Did Spike have Ice-T's musical talent?
+Can we really conclude that his life would have turned out exactly like Ice-T's if he had made the exact same choices as Ice-T?
+If we want to truly estimate the causal effect of the decision to leave criminal life on Ice-T's future outcomes, we would need to observe his ultimate course both under making the decision and not.
+Of course this is not possible, so what can we do?
+Perhaps we can find someone else who is exactly like Ice-T who did not make the same decision and see how they fare.
+Of course, Ice-T is unique, it would be challenging to find someone exactly like him.
+Again, this is attempted with Spike, and even so presents challenges.
+Often, instead of relying on a single individual, we rely on many individuals.
+We could conduct an experiment where we *randomize* many individuals to leave criminal like (or not) and see how this impacts their outcomes *on average* (this randomized trial seems to present some ethical issues, perhaps we need to look to *observational* studies to help answer this question)*.* In any case, we must rely on statistical techniques to help construct these unobservable counterfactuals.
+
 ## Target Trials
