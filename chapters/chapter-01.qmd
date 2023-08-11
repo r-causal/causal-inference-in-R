@@ -6,10 +6,6 @@
 
 ## Description, prediction, and explanation
 
-```{r}
-rnorm(5)
-```
-
 ## Causal Assumptions
 
 Like most statistical approaches, the validity of a causal analysis depends on how well certain assumptions are met. The most common assumptions across the approaches we describe in this book are:
