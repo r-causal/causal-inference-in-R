@@ -28,7 +28,7 @@ Our causal effect of interest is often some difference in potential outcomes $Y(
 ### Counterfactuals
 
 Conceptually, the missing counterfactual outcome is one that would have occurred under a different set of circumstances.
-In causal inference, we attempt to control for all factors that are related to an exposure and outcome such that we can construct a counterfactual outcome that would have occurred in the alternate universe where the exposure status for a given observation were flipped.
+In causal inference, we *wish* we could observe the conterfactual outcome that would have occurred in an alternate universe where the exposure status for a given observation was flipped. To do this, we attempt to control for all factors that are related to an exposure and outcome such that we can *construct* (or estimate) such a counterfactual outcome.
 
 Let's think about a specific example.
 Ice-T, best known as an American rapper and Fin on Law and Order: SVU, co-authored a book titled "Split Decision: Life Stories", published in 2022.
