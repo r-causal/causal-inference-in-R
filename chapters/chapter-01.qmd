@@ -69,6 +69,7 @@ We can draw a causal diagram of the relationship described in the code above (@f
 #| label: fig-diag
 #| echo: false
 #| warning: false
+#| fig-cap: "Causal Diagram of Example Randomized Study"
 library(ggdag)
 
 x <- data.frame(
@@ -140,9 +141,9 @@ Three ways to estimate the causal effect.
 :::
 
 
-Looking at the three outputs in @tbl-panel, we can first notice that all three are "unbiased" estimates of the causal effect (we know the true average treatment effect is 1, based on our simulation) -- the estimated causal effect in each table is in the `Beta` column. Great, so all methods give us an unbiased estimate. Next, let's look at the `SE` (standard error) column along with the     `95% CI` (confidence interval) column. Notice the unadjusted model has a *wider* confidence interval (in fact, in this case the confidence interval includes the null, 0) -- this means if we were to use this method, even though we were able to estimate an unbiased causal effect, we would often conclude that we *fail to reject the null* that relationship between the treatment and outcome is 0. In statistical terms, we refer to this as a *lack of efficiency*. Looking at the adjusted analysis in @tbl-panel-2, we see that the standard error is quite a bit smaller (and likewise the confidence interval is tighter, no longer including the null). Even though our baseline covariates `age` and `weight` were not *confounders* adjusting from them *increased the precision* of our result (this is a good thing! We want estimates that are both unbiased *and* precise). Finally, looking at the propensity score weighted estimate we can see that our precision was slightly improved compared to the adjusted result (0.202 compared to 0.204). The magnitude of this improvement will depend on several factors, but it has been shown mathematically that using propensity scores like this to adjust for baseline factors will *always* improve precision [@williamson2014variance]. What can we learn from this small demonstration? Even in the perfect scenario, where we can estimate unbiased results without using propensity scores, the methods we will show here can be useful. The utility of these methods only increases when exploring more complex examples, such as situations where the effect is *not* randomized, the introduction of time-varying confounders, etc.
+Looking at the three outputs in @tbl-panel, we can first notice that all three are "unbiased" estimates of the causal effect (we know the true average treatment effect is 1, based on our simulation) -- the estimated causal effect in each table is in the `Beta` column. Great, so all methods give us an unbiased estimate. Next, let's look at the `SE` (standard error) column along with the     `95% CI` (confidence interval) column. Notice the unadjusted model has a *wider* confidence interval (in fact, in this case the confidence interval includes the null, 0) -- this means if we were to use this method, even though we were able to estimate an unbiased causal effect, we would often conclude that we *fail to reject the null* that relationship between the treatment and outcome is 0. In statistical terms, we refer to this as a *lack of efficiency*. Looking at the adjusted analysis in @tbl-panel-2, we see that the standard error is quite a bit smaller (and likewise the confidence interval is tighter, no longer including the null). Even though our baseline covariates `age` and `weight` were not *confounders* adjusting from them *increased the precision* of our result (this is a good thing! We want estimates that are both unbiased *and* precise). Finally, looking at the propensity score weighted estimate we can see that our precision was slightly improved compared to the adjusted result (0.202 compared to 0.204). The magnitude of this improvement will depend on several factors, but it has been shown mathematically that using propensity scores like this to adjust for baseline factors in a randomized trial will *always* improve precision [@williamson2014variance]. What can we learn from this small demonstration? Even in the perfect scenario, where we can estimate unbiased results without using propensity scores, the methods we will show here can be useful. The utility of these methods only increases when exploring more complex examples, such as situations where the effect is *not* randomized, the introduction of time-varying confounders, etc.
 
-What if we did not have a randomized exposure? There are many cases where randomization to a treatment is not ethical or feasible. Standard methods can still estimate unbiased effects, but more care needs to be given to including *all confounders* with their correct functional form. If everything is simple and linear (and there is no effect heterogeneity, that is everyone's causal effect is the same regardless of their baseline factors), then a simple regression model can give you an unbiased result. Let's look at a simple example. Notice in the simulation below, the main difference is that the probability of treatment assignment is no longer 0.5 as it was above, but now dependent on the participants `age` and `weight`. The true causal effect is still 1, but now we have two confounders, `age` and `weight`.
+What if we did not have a randomized exposure? There are many cases where randomization to a treatment is not ethical or feasible. Standard methods can still estimate unbiased effects, but more care needs to be given to including *all confounders* with their correct functional form. If everything is simple and linear (and there is no effect heterogeneity, that is everyone's causal effect is the same regardless of their baseline factors), then a simple regression model can give you an unbiased result. Let's look at a simple example such as this. Notice in the simulation below, the main difference compared to the above simulation is that the probability of treatment assignment is no longer 0.5 as it was above, but now dependent on the participants `age` and `weight`. The true causal effect is still 1, but now we have two confounders, `age` and `weight` (@fig-diag-2).
 
 ```{r}
 set.seed(7)
@@ -153,6 +154,24 @@ d <- tibble(
   treatment = rbinom(n, 1, 1 / (1 + exp(-0.01 * age - weight))),
   y = 1 * treatment + 0.2 * age + 0.2 * weight + rnorm(n)
 )
+```
+
+```{r}
+#| label: fig-diag-2
+#| echo: false
+#| warning: false
+#| fig-cap: "Causal Diagram of Example Observation Study"
+
+x <- data.frame(
+  name = c("y", "trt", "age", "weight"), 
+  time = c(3, 2, 1, 1)
+)
+dagify(
+  y ~ trt + age + weight,
+  trt ~ age + weight,
+  coords = time_ordered_coords(x)
+) |> 
+  ggdag() + theme_dag()
 ```
 
 ::: {#tbl-panel-2 layout-ncol=2}
