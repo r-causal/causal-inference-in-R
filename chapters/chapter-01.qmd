@@ -8,36 +8,29 @@
 
 ## Causal Assumptions
 
-Like most statistical approaches, the validity of a causal analysis depends on how well certain assumptions are met. The most common assumptions across the approaches we describe in this book are:
+Like most statistical approaches, the validity of a causal analysis depends on how well certain assumptions are met. Often we are interested in estimating the effect of some exposure on an outcome, often denoted as $Y$. One way to tackle this is to frame the problem using *potential outcomes* [@rubin1974estimating]. This framework envisions that each individual possesses a range of potential outcomes for every conceivable value of some input. For instance, in a scenario with two exposure levels (exposed: 1 and unexposed: 0), we can define potential outcomes for exposure ($Y(1)$) and no exposure ($Y(0)$), and subsequently analyze the difference between these outcomes, i.e., $Y(1) - Y(0)$, to comprehend the impact of the input (the exposure) on the outcome, $Y$. At any given time, only one of these *potential outcomes* is observable -- namely, the outcome tied to the actual exposure the individual underwent. Under certain assumptions, we can leverage data from individuals exposed to different inputs to compare the average differences in their observed outcomes. The most common assumptions across the approaches we describe in this book are:
 
-1. Consistency: the potential outcome for a subject given their exposure is the observed outcome. Analogously, if we had a time machine through which we could assign the same exposure to the same subject many times, we would observe the same outcome in all experiments. Consistency can imply that manipulability of exposure is necessary [TODO explain this more clearly (or maybe we move this point to the target trial section)] [ref paragraph 3](https://journals.lww.com/epidem/fulltext/2009/01000/the_consistency_statement_in_causal_inference__a.3.aspx)
+1. **Consistency**: We assume that the causal question you claim you are answering is consistent with the one you are *actually* answering with your analysis.
 
-2. Exchangeability: within levels of relevant variables (confounders), exposed and unexposed subjects have an equal likelihood of experiencing any outcome prior to exposure; i.e. the exposed and unexposed subjects are exchangeable. This assumption is sometimes referred to as "no unmeasured confounding."
+5. **Well defined exposure**: We assume that for each value of the exposure, there is no difference between subjects in the delivery of that exposure. Put another way, multiple versions of the treatment do not exist.
 
-3. Positivity: within each level and combination of the study variables used to achieve exchangeability, there are exposed and unexposed subjects.
+4. **No interference**: We assume that the outcome (technically all *potential* outcomes, regardless of whether they are observed) for any subject does not depend on another subject's exposure.
 
-4. No interference: the outcome (observed or counterfactual) for any subject does not depend on another subject's exposure 
-[TODO: Make sure we've defined "counterfactual" in one of the first two sections above]
+2. **Exchangeability**: We assume that within levels of relevant variables (confounders), exposed and unexposed subjects have an equal likelihood of experiencing any outcome prior to exposure; i.e. the exposed and unexposed subjects are exchangeable. This assumption is sometimes referred to as **no unmeasured confounding**.
 
-5. Well defined exposure: for each value of the exposure, there is no difference between subjects in the delivery of that exposure. Put another way, multiple versions of the treatment do not exist.
+3. **Positivity**: We assume that within each level and combination of the study variables used to achieve exchangeability, there are exposed and unexposed subjects. Said differently, each individual has some chance of experiencing every available exposure level.
 
-Assumptions 1 through 3 are typically referred to as "identifiability conditions" since we need them to hold in order to identify causal estimates. [TODO: SUTVA callout box re: assumptions 4 and 5]. Technically, assumption 5 (well defined exposure) is part of assumption 1 (consistency), but we find it useful in practice to check the concerns separately.
+::: callout-tip
+## Jargon
+
+Assumptions 1 through 3 are sometimes referred to as *stable-unit-treatment-value-assumption* or SUTVA [@imbens2015causal]. Likewise, assumptions 1, 4, and 5 are referred to as *identifiability conditions* since we need them to hold in order to identify causal estimates. Technically, assumption 2 (well defined exposure) is part of assumption 1 (consistency), but we find it useful in practice to check the concerns separately.
+:::
 
 Causal assumptions can be difficult to verify and may not hold for many data collection strategies. We cannot overstate the importance of checking these criteria to the extent possible! Following any of the recipes in this book are unlikely to give valid answers if the causal assumptions are badly violated. 
 
-### Checking consistency
-
-A good example is effect of [SES on health](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4912021/): the assumption is that if you vary the components within the same SES level the same effect would occur. Can likely simulate some R code to show increasing income while lowering education to get same SES might result in different outcome. Make a note that this covers assumption 5 as well.
-
-### Checking exchangeability
-
-### Checking positivity
-
-### Checking interference
-
 ## When do standard methods succeed and fail?
 
-When teaching these topics, we are often asked when "standard methods" will succeed, i.e.: When can we just fit a linear regression model to estimate a causal effect? Let's start with the easiest example: the exposure is *randomized*. Why does randomization help? Looking at our assumptions above, traditional randomization solves *consistency* and *well defined exposure* by default. Additionally, it resolves the issue of *exchangeability* because the exposed and unexposed populations (in the limit) are inherently the same since their exposure status was determined by a random process (not by any factors that might make them different from each other). Great! Likewise for *positivity*; if we have randomly assigned folks to either the exposed or unexposed groups, we know the probability of assignment (and we know it is not exactly 0 or 1). Randomization alone does not solve *interference* (for example, if we randomize some people to receive a vaccine for a communicable disease, their receiving it could lower the chance of those around them contracting the infectious disease because it changes the probability of exposure). All that is to say, that randomization ensures comparability and can simplify the methods needed to estimate a causal effect. In the presence of a randomized exposure (assuming perfect adherence to the exposure assigned, no one dropped out of the study, etc.), simple tools like regression can be used to estimate a causal effect. 
+When teaching these topics, we are often asked when "standard methods" will succeed, i.e.: when can we just fit a linear regression model to estimate a causal effect? Let's start with the easiest example: the exposure is *randomized*. Why does randomization help? Looking at our assumptions above, traditional randomization solves *consistency* and *well defined exposure* by default. Additionally, it resolves the issue of *exchangeability* because the exposed and unexposed populations (in the limit) are inherently the same since their exposure status was determined by a random process (not by any factors that might make them different from each other). Great! Likewise for *positivity*; if we have randomly assigned folks to either the exposed or unexposed groups, we know the probability of assignment (and we know it is not exactly 0 or 1). Randomization alone does not solve *interference* (for example, if we randomize some people to receive a vaccine for a communicable disease, their receiving it could lower the chance of those around them contracting the infectious disease because it changes the probability of exposure). All that is to say, that randomization ensures comparability and can simplify the methods needed to estimate a causal effect. In the presence of a randomized exposure (assuming perfect adherence to the exposure assigned, no one dropped out of the study, etc.), simple tools like regression can be used to estimate a causal effect. 
 
 ### When correlation is causation
 
