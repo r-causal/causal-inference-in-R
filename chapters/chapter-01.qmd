@@ -140,7 +140,7 @@ What if we did not have a randomized exposure? There are many cases where random
 
 ```{r}
 set.seed(7)
-n <- 10000
+n <- 100000
 d <- tibble(
   age = rnorm(n, 55, 20),
   weight = rnorm(n),
