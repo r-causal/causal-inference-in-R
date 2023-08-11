@@ -142,4 +142,71 @@ Three ways to estimate the causal effect.
 
 Looking at the three outputs in @tbl-panel, we can first notice that all three are "unbiased" estimates of the causal effect (we know the true average treatment effect is 1, based on our simulation) -- the estimated causal effect in each table is in the `Beta` column. Great, so all methods give us an unbiased estimate. Next, let's look at the `SE` (standard error) column along with the     `95% CI` (confidence interval) column. Notice the unadjusted model has a *wider* confidence interval (in fact, in this case the confidence interval includes the null, 0) -- this means if we were to use this method, even though we were able to estimate an unbiased causal effect, we would often conclude that we *fail to reject the null* that relationship between the treatment and outcome is 0. In statistical terms, we refer to this as a *lack of efficiency*. Looking at the adjusted analysis in @tbl-panel-2, we see that the standard error is quite a bit smaller (and likewise the confidence interval is tighter, no longer including the null). Even though our baseline covariates `age` and `weight` were not *confounders* adjusting from them *increased the precision* of our result (this is a good thing! We want estimates that are both unbiased *and* precise). Finally, looking at the propensity score weighted estimate we can see that our precision was slightly improved compared to the adjusted result (0.202 compared to 0.204). The magnitude of this improvement will depend on several factors, but it has been shown mathematically that using propensity scores like this to adjust for baseline factors will *always* improve precision [@williamson2014variance]. What can we learn from this small demonstration? Even in the perfect scenario, where we can estimate unbiased results without using propensity scores, the methods we will show here can be useful. The utility of these methods only increases when exploring more complex examples, such as situations where the effect is *not* randomized, the introduction of time-varying confounders, etc.
 
-What if we did not have a randomized exposure? Standard methods can still estimate unbiased effects, but more care needs to be given to including *all confounders* with their correct functional form. If everything is simple and linear (and there is no effect heterogeneity, that is everyone's causal effect is the same regardless of their baseline factors), then a simple regression model can give you an unbiased result.
+What if we did not have a randomized exposure? There are many cases where randomization to a treatment is not ethical or feasible. Standard methods can still estimate unbiased effects, but more care needs to be given to including *all confounders* with their correct functional form. If everything is simple and linear (and there is no effect heterogeneity, that is everyone's causal effect is the same regardless of their baseline factors), then a simple regression model can give you an unbiased result. Let's look at a simple example. Notice in the simulation below, the main difference is that the probability of treatment assignment is no longer 0.5 as it was above, but now dependent on the participants `age` and `weight`. The true causal effect is still 1, but now we have two confounders, `age` and `weight`.
+
+```{r}
+set.seed(7)
+n <- 10000
+d <- tibble(
+  age = rnorm(n, 55, 20),
+  weight = rnorm(n),
+  treatment = rbinom(n, 1, 1 / (1 + exp(-0.01 * age - weight))),
+  y = 1 * treatment + 0.2 * age + 0.2 * weight + rnorm(n)
+)
+```
+
+::: {#tbl-panel-2 layout-ncol=2}
+
+```{r}
+#| code-fold: true
+#| message: false
+#| warning: false
+lm(y ~ treatment, d) |>
+  tbl_regression() |>
+  modify_column_unhide(column = std.error) |>
+  modify_caption("Unadjusted regression")
+```
+
+```{r}
+#| code-fold: true
+#| message: false
+#| warning: false
+lm(y ~ treatment + age + weight, d) |>
+  tbl_regression() |>
+  modify_column_unhide(column = std.error) |>
+  modify_caption("Adjusted regression")
+```
+
+
+```{r}
+#| code-fold: true
+#| message: false
+#| warning: false
+d |>
+  mutate(
+    p = glm(treatment ~ weight + age, data = d, family = binomial) |> predict(type = "response"),
+    ate = treatment / p + (1 - treatment) / (1 - p)
+  ) |>
+  as.data.frame() -> d
+library(PSW)
+df <- as.data.frame(d)
+x <- psw(df, 
+         "treatment ~ weight + age", 
+         weight = "ATE", wt = TRUE,
+         out.var = "y")
+tibble(
+  Characteristic = "treatment",
+  Beta = round(x$est.wt, 1),
+  SE = round(x$std.wt, 3),
+  `95% CI` = glue::glue("{round(x$est.wt - 1.96 * x$std.wt, 1)}, {round(x$est.wt + 1.96 * x$std.wt, 1)}"),
+  `p-value` = "<0.001"
+) |>
+  knitr::kable(caption = "Propensity score weighted regression")
+```
+
+Three ways to estimate a causal effect in a non-randomized setting
+
+:::
+
+First, let's look at @tbl-panel-2-1. Here, we see that the unadjusted effect is *biased* (it differs from the true effect, 1, and the true effect is *not* contained in the reported 95% confidence interval). Now lets compare @tbl-panel-2-2 and @tbl-panel-2-3. Technically, both are estimating unbiased causal effects. The output in the `Beta` column of @tbl-panel-2-2 is technically a *conditional* effect (and often in causal inference we want marginal effects), but because there is no treatment heterogeneity in this simulation, the conditional and marginal effects are equal. @tbl-panel-2-3, using the propensity score, also estimates an unbiased effect, but it is no longer the most *efficient* (that was true when the baseline covariates were merely causal for `y`, now that they are `confounders` the efficiency gains for using propensity score weighting are not as clear cut). So why would we ever use propensity scores in this case? Sometimes we have a better understanding of the functional form of the propensity score model compared to the outcome model. Alternatively, sometimes the outcome model is difficult to fit (for example, if the outcome is rare). We will show examples of both of these cases in later chapters.
+
