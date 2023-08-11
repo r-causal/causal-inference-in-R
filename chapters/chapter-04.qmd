@@ -6,7 +6,7 @@
 
 ### Potential Outcomes
 
-Before we talk about *counterfactuals,* let's begin by thinking about the philosophical concept of a *potential outcome.* Prior to some "cause" occurring, for example receiving some exposure, the *potential outcomes* are all of the potential things that could occur depending on what you end up exposed to.
+Let's begin by thinking about the philosophical concept of a *potential outcome.* Prior to some "cause" occurring, for example receiving some exposure, the *potential outcomes* are all of the potential things that could occur depending on what you end up exposed to.
 For simplicity, let's assume an exposure has two levels:
 
 -   $X=1$ if you are exposed
