@@ -8,31 +8,217 @@
 
 ## Causal Assumptions
 
-Like most statistical approaches, the validity of a causal analysis depends on how well certain assumptions are met. The most common assumptions across the approaches we describe in this book are:
+Like most statistical approaches, the validity of a causal analysis depends on how well certain assumptions are met. Often we are interested in estimating the effect of some exposure on an outcome, often denoted as $Y$. One way to tackle this is to frame the problem using *potential outcomes* [@rubin1974estimating]. This framework envisions that each individual possesses a range of potential outcomes for every conceivable value of some input. For instance, in a scenario with two exposure levels (exposed: 1 and unexposed: 0), we can define potential outcomes for exposure ($Y(1)$) and no exposure ($Y(0)$), and subsequently analyze the difference between these outcomes, i.e., $Y(1) - Y(0)$, to comprehend the impact of the input (the exposure) on the outcome, $Y$. At any given time, only one of these *potential outcomes* is observable -- namely, the outcome tied to the actual exposure the individual underwent. Under certain assumptions, we can leverage data from individuals exposed to different inputs to compare the average differences in their observed outcomes. The most common assumptions across the approaches we describe in this book are:
 
-1. Consistency: the potential outcome for a subject given their exposure is the observed outcome. Analogously, if we had a time machine through which we could assign the same exposure to the same subject many times, we would observe the same outcome in all experiments. Consistency can imply that manipulability of exposure is necessary [TODO explain this more clearly (or maybe we move this point to the target trial section)] [ref paragraph 3](https://journals.lww.com/epidem/fulltext/2009/01000/the_consistency_statement_in_causal_inference__a.3.aspx)
+1. **Consistency**: We assume that the causal question you claim you are answering is consistent with the one you are *actually* answering with your analysis.
 
-2. Exchangeability: within levels of relevant variables (confounders), exposed and unexposed subjects have an equal likelihood of experiencing any outcome prior to exposure; i.e. the exposed and unexposed subjects are exchangeable. This assumption is sometimes referred to as "no unmeasured confounding."
+5. **Well defined exposure**: We assume that for each value of the exposure, there is no difference between subjects in the delivery of that exposure. Put another way, multiple versions of the treatment do not exist.
 
-3. Positivity: within each level and combination of the study variables used to achieve exchangeability, there are exposed and unexposed subjects.
+4. **No interference**: We assume that the outcome (technically all *potential* outcomes, regardless of whether they are observed) for any subject does not depend on another subject's exposure.
 
-4. No interference: the outcome (observed or counterfactual) for any subject does not depend on another subject's exposure 
-[TODO: Make sure we've defined "counterfactual" in one of the first two sections above]
+2. **Exchangeability**: We assume that within levels of relevant variables (confounders), exposed and unexposed subjects have an equal likelihood of experiencing any outcome prior to exposure; i.e. the exposed and unexposed subjects are exchangeable. This assumption is sometimes referred to as **no unmeasured confounding**.
 
-5. Well defined exposure: for each value of the exposure, there is no difference between subjects in the delivery of that exposure. Put another way, multiple versions of the treatment do not exist.
+3. **Positivity**: We assume that within each level and combination of the study variables used to achieve exchangeability, there are exposed and unexposed subjects. Said differently, each individual has some chance of experiencing every available exposure level.
 
-Assumptions 1 through 3 are typically referred to as "identifiability conditions" since we need them to hold in order to identify causal estimates. [TODO: SUTVA callout box re: assumptions 4 and 5]. Technically, assumption 5 (well defined exposure) is part of assumption 1 (consistency), but we find it useful in practice to check the concerns separately.
+::: callout-tip
+## Jargon
+
+Assumptions 1 through 3 are sometimes referred to as *stable-unit-treatment-value-assumption* or SUTVA [@imbens2015causal]. Likewise, assumptions 1, 4, and 5 are referred to as *identifiability conditions* since we need them to hold in order to identify causal estimates. Technically, assumption 2 (well defined exposure) is part of assumption 1 (consistency), but we find it useful in practice to check the concerns separately.
+:::
 
 Causal assumptions can be difficult to verify and may not hold for many data collection strategies. We cannot overstate the importance of checking these criteria to the extent possible! Following any of the recipes in this book are unlikely to give valid answers if the causal assumptions are badly violated. 
 
-### Checking consistency
-
-A good example is effect of [SES on health](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4912021/): the assumption is that if you vary the components within the same SES level the same effect would occur. Can likely simulate some R code to show increasing income while lowering education to get same SES might result in different outcome. Make a note that this covers assumption 5 as well.
-
-### Checking exchangeability
-
-### Checking positivity
-
-### Checking interference
-
 ## When do standard methods succeed and fail?
+
+When teaching these topics, we are often asked when "standard methods" will succeed, i.e.: when can we just fit a linear regression model to estimate a causal effect? Let's start with the easiest example: the exposure is *randomized*. Why does randomization help? Looking at our assumptions above, traditional randomization solves *consistency* and *well defined exposure* by default. Additionally, it resolves the issue of *exchangeability* because the exposed and unexposed populations (in the limit) are inherently the same since their exposure status was determined by a random process (not by any factors that might make them different from each other). Great! Likewise for *positivity*; if we have randomly assigned folks to either the exposed or unexposed groups, we know the probability of assignment (and we know it is not exactly 0 or 1). Randomization alone does not solve *interference* (for example, if we randomize some people to receive a vaccine for a communicable disease, their receiving it could lower the chance of those around them contracting the infectious disease because it changes the probability of exposure). All that is to say, that randomization ensures comparability and can simplify the methods needed to estimate a causal effect. In the presence of a randomized exposure (assuming perfect adherence to the exposure assigned, no one dropped out of the study, etc.), simple tools like regression can be used to estimate a causal effect. 
+
+### When correlation is causation
+
+When you have no confounders and there is a linear relationship between the exposure and the outcome, that *correlation is a causal relationship*. Even in these cases, using the methods you will learn in this book can help.
+
+1. Adjusting for baseline covariates can make an estimate *more efficient*
+1. Propensity score weighting is *more efficient* that direct adjustment
+1. Sometimes we are *more comfortable with the functional form of the propensity score* (predicting exposure) than the outcome model
+
+Let's look at an example. I am going to simulate 100 observations. Here the treatment is randomly assigned and there are two baseline covariates: `age` and `weight`. On average, the treatment causes a one unit increase in the outcome (this is called the *average treatment effect*, we will talk more about this quantity in future chapters).
+
+```{r}
+#| message: false
+#| warning: false
+library(tidyverse)
+set.seed(10)
+n <- 100
+d <- tibble(
+  age = rnorm(n, 55, 20),
+  weight = rnorm(n),
+  treatment = rbinom(n, 1, 0.5),
+  y = 1 * treatment + 0.2 * age + 0.2 * weight + rnorm(n)
+)
+```
+
+We can draw a causal diagram of the relationship described in the code above (@fig-diag). Chapter 3 contains more information on these causal diagrams, but briefly, the arrows denote causal relationships, so since we have established that the treatment causes an increase in the outcome (an average treatment effect of 1), we see an arrow from `trt` to `y` in this diagram.
+
+```{r}
+#| label: fig-diag
+#| echo: false
+#| warning: false
+#| fig-cap: "Causal Diagram of Example Randomized Study"
+library(ggdag)
+
+x <- data.frame(
+  name = c("y", "trt", "age", "weight"), 
+  time = c(3, 2, 1, 1)
+)
+dagify(
+  y ~ trt + age + weight,
+  coords = time_ordered_coords(x)
+) |> 
+  ggdag() + theme_dag()
+```
+
+
+Let's examine three models: (1) an unadjusted model (@tbl-panel-1), (2) a linear model that adjusts for the baseline covariates (@tbl-panel-2), and (3) a propensity score weighted model (@tbl-panel-3).
+
+::: {#tbl-panel layout-ncol=2}
+
+```{r}
+#| code-fold: true
+#| message: false
+#| warning: false
+library(gtsummary)
+lm(y ~ treatment, d) |>
+  tbl_regression() |>
+  modify_column_unhide(column = std.error) |>
+  modify_caption("Unadjusted regression")
+```
+
+```{r}
+#| code-fold: true
+#| message: false
+#| warning: false
+lm(y ~ treatment + age + weight, d) |>
+  tbl_regression() |>
+  modify_column_unhide(column = std.error) |>
+  modify_caption("Adjusted regression")
+```
+
+
+```{r}
+#| code-fold: true
+#| message: false
+#| warning: false
+d |>
+  mutate(
+    p = glm(treatment ~ weight + age, data = d) |> predict(type = "response"),
+    ate = treatment / p + (1 - treatment) / (1 - p)
+  ) |>
+  as.data.frame() -> d
+library(PSW)
+df <- as.data.frame(d)
+x <- psw(df, 
+         "treatment ~ weight + age", 
+         weight = "ATE", wt = TRUE,
+         out.var = "y")
+tibble(
+  Characteristic = "treatment",
+  Beta = round(x$est.wt, 1),
+  SE = round(x$std.wt, 3),
+  `95% CI` = glue::glue("{round(x$est.wt - 1.96 * x$std.wt, 1)}, {round(x$est.wt + 1.96 * x$std.wt, 1)}"),
+  `p-value` = "<0.001"
+) |>
+  knitr::kable(caption = "Propensity score weighted regression")
+```
+
+
+Three ways to estimate the causal effect.
+:::
+
+
+Looking at the three outputs in @tbl-panel, we can first notice that all three are "unbiased" estimates of the causal effect (we know the true average treatment effect is 1, based on our simulation) -- the estimated causal effect in each table is in the `Beta` column. Great, so all methods give us an unbiased estimate. Next, let's look at the `SE` (standard error) column along with the     `95% CI` (confidence interval) column. Notice the unadjusted model has a *wider* confidence interval (in fact, in this case the confidence interval includes the null, 0) -- this means if we were to use this method, even though we were able to estimate an unbiased causal effect, we would often conclude that we *fail to reject the null* that relationship between the treatment and outcome is 0. In statistical terms, we refer to this as a *lack of efficiency*. Looking at the adjusted analysis in @tbl-panel-2, we see that the standard error is quite a bit smaller (and likewise the confidence interval is tighter, no longer including the null). Even though our baseline covariates `age` and `weight` were not *confounders* adjusting from them *increased the precision* of our result (this is a good thing! We want estimates that are both unbiased *and* precise). Finally, looking at the propensity score weighted estimate we can see that our precision was slightly improved compared to the adjusted result (0.202 compared to 0.204). The magnitude of this improvement will depend on several factors, but it has been shown mathematically that using propensity scores like this to adjust for baseline factors in a randomized trial will *always* improve precision [@williamson2014variance]. What can we learn from this small demonstration? Even in the perfect scenario, where we can estimate unbiased results without using propensity scores, the methods we will show here can be useful. The utility of these methods only increases when exploring more complex examples, such as situations where the effect is *not* randomized, the introduction of time-varying confounders, etc.
+
+What if we did not have a randomized exposure? There are many cases where randomization to a treatment is not ethical or feasible. Standard methods can still estimate unbiased effects, but more care needs to be given to including *all confounders* with their correct functional form. If everything is simple and linear (and there is no effect heterogeneity, that is everyone's causal effect is the same regardless of their baseline factors), then a simple regression model can give you an unbiased result. Let's look at a simple example such as this. Notice in the simulation below, the main difference compared to the above simulation is that the probability of treatment assignment is no longer 0.5 as it was above, but now dependent on the participants `age` and `weight`. The true causal effect is still 1, but now we have two confounders, `age` and `weight` (@fig-diag-2).
+
+```{r}
+set.seed(7)
+n <- 10000
+d <- tibble(
+  age = rnorm(n, 55, 20),
+  weight = rnorm(n),
+  treatment = rbinom(n, 1, 1 / (1 + exp(-0.01 * age - weight))),
+  y = 1 * treatment + 0.2 * age + 0.2 * weight + rnorm(n)
+)
+```
+
+```{r}
+#| label: fig-diag-2
+#| echo: false
+#| warning: false
+#| fig-cap: "Causal Diagram of Example Observation Study"
+
+x <- data.frame(
+  name = c("y", "trt", "age", "weight"), 
+  time = c(3, 2, 1, 1)
+)
+dagify(
+  y ~ trt + age + weight,
+  trt ~ age + weight,
+  coords = time_ordered_coords(x)
+) |> 
+  ggdag() + theme_dag()
+```
+
+::: {#tbl-panel-2 layout-ncol=2}
+
+```{r}
+#| code-fold: true
+#| message: false
+#| warning: false
+lm(y ~ treatment, d) |>
+  tbl_regression() |>
+  modify_column_unhide(column = std.error) |>
+  modify_caption("Unadjusted regression")
+```
+
+```{r}
+#| code-fold: true
+#| message: false
+#| warning: false
+lm(y ~ treatment + age + weight, d) |>
+  tbl_regression() |>
+  modify_column_unhide(column = std.error) |>
+  modify_caption("Adjusted regression")
+```
+
+
+```{r}
+#| code-fold: true
+#| message: false
+#| warning: false
+d |>
+  mutate(
+    p = glm(treatment ~ weight + age, data = d, family = binomial) |> predict(type = "response"),
+    ate = treatment / p + (1 - treatment) / (1 - p)
+  ) |>
+  as.data.frame() -> d
+library(PSW)
+df <- as.data.frame(d)
+x <- psw(df, 
+         "treatment ~ weight + age", 
+         weight = "ATE", wt = TRUE,
+         out.var = "y")
+tibble(
+  Characteristic = "treatment",
+  Beta = round(x$est.wt, 1),
+  SE = round(x$std.wt, 3),
+  `95% CI` = glue::glue("{round(x$est.wt - 1.96 * x$std.wt, 1)}, {round(x$est.wt + 1.96 * x$std.wt, 1)}"),
+  `p-value` = "<0.001"
+) |>
+  knitr::kable(caption = "Propensity score weighted regression")
+```
+
+Three ways to estimate a causal effect in a non-randomized setting
+
+:::
+
+First, let's look at @tbl-panel-2-1. Here, we see that the unadjusted effect is *biased* (it differs from the true effect, 1, and the true effect is *not* contained in the reported 95% confidence interval). Now lets compare @tbl-panel-2-2 and @tbl-panel-2-3. Technically, both are estimating unbiased causal effects. The output in the `Beta` column of @tbl-panel-2-2 is technically a *conditional* effect (and often in causal inference we want marginal effects), but because there is no treatment heterogeneity in this simulation, the conditional and marginal effects are equal. @tbl-panel-2-3, using the propensity score, also estimates an unbiased effect, but it is no longer the most *efficient* (that was true when the baseline covariates were merely causal for `y`, now that they are `confounders` the efficiency gains for using propensity score weighting are not as clear cut). So why would we ever use propensity scores in this case? Sometimes we have a better understanding of the functional form of the propensity score model compared to the outcome model. Alternatively, sometimes the outcome model is difficult to fit (for example, if the outcome is rare). We will show examples of both of these cases in later chapters.
+
