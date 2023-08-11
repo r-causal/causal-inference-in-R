@@ -51,9 +51,9 @@ Here is the synopsis:
 >
 > \
 > \"Propulsive\" (*Publishers Weekly*, starred review), timely, and thoughtful, two men with two very different lives reveal how their paths might have very well been reversed if they made different choices.
-> All it took was a *split decision*.
+> All it took was a *split decision*. [@split]
 
-\[TODO: cite: https://www.simonandschuster.com/books/Split-Decision/Ice-T/9781982148775\]
+
 
 This premise is compelling because it implies that we are observing a *counterfactual*.
 The book begins by setting up all the ways Ice-T and his friend Spike were similar prior to some important moment (both grew up in Los Angeles neighborhoods, both were involved with gangs, both worked together to orchestrate a series of jewelry heists, etc).
