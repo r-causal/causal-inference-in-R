@@ -36,11 +36,11 @@ Here is the synopsis:
 
 > **Award-winning actor, rapper, and producer Ice-T unveils a compelling memoir of his early life robbing jewelry stores until he found fame and fortune---while a handful of bad choices sent his former crime partner down an incredibly different path.**\
 > \
-> Ice-T rose to fame in the late 1980s, earning acclaim for his music before going on to enthrall television audiences as Odafin \"Fin\" Tutuola in *Law & Order: Special Victims Unit*.
+> Ice-T rose to fame in the late 1980s, earning acclaim for his music before going on to enthrall television audiences as Odafin \"Fin\" Tutuola in *Law & Order: Special Victims Unit*.
 > But it could have gone much differently.\
 >
 > \
-> In this \"poignant and powerful\" (*Library Journal*, starred review) memoir, Ice-T and Spike, his former crime partner---collaborating with *New York Times* bestselling author Douglas Century---relate the shocking stories of their shared pasts, and how just a handful of decisions led to their incredibly different lives.
+> In this \"poignant and powerful\" (*Library Journal*, starred review) memoir, Ice-T and Spike, his former crime partner---collaborating with *New York Times* bestselling author Douglas Century---relate the shocking stories of their shared pasts, and how just a handful of decisions led to their incredibly different lives.
 > Both grew up in violent, gang-controlled Los Angeles neighborhoods and worked together to orchestrate a series of jewelry heists.\
 >
 > \
@@ -60,7 +60,36 @@ The book begins by setting up all the ways Ice-T and his friend Spike were simil
 Then something happens -- Ice-T makes a decision to abandon criminal life and Spike makes the opposite decision.
 What happens next for Ice-T includes fame and fortune, while Spike ends up with 35 years to life in prison.
 This book is attempting a small study, two people who prior to some event were the same and after were different -- Spike's outcomes serve as the counterfactual to Ice-T's.
-In practice, this is what we need to do in causal inference. Even randomized trials are limited to a single factual world, so we compare the average effects of groups with different exposures.
+
+::: {#tbl-causal-map layout-ncol=1}
+
+```{mermaid}
+%%| echo: false
+flowchart LR
+  A{Ice-T} --> |observed| B(Abandons criminal life)
+  A -.-> |missing counterfactual| C(Does one more heist)
+  C -.-> D[35 years in prison]
+  B --> E[Fame & Fortune]
+  
+  classDef grey fill:#ddd
+  class D,C grey
+```
+
+```{mermaid}
+%%| echo: false
+flowchart LR
+  A{Spike} -.-> |missing counterfactual| B(Abandons criminal life)
+  A --> |observed| C(Does one more heist)
+  C --> D[35 years in prison]
+  B -.-> E[Fame & Fortune]
+  classDef grey fill:#ddd
+  class E,B grey
+```
+
+Ice-T and Spike Causal Map
+:::
+
+In practice, this is what we attempt to do with causal inference techniques. Even randomized trials are limited to a single factual world, so we compare the average effects of groups with different exposures.
 Now, having this as a concrete example of an attempt to construct a counterfactual scenario in the "real-world" there are several issues that we can immediately see, highlighting the difficulty in drawing such inference.
 First, while the synopsis implies that the two individuals were similar prior to the precipitating event that dictated their future opposite directions, we can easily identify factors in which perhaps they differed.
 Ice-T decided to leave his life of crime, but that wasn't the only factor in his success: he had enough musical talent to make a career of it. Did Spike have Ice-T's musical talent?
@@ -71,6 +100,6 @@ Perhaps we can find someone else who is exactly like Ice-T who did not make the 
 Of course, Ice-T is unique, it would be challenging to find someone exactly like him.
 Again, this is attempted with Spike, and even so presents challenges.
 Often, instead of relying on a single individual, we rely on many individuals.
-We could conduct an experiment where we *randomize* many individuals to leave criminal like (or not) and see how this impacts their outcomes *on average* (this randomized trial seems to present some ethical issues, perhaps we need to look to *observational* studies to help answer this question)*.* In any case, we must rely on statistical techniques to help construct these unobservable counterfactuals.
+We could conduct an experiment where we *randomize* many individuals to leave criminal like (or not) and see how this impacts their outcomes *on average* (this randomized trial seems to present some ethical issues, perhaps we need to look to *observational* studies to help answer this question). In any case, we must rely on statistical techniques to help construct these unobservable counterfactuals.
 
 ## Target Trials
