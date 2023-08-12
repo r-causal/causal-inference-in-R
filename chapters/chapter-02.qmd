@@ -742,6 +742,11 @@ For the estimate, we'll use `conf.high`, which is closer to 0 (the null), and as
 We'll use tipr to calculate this answer for 5 scenarios, where the mean difference in the confounder between exposure groups is 1, 2, 3, 4, or 5.
 
 ```{r}
+#| echo: false
+options(tipr.verbose = FALSE)
+```
+
+```{r}
 #| label: fig-tip-coef-net
 #| fig.cap: >
 #|   A tipping point analysis under several confounding scenarios where the unmeasured confounder is a normally-distributed continuous variable. The line represents the strength of confounding necessary to tip the upper confidence interval of the causal effect estimate to 0. The x-axis represents the coefficient of the confounder-outcome relationship adjusted for the exposure and the set of measured confounders. The y-axis represents the scaled mean difference of the confounder between exposure groups.
@@ -750,7 +755,7 @@ tipping_points <- tip_coef(boot_estimate$.upper, exposure_confounder_effect = 1:
 
 tipping_points |>
   ggplot(aes(confounder_outcome_effect, exposure_confounder_effect)) +
-  geom_line(color = "#009E73", size = 1.1) +
+  geom_line(color = "#009E73", linewidth = 1.1) +
   geom_point(fill = "#009E73", color = "white", size = 2.5, shape = 21) +
   labs(
     x = "Confounder-Outcome Effect",
