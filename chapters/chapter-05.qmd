@@ -2,10 +2,6 @@
 
 {{< include 00-setup.qmd >}}
 
-```{r}
-rnorm(5)
-```
-
 ## Target Trials
 
 ## When do standard methods succeed and fail?
