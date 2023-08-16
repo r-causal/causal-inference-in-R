@@ -6,3 +6,93 @@
 
 ## Description, prediction, and explanation
 
+## Diagraming a causal claim
+
+Diagramming sentences is a grammatical method used to visually represent the structure of a sentence, occasionally taught in grammar school. In this technique, sentences are deconstructed into their constituent parts, such as subjects, verbs, objects, and modifiers, and then displayed using a series of lines and symbols. The arrangement of these elements on the diagram reflects their syntactic roles and how they interact within the sentence's overall structure. By breaking down sentences into these visual representations, diagramming can help learners grasp the nuances of sentence construction, identify grammatical errors, and appreciate the intricate connections between words. We can apply a similar idea to *causal claims*. Here is an example of how one might diagram a causal claim. We've pulled out the *cause*, the *effect*, the *subject* (for whom?), and the *timing* (when?).  
+
+```{r}
+#| echo: false
+library(ggplot2)
+
+data <- data.frame(labels = c("cause", "effect", "for whom?", "when?"),
+                   x = c(1, 2, 0.8, 1.2),
+                   y = c(1, 1, 0.9, 0.7),
+                   angle = c(0, 0, -48, 0))  
+
+ggplot(data, aes(x = x, y = y)) +
+  geom_text(aes(label = labels, angle = angle, hjust = 0, vjust = 0), 
+            size = 5) +
+  geom_segment(aes(x = 0.5, xend = 2.5, y = 0.95, yend = 0.95)) +  
+  geom_segment(aes(x = 1.5, xend = 1.5, y = 0.95, yend = 1.1)) +
+  geom_segment(aes(x = 0.5, xend = 1, y = 0.95, yend = 0.65)) +
+  geom_segment(aes(x = 1, xend = 1.5, y = 0.65, yend = 0.65)) +
+  xlim(c(0.5, 2.5)) +
+  ylim(c(0.5, 1.2)) +
+  theme_void()
+```
+
+Let's start with a basic causal claim: 
+
+*Smoking causes cancer*
+
+
+
+```{r}
+#| echo: false
+data <- data.frame(labels = c("smoking", "lung cancer", "for everyone?", "always?"),
+                   x = c(1, 2, 0.8, 1.2),
+                   y = c(1, 1, 0.9, 0.7),
+                   angle = c(0, 0, -48, 0))  
+
+ggplot(data, aes(x = x, y = y)) +
+  geom_text(aes(label = labels, angle = angle, hjust = 0, vjust = 0), size = 5) +
+  geom_segment(aes(x = 0.5, xend = 2.5, y = 0.95, yend = 0.95)) +  
+  geom_segment(aes(x = 1.5, xend = 1.5, y = 0.95, yend = 1.1)) +
+  geom_segment(aes(x = 0.5, xend = 1, y = 0.95, yend = 0.65)) +
+  geom_segment(aes(x = 1, xend = 1.5, y = 0.65, yend = 0.65)) +
+  xlim(c(0.5, 2.5)) +
+  ylim(c(0.5, 1.2)) +
+  theme_void()
+```
+
+Let's try to get more specific. A study was published in *JAMA* (the Journal of the American Medical Association) in 2005 titled "Effect of Smoking Reduction on Lung Cancer Risk". This study concluded: "Among individuals who smoke 15 or more cigarettes per day, smoking reduction by 50% significantly reduces the risk of lung cancer". [@godtfredsen2005effect] The study goes on to describe the time frame as 5-10 years. Let's diagram this causal claim.
+
+```{r}
+#| echo: false
+data <- data.frame(labels = c("Reducing smoking by 50%", "Reduced lung cancer", "People who\nsmoke 15+\ncigarettes per day", "between 5-10 years"),
+                   x = c(1, 2, .83, 1.4),
+                   y = c(1, 1, 0.77, 0.7),
+                   angle = c(0, 0, -48, 0))  
+
+ggplot(data, aes(x = x, y = y)) +
+  geom_text(aes(label = labels, angle = angle, vjust = 0), size = 5) +
+  geom_segment(aes(x = 0.5, xend = 2.5, y = 0.95, yend = 0.95)) +  
+  geom_segment(aes(x = 1.5, xend = 1.5, y = 0.95, yend = 1.1)) +
+  geom_segment(aes(x = 0.5, xend = 1, y = 0.95, yend = 0.65)) +
+  geom_segment(aes(x = 1, xend = 1.5, y = 0.65, yend = 0.65)) +
+  xlim(c(0.5, 2.5)) +
+  ylim(c(0.5, 1.2)) +
+  theme_void()
+```
+
+Translating this idea into asking good causal questions, we can map the following terms that you will see throughout this book to these diagrams: *exposure* (the cause), *outcome* (the effect), *eligibility criteria* (for whom?), and *follow up period* (when?).
+
+```{r}
+#| echo: false
+data <- data.frame(labels = c("exposure", "outcome", "eligibility criteria", "follow up"),
+                   x = c(1, 2, 0.75, 1.2),
+                   y = c(1, 1, 0.9, 0.7),
+                   angle = c(0, 0, -48, 0))  
+
+ggplot(data, aes(x = x, y = y)) +
+  geom_text(aes(label = labels, angle = angle, hjust = 0, vjust = 0), size = 5) +
+  geom_segment(aes(x = 0.5, xend = 2.5, y = 0.95, yend = 0.95)) +  
+  geom_segment(aes(x = 1.5, xend = 1.5, y = 0.95, yend = 1.1)) +
+  geom_segment(aes(x = 0.5, xend = 1, y = 0.95, yend = 0.65)) +
+  geom_segment(aes(x = 1, xend = 1.5, y = 0.65, yend = 0.65)) +
+  xlim(c(0.5, 2.5)) +
+  ylim(c(0.5, 1.2)) +
+  theme_void()
+```
+
+Asking good causal questions means we map the *question* to the *evidence*. Let's return to the smoking example. Our initial question was: *Does smoking causes lung cancer?*; using our study, the evidence shows *For people who smoke 15+ cigarettes a day, reducing smoking by 50% reduces the risk of lung cancer over 5-10 years*. Do these match? Not quite. Let's update our question to match what the study actually was able to show: *For people who smoke 15+ cigarettes a day, does reducing smoking by 50% reduce the lung cancer risk over 5-10 years?*. Honing this skill, asking answerable causal questions, is important, and one that we will discuss throughout this book.
