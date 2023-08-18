@@ -43,7 +43,7 @@ The causal claim here would be *smoking causes cancer*. @fig-diagram-2 shows a p
 #| label: fig-diagram-2
 #| fig-height: 2
 #| fig-cap: "Diagram of the causal claim \"smoking causes cancer\"."
-data <- data.frame(labels = c("smoking", "lung cancer", "for everyone?", "always?"),
+data <- data.frame(labels = c("smoking", "lung cancer", "for everyone?", "immediately?"),
                    x = c(1.25, 1.75, 1.25, 1.55),
                    y = c(1, 1, 0.8, 0.7),
                    angle = c(0, 0, -30, 0))  
