@@ -2,7 +2,9 @@
   "hash": "d0cb732b98d1c73272d9bdd931f82305",
   "result": {
     "markdown": "# Expressing causal questions as DAGs {#sec-dags}\n\n\n\n\n\n## Visualizing Causal Assumptions\n\n\n## DAGs in R\n\n## Common Structures of Bias\n",
-    "supporting": [],
+    "supporting": [
+      "chapter-05_files"
+    ],
     "filters": [
       "rmarkdown/pagebreak.lua"
     ],
