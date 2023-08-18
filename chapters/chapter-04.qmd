@@ -4,6 +4,211 @@
 
 ## Target Trials
 
+
+## Causal inference with `group_by()` and `summarize()`
+
+Let's suppose we are trying to estimate a causal effect of an exposure on an outcome, but the exposure is not *randomized*, in fact, there is a common cause of the exposure and outcome, making the exposed on unexposed groups *not exchangeable* without adjustment (violating the fourth assumption in @sec-assump). 
+
+::: callout-note
+A **confounder** is a common cause of exposure and outcome.
+:::
+
+### One binary confounder
+
+Let's suppose this confounder is binary, see the simulation below:
+
+```{r}
+set.seed(1)
+n <- 10000 
+sim <- tibble(
+  confounder = rbinom(n, 1, 0.5),
+  p_exposure = case_when(
+    confounder == 1 ~ 0.75,
+    confounder == 0 ~ 0.25
+  ),
+  exposure = rbinom(n, 1, p_exposure),
+  outcome = confounder + rnorm(n)
+)
+```
+
+Here we have one binary `confounder`, the probability that `confounder = 1` is `0.5`. The probability of the being exposed is `0.75` for those for whom `confounder = 1` `0.25` for those for whom `confounder = 0`. There is no effect of the `exposure` on the `outcome` (the true causal effect is 0); the `outcome` effect is fully dependent on the `confounder`. Let's look at this generated data frame.
+
+```{r}
+sim
+```
+
+Great! Now, let's try to estimate the effect of the `exposure` on the `outcome` assuming the two exposed groups are exchangeable.
+
+```{r}
+#| message: false
+#| warning: false
+sim |>
+  group_by(exposure) |>
+  summarise(avg_outcome = mean(outcome))
+```
+
+The average outcome among the exposed is `0.76` and among the unexposed `0.23`, yielding an average effect of the exposure of `0.76-0.23=0.53`. Let's do a little R work to get there.
+
+```{r}
+#| message: false
+#| warning: false
+sim |>
+  group_by(exposure) |>
+  summarise(avg_outcome = mean(outcome)) |>
+  pivot_wider(
+    names_from = exposure, 
+    values_from = avg_outcome,  
+    names_prefix = "x_"
+  ) |>
+  summarise(estimate = x_1 - x_0) 
+```
+Ok, so assuming the exposure groups are exchangeable (and assuming the rest of the assumptions from @sec-assump hold), we estimate the effect of the exposure on the outcome to be 0.53. We *know* the exchaneability assumption is violated based on how we simulated the data. How can we estimate an unbiased effect? The easiest way to do so is to estimate the effect within each confounder class. This will work because folks with the same value of the confounder have an equal probability of exposure. Instead of just grouping by the exposure, let's group by the confounder as well:
+
+```{r}
+#| message: false
+#| warning: false
+sim |>
+  group_by(confounder, exposure) |>
+  summarise(avg_outcome = mean(outcome))
+```
+
+We can now calculate the average effect within each confounder class as well as the overall causal effect.
+
+```{r}
+#| warning: false
+#| message: false
+
+## Average effect within each confounder class
+sim |>
+  group_by(confounder, exposure) |>
+  summarise(avg_outcome = mean(outcome)) |>
+  pivot_wider(
+    names_from = exposure, 
+    values_from = avg_outcome,  
+    names_prefix = "x_"
+  ) |>
+  summarise(estimate = x_1 - x_0) 
+
+## Overall average effect
+
+sim |>
+  group_by(confounder, exposure) |>
+  summarise(avg_outcome = mean(outcome)) |>
+  pivot_wider(
+    names_from = exposure, 
+    values_from = avg_outcome,  
+    names_prefix = "x_"
+  ) |>
+  summarise(estimate = x_1 - x_0) |>
+  summarise(mean(estimate)) # note, we would need to weight this if the confounder groups were not equal sized
+```
+Great! Now our estimate is much closer to the true value (0).
+
+### Two binary confounders
+
+Let's extend this to two binary confounders. The simulation below now has two binary confounders. The true causal effect of the `exposure` on the `outcome` is still 0.
+
+```{r}
+set.seed(1)
+n <- 10000
+sim2 <- tibble(
+  confounder_1 = rbinom(n, 1, 0.5),
+  confounder_2 = rbinom(n, 1, 0.5), 
+  
+  p_exposure = case_when(
+    confounder_1 == 1 & confounder_2 == 1 ~ 0.75,
+    confounder_1 == 0 & confounder_2 == 1 ~ 0.9,
+    confounder_1 == 1 & confounder_2 == 0 ~ 0.2,
+    confounder_1 == 0 & confounder_2 == 0 ~ 0.1,
+  ),
+  exposure = rbinom(n, 1, p_exposure),
+  outcome = confounder_1 + confounder_2 + rnorm(n) 
+)
+```
+
+Now we are going to group by both confounders and estimate the causal effect within each stratum.
+
+```{r}
+#| warning: false
+#| message: false
+sim2 |>
+  group_by(confounder_1, confounder_2, exposure) |>
+  summarise(avg_y = mean(outcome)) |>
+  pivot_wider(
+    names_from = exposure,
+    values_from = avg_y,  
+    names_prefix = "x_"
+  ) |>
+  summarise(estimate = x_1 - x_0) 
+```
+
+We can also estimate the overall causal effect:
+
+```{r}
+#| warning: false
+#| message: false
+sim2 |>
+  group_by(confounder_1, confounder_2, exposure) |>
+  summarise(avg_outcome = mean(outcome)) |>
+  pivot_wider(
+    names_from = exposure, 
+    values_from = avg_outcome,  
+    names_prefix = "x_"
+  ) |>
+  summarise(estimate = x_1 - x_0, .groups = "drop") |>
+  summarise(mean(estimate)) 
+```
+
+### Continuous confounder
+
+So far our strategy has been to estimate the causal effect within strata where the individuals are *exchangeable*. How could we extend this to a continuous confounder? Let's create another simulation:
+
+```{r}
+set.seed(1)
+n <- 10000 
+sim3 <- tibble(
+  confounder = rnorm(n), 
+  p_exposure = exp(confounder) / (1 + exp(confounder)),
+  exposure = rbinom(n, 1, p_exposure),
+  outcome = confounder + rnorm(n) 
+)
+```
+
+```{r}
+sim3
+```
+
+If we want to still use `group_by` and `summarise`, we could bin the continuous confounder, for example using it's quintiles, and estimate the causal effect within each bin:
+
+```{r}
+#| message: false
+#| warning: false
+sim3 |>
+  mutate(confounder_q = ntile(confounder, 5)) |>
+  group_by(confounder_q, exposure) |>
+  summarise(avg_y = mean(outcome)) |>
+  pivot_wider(
+    names_from = exposure,
+    values_from = avg_y,  
+    names_prefix = "x_"
+  ) |>
+  summarise(estimate = x_1 - x_0) 
+
+sim3 |>
+  mutate(confounder_q = ntile(confounder, 5)) |>
+  group_by(confounder_q, exposure) |>
+  summarise(avg_y = mean(outcome)) |>
+  pivot_wider(
+    names_from = exposure,
+    values_from = avg_y,  
+    names_prefix = "x_"
+  ) |>
+  summarise(estimate = x_1 - x_0) |>
+  summarise(estimate = mean(estimate))
+
+```
+Great! Now, in practice we have many more than one or two binary confounders, we often have many many confounders, both continuous and binary. Attempting to estimate the causal effect within each unique stratum would be very inefficient (and often not possible!). What if instead we could create a single summary score for all of the confounders? Hold onto this thought, we'll bring it up again when we introduce *propensity scores*.
+
 ## When do standard methods succeed and fail?
 
 When teaching these topics, we are often asked when "standard methods" will succeed, i.e.: when can we just fit a linear regression model to estimate a causal effect? Let's start with the easiest example: the exposure is *randomized*. Why does randomization help? Looking at our assumptions above, traditional randomization solves *consistency* and *well defined exposure* by default. Additionally, it resolves the issue of *exchangeability* because the exposed and unexposed populations (in the limit) are inherently the same since their exposure status was determined by a random process (not by any factors that might make them different from each other). Great! Likewise for *positivity*; if we have randomly assigned folks to either the exposed or unexposed groups, we know the probability of assignment (and we know it is not exactly 0 or 1). Randomization alone does not solve *interference* (for example, if we randomize some people to receive a vaccine for a communicable disease, their receiving it could lower the chance of those around them contracting the infectious disease because it changes the probability of exposure). All that is to say, that randomization ensures comparability and can simplify the methods needed to estimate a causal effect. In the presence of a randomized exposure (assuming perfect adherence to the exposure assigned, no one dropped out of the study, etc.), simple tools like regression can be used to estimate a causal effect. 
@@ -32,7 +237,7 @@ d <- tibble(
 )
 ```
 
-We can draw a causal diagram of the relationship described in the code above (@fig-diag). Chapter 3 contains more information on these causal diagrams, but briefly, the arrows denote causal relationships, so since we have established that the treatment causes an increase in the outcome (an average treatment effect of 1), we see an arrow from `trt` to `y` in this diagram.
+We can draw a causal diagram of the relationship described in the code above (@fig-diag). @sec-dags contains more information on these causal diagrams, but briefly, the arrows denote causal relationships, so since we have established that the treatment causes an increase in the outcome (an average treatment effect of 1), we see an arrow from `trt` to `y` in this diagram.
 
 ```{r}
 #| label: fig-diag
@@ -112,7 +317,7 @@ Three ways to estimate the causal effect.
 
 Looking at the three outputs in @tbl-panel, we can first notice that all three are "unbiased" estimates of the causal effect (we know the true average treatment effect is 1, based on our simulation) -- the estimated causal effect in each table is in the `Beta` column. Great, so all methods give us an unbiased estimate. Next, let's look at the `SE` (standard error) column along with the     `95% CI` (confidence interval) column. Notice the unadjusted model has a *wider* confidence interval (in fact, in this case the confidence interval includes the null, 0) -- this means if we were to use this method, even though we were able to estimate an unbiased causal effect, we would often conclude that we *fail to reject the null* that relationship between the treatment and outcome is 0. In statistical terms, we refer to this as a *lack of efficiency*. Looking at the adjusted analysis in @tbl-panel-2, we see that the standard error is quite a bit smaller (and likewise the confidence interval is tighter, no longer including the null). Even though our baseline covariates `age` and `weight` were not *confounders* adjusting from them *increased the precision* of our result (this is a good thing! We want estimates that are both unbiased *and* precise). Finally, looking at the propensity score weighted estimate we can see that our precision was slightly improved compared to the adjusted result (0.202 compared to 0.204). The magnitude of this improvement will depend on several factors, but it has been shown mathematically that using propensity scores like this to adjust for baseline factors in a randomized trial will *always* improve precision [@williamson2014variance]. What can we learn from this small demonstration? Even in the perfect scenario, where we can estimate unbiased results without using propensity scores, the methods we will show here can be useful. The utility of these methods only increases when exploring more complex examples, such as situations where the effect is *not* randomized, the introduction of time-varying confounders, etc.
 
-What if we did not have a randomized exposure? There are many cases where randomization to a treatment is not ethical or feasible. Standard methods can still estimate unbiased effects, but more care needs to be given to including *all confounders* with their correct functional form. If everything is simple and linear (and there is no effect heterogeneity, that is everyone's causal effect is the same regardless of their baseline factors), then a simple regression model can give you an unbiased result. Let's look at a simple example such as this. Notice in the simulation below, the main difference compared to the above simulation is that the probability of treatment assignment is no longer 0.5 as it was above, but now dependent on the participants `age` and `weight`. The true causal effect is still 1, but now we have two confounders, `age` and `weight` (@fig-diag-2).
+What if we did not have a randomized exposure? There are many cases where randomization to a treatment is not ethical or feasible. Standard methods can still estimate unbiased effects, but more care needs to be given to the previously mentioned assumptions. For example, we need the exposed an unexposed groups to be *exchangeable*; this means we must include *all confounders* with their correct functional form. If everything is simple and linear (and there is no effect heterogeneity, that is everyone's causal effect is the same regardless of their baseline factors), then a simple regression model that adjusts for the confounders can give you an unbiased result. Let's look at a simple example such as this. Notice in the simulation below, the main difference compared to the above simulation is that the probability of treatment assignment is no longer 0.5 as it was above, but now dependent on the participants `age` and `weight`. The true causal effect is still 1, but now we have two confounders, `age` and `weight` (@fig-diag-2).
 
 ```{r}
 set.seed(7)
@@ -204,73 +409,3 @@ First, let's look at @tbl-panel-2-1. Here, we see that the unadjusted effect is 
 In causal inference, we are often interested in *marginal* effects, mathematically, this means that we want to *marginalize* the effect of interest across the distribution of factors in a particular population that we are trying to estimate a causal effect for. In an adjusted regression model, the coefficients are *conditional*, in other words, when describing the estimated coefficient, we often say something like "a one-unit change in the exposure results in a `coefficient` change in the outcome *holding all other variables in the model constant*. In the case where the outcome is continuous, the effect is linear, and there are no interactions between the exposure effect and other factors about the population, the distinction between an conditional and a marginal effect is largely semantic. If there *is* an interaction in the model, that is, if the exposure has a different impact on the outcome depending on some other factor, we no longer have a single coefficient to interpret. We would want to estimate a *marginal* effect, taking into account the distribution of that factor in the population of interest. Why? We are ultimately trying to determine whether we should suggest the exposure to the target population, so we want to know *on average* whether it will be beneficial. Let's look at quick example: suppose that you are designing an online shopping site. Currently, the "Purchase" button is grey. Changing the button to red increases revenue by \$10 for people who are *not* colorblind and decreases revenue by \$10 for those who *are* colorblind -- *the effect is heterogeneous*. Whether you change the color of the button will depend on the *distribution* of colorblind folks that visit your website. For example, if 50% of the visitors are colorblind, your average effect of changing the color would be \$0. If instead, 100% are colorblind, the average effect of changing the color would be -\$10. Likewise, if 0% are colorblind, the average effect of changing the color to red would be \$10. Your decision, therefore, needs to be based on the *marginal* effect, the effect that takes into account the distribution of colorblind online customers.
 :::
 
-<!-- Let's look at an example where the functional form of the propensity score is better understood. Notice in the simulation below, those who have a higher propensity of treatment (those younger than 65 years old), tend to have a wider distribution of age (`sd = 20`). Notice we've also changed the outcome such that there is a non-linear effect of `age` on the outcome that the analyst is not aware of. This does not effect our causal diagram, `age` and `weight` are both still confounders, but it will effect the ability of our adjusted regression model to estimate the correct causal effect. -->
-
-<!-- ```{r} -->
-<!-- set.seed(7) -->
-<!-- n <- 100000 -->
-<!-- d <- tibble( -->
-<!--   age = c(rnorm(n/2, 55, sd = 20), rnorm(n/2, 75, sd = 10)), -->
-<!--   weight = rnorm(n), -->
-<!--   treatment = rbinom(n, 1, 1 / (1 + exp((age > 55) - weight))), -->
-<!--   y = 1 * treatment +  -->
-<!--     0.2 * age + 0.03 * age^2 +  0.001 * age^3 + # nonlinear effect -->
-<!--     0.2 * weight + rnorm(n) -->
-<!-- ) -->
-<!-- ``` -->
-
-<!-- ::: {#tbl-panel-2 layout-ncol=2} -->
-
-<!-- ```{r} -->
-<!-- #| code-fold: true -->
-<!-- #| message: false -->
-<!-- #| warning: false -->
-<!-- lm(y ~ treatment, d) |> -->
-<!--   tbl_regression() |> -->
-<!--   modify_column_unhide(column = std.error) |> -->
-<!--   modify_caption("Unadjusted regression") -->
-<!-- ``` -->
-
-<!-- ```{r} -->
-<!-- #| code-fold: true -->
-<!-- #| message: false -->
-<!-- #| warning: false -->
-<!-- lm(y ~ treatment + age + weight, d) |> -->
-<!--   tbl_regression() |> -->
-<!--   modify_column_unhide(column = std.error) |> -->
-<!--   modify_caption("Adjusted regression") -->
-<!-- ``` -->
-
-
-<!-- ```{r} -->
-<!-- #| code-fold: true -->
-<!-- #| message: false -->
-<!-- #| warning: false -->
-<!-- d |> -->
-<!--   mutate( -->
-<!--     p = glm(treatment ~ weight + (age > 55), data = d, family = binomial) |> predict(type = "response"), -->
-<!--     ate = treatment / p + (1 - treatment) / (1 - p) -->
-<!--   ) |> -->
-<!--   as.data.frame() -> d -->
-<!-- library(PSW) -->
-<!-- df <- as.data.frame(d) -->
-<!-- x <- psw(df,  -->
-<!--          "treatment ~ weight + age",  -->
-<!--          weight = "ATE", wt = TRUE, -->
-<!--          out.var = "y") -->
-<!-- tibble( -->
-<!--   Characteristic = "treatment", -->
-<!--   Beta = round(x$est.wt, 1), -->
-<!--   SE = round(x$std.wt, 3), -->
-<!--   `95% CI` = glue::glue("{round(x$est.wt - 1.96 * x$std.wt, 1)}, {round(x$est.wt + 1.96 * x$std.wt, 1)}"), -->
-<!--   `p-value` = "<0.001" -->
-<!-- ) |> -->
-<!--   knitr::kable(caption = "Propensity score weighted regression") -->
-<!-- ``` -->
-
-<!-- Three ways to estimate a causal effect in a non-randomized setting -->
-
-<!-- ::: -->
-
-
-## Causal inference with `group_by()` and `summarize()`

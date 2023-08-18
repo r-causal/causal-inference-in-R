@@ -102,19 +102,19 @@ Again, this is attempted with Spike, and even so presents challenges.
 Often, instead of relying on a single individual, we rely on many individuals.
 We could conduct an experiment where we *randomize* many individuals to leave criminal like (or not) and see how this impacts their outcomes *on average* (this randomized trial seems to present some ethical issues, perhaps we need to look to *observational* studies to help answer this question). In any case, we must rely on statistical techniques to help construct these unobservable counterfactuals.
 
-## Causal Assumptions
+## Causal Assumptions {#sec-assump}
 
 Like most statistical approaches, the validity of a causal analysis depends on how well certain assumptions are met. Often we are interested in estimating the effect of some exposure on an outcome, often denoted as $Y$. One way to tackle this is to frame the problem using *potential outcomes* [@rubin1974estimating]. This framework envisions that each individual possesses a range of potential outcomes for every conceivable value of some input. For instance, in a scenario with two exposure levels (exposed: 1 and unexposed: 0), we can define potential outcomes for exposure ($Y(1)$) and no exposure ($Y(0)$), and subsequently analyze the difference between these outcomes, i.e., $Y(1) - Y(0)$, to comprehend the impact of the input (the exposure) on the outcome, $Y$. At any given time, only one of these *potential outcomes* is observable -- namely, the outcome tied to the actual exposure the individual underwent. Under certain assumptions, we can leverage data from individuals exposed to different inputs to compare the average differences in their observed outcomes. The most common assumptions across the approaches we describe in this book are:
 
 1. **Consistency**: We assume that the causal question you claim you are answering is consistent with the one you are *actually* answering with your analysis.
 
-5. **Well defined exposure**: We assume that for each value of the exposure, there is no difference between subjects in the delivery of that exposure. Put another way, multiple versions of the treatment do not exist.
+2. **Well defined exposure**: We assume that for each value of the exposure, there is no difference between subjects in the delivery of that exposure. Put another way, multiple versions of the treatment do not exist.
 
-4. **No interference**: We assume that the outcome (technically all *potential* outcomes, regardless of whether they are observed) for any subject does not depend on another subject's exposure.
+3. **No interference**: We assume that the outcome (technically all *potential* outcomes, regardless of whether they are observed) for any subject does not depend on another subject's exposure.
 
-2. **Exchangeability**: We assume that within levels of relevant variables (confounders), exposed and unexposed subjects have an equal likelihood of experiencing any outcome prior to exposure; i.e. the exposed and unexposed subjects are exchangeable. This assumption is sometimes referred to as **no unmeasured confounding**.
+4. **Exchangeability**: We assume that within levels of relevant variables (confounders), exposed and unexposed subjects have an equal likelihood of experiencing any outcome prior to exposure; i.e. the exposed and unexposed subjects are exchangeable. This assumption is sometimes referred to as **no unmeasured confounding**.
 
-3. **Positivity**: We assume that within each level and combination of the study variables used to achieve exchangeability, there are exposed and unexposed subjects. Said differently, each individual has some chance of experiencing every available exposure level.
+5. **Positivity**: We assume that within each level and combination of the study variables used to achieve exchangeability, there are exposed and unexposed subjects. Said differently, each individual has some chance of experiencing every available exposure level.
 
 ::: callout-tip
 ## Jargon

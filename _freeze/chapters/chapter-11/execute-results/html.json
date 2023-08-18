@@ -1,8 +1,10 @@
 {
-  "hash": "55b373691b598915f6ff3286b9b408d6",
+  "hash": "52cdc5c043504620e3c65dd4015038d2",
   "result": {
-    "markdown": "# Evaluating your propensity score model {#sec-eval-ps-model}\n\n\n\n\n::: {.cell}\n\n```{.r .cell-code}\nrnorm(5)\n```\n\n::: {.cell-output .cell-output-stdout}\n```\n[1]  0.53969  2.72115 -1.46537  0.04809  0.02042\n```\n:::\n:::\n\n\n## Calculating the standardized mean difference\n\n## Visualizing balance via Love Plots, boxplots, and eCDF plots\n",
-    "supporting": [],
+    "markdown": "# Fitting the outcome model {#sec-outcome-model}\n\n\n\n\n\n## Using matched data sets\n\n\n::: {.cell}\n\n```{.r .cell-code}\nrnorm(5)\n```\n\n::: {.cell-output .cell-output-stdout}\n\n```\n[1] -0.5790 -0.5911  0.3102  0.3006  1.4746\n```\n\n\n:::\n:::\n\n\n## Using weights in outcome models\n\n## Estimating uncertainty\n",
+    "supporting": [
+      "chapter-11_files"
+    ],
     "filters": [
       "rmarkdown/pagebreak.lua"
     ],
