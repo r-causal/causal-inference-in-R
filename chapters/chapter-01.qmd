@@ -34,7 +34,7 @@ ggplot(data, aes(x = x, y = y)) +
 
 Let's start with a basic causal question: **Does smoking cause cancer?**
 
-The causal claim here would be *smoking causes cancer*. @fig-diagram-2 shows a potential diagram of this causal claim.
+The causal claim here could be *smoking causes cancer*. @fig-diagram-2 shows a potential diagram of this causal claim.
 
 
 
@@ -58,7 +58,7 @@ ggplot(data, aes(x = x, y = y)) +
   theme_void()
 ```
 
-Let's try to get more specific. A study was published in *JAMA* (the Journal of the American Medical Association) in 2005 titled "Effect of Smoking Reduction on Lung Cancer Risk". This study concluded: "Among individuals who smoke 15 or more cigarettes per day, smoking reduction by 50% significantly reduces the risk of lung cancer". [@godtfredsen2005effect] The study goes on to describe the time frame as 5-10 years. Let's diagram this causal claim.
+Let's try to get more specific. A study was published in *JAMA* (the Journal of the American Medical Association) in 2005 titled "Effect of Smoking Reduction on Lung Cancer Risk". This study concluded: "Among individuals who smoke 15 or more cigarettes per day, smoking reduction by 50% significantly reduces the risk of lung cancer". [@godtfredsen2005effect] The study goes on to describe the time frame studied as 5-10 years. Let's diagram this causal claim.
 
 ```{r}
 #| echo: false
@@ -103,4 +103,4 @@ ggplot(data, aes(x = x, y = y)) +
   theme_void()
 ```
 
-Asking good causal questions means we map the *question* to the *evidence*. Let's return to the smoking example. Our initial question was: *Does smoking causes lung cancer?*; using our study, the evidence shows *For people who smoke 15+ cigarettes a day, reducing smoking by 50% reduces the risk of lung cancer over 5-10 years*. Do these match? Not quite. Let's update our question to match what the study actually was able to show: *For people who smoke 15+ cigarettes a day, does reducing smoking by 50% reduce the lung cancer risk over 5-10 years?*. Honing this skill, asking answerable causal questions, is important, and one that we will discuss throughout this book.
+Asking good causal questions means we map the *question* to the observable *evidence*. Let's return to the smoking example. Our initial question was: *Does smoking causes lung cancer?*; using our study, the evidence shows *For people who smoke 15+ cigarettes a day, reducing smoking by 50% reduces the risk of lung cancer over 5-10 years*. Do these match? Not quite. Let's update our question to match what the study actually was able to show: *For people who smoke 15+ cigarettes a day, does reducing smoking by 50% reduce the lung cancer risk over 5-10 years?*. Honing this skill, asking answerable causal questions, is important, and one that we will discuss throughout this book.

@@ -1,7 +1,15 @@
-# An introduction to touringplans
+# Preparing data to answer causal questions
 
 {{< include 00-setup.qmd >}}
 
-```{r}
-rnorm(5)
-```
+## Introduction to the data
+
+## Data wrangling and recipes
+
+## Recognizing missing data
+
+## Working with multiple data sources
+
+## Exploring and visualizing data and assumptions
+
+## Presenting descriptive statistics

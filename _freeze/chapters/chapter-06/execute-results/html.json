@@ -1,8 +1,10 @@
 {
-  "hash": "6c3e89b488fc46dbeef2059c5052a2b4",
+  "hash": "6021306b357e0bf44645e51ddac18a89",
   "result": {
-    "markdown": "# An introduction to touringplans\n\n\n\n\n::: {.cell}\n\n```{.r .cell-code}\nrnorm(5)\n```\n\n::: {.cell-output .cell-output-stdout}\n```\n[1]  1.454048 -1.428721  0.009227  0.250454 -0.856153\n```\n:::\n:::\n",
-    "supporting": [],
+    "markdown": "# Preparing data to answer causal questions\n\n\n\n\n\n## Introduction to the data\n\n## Data wrangling and recipes\n\n## Recognizing missing data\n\n## Working with multiple data sources\n\n## Exploring and visualizing data and assumptions\n\n## Presenting descriptive statistics\n",
+    "supporting": [
+      "chapter-06_files"
+    ],
     "filters": [
       "rmarkdown/pagebreak.lua"
     ],

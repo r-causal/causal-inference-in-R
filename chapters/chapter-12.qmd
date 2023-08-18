@@ -1,13 +1,284 @@
-# Fitting the outcome model {#sec-outcome-model}
+# Continuous exposures
 
 {{< include 00-setup.qmd >}}
 
-## Using matched data sets
+## Calculating propensity scores for continuous exposures
+
+Propensity scores generalize to many other types of exposures, including continuous exposures.
+At its heart, the workflow is the same: we fit a model where the exposure is the outcome and then use that model to weight a second outcome model.
+For continuous exposures, linear regression is the simplest way to create propensities.
+Instead of probabilities, we use the cumulative density function.
+Then, we use this density to weight the outcome model.
+
+Let's take a look at an example.
+In the `touringplans` data set, we have information about the posted waiting times for rides.
+We also have a limited amount of data on the observed actual times.
+The question we will consider is this: Do posted wait times for the Seven Dwarves Mine Train at 8 am affect actual wait times at 9 am?
+Here's our DAG:
 
 ```{r}
-rnorm(5)
+#| label: fig-dag-avg-wait
+#| echo: false
+#| message: false
+#| warning: false
+#| fig.cap: >
+#|    Proposed DAG for the relationship between posted wait
+#|    in the morning at a particular park and the average
+#|    wait time between 5 pm and 6 pm.
+
+library(tidyverse)
+library(ggdag)
+library(ggokabeito)
+
+coord_dag <- list(
+  x = c(Season = -1, close = -1, weather = -2, extra = 0, x = 1, y = 2),
+  y = c(Season = -1, close = 1, weather = 0, extra = 0, x = 0, y = 0)
+)
+
+labels <- c(
+  extra = "Extra Magic Morning",
+  x = "Average posted wait ",
+  y = "Average acutal wait",
+  Season = "Ticket Season",
+  weather = "Historic high temperature",
+  close = "Time park closed"
+)
+
+dagify(
+    y ~ x + close + Season + weather + extra,
+    x ~ weather + close + Season + extra,
+    extra ~ weather + close + Season,
+    coords = coord_dag,
+    labels = labels,
+    exposure = "x",
+    outcome = "y"
+) |>
+    tidy_dagitty() |>
+    node_status() |>
+    ggplot(
+        aes(x, y, xend = xend, yend = yend, color = status)
+    ) +
+    geom_dag_edges_arc(curvature = c(rep(0, 7), .2, 0, .2, .2, 0), edge_colour = "grey70") +
+    geom_dag_point() +
+    geom_dag_label_repel(seed = 1602) + 
+    scale_color_okabe_ito(na.value = "grey90") +
+    theme_dag() +
+    theme(
+        legend.position = "none",
+        axis.text.x = element_text()
+    ) +
+    coord_cartesian(clip = "off") +
+    scale_x_continuous(
+        limits = c(-2.25, 2.25),
+        breaks = c(-2, -1, 0, 1, 2),
+        labels = c(
+            "\n(one year ago)",
+            "\n(6 months ago)",
+            "\n(3 months ago)",
+            "8am-9am\n(Today)",
+            "9am-10am\n(Today)"
+        )
+    )
 ```
 
-## Using weights in outcome models
+In @fig-dag-avg-wait, we're assuming that our primary confounders are when the park closes, historic high temperatures, whether or not the ride has extra magic morning hours, and the ticket season.
+This is the only minimal adjustment set in the DAG, as well.
+The confounders precede the exposure and outcome, and (by definition) the exposure precedes the outcome.
+The average posted wait time is, in theory, a manipulable exposure because the park could post a time different from what they expect.
+The adjustment set
 
-## Estimating uncertainty
+The model is similar to the binary exposure case, but we need to use linear regression, as the posted time is a continuous variable.
+Since we're not using probabilities, we'll calculate denominators for our weights from a normal density.
+We then calculate the denominator using the `dnorm()` function, which calculates the normal density for the `exposure`, using `.fitted` as the mean and `mean(.sigma)` as the SD.
+
+```{r}
+#| eval: false
+lm(
+  exposure ~ confounder_1 + confounder_2,
+  data = df
+) |>
+  augment(data = df) |>
+  mutate(
+    denominator = dnorm(exposure, .fitted, mean(.sigma, na.rm = TRUE))
+  )
+```
+
+## Diagnostics and stabilization
+
+Continuous exposure weights, however, are very sensitive to modeling choices.
+One problem, in particular, is the existence of extreme weights, an issue that can also affect other types of exposures.
+When some observations have extreme weights, the propensities are *destabilized,* which results in wider confidence intervals.
+We can stabilize them using the marginal distribution of the exposure.
+A common way to calculate the marginal distribution for propensity scores is to use a regression model with no predictors.
+
+::: callout-caution
+Extreme weights destabilize estimates, resulting in wider confidence intervals.
+Extreme weights can be an issue for any time of weight (including those for binary and other types of exposures) that is not bounded.
+Bounded weights like the ATO (which are bounded to 0 and 1) do not have this problem, however---one of their many benefits.
+:::
+
+```{r}
+#| eval: false
+# for continuous exposures
+lm(
+  exposure ~ 1,
+  data = df
+) |>
+  augment(data = df) |>
+  transmute(
+    numerator = dnorm(exposure, .fitted, mean(.sigma, na.rm = TRUE))
+  )
+
+# for binary exposures
+glm(
+  exposure ~ 1,
+  data = df,
+  family = binomial()
+) |>
+  augment(type.predict = "response", data = df) |>
+  select(numerator = .fitted)
+```
+
+Then, rather than inverting them, we calculate the weights as `numerator / denominator`.
+Let's try it out on our posted wait times example.
+First, let's wrangle our data to address our question: do posted wait times at 8 affect actual weight times at 9?
+We'll join the baseline data (all covariates and posted wait time at 8) with the outcome (average actual time).
+We also have a lot of missingness for `avg_sactmin`, so we'll drop unobserved values for now.
+
+```{r}
+library(tidyverse)
+library(touringplans)
+eight <- seven_dwarfs_train_2018 |>
+  filter(hour == 8) |>
+  select(-avg_sactmin)
+
+nine <- seven_dwarfs_train_2018 |>
+  filter(hour == 9) |>
+  select(date, avg_sactmin)
+
+wait_times <- eight |>
+  left_join(nine, by = "date") |>
+  drop_na(avg_sactmin)
+```
+
+First, let's calculate our denominator model.
+We'll fit a model using `lm()` for `avg_spostmin` with our covariates, then use the fitted predictions of `avg_spostmin` (`.fitted`) to calculate the density using `dnorm()`.
+
+```{r}
+library(broom)
+denominator_model <- lm(
+  avg_spostmin ~
+    close + extra_magic_morning + weather_wdwhigh + wdw_ticket_season,
+  data = wait_times
+)
+
+denominators <- denominator_model |>
+  augment(data = wait_times) |>
+  mutate(
+    denominator = dnorm(
+      avg_spostmin,
+      .fitted,
+      mean(.sigma, na.rm = TRUE)
+    )
+  ) |>
+  select(date, denominator, .fitted)
+```
+
+When we only use the inverted values of `denominator`, we end up with several extreme weights:
+
+```{r}
+#| label: fig-hist-sd-unstable
+#| fig.cap: >
+#|   A histogram of the inverse probability weights for posted waiting time. Weights for continuous exposures are prone to extreme values, which can unstabilize estimates and variance.
+denominators |>
+  mutate(wts = 1 / denominator) |>
+  ggplot(aes(wts)) +
+  geom_histogram(fill = "#E69F00", color = "white", bins = 50) +
+  scale_x_log10(name = "weights") 
+```
+
+In @fig-hist-sd-unstable, we see several weights over 100 and one over 10,000; these extreme weights will put undue stress on specific points, complicating the results we will estimate.
+
+Let's now fit the marginal density to use for stabilized weights:
+
+```{r}
+numerator_model <- lm(
+  avg_spostmin ~ 1,
+  data = wait_times
+)
+
+numerators <- numerator_model |>
+  augment(data = wait_times) |>
+  mutate(
+    numerator = dnorm(
+      avg_spostmin,
+      .fitted,
+      mean(.sigma, na.rm = TRUE)
+    )
+  ) |>
+  select(date, numerator)
+```
+
+We also need to join the fitted values back to our original data set by date, then calculate the stabilized weights (`swts`) using `numerator / denominator`.
+
+```{r}
+wait_times_wts <- wait_times |>
+  left_join(numerators, by = "date") |>
+  left_join(denominators, by = "date") |>
+  mutate(swts = numerator / denominator)
+```
+
+The stabilized weights are much less extreme.
+Stabilized weights should have a mean close to 1 (in this example, it is `round(mean(wait_times_wts$swts), digits = 2)`); when that is the case, then the pseudo-population (that is, the equivalent number of observations after weighting) is equal to the original sample size.
+If the mean is far from 1, we may have issues with model misspecification or positivity violations [@hernán2021].
+
+```{r}
+#| label: fig-hist-sd-stable
+#| fig.cap: >
+#|   A histogram of the stabilized inverse probability weights for posted waiting time. These weights are much more reasonable and will allow the outcome model to behave better.
+ggplot(wait_times_wts, aes(swts)) +
+  geom_histogram(fill = "#E69F00", color = "white", bins = 50) +
+  scale_x_log10(name = "weights") 
+```
+
+When we compare the exposure---average posted wait times---to the standardized weights, we still have one exceptionally high weight.
+Is this a problem, or is this a valid data point?
+
+```{r}
+#| label: fig-stabilized-wts-scatter
+#| fig.cap: >
+#|   A scatter of the stabilized inverse probability weights for posted waiting time vs. posted waiting times. Days with more values of `avg_spostmin` farther from the mean appear to be downweighted, with a few exceptions. The most unusual weight is for June 23, 2018.
+ggplot(wait_times_wts, aes(avg_spostmin, swts)) +
+  geom_point(size = 3, color = "grey80", alpha = 0.7) +
+  geom_point(
+    data = function(x) filter(x, swts > 10),
+    color = "firebrick",
+    size = 3
+  ) +
+  geom_text(
+    data = function(x) filter(x, swts > 10),
+    aes(label = date),
+    size = 5,
+    hjust = 0,
+    nudge_x = -15.5,
+    color = "firebrick"
+  ) +
+  scale_y_log10() +
+  labs(x = "Average Posted Wait", y = "Stabilized Weights")
+```
+
+```{r}
+wait_times_wts |> 
+  filter(swts > 10) |> 
+  select(
+    date, avg_spostmin, .fitted, 
+    close, extra_magic_morning, 
+    weather_wdwhigh, wdw_ticket_season
+  ) |>
+  knitr::kable()
+```
+
+Our model predicted a much lower posted wait time than observed, so this date was upweighted.
+We don't know why the posted time was so high (the actual time was much lower), but we did find an artist rendering from that date of [Pluto digging for Seven Dwarfs Mine Train treasure](https://disneyparks.disney.go.com/blog/2018/06/disney-doodle-pluto-sniffs-out-fun-at-seven-dwarfs-mine-train/).
+
+## Fitting the outcome model for continuous exposures
