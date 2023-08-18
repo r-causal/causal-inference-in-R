@@ -1,13 +1,13 @@
-# Causal survival analysis
+# Causal mediation analysis
 
 {{< include 00-setup.qmd >}}
 
-## Preparing data for survival analysis
+## Estimating direct effects
 
 ```{r}
 rnorm(5)
 ```
 
-## Pooled logistic regression
+## Estimating indirect effects
 
-## Confidence intervals for causal survival models
+## Allowing for interactions

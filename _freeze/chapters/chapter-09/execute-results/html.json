@@ -1,7 +1,7 @@
 {
-  "hash": "1ca1c05cbaab44028148a78232fdfcbc",
+  "hash": "55b373691b598915f6ff3286b9b408d6",
   "result": {
-    "markdown": "# Using the propensity score {#sec-using-ps}\n\n\n\n\n\n## Matching\n\n\n::: {.cell}\n\n```{.r .cell-code}\nrnorm(5)\n```\n\n::: {.cell-output .cell-output-stdout}\n```\n[1] -0.1456  0.1530  0.5043 -0.9903 -0.7952\n```\n:::\n:::\n\n\n## Weighting\n",
+    "markdown": "# Evaluating your propensity score model {#sec-eval-ps-model}\n\n\n\n\n::: {.cell}\n\n```{.r .cell-code}\nrnorm(5)\n```\n\n::: {.cell-output .cell-output-stdout}\n\n```\n[1] -1.2297 -0.4071 -1.8826  1.5237 -0.4425\n```\n\n\n:::\n:::\n\n\n## Calculating the standardized mean difference\n\n## Visualizing balance via Love Plots, boxplots, and eCDF plots\n",
     "supporting": [],
     "filters": [
       "rmarkdown/pagebreak.lua"

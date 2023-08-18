@@ -1,7 +1,10 @@
-# Causal inference with `group_by()` and `summarize()`
+# Expressing causal questions as DAGs {#sec-dags}
 
 {{< include 00-setup.qmd >}}
 
-```{r}
-rnorm(5)
-```
+## Visualizing Causal Assumptions
+
+
+## DAGs in R
+
+## Common Structures of Bias

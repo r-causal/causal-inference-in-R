@@ -1,11 +1,15 @@
-# Sensitivity analysis
-
-## Quantitative bias analyses
+# Other approaches to causal inference
 
 {{< include 00-setup.qmd >}}
+
+## Targeted Learning
 
 ```{r}
 rnorm(5)
 ```
 
-## Tipping point analyses
+## Instrumental variable analysis
+
+## Regression discontinuity
+
+## Difference-in-Difference
