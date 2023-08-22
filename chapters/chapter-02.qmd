@@ -96,7 +96,9 @@ In this particular data, [simulated by Dr. Andrew Heiss](https://evalsp21.classe
 
 Because we're using simulated data, we'll have direct access to a variable that measures the likelihood of contracting malaria, something we wouldn't likely have in real life.
 We'll stick with this measure because we know the actual effect size.
-We'll use simulated data, `net_data`, from the {causalworkshop} package (TODO: move this to causaldata?), which includes ten variables:
+We'll use simulated data, `net_data`, from the {causalworkshop} package, which includes ten variables:
+
+<!-- (TODO: move this to causaldata?) -->
 
 `id`
 
