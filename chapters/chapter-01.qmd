@@ -70,46 +70,6 @@ When we're clear about our goals, we can use all three approaches more effective
 
 ## Description, prediction, and explanation
 
-## Causal Assumptions
-
-Like most statistical approaches, the validity of a causal analysis depends on how well certain assumptions are met.
-The most common assumptions across the approaches we describe in this book are:
-
-1.  Consistency: the potential outcome for a subject given their exposure is the observed outcome.
-    Analogously, if we had a time machine through which we could assign the same exposure to the same subject many times, we would observe the same outcome in all experiments.
-    Consistency can imply that manipulability of exposure is necessary \[TODO explain this more clearly (or maybe we move this point to the target trial section)\] [ref paragraph 3](https://journals.lww.com/epidem/fulltext/2009/01000/the_consistency_statement_in_causal_inference__a.3.aspx)
-
-2.  Exchangeability: within levels of relevant variables (confounders), exposed and unexposed subjects have an equal likelihood of experiencing any outcome prior to exposure; i.e. the exposed and unexposed subjects are exchangeable.
-    This assumption is sometimes referred to as "no unmeasured confounding."
-
-3.  Positivity: within each level and combination of the study variables used to achieve exchangeability, there are exposed and unexposed subjects.
-
-4.  No interference: the outcome (observed or counterfactual) for any subject does not depend on another subject's exposure \[TODO: Make sure we've defined "counterfactual" in one of the first two sections above\]
-
-5.  Well defined exposure: for each value of the exposure, there is no difference between subjects in the delivery of that exposure.
-    Put another way, multiple versions of the treatment do not exist.
-
-Assumptions 1 through 3 are typically referred to as "identifiability conditions" since we need them to hold in order to identify causal estimates.
-\[TODO: SUTVA callout box re: assumptions 4 and 5\].
-Technically, assumption 5 (well defined exposure) is part of assumption 1 (consistency), but we find it useful in practice to check the concerns separately.
-
-Causal assumptions can be difficult to verify and may not hold for many data collection strategies.
-We cannot overstate the importance of checking these criteria to the extent possible!
-Following any of the recipes in this book are unlikely to give valid answers if the causal assumptions are badly violated.
-
-### Checking consistency
-
-A good example is effect of [SES on health](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4912021/): the assumption is that if you vary the components within the same SES level the same effect would occur.
-Can likely simulate some R code to show increasing income while lowering education to get same SES might result in different outcome.
-Make a note that this covers assumption 5 as well.
-
-### Checking exchangeability
-
-### Checking positivity
-
-### Checking interference
-
-## When do standard methods succeed and fail?
 ## Diagraming a causal claim
 
 Diagramming sentences is a grammatical method used to visually represent the structure of a sentence, occasionally taught in grammar school. In this technique, sentences are deconstructed into their constituent parts, such as subjects, verbs, objects, and modifiers, and then displayed using a series of lines and symbols. The arrangement of these elements on the diagram reflects their syntactic roles and how they interact within the sentence's overall structure. By breaking down sentences into these visual representations, diagramming can help learners grasp the nuances of sentence construction, identify grammatical errors, and appreciate the intricate connections between words. We can apply a similar idea to *causal claims*. Here is an example of how one might diagram a causal claim. We've pulled out the *cause*, the *effect*, the *subject* (for whom?), and the *timing* (when?).  
