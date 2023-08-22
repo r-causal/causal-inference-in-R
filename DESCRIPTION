@@ -22,6 +22,7 @@ Imports:
     gtsummary (>= 1.7.0),
     halfmoon (>= 0.0.0.9000),
     here,
+    janitor,
     MatchIt,
     propensity (>= 0.0.0.9000),
     ragg,
