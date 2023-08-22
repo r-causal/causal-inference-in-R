@@ -1,7 +1,7 @@
 # Preface {.unnumbered}
 
 Welcome to *Causal Inference in R*.
-This book teaches you strategies for making valid causal inferences from different data types.
+This book teaches you strategies for making valid causal inferences from different data types. 
 By its end, we hope to help you:
 
 1.  Ask better causal questions.
