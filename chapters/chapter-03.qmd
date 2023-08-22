@@ -114,7 +114,7 @@ Like most statistical approaches, the validity of a causal analysis depends on h
 
 4. **Exchangeability**: We assume that within levels of relevant variables (confounders), exposed and unexposed subjects have an equal likelihood of experiencing any outcome prior to exposure; i.e. the exposed and unexposed subjects are exchangeable. This assumption is sometimes referred to as **no unmeasured confounding**.
 
-5. **Positivity**: We assume that within each level and combination of the study variables used to achieve exchangeability, there are exposed and unexposed subjects. Said differently, each individual has some chance of experiencing every available exposure level.
+5. **Positivity**: We assume that within each level and combination of the study variables used to achieve exchangeability, there are exposed and unexposed subjects. Said differently, each individual has some chance of experiencing every available exposure level. Sometimes this is referred to as the **probabilistic** assumption.
 
 ::: callout-tip
 ## Jargon
