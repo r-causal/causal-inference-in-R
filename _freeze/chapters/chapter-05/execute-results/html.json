@@ -1,7 +1,7 @@
 {
-  "hash": "b66fa4a3923b227d16e9f8e1cda07ed7",
+  "hash": "d0cb732b98d1c73272d9bdd931f82305",
   "result": {
-    "markdown": "# Causal inference with `group_by()` and `summarize()`\n\n\n\n\n::: {.cell}\n\n```{.r .cell-code}\nrnorm(5)\n```\n\n::: {.cell-output .cell-output-stdout}\n```\n[1]  0.6063  0.7966 -0.2689 -0.8430  0.6844\n```\n:::\n:::\n",
+    "markdown": "# Expressing causal questions as DAGs {#sec-dags}\n\n\n\n\n\n## Visualizing Causal Assumptions\n\n\n## DAGs in R\n\n## Common Structures of Bias\n",
     "supporting": [],
     "filters": [
       "rmarkdown/pagebreak.lua"

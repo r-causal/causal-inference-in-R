@@ -1,13 +1,13 @@
-# G-Computation {#sec-g-comp}
+# Causal survival analysis
 
 {{< include 00-setup.qmd >}}
 
-## The Parametric G-Formula
+## Preparing data for survival analysis
 
 ```{r}
 rnorm(5)
 ```
 
-## Calculating estimates with G-Computation
+## Pooled logistic regression
 
-## The Natural Course
+## Confidence intervals for causal survival models

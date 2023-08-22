@@ -1,13 +1,11 @@
-# Causal mediation analysis
+# Sensitivity analysis
+
+## Quantitative bias analyses
 
 {{< include 00-setup.qmd >}}
-
-## Estimating direct effects
 
 ```{r}
 rnorm(5)
 ```
 
-## Estimating indirect effects
-
-## Allowing for interactions
+## Tipping point analyses

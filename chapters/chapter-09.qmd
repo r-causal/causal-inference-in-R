@@ -1,11 +1,11 @@
-# Using the propensity score {#sec-using-ps}
+# Evaluating your propensity score model {#sec-eval-ps-model}
 
 {{< include 00-setup.qmd >}}
-
-## Matching
 
 ```{r}
 rnorm(5)
 ```
 
-## Weighting
+## Calculating the standardized mean difference
+
+## Visualizing balance via Love Plots, boxplots, and eCDF plots

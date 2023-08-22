@@ -1,11 +1,13 @@
-# Evaluating your propensity score model {#sec-eval-ps-model}
+# Fitting the outcome model {#sec-outcome-model}
 
 {{< include 00-setup.qmd >}}
+
+## Using matched data sets
 
 ```{r}
 rnorm(5)
 ```
 
-## Calculating the standardized mean difference
+## Using weights in outcome models
 
-## Visualizing balance via Love Plots, boxplots, and eCDF plots
+## Estimating uncertainty
