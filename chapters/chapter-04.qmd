@@ -49,10 +49,34 @@ Positivity |`r emo::ji("heavy_check_mark")`||`r emo::ji("heavy_check_mark")`|| |
 Exchangeability |`r emo::ji("heavy_check_mark")`||`r emo::ji("heavy_check_mark")`|`r emo::ji("heavy_check_mark")`|| | `r emo::ji("heavy_check_mark")`
 : Mapping assumptions to elements of a study protocol {#tbl-protocol}
 
+Recall our diagrams from @sec-diag (@fig-diagram-4); several of these protocol elements can be mapped to these diagrams when we are attempting to define our causal question.
+
+```{r}
+#| echo: false
+#| label: fig-diagram-4
+#| fig-height: 2
+#| fig-cap: "Example diagram mapped to causal analysis terminology"
+data <- data.frame(labels = c("exposure", "outcome", "eligibility criteria", "time zero", "followed-up", "follow-up time"),
+                   x = c(1.25, 1.75, 1.25, 1.55, 1.8, 2.15),
+                   y = c(1, 1, 0.8, 0.7, 0.8, 0.7),
+                   angle = c(0, 0, -30, 0, -30, 0))  
+
+ggplot(data, aes(x = x, y = y)) +
+  geom_text(aes(label = labels, angle = angle, vjust = 0), 
+            size = 7) +
+  geom_segment(aes(x = 1, xend = 2, y = 0.95, yend = 0.95)) +  
+  geom_segment(aes(x = 1.5, xend = 1.5, y = 0.95, yend = 1.1)) +
+  geom_segment(aes(x = 1, xend = 1.35, y = 0.95, yend = 0.65)) +
+  geom_segment(aes(x = 1.35, xend = 1.65, y = 0.65, yend = 0.65)) +
+  geom_segment(aes(x = 1.55, xend = 1.9, y = 0.95, yend = 0.65)) +
+  geom_segment(aes(x = 1.9, xend = 2.15, y = 0.65, yend = 0.65)) +
+  theme_void()
+```
+
+
 ## Target Trials
 
-There are many reasons why randomization may not be possible. For example, it might not be ethical to randomly assign people to a particular exposure, there may not be funding available to run a randomized trial, or there might not be enough time to conduct a full trial. In these situations, we rely on observational data to help us answer causal questions by implementing a *target trial*. A *target trial* answers: What experiment would you design if you could?
-
+There are many reasons why randomization may not be possible. For example, it might not be ethical to randomly assign people to a particular exposure, there may not be funding available to run a randomized trial, or there might not be enough time to conduct a full trial. In these situations, we rely on observational data to help us answer causal questions by implementing a *target trial*. A *target trial* answers: What experiment would you design if you could? 
 ## Causal inference with `group_by()` and `summarize()`
 
 Let's suppose we are trying to estimate a causal effect of an exposure on an outcome, but the exposure is not *randomized*, in fact, there is a common cause of the exposure and outcome, making the exposed on unexposed groups *not exchangeable* without adjustment (violating the fourth assumption in @sec-assump).
