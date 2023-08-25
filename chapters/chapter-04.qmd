@@ -83,7 +83,7 @@ ggplot(data, aes(x = x, y = y)) +
 
 There are many reasons why randomization may not be possible. For example, it might not be ethical to randomly assign people to a particular exposure, there may not be funding available to run a randomized trial, or there might not be enough time to conduct a full trial. In these situations, we rely on observational data to help us answer causal questions by implementing a *target trial*. A *target trial* answers: What experiment would you design if you could? 
 
-## Causal inference with `group_by()` and `summarize()`
+## Causal inference with `group_by()` and `summarize()` {#sec-group-sum}
 
 Let's suppose we are trying to estimate a causal effect of an exposure on an outcome, but the exposure is not *randomized*, in fact, there is a common cause of the exposure and outcome, making the exposed on unexposed groups *not exchangeable* without adjustment (violating the fourth assumption in @sec-assump).
 
@@ -309,7 +309,7 @@ Attempting to estimate the causal effect within each unique stratum would be ver
 What if instead we could create a single summary score for all of the confounders?
 Hold onto this thought, we'll bring it up again when we introduce *propensity scores*.
 
-## When do standard methods succeed and fail?
+## When do standard methods succeed and fail? {#sec-standard}
 
 When teaching these topics, we are often asked when "standard methods" will succeed, i.e.: when can we just fit a linear regression model to estimate a causal effect?
 Let's start with the easiest example: the exposure is *randomized*.
