@@ -6,6 +6,11 @@
 ## Randomized trials {#sec-rand-trials}
 
 A *randomized trial* is one where the exposure (cause) of interest is *randomly assigned*.
+
+::: callout-note
+In this book, we refer to analyses where the exposure is randomly assigned as a *randomized trial*, sometimes this is called an A/B test.
+:::
+
 Why does randomization help?
 Looking at our assumptions in @sec-assump, randomized trials solve consistency and well defined exposure by default -- the exposure is exactly what is randomized.
 Likewise for positivity; if we have randomly assigned folks to either the exposed or unexposed groups, we know the probability of assignment (and we know it is not exactly 0 or 1).
@@ -56,7 +61,7 @@ Recall our diagrams from @sec-diag (@fig-diagram-4); several of these protocol e
 #| label: fig-diagram-4
 #| fig-height: 2
 #| fig-cap: "Example diagram mapped to causal analysis terminology"
-data <- data.frame(labels = c("exposure", "outcome", "eligibility criteria", "time zero", "followed-up", "follow-up time"),
+data <- data.frame(labels = c("exposure", "outcome", "eligibility criteria", "time zero", "target population", "follow-up time"),
                    x = c(1.25, 1.75, 1.25, 1.55, 1.8, 2.15),
                    y = c(1, 1, 0.8, 0.7, 0.8, 0.7),
                    angle = c(0, 0, -30, 0, -30, 0))  
@@ -77,6 +82,7 @@ ggplot(data, aes(x = x, y = y)) +
 ## Target Trials
 
 There are many reasons why randomization may not be possible. For example, it might not be ethical to randomly assign people to a particular exposure, there may not be funding available to run a randomized trial, or there might not be enough time to conduct a full trial. In these situations, we rely on observational data to help us answer causal questions by implementing a *target trial*. A *target trial* answers: What experiment would you design if you could? 
+
 ## Causal inference with `group_by()` and `summarize()`
 
 Let's suppose we are trying to estimate a causal effect of an exposure on an outcome, but the exposure is not *randomized*, in fact, there is a common cause of the exposure and outcome, making the exposed on unexposed groups *not exchangeable* without adjustment (violating the fourth assumption in @sec-assump).
