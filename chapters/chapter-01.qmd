@@ -39,19 +39,19 @@ lvls <- rankings |>
   levels()
 
 rankings |>
-    count(rating, root_word) |> 
-    mutate(root_word = factor(root_word, levels = lvls)) |> 
-    filter(!is.na(root_word)) |> 
-    group_by(rating) |> 
-    mutate(rank = n / sum(n)) |> 
-    ungroup() |> 
-    drop_na(rating) |> 
-    mutate(rating = factor(rating, levels = c("None", "Weak", "Moderate", "Strong"))) |> 
-    ggplot(aes(x = rank, y = root_word, fill = rating)) + 
-    geom_col(position = position_fill(reverse = TRUE)) +
-    scale_fill_viridis_d( direction = -1)  +
-    labs(y = "root word") +
-    theme(axis.ticks = element_blank(), panel.grid = element_blank())
+  count(rating, root_word) |> 
+  mutate(root_word = factor(root_word, levels = lvls)) |> 
+  filter(!is.na(root_word)) |> 
+  group_by(rating) |> 
+  mutate(rank = n / sum(n)) |> 
+  ungroup() |> 
+  drop_na(rating) |> 
+  mutate(rating = factor(rating, levels = c("None", "Weak", "Moderate", "Strong"))) |> 
+  ggplot(aes(x = rank, y = root_word, fill = rating)) + 
+  geom_col(position = position_fill(reverse = TRUE)) +
+  scale_fill_viridis_d( direction = -1)  +
+  labs(y = "root word") +
+  theme(axis.ticks = element_blank(), panel.grid = element_blank())
 ```
 
 Instead of clear questions with obvious assumptions and goals, we end up with "Schrödinger's causal inference":
@@ -70,7 +70,7 @@ When we're clear about our goals, we can use all three approaches more effective
 
 ## Description, prediction, and explanation
 
-## Diagraming a causal claim
+## Diagraming a causal claim {#sec-diag}
 
 Diagramming sentences is a grammatical method used to visually represent the structure of a sentence, occasionally taught in grammar school. In this technique, sentences are deconstructed into their constituent parts, such as subjects, verbs, objects, and modifiers, and then displayed using a series of lines and symbols. The arrangement of these elements on the diagram reflects their syntactic roles and how they interact within the sentence's overall structure. By breaking down sentences into these visual representations, diagramming can help learners grasp the nuances of sentence construction, identify grammatical errors, and appreciate the intricate connections between words. We can apply a similar idea to *causal claims*. Here is an example of how one might diagram a causal claim. We've pulled out the *cause*, the *effect*, the *subject* (for whom?), and the *timing* (when?).  
 
@@ -81,10 +81,10 @@ Diagramming sentences is a grammatical method used to visually represent the str
 #| label: fig-diagram-1
 library(ggplot2)
 
-data <- data.frame(labels = c("cause", "effect", "for whom?", "when?"),
-                   x = c(1.25, 1.75, 1.25, 1.55),
-                   y = c(1, 1, 0.8, 0.7),
-                   angle = c(0, 0, -30, 0))  
+data <- data.frame(labels = c("cause", "effect", "for whom?", "when?", "for whom?", "when?"),
+                   x = c(1.25, 1.75, 1.25, 1.55, 1.8, 2.05),
+                   y = c(1, 1, 0.8, 0.7, 0.8, 0.7),
+                   angle = c(0, 0, -30, 0, -30, 0))  
 
 ggplot(data, aes(x = x, y = y)) +
   geom_text(aes(label = labels, angle = angle, vjust = 0), 
@@ -93,6 +93,8 @@ ggplot(data, aes(x = x, y = y)) +
   geom_segment(aes(x = 1.5, xend = 1.5, y = 0.95, yend = 1.1)) +
   geom_segment(aes(x = 1, xend = 1.35, y = 0.95, yend = 0.65)) +
   geom_segment(aes(x = 1.35, xend = 1.65, y = 0.65, yend = 0.65)) +
+  geom_segment(aes(x = 1.55, xend = 1.9, y = 0.95, yend = 0.65)) +
+  geom_segment(aes(x = 1.9, xend = 2.15, y = 0.65, yend = 0.65)) +
   theme_void()
 ```
 
@@ -107,18 +109,20 @@ The causal claim here could be *smoking causes cancer*. @fig-diagram-2 shows a p
 #| label: fig-diagram-2
 #| fig-height: 2
 #| fig-cap: "Diagram of the causal claim \"smoking causes cancer\"."
-data <- data.frame(labels = c("smoking", "lung cancer", "for everyone?", "immediately?"),
-                   x = c(1.25, 1.75, 1.25, 1.55),
-                   y = c(1, 1, 0.8, 0.7),
-                   angle = c(0, 0, -30, 0))  
+data <- data.frame(labels = c("smoking", "lung cancer", "for everyone?", "immediately?", "for everyone?", "immediately?"),
+                   x = c(1.25, 1.75, 1.25, 1.55, 1.8, 2.05),
+                   y = c(1, 1, 0.8, 0.7, 0.8, 0.7),
+                   angle = c(0, 0, -30, 0, -30, 0))  
 
 ggplot(data, aes(x = x, y = y)) +
   geom_text(aes(label = labels, angle = angle, vjust = 0), 
-            size = 7) +
+            size = 6) +
   geom_segment(aes(x = 1, xend = 2, y = 0.95, yend = 0.95)) +  
   geom_segment(aes(x = 1.5, xend = 1.5, y = 0.95, yend = 1.1)) +
   geom_segment(aes(x = 1, xend = 1.35, y = 0.95, yend = 0.65)) +
   geom_segment(aes(x = 1.35, xend = 1.65, y = 0.65, yend = 0.65)) +
+  geom_segment(aes(x = 1.55, xend = 1.9, y = 0.95, yend = 0.65)) +
+  geom_segment(aes(x = 1.9, xend = 2.15, y = 0.65, yend = 0.65)) +
   theme_void()
 ```
 
@@ -129,10 +133,10 @@ Let's try to get more specific. A study was published in *JAMA* (the Journal of 
 #| fig-cap: "Example diagram of a more specific causal claim based on results from @godtfredsen2005effect"
 #| label: fig-diagram-3
 
-data <- data.frame(labels = c("Reducing smoking by 50%", "Reduced lung cancer", "People who\nsmoke 15+\ncigarettes per day", "between 5-10 years"),
-                   x = c(1, 2, .83, 1.4),
-                   y = c(1, 1, 0.77, 0.7),
-                   angle = c(0, 0, -48, 0))  
+data <- data.frame(labels = c("Reducing smoking by 50%", "Reduced lung cancer", "People who\nsmoke 15+\ncigarettes per day", "when they stopped", "People who\nsmoke 15+\ncigarettes per day", "between 5-10 years"),
+                   x = c(1, 2, .83, 1.4, 1.88, 2.45),
+                   y = c(1, 1, 0.77, 0.7, 0.77, 0.7),
+                   angle = c(0, 0, -52, 0, -52, 0))  
 
 ggplot(data, aes(x = x, y = y)) +
   geom_text(aes(label = labels, angle = angle, vjust = 0), size = 5) +
@@ -140,22 +144,24 @@ ggplot(data, aes(x = x, y = y)) +
   geom_segment(aes(x = 1.5, xend = 1.5, y = 0.95, yend = 1.1)) +
   geom_segment(aes(x = 0.5, xend = 1, y = 0.95, yend = 0.65)) +
   geom_segment(aes(x = 1, xend = 1.5, y = 0.65, yend = 0.65)) +
-  xlim(c(0.5, 2.5)) +
+  geom_segment(aes(x = 1.55, xend = 2.05, y = 0.95, yend = 0.65)) +
+  geom_segment(aes(x = 2.05, xend = 2.55, y = 0.65, yend = 0.65)) +
+  xlim(c(0.5, 2.75)) +
   ylim(c(0.5, 1.2)) +
-  theme_void()
+  theme_void() 
 ```
 
-Translating this idea into asking good causal questions, we can map the following terms that you will see throughout this book to these diagrams: *exposure* (the cause), *outcome* (the effect), *eligibility criteria* (for whom?), and *follow up period* (when?).
+Translating this idea into asking good causal questions, we can map the following terms that you will see throughout this book to these diagrams: *exposure* (the cause), *outcome* (the effect), *eligibility criteria* (for whom?), *time zero* (when did the participants begin to be followed?), *follwed-up*, (who can we estimate an outcome effect for?) and *follow up period* (when?).
 
 ```{r}
 #| echo: false
 #| label: fig-diagram-4
 #| fig-height: 2
 #| fig-cap: "Example diagram mapped to causal analysis terminology"
-data <- data.frame(labels = c("exposure", "outcome", "eligibility criteria", "follow up"),
-                   x = c(1.25, 1.75, 1.25, 1.55),
-                   y = c(1, 1, 0.8, 0.7),
-                   angle = c(0, 0, -30, 0))  
+data <- data.frame(labels = c("exposure", "outcome", "eligibility criteria", "time zero", "followed-up", "follow-up time"),
+                   x = c(1.25, 1.75, 1.25, 1.55, 1.8, 2.15),
+                   y = c(1, 1, 0.8, 0.7, 0.8, 0.7),
+                   angle = c(0, 0, -30, 0, -30, 0))  
 
 ggplot(data, aes(x = x, y = y)) +
   geom_text(aes(label = labels, angle = angle, vjust = 0), 
@@ -164,6 +170,8 @@ ggplot(data, aes(x = x, y = y)) +
   geom_segment(aes(x = 1.5, xend = 1.5, y = 0.95, yend = 1.1)) +
   geom_segment(aes(x = 1, xend = 1.35, y = 0.95, yend = 0.65)) +
   geom_segment(aes(x = 1.35, xend = 1.65, y = 0.65, yend = 0.65)) +
+  geom_segment(aes(x = 1.55, xend = 1.9, y = 0.95, yend = 0.65)) +
+  geom_segment(aes(x = 1.9, xend = 2.15, y = 0.65, yend = 0.65)) +
   theme_void()
 ```
 
