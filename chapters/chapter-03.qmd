@@ -2,9 +2,7 @@
 
 {{< include 00-setup.qmd >}}
 
-## What is a counterfactual?
-
-### Potential Outcomes
+## Potential Outcomes {#sec-potential}
 
 Let's begin by thinking about the philosophical concept of a *potential outcome.* Prior to some "cause" occurring, for example receiving some exposure, the *potential outcomes* are all of the potential things that could occur depending on what you end up exposed to.
 For simplicity, let's assume an exposure has two levels:
@@ -25,7 +23,7 @@ In the case of a binary exposure, this leaves one potential outcome as *observab
 
 Our causal effect of interest is often some difference in potential outcomes $Y(1) - Y(0)$, averaged over a particular population.
 
-### Counterfactuals
+## Counterfactuals
 
 Conceptually, the missing counterfactual outcome is one that would have occurred under a different set of circumstances.
 In causal inference, we *wish* we could observe the conterfactual outcome that would have occurred in an alternate universe where the exposure status for a given observation was flipped. To do this, we attempt to control for all factors that are related to an exposure and outcome such that we can *construct* (or estimate) such a counterfactual outcome.
@@ -104,7 +102,7 @@ We could conduct an experiment where we *randomize* many individuals to leave cr
 
 ## Causal Assumptions {#sec-assump}
 
-Like most statistical approaches, the validity of a causal analysis depends on how well certain assumptions are met. Often we are interested in estimating the effect of some exposure on an outcome, often denoted as $Y$. One way to tackle this is to frame the problem using *potential outcomes* [@rubin1974estimating]. This framework envisions that each individual possesses a range of potential outcomes for every conceivable value of some input. For instance, in a scenario with two exposure levels (exposed: 1 and unexposed: 0), we can define potential outcomes for exposure ($Y(1)$) and no exposure ($Y(0)$), and subsequently analyze the difference between these outcomes, i.e., $Y(1) - Y(0)$, to comprehend the impact of the input (the exposure) on the outcome, $Y$. At any given time, only one of these *potential outcomes* is observable -- namely, the outcome tied to the actual exposure the individual underwent. Under certain assumptions, we can leverage data from individuals exposed to different inputs to compare the average differences in their observed outcomes. The most common assumptions across the approaches we describe in this book are:
+Like most statistical approaches, the validity of a causal analysis depends on how well certain assumptions are met. As mentioned in @sec-potential, the potential outcomes framework envisions that each individual possesses a range of potential outcomes for every conceivable value of some input. For instance, as in the scenario previously described with two exposure levels (exposed: 1 and unexposed: 0), we can define potential outcomes for exposure ($Y(1)$) and no exposure ($Y(0)$), and subsequently analyze the difference between these outcomes, i.e., $Y(1) - Y(0)$, to comprehend the impact of the input (the exposure) on the outcome, $Y$. At any given time, only one of these *potential outcomes* is observable -- namely, the outcome tied to the actual exposure the individual underwent. Under certain assumptions, we can leverage data from individuals exposed to different inputs to compare the average differences in their observed outcomes. The most common assumptions across the approaches we describe in this book are:
 
 1. **Consistency**: We assume that the causal question you claim you are answering is consistent with the one you are *actually* answering with your analysis.
 
