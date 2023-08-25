@@ -19,7 +19,8 @@ In a recent study of the language of analyses in epidemiologic research, for ins
 Only around 1% of the studies analyzed used the root word "cause" at all.
 Yet, a third of studies had action recommendations, and researchers rated 80% of these recommendations as having at least some causal implication.
 Often, these studies have stronger action recommendations (alluding to causal effects) than those implied by the description of the effect (root words like "associate" and "compare").
-Despite how many studies implied that the goal was causal inference, only about 4% used formal causal models like those discussed in this book. However, most discussed how such a cause might be justified by previous research or theory.
+Despite how many studies implied that the goal was causal inference, only about 4% used formal causal models like those discussed in this book.
+However, most discussed how such a cause might be justified by previous research or theory.
 
 ```{r}
 #| label: "fig-word-ranking"
@@ -72,7 +73,14 @@ When we're clear about our goals, we can use all three approaches more effective
 
 ## Diagraming a causal claim {#sec-diag}
 
-Diagramming sentences is a grammatical method used to visually represent the structure of a sentence, occasionally taught in grammar school. In this technique, sentences are deconstructed into their constituent parts, such as subjects, verbs, objects, and modifiers, and then displayed using a series of lines and symbols. The arrangement of these elements on the diagram reflects their syntactic roles and how they interact within the sentence's overall structure. By breaking down sentences into these visual representations, diagramming can help learners grasp the nuances of sentence construction, identify grammatical errors, and appreciate the intricate connections between words. We can apply a similar idea to *causal claims*. Here is an example of how one might diagram a causal claim. We've pulled out the *cause*, the *effect*, the *subject* (for whom?), and the *timing* (when?).  
+Diagramming sentences is a grammatical method used to visually represent the structure of a sentence, occasionally taught in grammar school.
+In this technique, sentences are deconstructed into their constituent parts, such as subjects, verbs, objects, and modifiers, and then displayed using a series of lines and symbols.
+The arrangement of these elements on the diagram reflects their syntactic roles and how they interact within the sentence's overall structure.
+By breaking down sentences into these visual representations, diagramming can help learners grasp the nuances of sentence construction, identify grammatical errors, and appreciate the intricate connections between words.
+We can apply a similar idea to *causal claims*.
+Here is an example of how one might diagram a causal claim.
+We've pulled out the *cause*, the *effect*, the *subject* (for whom?), and the *timing* (when?).
+
 
 ```{r}
 #| echo: false
@@ -100,9 +108,8 @@ ggplot(data, aes(x = x, y = y)) +
 
 Let's start with a basic causal question: **Does smoking cause cancer?**
 
-The causal claim here could be *smoking causes cancer*. @fig-diagram-2 shows a potential diagram of this causal claim.
-
-
+The causal claim here could be *smoking causes cancer*.
+@fig-diagram-2 shows a potential diagram of this causal claim.
 
 ```{r}
 #| echo: false
@@ -126,7 +133,13 @@ ggplot(data, aes(x = x, y = y)) +
   theme_void()
 ```
 
-Let's try to get more specific. A study was published in *JAMA* (the Journal of the American Medical Association) in 2005 titled "Effect of Smoking Reduction on Lung Cancer Risk". This study concluded: "Among individuals who smoke 15 or more cigarettes per day, smoking reduction by 50% significantly reduces the risk of lung cancer". [@godtfredsen2005effect] The study goes on to describe the time frame studied as 5-10 years. Let's diagram this causal claim.
+Let's try to get more specific.
+A study was published in *JAMA* (the Journal of the American Medical Association) in 2005 titled "Effect of Smoking Reduction on Lung Cancer Risk".
+This study concluded: "Among individuals who smoke 15 or more cigarettes per day, smoking reduction by 50% significantly reduces the risk of lung cancer".
+[@godtfredsen2005effect] The study goes on to describe the time frame studied as 5-10 years.
+Let's diagram this causal claim.
+Here, we are assuming that the eligibility criteria and the target population for the estimated causal effect are the same (individuals who smoke 15 or more cigarettes per day), this need not always be the case.
+In @sec-estimands we will discuss other potential target populations.
 
 ```{r}
 #| echo: false
@@ -151,14 +164,14 @@ ggplot(data, aes(x = x, y = y)) +
   theme_void() 
 ```
 
-Translating this idea into asking good causal questions, we can map the following terms that you will see throughout this book to these diagrams: *exposure* (the cause), *outcome* (the effect), *eligibility criteria* (for whom?), *time zero* (when did the participants begin to be followed?), *follwed-up*, (who can we estimate an outcome effect for?) and *follow up period* (when?).
+Translating this idea into asking good causal questions, we can map the following terms that you will see throughout this book to these diagrams: *exposure* (the cause), *outcome* (the effect), *eligibility criteria* (for whom?), *time zero* (when did the participants begin to be followed?), *target population*, (who can we estimate an outcome effect for?) and *follow up period* (when?).
 
 ```{r}
 #| echo: false
 #| label: fig-diagram-4
 #| fig-height: 2
 #| fig-cap: "Example diagram mapped to causal analysis terminology"
-data <- data.frame(labels = c("exposure", "outcome", "eligibility criteria", "time zero", "followed-up", "follow-up time"),
+data <- data.frame(labels = c("exposure", "outcome", "eligibility criteria", "time zero", "target population", "follow-up time"),
                    x = c(1.25, 1.75, 1.25, 1.55, 1.8, 2.15),
                    y = c(1, 1, 0.8, 0.7, 0.8, 0.7),
                    angle = c(0, 0, -30, 0, -30, 0))  
@@ -175,4 +188,10 @@ ggplot(data, aes(x = x, y = y)) +
   theme_void()
 ```
 
-Asking good causal questions means we map the *question* to the observable *evidence*. Let's return to the smoking example. Our initial question was: *Does smoking causes lung cancer?*; using our study, the evidence shows *For people who smoke 15+ cigarettes a day, reducing smoking by 50% reduces the risk of lung cancer over 5-10 years*. Do these match? Not quite. Let's update our question to match what the study actually was able to show: *For people who smoke 15+ cigarettes a day, does reducing smoking by 50% reduce the lung cancer risk over 5-10 years?*. Honing this skill, asking answerable causal questions, is important, and one that we will discuss throughout this book.
+Asking good causal questions means we map the *question* to the observable *evidence*.
+Let's return to the smoking example.
+Our initial question was: *Does smoking causes lung cancer?*; using our study, the evidence shows *For people who smoke 15+ cigarettes a day, reducing smoking by 50% reduces the risk of lung cancer over 5-10 years*.
+Do these match?
+Not quite.
+Let's update our question to match what the study actually was able to show: *For people who smoke 15+ cigarettes a day, does reducing smoking by 50% reduce the lung cancer risk over 5-10 years?*.
+Honing this skill, asking answerable causal questions, is important, and one that we will discuss throughout this book.

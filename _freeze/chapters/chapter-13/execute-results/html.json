@@ -1,10 +1,8 @@
 {
   "hash": "1d5c11e4eb1e56d478902dc918373b89",
   "result": {
-    "markdown": "# Categorical exposures\n\n\n\n\n\n## Calculating propensity scores for categorical exposures\n\n\n::: {.cell}\n\n```{.r .cell-code}\nrnorm(5)\n```\n\n::: {.cell-output .cell-output-stdout}\n\n```\n[1] -0.2455 -0.4369 -2.4485  0.6768  0.4560\n```\n\n\n:::\n:::\n\n\n## Diagnostics with many categories\n\n## Fitting the outcome model again\n",
-    "supporting": [
-      "chapter-13_files/figure-html"
-    ],
+    "markdown": "# Categorical exposures\n\n\n\n\n\n## Calculating propensity scores for categorical exposures\n\n\n::: {.cell}\n\n```{.r .cell-code}\nrnorm(5)\n```\n\n::: {.cell-output .cell-output-stdout}\n\n```\n[1] -0.6711  0.9282  0.9044 -0.1768  1.4206\n```\n\n\n:::\n:::\n\n\n## Diagnostics with many categories\n\n## Fitting the outcome model again\n",
+    "supporting": [],
     "filters": [
       "rmarkdown/pagebreak.lua"
     ],
