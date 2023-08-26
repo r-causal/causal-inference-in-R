@@ -85,7 +85,7 @@ There are many reasons why randomization may not be possible. For example, it mi
 
 ## Causal inference with `group_by()` and `summarize()` {#sec-group-sum}
 
-Let's suppose we are trying to estimate a causal effect of an exposure on an outcome, but the exposure is not *randomized*, in fact, there is a common cause of the exposure and outcome, making the exposed on unexposed groups *not exchangeable* without adjustment (violating the fourth assumption in @sec-assump).
+Let's suppose we are trying to estimate a causal effect of an exposure on an outcome, but the exposure is not *randomized*, in fact, there is a common cause of the exposure and outcome, making the exposed and unexposed groups *not exchangeable* without adjustment (violating the fourth assumption in @sec-assump).
 
 ::: callout-note
 A **confounder** is a common cause of exposure and outcome.
@@ -99,26 +99,52 @@ Let's suppose this confounder is binary, see the simulation below:
 set.seed(1)
 n <- 10000 
 sim <- tibble(
+  # generate the confounder from a binomial distribution
+  # with a probability 0.5 for being in either group 
   confounder = rbinom(n, 1, 0.5),
+  # make the probability of exposure dependent on the 
+  # confounder value
   p_exposure = case_when(
     confounder == 1 ~ 0.75,
     confounder == 0 ~ 0.25
   ),
+  # generate the exposure from a binomial distribution
+  # with the probability of exposure dependent on the confounder
   exposure = rbinom(n, 1, p_exposure),
-  outcome = confounder + rnorm(n)
+  # generate the "true" average treatment effect of 0 
+  # to do this, we are going to generate the potential outcomes, first 
+  # the potential outcome if exposure = 0
+  # (notice exposure is not in the equation below, only the confounder)
+  # we use rnorm(n) to add the random error term that is normally
+  # distributed with a mean of 0 and a standard deviation of 1
+  y0 = confounder + rnorm(n),
+  # because the true effect is 0, the potential outcome if exposure = 1
+  # is identical
+  y1 = y0,
+  # now, in practice we will only see one of these, outcome is what is 
+  # observed
+  outcome = (1 - exposure) * y0 + exposure * y1,
+  observed_potential_outcome = case_when(
+    exposure == 0 ~ "y0",
+    exposure == 1 ~ "y1"
+  )
 )
 ```
 
 Here we have one binary `confounder`, the probability that `confounder = 1` is `0.5`.
 The probability of the being exposed is `0.75` for those for whom `confounder = 1` `0.25` for those for whom `confounder = 0`.
-There is no effect of the `exposure` on the `outcome` (the true causal effect is 0); the `outcome` effect is fully dependent on the `confounder`.
+There is no effect of the `exposure` on the `outcome` (the true causal effect is 0); the `outcome` effect is fully dependent on the `confounder`. In this simulation we generate the potential outcomes to drive home our assumptions; many of our simulations in this book will skip this step.
 Let's look at this generated data frame.
 
 ```{r}
-sim
+sim |>
+  select(confounder, exposure, outcome, observed_potential_outcome)
 ```
 
-Great!
+Great! Let's begin by proving to ourselves that this violates the exchangeability assumption. Recall from @sec-assump:
+
+> **Exchangeability**: We assume that within levels of relevant variables (confounders), exposed and unexposed subjects have an equal likelihood of experiencing any outcome prior to exposure; i.e. the exposed and unexposed subjects are exchangeable. This assumption is sometimes referred to as **no unmeasured confounding**.
+
 Now, let's try to estimate the effect of the `exposure` on the `outcome` assuming the two exposed groups are exchangeable.
 
 ```{r}
@@ -194,6 +220,10 @@ sim |>
 
 Great!
 Now our estimate is much closer to the true value (0).
+
+::: callout
+The method we are using to solve the fact that our two groups are not exchangeable is known as **stratification**. We are *stratifying* by the confounder(s) and estimating the causal effect within each stratum. To get an overall average causal effect we are averaging across the strata. This can be a great tool if there are very few confounders, however it can suffer from the curse of dimensionality as the number of confounders as well as the number of levels within each confounder increases.
+:::
 
 ### Two binary confounders
 
@@ -339,7 +369,10 @@ n <- 100
 d <- tibble(
   age = rnorm(n, 55, 20),
   weight = rnorm(n),
+  # generate the treatment from a binomial distribution
+  # with the probability of treatment = 0.5
   treatment = rbinom(n, 1, 0.5),
+  # generate the average causal effect of treatment: 1
   y = 1 * treatment + 0.2 * age + 0.2 * weight + rnorm(n)
 )
 ```
@@ -433,11 +466,11 @@ The utility of these methods only increases when exploring more complex examples
 
 What if we did not have a randomized exposure?
 There are many cases where randomization to a treatment is not ethical or feasible.
-Standard methods can still estimate unbiased effects, but more care needs to be given to the previously mentioned assumptions.
-For example, we need the exposed an unexposed groups to be *exchangeable*; this means we must include *all confounders* with their correct functional form.
+Standard methods can still estimate unbiased effects, but more care needs to be given to the previously mentioned assumptions (@tbl-assump-solved).
+For example, we need the exposed an unexposed groups to be *exchangeable*; this means we must adjust for *all confounders* with their correct functional form.
 If everything is simple and linear (and there is no effect heterogeneity, that is everyone's causal effect is the same regardless of their baseline factors), then a simple regression model that adjusts for the confounders can give you an unbiased result.
 Let's look at a simple example such as this.
-Notice in the simulation below, the main difference compared to the above simulation is that the probability of treatment assignment is no longer 0.5 as it was above, but now dependent on the participants `age` and `weight`.
+Notice in the simulation below, the main difference compared to the above simulation is that the probability of treatment assignment is no longer 0.5 as it was above, but now dependent on the participants `age` and `weight`. For example, maybe doctors tend to prescribe a certain treatment to patients who are older and who weigh more.
 The true causal effect is still 1, but now we have two confounders, `age` and `weight` (@fig-diag-2).
 
 ```{r}
@@ -446,7 +479,10 @@ n <- 100000
 d <- tibble(
   age = rnorm(n, 55, 20),
   weight = rnorm(n),
+  # generate the treatment from a binomial distribution
+  # with the probability of treatment dependent on the age and weight
   treatment = rbinom(n, 1, 1 / (1 + exp(-0.01 * age - weight))),
+  ## generate the true average causal effect of the treatment: 1
   y = 1 * treatment + 0.2 * age + 0.2 * weight + rnorm(n)
 )
 ```
