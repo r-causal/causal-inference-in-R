@@ -69,7 +69,7 @@ For a deeper understanding of what causes the event?
 It's a vague request, but it smacks of causal interest to us.
 When we're clear about our goals, we can use all three approaches more effectively (and, as we'll see, both descriptive analysis and prediction models are still helpful when the goal is to make causal inferences).
 
-## Description, prediction, and explanation
+<!-- ## Description, prediction, and explanation -->
 
 ## Diagraming a causal claim {#sec-diag}
 
