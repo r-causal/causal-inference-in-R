@@ -128,7 +128,7 @@ data <- data.frame(labels = c("comedy podcast", "test scores", "graduate student
 
 ggplot(data, aes(x = x, y = y)) +
   geom_text(aes(label = labels, angle = angle, vjust = 0), 
-            size = 7) +
+            size = 5) +
   geom_segment(aes(x = 1, xend = 2, y = 0.95, yend = 0.95)) +  
   geom_segment(aes(x = 1.5, xend = 1.5, y = 0.95, yend = 1.1)) +
   geom_segment(aes(x = 1, xend = 1.35, y = 0.95, yend = 0.65)) +
