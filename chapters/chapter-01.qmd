@@ -77,15 +77,21 @@ The goal of descriptive analysis to describe the distribution of variables, ofte
 
 Descriptive analyses are usually based on statistical summaries such as measures of centrality (means, medians) and spread (minimums, maximums, quartiles), but they also occasionally use techniques like regression modeling. The goal applying more advanced techniques like regression is different in descriptive analyses than in either predictive or causal analyses. "Adjusting" for a variable in descriptive analyses means that we are removing its effect (and thus changing our question), *not* that we are controlling for confounding.
 
-In epidemiology, a useful concept for descriptive analyses is "person, place, and time" -- who has what disease, where, and when. This idea is useful for descriptive analyses in other fields, as well. Usually we want to be clear about what population we're trying to describe, and so we need to be as specific as possible. For human health, describing the people involved, the location, and the time period are all key. In other words, focus on the first principles of generating understanding about your data.
+In epidemiology, a useful concept for descriptive analyses is "person, place, and time" -- who has what disease, where, and when. This is a good template for descriptive analyses in other fields, as well. Usually we want to be clear about what population we're trying to describe, and so we need to be as specific as possible. For human health, describing the people involved, the location, and the time period are all key. In other words, focus on the first principles of generating understanding about your data, and describe your data accordingly. 
 
 #### Examples
 
 EDA is useful for both predictive and causal analyses, but descriptive analyses are useful independent of the other types of analysis tasks. Ask any data scientist who thought they'd be developing complex machine learning models and find themselves spending most of their time on dashboards. Understanding the basic distributions of the data, particularly for key analyses goals (say, KPIs in industry or disease incidence in epidemiology) is critical for many types of decision making.
 
-One of the best recent examples of descriptive analyses is the COVID-19 pandemic. 
+One of the best recent examples of descriptive analyses is the COVID-19 pandemic. In 2020, particularly in the early months of the pandemic, descriptive analyses were key to understanding risk and allocating resources. Since the coronavirus has some similarities to other types of respiratory diseases, we had many public health tools to use (e.g. distancing, and later, face masks). Descriptive statistics of cases by region were important for deciding local policies and the strength of those policies. 
 
-Here are some other great examples of decriptive analyses.
+A great example of a more complex descriptive analysis in the pandemic was an ongoing report by the Financial Times of expected deaths vs. observed deaths in various countries and regions. While the calculation of expected deaths is slightly more sophisticated than most descriptive statistics, it provided a tremendous amount of information about current deaths without needing to untangle causal effects (e.g., were they due to COVID-19 directly? Inaccessible healthcare? Cardiovascular events post-COVID?).
+
+TODO: include plot
+
+Here are some other great examples of descriptive analyses.
+
+TODO: include examples
 
 #### Validity 
 
@@ -104,11 +110,15 @@ One important detail of descriptive anlysis is that confounding bias, one of the
 
 #### Relationship to causal inference
 
-Finally, as we'll see in CHAPTER REF, there are certain circumstances where we *can* make causal inferences, particularly in cases where we can randomize interventions. 
+Humans are built to see patterns; we can't help but see them, and this is particularly true in data analysis. This is a really helpful feature of our brains, but it can also lead down a slippery slope of inference when we're not working with data or methods that can allow us to do that. The single biggest thing to be cautious of is making the leap from description to causation (implied or explicit). 
+
+But of course, descriptive analysis is useful too when we *are* estimating causal effects. It helps us understand the population we're working with, the distribution of the outcomes, exposures (variables we think might be causal), and confounders (variables we need to account for to get unbiased causal effects for the exposure). You should always do descriptive analyses of your data when you are conducting a causal analysis. 
+
+Finally, as we'll see in TODO: CHAPTER REF, there are certain circumstances where we can make causal inferences with basic statics. Be cautious about the distinction between the causal question and the descriptive component here, as well. Just because we're using the same calculation (e.g., a difference in means) doesn't mean that all descriptions you can generate are causal in nature.
 
 ### Prediction
 
-The goal of prediction...
+The goal of prediction is to 
 
 #### Examples
 #### Validity 
