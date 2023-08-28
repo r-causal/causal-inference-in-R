@@ -118,10 +118,17 @@ Finally, as we'll see in TODO: CHAPTER REF, there are certain circumstances wher
 
 ### Prediction
 
-The goal of prediction is to 
+The goal of prediction is to use data to make accurate predictions about variables, usually on new data. What exactly this means depends on the question, domain, and so on. Prediction models are used in about every setting imaginable, from peer-reviewed clinical models to bespoke machine learning models embedded in consumer devices. Even large language models like the ones ChatGPT is based on are prediction models: they predict what a response to a prompt would look like.
+
+Predictive modeling generally uses a different workflow than the one we'll present in this book for causal modeling. Since the goal of prediction is usually related to making predictions on new data, the workflow of this type of modeling focuses on maximizing predictive accuracy while retaining generalization to new data, sometimes called the bias-variance trade-off. In practice, this means splitting your data into training sets (the part of the data you build your model on) and test sets (the part of the data you assess your model with, a proxy for how it would perform on new data). Usually, data scientists use cross-validation or other sampling techniques to further reduce the risk of overfitting your model to the training set. 
+
+
 
 #### Examples
 #### Validity 
+
+The key measure of validity in prediction modeling is predictive accuracy, which can be measured a number of ways. A convenient detail about predictive modeling is that we can often assess if we're right.       
+
 #### Relationship to causal inference
 
 ## Diagraming a causal claim {#sec-diag}
