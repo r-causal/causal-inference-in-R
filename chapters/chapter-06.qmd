@@ -4,11 +4,34 @@
 
 ## Introduction to the data
 
+Throughout this book we will be using data obtained from [Touring Plans](https://touringplans.com). Touring Plans is a company that helps folks plan their trips to Disney and Universal theme parks. One of their goals is to accurately predict attraction wait times at these theme parks by leveraging data and statistical modeling. The {touringplans} R package includes several datasets containing information about Disney theme park attractions. A summary of the attractions included in the package can be found by running the following:
+
+```{r}
+library(touringplans)
+attraction_datasets
+```
+
 ## Data wrangling and recipes
 
-## Recognizing missing data
+Suppose we are interested in answering a question about the Seven Dwarfs Mine Train ride, an attraction at Walt Disney World's Magic Kingdom. The `seven_dwarfs_train` dataset in the {touringplans} package contains information about the date a particular wait time was recorded (`date`), the time of the wait time (`datetime`), the actual wait time (`wait_minutes_actual`), and the posted wait time (`wait_minutes_posted`). Let's take a look at this dataset. The {skimr} package is great for getting a quick glimpse at a new dataset.
+
+```{r}
+library(skimr)
+skim(seven_dwarfs_train)
+```
+
+Examining the output above, we learn that this dataset contains four columns and 321,631 rows. We also learn that the dates span from 2015 to 2021.
 
 ## Working with multiple data sources
+
+Frequently we find ourselves merging data from multiple sources when attempting to answer causal questions in order to ensure that all of the necessary factors are accounted for.
+
+```{r}
+seven_dwarfs_train
+```
+
+
+## Recognizing missing data
 
 ## Exploring and visualizing data and assumptions
 

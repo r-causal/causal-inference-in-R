@@ -27,11 +27,12 @@ Imports:
     propensity (>= 0.0.0.9000),
     ragg,
     rsample (>= 0.0.5),
+    skimr,
     smd,
     survey,
     tidyverse,
     tipr (>= 1.0.1),
-    touringplans (>= 0.0.0.9000)
+    touringplans (>= 0.0.1)
 Suggests: 
     downlit,
     grkstyle (>= 0.0.3),
