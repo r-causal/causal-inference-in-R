@@ -80,6 +80,8 @@ Examining the output above, we learn that this dataset contains four columns and
 
 
 ```{r}
+#| message: false
+#| warning: false
 library(dplyr)
 library(lubridate)
 seven_dwarfs_train_2018 <- seven_dwarfs_train |>
