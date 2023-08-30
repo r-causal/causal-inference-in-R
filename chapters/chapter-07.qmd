@@ -72,7 +72,7 @@ glm(
 
 Let's look at an example.
 
-### Extra Magic Hours at Magic Kingdom
+### Extra Magic Hours at Magic Kingdom {#sec-prop-dag}
 
 Historically, guests who stayed in a Walt Disney World resort hotel could access the park during "Extra Magic Hours," during which the park was closed to all other guests.
 These extra hours could be in the morning or evening.

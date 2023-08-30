@@ -4,30 +4,139 @@
 
 ## Introduction to the data
 
-Throughout this book we will be using data obtained from [Touring Plans](https://touringplans.com). Touring Plans is a company that helps folks plan their trips to Disney and Universal theme parks. One of their goals is to accurately predict attraction wait times at these theme parks by leveraging data and statistical modeling. The {touringplans} R package includes several datasets containing information about Disney theme park attractions. A summary of the attractions included in the package can be found by running the following:
+Throughout this book we will be using data obtained from [Touring Plans](https://touringplans.com). Touring Plans is a company that helps folks plan their trips to Disney and Universal theme parks. One of their goals is to accurately predict attraction wait times at these theme parks by leveraging data and statistical modeling. The `{touringplans}` R package includes several datasets containing information about Disney theme park attractions. A summary of the attractions included in the package can be found by running the following:
 
 ```{r}
 library(touringplans)
-attraction_datasets
+attractions_metadata
 ```
+
+Additionally, this package contains a dataset with raw metadata about the parks, with observations recorded daily. This metadata includes information like the Walt Disney World ticket season on the particular day (was it high season -- think Christmas -- or low season -- think right when school started), what the historic temperatures were in the park on that day, and whether there was a special event, such as "extra magic hours" in the park on that day (did the park open early to guests staying in the Walt Disney World resorts?).
+
+```{r}
+parks_metadata_raw
+```
+
+Suppose the causal question of interest is:
+
+**Is there a relationship between whether there were "Extra Magic Hours" in the morning at Magic Kingdom and the average wait time for an attraction called the "Seven Dwarfs Mine Train" the same day between 9am and 10am in 2018?** 
+
+Let's begin by diagramming this causal question (@fig-seven-diag).
+
+```{r}
+#| echo: false
+#| fig-cap: "Diagram of the causal question \"Is there a relationship between whether there were \"Extra Magic Hours\" in the morning at Magic Kingdom and the average wait time for an attraction called the \"Seven Dwarfs Mine Train\" the same day between 9am and 10am in 2018?\""
+#| label: fig-seven-diag
+
+data <- data.frame(labels = c("Extra Magic Hours", "Change average wait time", "Magic Kingdom guests", "before the park opens (2018)", "Magic Kingdom guests", "9am and 10am (2018)"),
+                   x = c(1, 2, .83, 1.4, 1.88, 2.45),
+                   y = c(1, 1, 0.77, 0.7, 0.77, 0.7),
+                   angle = c(0, 0, -52, 0, -52, 0))  
+
+ggplot(data, aes(x = x, y = y)) +
+  geom_text(aes(label = labels, angle = angle, vjust = 0), size = 4) +
+  geom_segment(aes(x = 0.5, xend = 2.5, y = 0.95, yend = 0.95)) +  
+  geom_segment(aes(x = 1.5, xend = 1.5, y = 0.95, yend = 1.1)) +
+  geom_segment(aes(x = 0.5, xend = 1, y = 0.95, yend = 0.65)) +
+  geom_segment(aes(x = 1, xend = 1.5, y = 0.65, yend = 0.65)) +
+  geom_segment(aes(x = 1.55, xend = 2.05, y = 0.95, yend = 0.65)) +
+  geom_segment(aes(x = 2.05, xend = 2.55, y = 0.65, yend = 0.65)) +
+  xlim(c(0.5, 2.75)) +
+  ylim(c(0.5, 1.2)) +
+  theme_void() 
+```
+Since we are not in charge of Walt Disney World's operations, we cannot randomize dates to have (or not) "Extra Magic Hours", therefore, we need to rely on previously collected observational data and do our best to emulate the *target trial* that we would have created, should it have been possible. Here, our observations are *days*. Looking at the diagram above, we can map each element of the causal question to elements of our target trial protocol:
+
+* **Eligibility criteria**: Days must be from 2018
+* **Exposure definition**: Magic kingdom had "Extra Magic Hours" in the morning
+* **Assignment procedures**: Observed -- if the historic data suggests there were "Extra Magic Hours" in the morning on a particular day, that day is classified as "exposed" otherwise it is "unexposed"
+* **Follow-up period**: From park open to 10am. 
+* **Outcome definition**: The average posted wait time between 9am and 10am
+* **Causal contrast of interest**: Average treatment effect (we will discuss this in @sec-estimands)
+* **Analysis plan**: We use inverse probability waiting after fitting a propensity score model to estimate the average treatment effect of the exposure on the outcome of interest. We will adjust for variables as determined by our DAG (@sec-prop-dag)
 
 ## Data wrangling and recipes
 
-Suppose we are interested in answering a question about the Seven Dwarfs Mine Train ride, an attraction at Walt Disney World's Magic Kingdom. The `seven_dwarfs_train` dataset in the {touringplans} package contains information about the date a particular wait time was recorded (`date`), the time of the wait time (`datetime`), the actual wait time (`wait_minutes_actual`), and the posted wait time (`wait_minutes_posted`). Let's take a look at this dataset. The {skimr} package is great for getting a quick glimpse at a new dataset.
+Most of our data manipulation tools come from the `{dplyr}` package (@tbl-dplyr). We will also use `{lubridate}` to help us manipulate dates. 
+
+Target trial protocol element | {dplyr} functions
+------------------------------|--------------------
+Eligibility criteria | `filter()`
+Exposure definition | `mutate()`
+Assignment procedures | `mutate()`
+Follow-up period | `mutate()` `pivot_longer()` `pivot_wider()` 
+Outcome definition | `mutate()`
+Analysis plan | `select()`
+: Mapping target trial protocol elements to commonly used `{dplyr}` functions {#tbl-dplyr}
+
+To answer this question, we are going to need to manipulate both the `seven_dwarfs_train` dataset as well as the `parks_metadata_raw` dataset. Let's start with the `seven_dwarfs_train` data set. The Seven Dwarfs Mine Train ride is an attraction at Walt Disney World's Magic Kingdom. The `seven_dwarfs_train` dataset in the {touringplans} package contains information about the date a particular wait time was recorded (`park_date`), the time of the wait time (`wait_datetime`), the actual wait time (`wait_minutes_actual`), and the posted wait time (`wait_minutes_posted`). Let's take a look at this dataset. The {skimr} package is great for getting a quick glimpse at a new dataset.
 
 ```{r}
 library(skimr)
 skim(seven_dwarfs_train)
 ```
 
-Examining the output above, we learn that this dataset contains four columns and 321,631 rows. We also learn that the dates span from 2015 to 2021.
+Examining the output above, we learn that this dataset contains four columns and 321,631 rows. We also learn that the dates span from 2015 to 2021. We need this dataset to calculate our *outcome*. Recall from above that our outcome is defined as the average posted wait time between 9am and 10am. Additionally, recall our eligibility criteria states that we need to restrict our analysis to days in 2018.
+
+
+```{r}
+library(dplyr)
+library(lubridate)
+seven_dwarfs_train_2018 <- seven_dwarfs_train |>
+  filter(year(park_date) == 2018) |> # eligibility criteria 
+  mutate(hour = hour(wait_datetime)) |> # get hour from wait
+  group_by(park_date, hour) |> # group by date
+  summarise(
+    wait_minutes_posted_avg = mean(wait_minutes_posted, na.rm = TRUE), 
+    .groups = "drop") |> # get average wait time
+  mutate(wait_minutes_posted_avg = 
+           case_when(is.nan(wait_minutes_posted_avg) ~ NA,
+                     TRUE ~ wait_minutes_posted_avg)) |> # if it is NAN make it NA 
+  filter(hour == 9) # only keep the average wait time between 9 and 10
+```
+
+```{r}
+seven_dwarfs_train_2018
+```
+
+Now that we have our outcome settled, we need to get our exposure variable, as well as any other park-specific variables about the day in question that may be used as variables that we adjust for. These are in the `parks_metadata_raw` dataset. This data will require extra cleaning, since the names are in the original format.
+
+::: callout-tip
+We like to have our variable names follow a clean convention -- one way to do this is to follow Emily Riederer's "Column Names as Contracts" format [@Riederer_2020]. The basic idea is to predefine a set of words, phrases, or stubs with clear meanings to index information, and use these consistently when naming variables. For example, in these data, variables that are specific to a particular wait time are prepended with the term `wait` (e.g. `wait_datetime` and `wait_minutes_actual`), variables that are specific to the park on a particular day, acquired from parks metadata, are prepended with the term `park` (e.g. `park_date` or `park_temperature_high`). 
+:::
+
+Let's first decide what variables we will need. In practice, this decision may involve an iterative process. For example, after drawing our DAG or after conducting diagnostic, we may determine that we need more variables than what we originally cleaned. Let's start by skimming this dataframe.
+
+```{r}
+skim(parks_metadata_raw)
+```
+
+
+This dataset contains many more variables than the one we worked with previously. For this analysis, we are going to select `date` (the observation date), `wdw_ticket_season` (the ticket season for the observation), `wdwmaxtemp` (the maximum temperature), `mkclose` (the time Magic Kingdom closed), `mkemhmorn` (whether Magic Kingdom had an "Extra Magic Hour" in the morning).
+
+```{r}
+parks_metadata_clean <- parks_metadata_raw |>
+  ##  based on our analysis plan, we will select the following variables
+  select(date, wdw_ticket_season, wdwmaxtemp, mkclose, mkemhmorn) |>
+  ## based on eligibility criteria, limit to 2018
+  filter(year(date) == 2018) |>
+  ## rename variables
+  rename(
+    park_date = date,
+    park_ticket_season = wdw_ticket_season,
+    park_cose = mkclose,
+    park_extra_magic_morning = mkemhmorn
+  )
+```
+
 
 ## Working with multiple data sources
 
-Frequently we find ourselves merging data from multiple sources when attempting to answer causal questions in order to ensure that all of the necessary factors are accounted for.
+Frequently we find ourselves merging data from multiple sources when attempting to answer causal questions in order to ensure that all of the necessary factors are accounted for. The way we can combine datasets is via *joins* -- joining two or more datasets based on a set or sets of common variables. We can think of three main types of *joins*: left, right, and inner. A *left* join combines data from two datasets based on a common variable and includes all records from the *left* dataset along with matching records from the *right* dataset (in `{dplyr}`, `left_join()`), while a *right* join includes all records from the *right* dataset and their corresponding matches from the *left* dataset (in `{dplyr}` `right_join()`); an inner join, on the other hand, includes only the records with matching values in *both* datasets, excluding non-matching records (in `{dplyr}` `inner_join()`. For this analysis, we need to use a left join to pull in the cleaned parks metadata.
 
 ```{r}
-seven_dwarfs_train
+seven_dwarfs_train_2018 <- seven_dwarfs_train_2018 |>
+  left_join(parks_metadata_clean, by = "park_date")
 ```
 
 

@@ -137,7 +137,7 @@ ggplot(data, aes(x = x, y = y)) +
   geom_segment(aes(x = 1.9, xend = 2.15, y = 0.65, yend = 0.65)) +
   theme_void()
 ```
-The first step is to specify your DAG. In R, we can use the {ggdag} package for this along with the `dagify()` function. The `dagify()` function takes formulas, separated by commas, that specify cause and effect, with the left element of of the formula specifying the effect and the right all of the factors that cause it. What are all of the factors that "cause" graduate students to listen to a podcast the morning before an exam? What are all of the factors that could "cause" a graduate student to do well on a test? Let's posit some here.
+The first step is to specify your DAG. In R, we can use the `{ggdag}` package for this along with the `dagify()` function. The `dagify()` function takes formulas, separated by commas, that specify cause and effect, with the left element of of the formula specifying the effect and the right all of the factors that cause it. What are all of the factors that "cause" graduate students to listen to a podcast the morning before an exam? What are all of the factors that could "cause" a graduate student to do well on a test? Let's posit some here.
 
 ```{r}
 library(ggdag)
@@ -182,7 +182,7 @@ In @fig-paths we see two open paths, one through `mood` and one through `prepare
 
 In this particular scenario, randomization is likely not possible. It would be challenging to justify randomizing students to listening to a full podcast prior to taking an exam (and it would likely have lots of issues with adherence!). Stratification is similar to what we demonstrated in @sec-group-sum. We could stratify the students into all possible mood and prepared categories and analyze the causal effect within each stratum -- again, this might pose challenges depending on the sample size and the number of categories we believe exists in each of these factors. The next section will dive into some of these other tools we could use to account for these potential backdoor paths.
 
-The {ggdag} package can also help us identify adjustment sets. In this particular example, this yields the same result as above, since we need to adjust for both `mood` and `prepared` in order to close the backdoor paths. It is possible, however, to have different ways to close backdoor paths depending on the number of factors and complexity causal relationships assumed.
+The `{ggdag}` package can also help us identify adjustment sets. In this particular example, this yields the same result as above, since we need to adjust for both `mood` and `prepared` in order to close the backdoor paths. It is possible, however, to have different ways to close backdoor paths depending on the number of factors and complexity causal relationships assumed.
 
 ```{r}
 ggdag_adjustment_set(
