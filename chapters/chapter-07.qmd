@@ -74,11 +74,7 @@ Let's look at an example.
 
 ### Extra Magic Hours at Magic Kingdom {#sec-prop-dag}
 
-Historically, guests who stayed in a Walt Disney World resort hotel could access the park during "Extra Magic Hours," during which the park was closed to all other guests.
-These extra hours could be in the morning or evening.
-The Seven Dwarfs Mine Train is a ride at Walt Disney World's Magic Kingdom.
-Magic Kingdom may or may not be selected each day to have these "Extra Magic Hours." We are interested in examining the relationship between whether there were "Extra Magic Hours" in the morning and the average wait time for the Seven Dwarfs Mine Train on the same day between 9 am and 10 am.
-Below is a proposed DAG for this question.
+Recall our causal question of interest from @sec-data: **Is there a relationship between whether there were "Extra Magic Hours" in the morning at Magic Kingdom and the average wait time for an attraction called the "Seven Dwarfs Mine Train" the same day between 9am and 10am in 2018?** Below is a proposed DAG for this question.
 
 ```{r}
 #| label: fig-dag-magic-hours-wait
@@ -144,11 +140,11 @@ dagify(
 ```
 
 In @fig-dag-magic-hours-wait, we propose three confounders: the historic high temperature on the day, the time the park closed, and the ticket season: value, regular, or peak.
-We can build a propensity score model using the `seven_dwarfs_train_2018` data set from the [{`touringplans`}](https://lucymcgowan.github.io/touringplans/) package.
+We can build a propensity score model using the `seven_dwarfs_train_2018` data set from the `{touringplans}` package.
 Each row of this dataset contains information about the Seven Dwarfs Mine Train during a particular hour on a given day.
 First, we need to subset the data to only include average wait times between 9 and 10 am.
 Then we will use the `glm()` function to fit the propensity score model, predicting `park_extra_magic_morning` using the four confounders specified above.
-We'll add the propensity scores to the data frame (in a column called `.fitted` as set by the `augment()` function in the {`broom`} package).
+We'll add the propensity scores to the data frame (in a column called `.fitted` as set by the `augment()` function in the `{broom}` package).
 
 ```{r}
 library(broom)

@@ -74,17 +74,17 @@ format:
     theme:
       - cosmo
       - style.scss
-  # pdf:
-  #   tbl-cap-location: bottom
-  #   documentclass: krantz
-  #   link-citations: true
-  #   colorlinks: true
-  #   lot: true
-  #   lof: true
-  #   includes:
-  #     in_header: latex/preamble.tex
-  #     before_body: latex/before_body.tex
-  #     after_body: latex/after_body.tex
+  #pdf:
+    #tbl-cap-location: bottom
+    #documentclass: krantz
+    #link-citations: true
+    #colorlinks: true
+    #lot: true
+    #lof: true
+    #includes:
+    #  in_header: latex/preamble.tex
+    #  before_body: latex/before_body.tex
+    #  after_body: latex/after_body.tex
 
 editor_options:
   markdown:

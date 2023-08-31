@@ -23,6 +23,7 @@ Imports:
     halfmoon (>= 0.0.0.9000),
     here,
     janitor,
+    lubridate,
     MatchIt,
     propensity (>= 0.0.0.9000),
     ragg,
@@ -32,7 +33,8 @@ Imports:
     survey,
     tidyverse,
     tipr (>= 1.0.1),
-    touringplans (>= 0.0.1)
+    touringplans (>= 0.0.1),
+    visdat
 Suggests: 
     downlit,
     grkstyle (>= 0.0.3),
