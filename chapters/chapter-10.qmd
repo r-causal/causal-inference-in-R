@@ -159,7 +159,7 @@ In other words, the weight is one over the propensity score for those in the exp
 Intuitively, this weight equates to the inverse probability of being in the exposure group in which you actually were.
 
 Let's dig deeper into this causal estimand using the Touring Plans data.
-Recall that in @sec-using-ps, we examined the relationship between whether there were "Extra Magic Hours" in the morning and the average wait time for the Seven Dwarfs Mine Train the same day between 5 pm and 6 pm.
+Recall that in @sec-using-ps, we examined the relationship between whether there were "Extra Magic Hours" in the morning and the average wait time for the Seven Dwarfs Mine Train the same day between 9 am and 10 am.
 Let's reconstruct our data set, `seven_dwarfs` and fit the same propensity score model specified previously.
 
 ```{r}
@@ -167,14 +167,14 @@ library(broom)
 library(touringplans)
 
 seven_dwarfs <- seven_dwarfs_train_2018 |>
-  filter(hour == 17) |>
-  mutate(extra_magic_morning = factor(
-    extra_magic_morning,
+  filter(wait_hour == 9) |>
+  mutate(park_extra_magic_morning = factor(
+    park_extra_magic_morning,
     labels = c("No Magic Hours", "Extra Magic Hours")
   ))
 
 seven_dwarfs_with_ps <- glm(
-  extra_magic_morning ~ wdw_ticket_season + close + weather_wdwhigh,
+  park_extra_magic_morning ~ park_ticket_season + park_close + park_temperature_high,
   data = seven_dwarfs,
   family = binomial()
 ) |>
@@ -182,8 +182,8 @@ seven_dwarfs_with_ps <- glm(
 ```
 
 Let's examine a table of the variables of interest in this data frame.
-To do so, we are going to use the `tbl_summary()` function from the {gtsummary} package.
-(We'll also use the {labelled} package to clean up the variable names for the table.)
+To do so, we are going to use the `tbl_summary()` function from the `{gtsummary}` package.
+(We'll also use the `{labelled}` package to clean up the variable names for the table.)
 
 ```{r}
 #| label: tbl-unweighted-gtsummary
@@ -192,33 +192,33 @@ library(gtsummary)
 library(labelled)
 seven_dwarfs_with_ps <- seven_dwarfs_with_ps |>
   set_variable_labels(
-    wdw_ticket_season = "Ticket Season",
-    close = "Close Time",
-    weather_wdwhigh = "Historic High Temperature"
+    park_ticket_season = "Ticket Season",
+    park_close = "Close Time",
+    park_temperature_high = "Historic High Temperature"
   )
 
 tbl_summary(
   seven_dwarfs_with_ps,
-  by = extra_magic_morning,
-  include = c(wdw_ticket_season, close, weather_wdwhigh)
+  by = park_extra_magic_morning,
+  include = c(park_ticket_season, park_close, park_temperature_high)
 ) |>
   # add an overall column to the table
   add_overall(last = TRUE)
 ```
 
-From @tbl-unweighted-gtsummary, 291 days did not have extra magic hours in the morning, and 56 did.
-We also see that 30% of the extra magic mornings were during peak season compared to 21% of the non-extra magic mornings.
+From @tbl-unweighted-gtsummary, 294 days did not have extra magic hours in the morning, and 60 did.
+We also see that 30% of the extra magic mornings were during peak season compared to 20% of the non-extra magic mornings.
 Additionally, days with extra magic mornings were more likely to close at 6 pm (18:00:00) compared to non-magic hour mornings.
-The median temperature on days with extra magic hour mornings is slightly lower (79 degrees) compared to non-extra magic hour morning days.
+The median high temperature on days with extra magic hour mornings is slightly lower (83 degrees) compared to non-extra magic hour morning days.
 
 Now let's construct our propensity score weight to estimate the ATE.
-The {propensity} package has helper functions to estimate weights.
+The `{propensity}` package has helper functions to estimate weights.
 The `wt_ate()` function will calculate ATE weights.
 
 ```{r}
 library(propensity)
 seven_dwarfs_wts <- seven_dwarfs_with_ps |>
-  mutate(w_ate = wt_ate(.fitted, extra_magic_morning))
+  mutate(w_ate = wt_ate(.fitted, park_extra_magic_morning))
 ```
 
 Let's look at a distribution of these weights.
@@ -343,9 +343,9 @@ The likelihood of falling into finite sample bias depends on:\
 (3) the sample size.
 :::
 
-The {gtsummary} package allows the creation of *weighted* tables, which can help us build an intuition for the psuedopopulation created by the weights.
-First, we must load the {survey} package and create a survey design object.
-The {survey} package supports calculating statistics and models using weights.
+The `{gtsummary}` package allows the creation of *weighted* tables, which can help us build an intuition for the psuedopopulation created by the weights.
+First, we must load the `{survey}` package and create a survey design object.
+The `{survey}` package supports calculating statistics and models using weights.
 Historically, many researchers applied techniques incorporating weights to survey analyses.
 Even though we are not doing a survey analysis, the same techniques are helpful for our propensity score weights.
 
@@ -361,15 +361,15 @@ seven_dwarfs_svy <- svydesign(
 )
 tbl_svysummary(
   seven_dwarfs_svy,
-  by = extra_magic_morning,
-  include = c(wdw_ticket_season, close, weather_wdwhigh)
+  by = park_extra_magic_morning,
+  include = c(park_ticket_season, park_close, park_temperature_high)
 ) |>
   add_overall(last = TRUE)
 ```
 
 Notice in @tbl-weighted-gtsummary that the variables are more **balanced** between the groups.
-For example, looking at the variable `wdw_ticket_season`, in @tbl-unweighted-gtsummary we see that a higher percentage of the days with extra magic hours in the mornings were during the peak season (30%) compared to the percent of days without extra magic hours in the morning (21%).
-In @tbl-weighted-gtsummary this is balanced, with a weighted percent of 21% peak days in the extra magic morning group and 22% in the no extra magic morning group.
+For example, looking at the variable `park_ticket_season`, in @tbl-unweighted-gtsummary we see that a higher percentage of the days with extra magic hours in the mornings were during the peak season (30%) compared to the percent of days without extra magic hours in the morning (23%).
+In @tbl-weighted-gtsummary this is balanced, with a weighted percent of 22% peak days in the extra magic morning group and 22% in the no extra magic morning group.
 The weights change the variables' distribution by weighting each observation so that the two groups appear balanced.
 Also, notice that the distribution of variables in @tbl-weighted-gtsummary now matches the Overall column of @tbl-unweighted-gtsummary.
 That is what ATE weights do: they make the distribution of variables included in the propensity score for each exposure group look like the overall distribution across the whole sample.
@@ -382,10 +382,10 @@ We will plot the distribution of the propensity score for the days in the exposu
 #| fig.cap: >
 #|   A mirrored histogram of the distribution of propensity scores between exposure groups. The dark bars represent the unweighted distribution, and the colored bars represent the distribution weighted by the average treatment effect (ATE) weight.
 library(halfmoon)
-ggplot(seven_dwarfs_wts, aes(.fitted, group = extra_magic_morning)) +
+ggplot(seven_dwarfs_wts, aes(.fitted, group = park_extra_magic_morning)) +
   geom_mirror_histogram(bins = 50) +
   geom_mirror_histogram(
-    aes(fill = extra_magic_morning, weight = w_ate),
+    aes(fill = park_extra_magic_morning, weight = w_ate),
     bins = 50,
     alpha = 0.5
   ) +
@@ -424,7 +424,7 @@ Let's add the ATT weights to the `seven_dwarfs_wts` data frame and look at their
 #| fig.cap : >
 #|   A histogram of the average treatment effect among the treated (ATT) weights. The range of the ATT weights in this example is more stable than the ATE weights: the range is much smaller.
 seven_dwarfs_wts <- seven_dwarfs_wts |>
-  mutate(w_att = wt_att(.fitted, extra_magic_morning))
+  mutate(w_att = wt_att(.fitted, park_extra_magic_morning))
 
 ggplot(seven_dwarfs_wts, aes(w_att)) +
   geom_histogram(bins = 50)
@@ -447,8 +447,8 @@ seven_dwarfs_svy <- svydesign(
 )
 tbl_svysummary(
   seven_dwarfs_svy,
-  by = extra_magic_morning,
-  include = c(wdw_ticket_season, close, weather_wdwhigh)
+  by = park_extra_magic_morning,
+  include = c(park_ticket_season, park_close, park_temperature_high)
 ) |>
   add_overall(last = TRUE)
 ```
@@ -465,10 +465,10 @@ We can again create a mirrored histogram to observe the weighted psuedopopulatio
 #| label: fig-sd-mirror-hist-att
 #| fig.cap: >
 #|   A mirrored histogram of the distribution of propensity scores between exposure groups. The dark bars represent the unweighted distribution, and the colored bars represent the distribution weighted by the average treatment effect among the treated (ATT) weight.
-ggplot(seven_dwarfs_wts, aes(.fitted, group = extra_magic_morning)) +
+ggplot(seven_dwarfs_wts, aes(.fitted, group = park_extra_magic_morning)) +
   geom_mirror_histogram(bins = 50) +
   geom_mirror_histogram(
-    aes(fill = extra_magic_morning, weight = w_att),
+    aes(fill = park_extra_magic_morning, weight = w_att),
     bins = 50,
     alpha = 0.5
   ) +
@@ -503,7 +503,7 @@ $$w_{ATU} = \frac{X(1-p)}{p}+ (1-X)$$ Let's add the ATU weights to the `seven_dw
 #| fig.cap : >
 #|   A histogram of the average treatment effect among the unexposed (ATU) weights. The range of the ATU weights in this example is very similar to the ATE weights.
 seven_dwarfs_wts <- seven_dwarfs_wts |>
-  mutate(w_atu = wt_atu(.fitted, extra_magic_morning))
+  mutate(w_atu = wt_atu(.fitted, park_extra_magic_morning))
 
 ggplot(seven_dwarfs_wts, aes(w_atu)) +
   geom_histogram(bins = 50)
@@ -526,8 +526,8 @@ seven_dwarfs_svy <- svydesign(
 )
 tbl_svysummary(
   seven_dwarfs_svy,
-  by = extra_magic_morning,
-  include = c(wdw_ticket_season, close, weather_wdwhigh)
+  by = park_extra_magic_morning,
+  include = c(park_ticket_season, park_close, park_temperature_high)
 ) |>
   add_overall(last = TRUE)
 ```
@@ -540,10 +540,10 @@ We can again create a mirrored histogram to observe the weighted psuedopopulatio
 #| label: fig-sd-mirror-hist-atu
 #| fig.cap: >
 #|   A mirrored histogram of the distribution of propensity scores between exposure groups. The dark bars represent the unweighted distribution, and the colored bars represent the distribution weighted by the average treatment effect among the unexposed (ATU) weight.
-ggplot(seven_dwarfs_wts, aes(.fitted, group = extra_magic_morning)) +
+ggplot(seven_dwarfs_wts, aes(.fitted, group = park_extra_magic_morning)) +
   geom_mirror_histogram(bins = 50) +
   geom_mirror_histogram(
-    aes(fill = extra_magic_morning, weight = w_atu),
+    aes(fill = park_extra_magic_morning, weight = w_atu),
     bins = 50,
     alpha = 0.5
   ) +
@@ -581,7 +581,7 @@ Let's add the ATM weights to the `seven_dwarfs_wts` data frame and look at their
 #| fig.cap: >
 #|   A histogram of the average treatment effect among the evenly matchable (ATM) weights for whether or not a day had extra magic hours. ATM weights can range from 0 to 1, so they are always stable.
 seven_dwarfs_wts <- seven_dwarfs_wts |>
-  mutate(w_atm = wt_atm(.fitted, extra_magic_morning))
+  mutate(w_atm = wt_atm(.fitted, park_extra_magic_morning))
 
 ggplot(seven_dwarfs_wts, aes(w_atm)) +
   geom_histogram(bins = 50)
@@ -604,8 +604,8 @@ seven_dwarfs_svy <- svydesign(
 )
 tbl_svysummary(
   seven_dwarfs_svy,
-  by = extra_magic_morning,
-  include = c(wdw_ticket_season, close, weather_wdwhigh)
+  by = park_extra_magic_morning,
+  include = c(park_ticket_season, park_close, park_temperature_high)
 ) |>
   add_overall(last = TRUE)
 ```
@@ -620,10 +620,10 @@ We can again create a mirrored histogram to observe the ATM weighted psuedopopul
 #| label: fig-sd-mirror-hist-atm
 #| fig.cap: >
 #|   A mirrored histogram of the distribution of propensity scores between exposure groups. The dark bars represent the unweighted distribution, and the colored bars represent the distribution weighted by the average treatment effect among the evenly matchable (ATM) weight.
-ggplot(seven_dwarfs_wts, aes(.fitted, group = extra_magic_morning)) +
+ggplot(seven_dwarfs_wts, aes(.fitted, group = park_extra_magic_morning)) +
   geom_mirror_histogram(bins = 50) +
   geom_mirror_histogram(
-    aes(fill = extra_magic_morning, weight = w_atm),
+    aes(fill = park_extra_magic_morning, weight = w_atm),
     bins = 50,
     alpha = 0.5
   ) +
@@ -655,7 +655,7 @@ Let's add the ATO weights to the `seven_dwarfs_wts` data frame and look at their
 #| fig.cap: >
 #|   A histogram of the average treatment effect among the overlap population (ATO) weights for whether or not a day had extra magic hours. Like ATM weights, ATO weights can range from 0 to 1, so they are always stable. ATO weights also have improved variance properties compared to the ATM weights.
 seven_dwarfs_wts <- seven_dwarfs_wts |>
-  mutate(w_ato = wt_ato(.fitted, extra_magic_morning))
+  mutate(w_ato = wt_ato(.fitted, park_extra_magic_morning))
 
 ggplot(seven_dwarfs_wts, aes(w_ato)) +
   geom_histogram(bins = 50)
@@ -739,8 +739,8 @@ seven_dwarfs_svy <- svydesign(
 )
 tbl_svysummary(
   seven_dwarfs_svy,
-  by = extra_magic_morning,
-  include = c(wdw_ticket_season, close, weather_wdwhigh)
+  by = park_extra_magic_morning,
+  include = c(park_ticket_season, park_close, park_temperature_high)
 ) |>
   add_overall(last = TRUE)
 ```
@@ -753,10 +753,10 @@ We can again create a mirrored histogram to observe the ATO weighted psuedopopul
 #| label: fig-sd-mirror-hist-ato
 #| fig.cap: >
 #|   A mirrored histogram of the distribution of propensity scores between exposure groups. The dark bars represent the unweighted distribution, and the colored bars represent the distribution weighted by the average treatment effect among the overlap population (ATO) weight.
-ggplot(seven_dwarfs_wts, aes(.fitted, group = extra_magic_morning)) +
+ggplot(seven_dwarfs_wts, aes(.fitted, group = park_extra_magic_morning)) +
   geom_mirror_histogram(bins = 50) +
   geom_mirror_histogram(
-    aes(fill = extra_magic_morning, weight = w_ato),
+    aes(fill = park_extra_magic_morning, weight = w_ato),
     bins = 50,
     alpha = 0.5
   ) +
