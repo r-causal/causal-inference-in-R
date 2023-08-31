@@ -280,6 +280,7 @@ We have confirmed that for each of the three confounders, we do not see strong e
 ```{r}
 #| label: fig-positivity
 #| fig-cap: "Check for positivity violations across three confounders: historic high temperature, park close time, and ticket season."
+#| fig-width: 9
 seven_dwarfs_train_2018 |>
   ## cut park_temperature_high into tertiles
   mutate(park_temperature_high_bin = cut(park_temperature_high, breaks = 3)) |>
@@ -290,15 +291,15 @@ seven_dwarfs_train_2018 |>
     hour(park_close) >= 24 | hour(park_close) < 12 ~ "(3) late"
   )) |>
   group_by(park_close_bin, park_temperature_high_bin, park_ticket_season) |>
-  ## calculate the percent exposed in each bin
-  summarise(pct_exposed = mean(park_extra_magic_morning), .groups = "drop") |>
-ggplot(aes(x = park_close_bin, y = park_temperature_high_bin, fill = pct_exposed)) + 
+  ## calculate the proportion exposed in each bin
+  summarise(prop_exposed = mean(park_extra_magic_morning), .groups = "drop") |>
+ggplot(aes(x = park_close_bin, y = park_temperature_high_bin, fill = prop_exposed)) + 
   geom_tile() + 
   scale_fill_gradient2(midpoint = 0.5) +
   facet_wrap(~park_ticket_season) + 
   labs(y = "Historic Maximum Temperature (F)",
        x = "Magic Kingdom Park Close Time",
-       fill = "Percent of Days Exposed")
+       fill = "Proportion of Days Exposed")
 ```
 
 Interesting! @fig-positivity shows an interesting potential violation. It looks like 100% of days with lower temperatures (historic highs between 51 and 65 degrees) that are in the peak ticket season have extra magic hours in the morning. This actually makes sense if we think a bit about this data set. The only days with cold temperatures in Florida that would also be considered a "peak" time to visit Walt Disney World would be over Christmas / New Years. During this time there historically were always extra magic hours.
