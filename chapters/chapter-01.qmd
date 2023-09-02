@@ -73,19 +73,33 @@ When we're clear about our goals, we can use all three approaches more effective
 
 ### Description
 
-The goal of descriptive analysis to describe the distribution of variables, often stratified by key variables of interest. A closely related idea is exploratory data analysis (EDA), although descriptive analyses often have clearer goals than those in EDA. 
+The goal of descriptive analysis to describe the distribution of variables, often stratified by key variables of interest.
+A closely related idea is exploratory data analysis (EDA), although descriptive analyses often have clearer goals than those in EDA.
 
-Descriptive analyses are usually based on statistical summaries such as measures of centrality (means, medians) and spread (minimums, maximums, quartiles), but they also occasionally use techniques like regression modeling. The goal applying more advanced techniques like regression is different in descriptive analyses than in either predictive or causal analyses. "Adjusting" for a variable in descriptive analyses means that we are removing its effect (and thus changing our question), *not* that we are controlling for confounding.
+Descriptive analyses are usually based on statistical summaries such as measures of centrality (means, medians) and spread (minimums, maximums, quartiles), but they also occasionally use techniques like regression modeling.
+The goal applying more advanced techniques like regression is different in descriptive analyses than in either predictive or causal analyses.
+"Adjusting" for a variable in descriptive analyses means that we are removing its effect (and thus changing our question), *not* that we are controlling for confounding.
 
-In epidemiology, a useful concept for descriptive analyses is "person, place, and time" -- who has what disease, where, and when. This is a good template for descriptive analyses in other fields, as well. Usually we want to be clear about what population we're trying to describe, and so we need to be as specific as possible. For human health, describing the people involved, the location, and the time period are all key. In other words, focus on the first principles of generating understanding about your data, and describe your data accordingly. 
+In epidemiology, a useful concept for descriptive analyses is "person, place, and time" -- who has what disease, where, and when.
+This is a good template for descriptive analyses in other fields, as well.
+Usually we want to be clear about what population we're trying to describe, and so we need to be as specific as possible.
+For human health, describing the people involved, the location, and the time period are all key.
+In other words, focus on the first principles of generating understanding about your data, and describe your data accordingly.
 
 #### Examples
 
-Counting things is one of the best things we can do with data. EDA is useful for both predictive and causal analyses, but descriptive analyses are useful independent of the other types of analysis tasks. Ask any data scientist who thought they'd be developing complex machine learning models and find themselves spending most of their time on dashboards. Understanding the basic distributions of the data, particularly for key analyses goals (say, KPIs in industry or disease incidence in epidemiology) is critical for many types of decision making.
+Counting things is one of the best things we can do with data.
+EDA is useful for both predictive and causal analyses, but descriptive analyses are useful independent of the other types of analysis tasks.
+Ask any data scientist who thought they'd be developing complex machine learning models and find themselves spending most of their time on dashboards.
+Understanding the basic distributions of the data, particularly for key analyses goals (say, KPIs in industry or disease incidence in epidemiology) is critical for many types of decision making.
 
-One of the best recent examples of descriptive analyses is the COVID-19 pandemic. In 2020, particularly in the early months of the pandemic, descriptive analyses were key to understanding risk and allocating resources. Since the coronavirus has some similarities to other types of respiratory diseases, we had many public health tools to use (e.g. distancing, and later, face masks). Descriptive statistics of cases by region were important for deciding local policies and the strength of those policies. 
+One of the best recent examples of descriptive analyses is the COVID-19 pandemic.
+In 2020, particularly in the early months of the pandemic, descriptive analyses were key to understanding risk and allocating resources.
+Since the coronavirus has some similarities to other types of respiratory diseases, we had many public health tools to use (e.g. distancing, and later, face masks).
+Descriptive statistics of cases by region were important for deciding local policies and the strength of those policies.
 
-A great example of a more complex descriptive analysis in the pandemic was an ongoing report by the Financial Times of expected deaths vs. observed deaths in various countries and regions. While the calculation of expected deaths is slightly more sophisticated than most descriptive statistics, it provided a tremendous amount of information about current deaths without needing to untangle causal effects (e.g., were they due to COVID-19 directly? Inaccessible healthcare? Cardiovascular events post-COVID?).
+A great example of a more complex descriptive analysis in the pandemic was an ongoing report by the Financial Times of expected deaths vs. observed deaths in various countries and regions.
+While the calculation of expected deaths is slightly more sophisticated than most descriptive statistics, it provided a tremendous amount of information about current deaths without needing to untangle causal effects (e.g., were they due to COVID-19 directly? Inaccessible healthcare? Cardiovascular events post-COVID?).
 
 TODO: include plot
 
@@ -93,100 +107,184 @@ Here are some other great examples of descriptive analyses.
 
 TODO: include examples
 
-#### Validity 
+#### Validity
 
-There are two key issues of validity in descriptive analyses: measurement error and sampling error. 
+There are two key issues of validity in descriptive analyses: measurement error and sampling error.
 
-Measurement error is when we have mismeasured one or more variables in some capacity. For descriptive analyses, mismeasuring things means we may not be getting the actual answer to our question. However, the degree to which that is the case depends on both the severity of the measurement error and the question itself.
+Measurement error is when we have mismeasured one or more variables in some capacity.
+For descriptive analyses, mismeasuring things means we may not be getting the actual answer to our question.
+However, the degree to which that is the case depends on both the severity of the measurement error and the question itself.
 
-Sampling error is a more nuanced topic in descriptive analyses. It's related to both the population we're analyzing (who should the analysis produce descriptions about) and uncertainty (how certain are we that the descriptions of those we have data for represent the population we're trying to describe.).  
+Sampling error is a more nuanced topic in descriptive analyses.
+It's related to both the population we're analyzing (who should the analysis produce descriptions about) and uncertainty (how certain are we that the descriptions of those we have data for represent the population we're trying to describe.).
 
-The population from which our data come and the population we're trying to describe must be the same for us to provide valid descriptions. Consider a dataset generated by an online survey. Who are the people who are answering these questions, and how do they relate to the people we want to describe? For many analyses, the people who take the time to answer surveys are different than the people we want to make descriptions about, e.g. the group of people who fill out surveys may have a different distribution of variables than people who don't. This is not technically bias because, outside of sample size-related uncertainty and measurement error, the descriptions are accurate---they're just not for the right group of people! In other words, we've gotten an answer to the wrong question.
+The population from which our data come and the population we're trying to describe must be the same for us to provide valid descriptions.
+Consider a dataset generated by an online survey.
+Who are the people who are answering these questions, and how do they relate to the people we want to describe?
+For many analyses, the people who take the time to answer surveys are different than the people we want to make descriptions about, e.g. the group of people who fill out surveys may have a different distribution of variables than people who don't.
+This is not technically bias because, outside of sample size-related uncertainty and measurement error, the descriptions are accurate---they're just not for the right group of people!
+In other words, we've gotten an answer to the wrong question.
 
-Notably, sometimes our data represent the entire  population (or close enough) that sampling error is irrelevant. Consider a company that has certain types of data on every customer that uses their service. For many useful analyses, this represents the entire population (current customers) about whom we want information. Similarly, in countries with population-wide health registries, the data available, for certain practical purposes, is close enough to the entire population that no sampling is needed (although researchers might use sampling for simpler computations). In these cases, there's not really such a thing as uncertainty. Assuming everything is well-measured; the summary statistics we generate *are inherently unbiased and precise* because we have information from everyone in the population. Of course, in practice, we usually have some mixture of measurement error, missing data, and so on, even in the best of circumstances.
+Notably, sometimes our data represent the entire population (or close enough) that sampling error is irrelevant.
+Consider a company that has certain types of data on every customer that uses their service.
+For many useful analyses, this represents the entire population (current customers) about whom we want information.
+Similarly, in countries with population-wide health registries, the data available, for certain practical purposes, is close enough to the entire population that no sampling is needed (although researchers might use sampling for simpler computations).
+In these cases, there's not really such a thing as uncertainty.
+Assuming everything is well-measured; the summary statistics we generate *are inherently unbiased and precise* because we have information from everyone in the population.
+Of course, in practice, we usually have some mixture of measurement error, missing data, and so on, even in the best of circumstances.
 
-One important detail of descriptive analysis is that confounding bias, one of the chief concerns of this book, is undefined. That's because confounding is a causal concern. Descriptive analyses cannot be confounded because they are a statistical description of relationships as-is, not the mechanisms behind those relationships.
+One important detail of descriptive analysis is that confounding bias, one of the chief concerns of this book, is undefined.
+That's because confounding is a causal concern.
+Descriptive analyses cannot be confounded because they are a statistical description of relationships as-is, not the mechanisms behind those relationships.
 
 #### Relationship to causal inference
 
-Humans are built to see patterns; we can't help but see them, and this is particularly true in data analysis. This is a really helpful feature of our brains, but it can also lead down a slippery slope of inference when we're not working with data or methods that can allow us to do that validly. The single biggest thing to be cautious of when your goal is to describe is making the leap from description to causation (implicitly or explicitly). 
+Humans are built to see patterns; we can't help but see them, and this is particularly true in data analysis.
+This is a really helpful feature of our brains, but it can also lead down a slippery slope of inference when we're not working with data or methods that can allow us to do that validly.
+The single biggest thing to be cautious of when your goal is to describe is making the leap from description to causation (implicitly or explicitly).
 
-But of course, descriptive analysis is useful too when we *are* estimating causal effects. It helps us understand the population we're working with, the distribution of the outcomes, exposures (variables we think might be causal), and confounders (variables we need to account for to get unbiased causal effects for the exposure). You should always do descriptive analyses of your data when you are conducting a causal analysis. 
+But of course, descriptive analysis is useful too when we *are* estimating causal effects.
+It helps us understand the population we're working with, the distribution of the outcomes, exposures (variables we think might be causal), and confounders (variables we need to account for to get unbiased causal effects for the exposure).
+You should always do descriptive analyses of your data when you are conducting a causal analysis.
 
-Finally, as we'll see in [Chapter -@sec-trials-std], there are certain circumstances where we can make causal inferences with basic statics. Be cautious about the distinction between the causal question and the descriptive component here, too, though: just because we're using the same calculation (e.g., a difference in means) doesn't mean that all descriptions you can generate are causal in nature.
+Finally, as we'll see in [Chapter -@sec-trials-std], there are certain circumstances where we can make causal inferences with basic statics.
+Be cautious about the distinction between the causal question and the descriptive component here, too, though: just because we're using the same calculation (e.g., a difference in means) doesn't mean that all descriptions you can generate are causal in nature.
 
 ### Prediction
 
-The goal of prediction is to use data to make accurate predictions about variables, usually on new data. What exactly this means depends on the question, domain, and so on. Prediction models are used in about every setting imaginable, from peer-reviewed clinical models to bespoke machine learning models embedded in consumer devices. Even large language models like the ones ChatGPT is based on are prediction models: they predict what a response to a prompt would look like.
+The goal of prediction is to use data to make accurate predictions about variables, usually on new data.
+What exactly this means depends on the question, domain, and so on.
+Prediction models are used in about every setting imaginable, from peer-reviewed clinical models to bespoke machine learning models embedded in consumer devices.
+Even large language models like the ones ChatGPT is based on are prediction models: they predict what a response to a prompt would look like.
 
-Predictive modeling generally uses a different workflow than the workflow for causal modeling we'll present in this book. Since the goal of prediction is usually related to making predictions on new data, the workflow of this type of modeling focuses on maximizing predictive accuracy while retaining generalization to new data, sometimes called the bias-variance trade-off. In practice, this means splitting your data into training sets (the part of the data you build your model on) and test sets (the part of the data you assess your model with, a proxy for how it would perform on new data). Usually, data scientists use cross-validation or other sampling techniques to further reduce the risk of overfitting your model to the training set. 
+Predictive modeling generally uses a different workflow than the workflow for causal modeling we'll present in this book.
+Since the goal of prediction is usually related to making predictions on new data, the workflow of this type of modeling focuses on maximizing predictive accuracy while retaining generalization to new data, sometimes called the bias-variance trade-off.
+In practice, this means splitting your data into training sets (the part of the data you build your model on) and test sets (the part of the data you assess your model with, a proxy for how it would perform on new data).
+Usually, data scientists use cross-validation or other sampling techniques to further reduce the risk of overfitting your model to the training set.
 
 There are many excellent texts on predictive modeling, and so we refer you to those for a deeper exploration of the goals and methods of these techniques TODO: cite
 
 #### Examples
 
-TODO: include main example. Covid predictions? 
+TODO: include main example.
+Covid predictions?
 
 TODO: include examples
 
-#### Validity 
+#### Validity
 
-The key measure of validity in prediction modeling is predictive accuracy, which can be measured a number of ways, such as TODO: expand RMSE, AUC. A convenient detail about predictive modeling is that we can often assess if we're right, which is not true of descriptive statistics for which we only have a subset of data or causal inference for which we don't know the true causal structure. This isn't always true, but it's almost always required for fitting the initial model^1.
+The key measure of validity in prediction modeling is predictive accuracy, which can be measured a number of ways, such as TODO: expand RMSE, AUC. A convenient detail about predictive modeling is that we can often assess if we're right, which is not true of descriptive statistics for which we only have a subset of data or causal inference for which we don't know the true causal structure.
+This isn't always true, but it's almost always required for fitting the initial model\^1.
 
-Measurement error is also a concern for predictive modeling because we usually need accurate data for accurate predictions. Interestingly, measurement error and missingness can be informative in predictive settings. In a causal setting, this might induce bias, but predictive models can consume that information with no issue. For instance, in the famous Netflix Prize, winning models leveraged information about whether or not a customer rated a movie at all to improve recommendation systems. 
+Measurement error is also a concern for predictive modeling because we usually need accurate data for accurate predictions.
+Interestingly, measurement error and missingness can be informative in predictive settings.
+In a causal setting, this might induce bias, but predictive models can consume that information with no issue.
+For instance, in the famous Netflix Prize, winning models leveraged information about whether or not a customer rated a movie at all to improve recommendation systems.
 
-Like descriptive analysis, confounding is undefined for predictive modeling. A coefficient in a prediction model cannot be confounded; we usually only care about whether or not the variable provides predictive information, not if that information is because of a causal relationship or something else.
+Like descriptive analysis, confounding is undefined for predictive modeling.
+A coefficient in a prediction model cannot be confounded; we usually only care about whether or not the variable provides predictive information, not if that information is because of a causal relationship or something else.
 
-[^1 We say model singular but usually data scientists fit many models for experimentation and often the best prediction models are some combination of predictions from several models, called a stacked model]
+\[\^1 We say model singular but usually data scientists fit many models for experimentation and often the best prediction models are some combination of predictions from several models, called a stacked model\]
 
 #### Relationship to causal inference
 
-The single biggest risk in prediction is to assume that a given coefficient in a model has a causal interpretation. There is a good chance that this isn't so. A model may predict well but may also have completely biased coefficients from a causal point of view. We'll see more about this in @sec-pred-or-explain and, indeed, the rest of the book.
+The single biggest risk in prediction is to assume that a given coefficient in a model has a causal interpretation.
+There is a good chance that this isn't so.
+A model may predict well but may also have completely biased coefficients from a causal point of view.
+We'll see more about this in @sec-pred-or-explain and, indeed, the rest of the book.
 
-Often, people mistakenly use methods for selecting features (variables) for prediction models to select confounders in causal models. These methods, aside from their risk of overfitting, are appropriate for prediction models but not for causal model. Prediction metrics cannot determine the causal structure of your question, and predictive value for the outcome does not make a variable a confounder. We'll discuss methods for choosing variables for causal models in [Chapter -@sec-dags].
+Often, people mistakenly use methods for selecting features (variables) for prediction models to select confounders in causal models.
+These methods, aside from their risk of overfitting, are appropriate for prediction models but not for causal model.
+Prediction metrics cannot determine the causal structure of your question, and predictive value for the outcome does not make a variable a confounder.
+We'll discuss methods for choosing variables for causal models in [Chapter -@sec-dags].
 
-Prediction is nevertheless crucial to causal inference. From a philosophical perspective, we're comparing predictions from different *what if* scenarios: what would the outcome had one thing happened vs if another thing happened? We'll spend a lot of time on this subject, particularly in [Chapter -@sec-counterfactuals]. We'll also talk a lot about prediction from a practical perspective: just like in prediction and some description, we'll use modeling techniques to answer causal questions. Techniques like propensity score methods and g-computation use model predictions to answer causal questions, but the workflow for building models---and the interpretation of the models themselves---are quite different.
+Prediction is nevertheless crucial to causal inference.
+From a philosophical perspective, we're comparing predictions from different *what if* scenarios: what would the outcome had one thing happened vs if another thing happened?
+We'll spend a lot of time on this subject, particularly in [Chapter -@sec-counterfactuals].
+We'll also talk a lot about prediction from a practical perspective: just like in prediction and some description, we'll use modeling techniques to answer causal questions.
+Techniques like propensity score methods and g-computation use model predictions to answer causal questions, but the workflow for building models---and the interpretation of the models themselves---are quite different.
 
 ### Causal Inference
 
-The goal of causal inference is to understand the impact that a variable, sometimes called an exposure, has on another variable, sometimes called an outcome. "Exposure" and "outcome" are the terms we'll use in this book to describe the causal relationship we're interested in. Importantly, our goal is to answer this question in a clear, precise way. In practice, this means using techniques like study design (e.g. a randomized trial) or statistical methods (like propensity scores) to calculate an unbiased effect of the exposure on the outcome.
+The goal of causal inference is to understand the impact that a variable, sometimes called an exposure, has on another variable, sometimes called an outcome.
+"Exposure" and "outcome" are the terms we'll use in this book to describe the causal relationship we're interested in.
+Importantly, our goal is to answer this question in a clear, precise way.
+In practice, this means using techniques like study design (e.g. a randomized trial) or statistical methods (like propensity scores) to calculate an unbiased effect of the exposure on the outcome.
 
-As with prediction and description, it's better to start with a clear, precise question to get a clear, precise answer. In statistics and data science, particularly as we swim through the ocean of data of the modern world, we often end up with an answer without a question (e.g., `42`). This, of course, makes interpretation of the answer difficult. In @sec-diag, we'll discuss the nature of causal questions. In [Chapter -@sec-counterfactuals] and [Chapter -@sec-trials-std], we'll discuss philosophical and practical ways, respectively, to sharpen the questions we have.
+As with prediction and description, it's better to start with a clear, precise question to get a clear, precise answer.
+In statistics and data science, particularly as we swim through the ocean of data of the modern world, we often end up with an answer without a question (e.g., `42`).
+This, of course, makes interpretation of the answer difficult.
+In @sec-diag, we'll discuss the nature of causal questions.
+In [Chapter -@sec-counterfactuals] and [Chapter -@sec-trials-std], we'll discuss philosophical and practical ways, respectively, to sharpen the questions we have.
 
 #### Examples
 
-TODO: include main example. face masks study by ellie? 
+TODO: include main example.
+face masks study by ellie?
 
 TODO: include examples
 
-#### Validity 
+#### Validity
 
-Making valid causal inferences requires several assumptions that we'll discuss in @sec-assump. As opposed to prediction, we generally cannot confirm that our causal models are correct. In other words, most of the assumptions we need to make are unverifiable. We'll come back to this topic time and time again in the book---from the basics of these assumptions, to practical decision-making, to probing our models for problems. 
+Making valid causal inferences requires several assumptions that we'll discuss in @sec-assump.
+As opposed to prediction, we generally cannot confirm that our causal models are correct.
+In other words, most of the assumptions we need to make are unverifiable.
+We'll come back to this topic time and time again in the book---from the basics of these assumptions, to practical decision-making, to probing our models for problems.
 
 ### Why isn't the best causal model just the best prediction model? {#sec-pred-or-explain}
 
-You may wonder at this point: why isn't the best causal model just the best prediction model? It makes sense that the two would be related: naturally, things that cause other things would be predictors. Doesn't it stand to reason that predictors would be causal in nature, too? Unfortunately, this is not always the case; causal effects needn't predict particularly well and good predictors needn't be causal. Most importantly, there is no way to distinguish these situations using data alone.
+You may wonder at this point: why isn't the best causal model just the best prediction model?
+It makes sense that the two would be related: naturally, things that cause other things would be predictors.
+Doesn't it stand to reason that predictors would be causal in nature, too?
+Unfortunately, this is not always the case; causal effects needn't predict particularly well and good predictors needn't be causal.
+Most importantly, there is no way to distinguish these situations using data alone.
 
-Let's consider the causal perspective first, because it's a bit simpler: if an outcome has many causes, then a model that accurately describes such relationship likely won't predict the outcome very well. Likewise, if a true causal effect is small, it won't bring much predictive value. Of course, low predictive power might also be a sign that a causal effect isn't much use from an applied perspective, although that depends on number of statistical factors.
+Let's consider the causal perspective first, because it's a bit simpler: if an outcome has many causes, then a model that accurately describes such relationship likely won't predict the outcome very well.
+Likewise, if a true causal effect is small, it won't bring much predictive value.
+Of course, low predictive power might also be a sign that a causal effect isn't much use from an applied perspective, although that depends on number of statistical factors.
 
-There are two slightly more complex reasons that predictive models won't always be good causal models. For the first reason, let's consider a model that is accurate from a causal perspective: it estimates effects on an outcome, and all of these effects are unbiased. Even in this ideal setting, you might be able to get better predictions by using a different model. The reason has to do with the bias-variance trade-off in predictive modeling. When effects are small, data are noisy, or TODO: ADD OTHER REASONS, then it might make sense to use a biased model like penalized regression. These types of models intentionally introduce bias in favor of improved variance in out-of-data predictions. Since the goals of predication and causal inference are different (accurate predictions, usually for out-of-data observations vs. an unbiased effect), the best model for inference is not necessarily the best model for prediction.
+There are two slightly more complex reasons that predictive models won't always be good causal models.
+For the first reason, let's consider a model that is accurate from a causal perspective: it estimates effects on an outcome, and all of these effects are unbiased.
+Even in this ideal setting, you might be able to get better predictions by using a different model.
+The reason has to do with the bias-variance trade-off in predictive modeling.
+When effects are small, data are noisy, or TODO: ADD OTHER REASONS, then it might make sense to use a biased model like penalized regression.
+These types of models intentionally introduce bias in favor of improved variance in out-of-data predictions.
+Since the goals of predication and causal inference are different (accurate predictions, usually for out-of-data observations vs. an unbiased effect), the best model for inference is not necessarily the best model for prediction.
 
-Secondly, variables which are bias from a causal perspective often bring along with them predictive power. We'll talk more about which variables to include and *not* include in your models in @sec-dags, but let's consider a simple example. One of the famous examples of confounded relationships is ice cream sales and crime in the summer. Descriptively, ice cream sales and crime are related, but this relationship is confounded by weather, e.g. both ice cream sales and crime increases when it's warmer. Consider a thought experiment where you are in a dark room. Your goal is to predict crime, but you don't know the weather or time of year. You do, however, have information on ice cream sales. A model with ice cream sales on crime would be biased from a causal perspective---ice cream sales do not cause crime, even though the model would show an effect---but would provide some predictive value to your crime model. The reason for both of these conditions is the same: weather and ice cream sales are correlated, and so are weather and crime. So, ice cream sales can successfully, if imperfectly, serve as a proxy for weather. That results in a biased effect estimate of the causal impact of ice cream sales on crime but a partially effective prediction of crime. Other variables, too, which are invalid from a causal perspective, either by being biased themselves or by introducing bias into the causal effect estimate, often bring good predictive value. Thus predictive accuracy is not a good measure of causality.
+Secondly, variables which are bias from a causal perspective often bring along with them predictive power.
+We'll talk more about which variables to include and *not* include in your models in @sec-dags, but let's consider a simple example.
+One of the famous examples of confounded relationships is ice cream sales and crime in the summer.
+Descriptively, ice cream sales and crime are related, but this relationship is confounded by weather, e.g. both ice cream sales and crime increases when it's warmer.
+Consider a thought experiment where you are in a dark room.
+Your goal is to predict crime, but you don't know the weather or time of year.
+You do, however, have information on ice cream sales.
+A model with ice cream sales on crime would be biased from a causal perspective---ice cream sales do not cause crime, even though the model would show an effect---but would provide some predictive value to your crime model.
+The reason for both of these conditions is the same: weather and ice cream sales are correlated, and so are weather and crime.
+So, ice cream sales can successfully, if imperfectly, serve as a proxy for weather.
+That results in a biased effect estimate of the causal impact of ice cream sales on crime but a partially effective prediction of crime.
+Other variables, too, which are invalid from a causal perspective, either by being biased themselves or by introducing bias into the causal effect estimate, often bring good predictive value.
+Thus predictive accuracy is not a good measure of causality.
 
-A closely related idea is the *Table Two Fallacy*, so-called because in health research papers, descriptive analyses are often presented in Table 1 and regression models are often presented in Table 2. The Table Two Fallacy is when a researcher presents confounders and other non-effect variables and, particularly, when they interpret those coefficients as if they, too, were causal. The problem is that in some situations, the model to estimate an unbiased effect of one variable is not the same model to estimate an unbiased effect of another variable. In other words, we can't interpret the effects of confounders as causal because they might *themselves* be confounded by another variable unrelated to the original exposure. 
+A closely related idea is the *Table Two Fallacy*, so-called because in health research papers, descriptive analyses are often presented in Table 1 and regression models are often presented in Table 2.
+The Table Two Fallacy is when a researcher presents confounders and other non-effect variables and, particularly, when they interpret those coefficients as if they, too, were causal.
+The problem is that in some situations, the model to estimate an unbiased effect of one variable is not the same model to estimate an unbiased effect of another variable.
+In other words, we can't interpret the effects of confounders as causal because they might *themselves* be confounded by another variable unrelated to the original exposure.
 
-Descriptive, predictive, and causal analyses will always contain some aspect of each other. A predictive model leans on causality in some aspect, and a causal model with have some predictive power. However, the same model in the same data with different goals with have different usefulness depending on those goals. Be cautious and be thoughtful.
+Descriptive, predictive, and causal analyses will always contain some aspect of each other.
+A predictive model leans on causality in some aspect, and a causal model with have some predictive power.
+However, the same model in the same data with different goals with have different usefulness depending on those goals.
+Be cautious and be thoughtful.
 
 ## Diagraming a causal claim {#sec-diag}
 
-Let's return to the idea of a causal question. Diagramming sentences is a grammatical method used to visually represent the structure of a sentence, occasionally taught in grammar school.
+Let's return to the idea of a causal question.
+Diagramming sentences is a grammatical method used to visually represent the structure of a sentence, occasionally taught in grammar school.
 In this technique, sentences are deconstructed into their constituent parts, such as subjects, verbs, objects, and modifiers, and then displayed using a series of lines and symbols.
 The arrangement of these elements on the diagram reflects their syntactic roles and how they interact within the sentence's overall structure.
 By breaking down sentences into these visual representations, diagramming can help learners grasp the nuances of sentence construction, identify grammatical errors, and appreciate the intricate connections between words.
 We can apply a similar idea to *causal claims*.
 Here is an example of how one might diagram a causal claim.
 We've pulled out the *cause*, the *effect*, the *subject* (for whom?), and the *timing* (when?).
-
 
 ```{r}
 #| echo: false
