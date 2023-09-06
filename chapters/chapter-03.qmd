@@ -98,7 +98,7 @@ Perhaps we can find someone else who is exactly like Ice-T who did not make the 
 Of course, Ice-T is unique, it would be challenging to find someone exactly like him.
 Again, this is attempted with Spike, and even so presents challenges.
 Often, instead of relying on a single individual, we rely on many individuals.
-We could conduct an experiment where we *randomize* many individuals to leave criminal like (or not) and see how this impacts their outcomes *on average* (this randomized trial seems to present some ethical issues, perhaps we need to look to *observational* studies to help answer this question). In any case, we must rely on statistical techniques to help construct these unobservable counterfactuals.
+We could conduct an experiment where we *randomize* many individuals to leave criminal life (or not) and see how this impacts their outcomes *on average* (this randomized trial seems to present some ethical issues, perhaps we need to look to *observational* studies to help answer this question). In any case, we must rely on statistical techniques to help construct these unobservable counterfactuals.
 
 ## Causal Assumptions {#sec-assump}
 
