@@ -27,6 +27,7 @@ Imports:
     lubridate,
     MatchIt,
     propensity (>= 0.0.0.9000),
+    PSW,
     ragg,
     rsample (>= 0.0.5),
     skimr,
@@ -41,7 +42,7 @@ Suggests:
     grkstyle (>= 0.0.3),
     styler,
     xml2
-Remotes:  
+Remotes: 
     gadenbuie/grkstyle,
     LucyMcGowan/tipr,
     LucyMcGowan/touringplans,
