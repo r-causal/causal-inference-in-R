@@ -16,7 +16,7 @@ Depends:
 Imports: 
     broom,
     causalworkshop (>= 0.1.0),
-    emo,
+    emo (>= 0.0.0.9000),
     ggdag (>= 0.2.7),
     ggokabeito,
     ggtext,
@@ -41,13 +41,14 @@ Suggests:
     grkstyle (>= 0.0.3),
     styler,
     xml2
-Remotes: 
+Remotes:  
     gadenbuie/grkstyle,
     LucyMcGowan/tipr,
     LucyMcGowan/touringplans,
     malcolmbarrett/causalworkshop,
     malcolmbarrett/halfmoon,
-    malcolmbarrett/propensity
+    malcolmbarrett/propensity,
+    hadley/emo
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
