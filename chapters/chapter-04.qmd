@@ -12,9 +12,9 @@ In this book, we refer to analyses where the exposure is randomly assigned as a 
 :::
 
 Why does randomization help?
-Looking at our assumptions in @sec-assump, randomized trials solve consistency and well defined exposure by default -- the exposure is exactly what is randomized.
+Looking at our assumptions in @sec-assump, randomized trials solve the well defined exposure portion of consistency by default -- the exposure is exactly what is randomized.
 Likewise for positivity; if we have randomly assigned folks to either the exposed or unexposed groups, we know the probability of assignment (and we know it is not exactly 0 or 1).
-Randomization alone does not solve interference (for example, if we randomize some people to receive a vaccine for a communicable disease, their receiving it could lower the chance of those around them contracting the infectious disease because it changes the probability of exposure).
+Randomization alone does not solve the interference portion of consistency (for example, if we randomize some people to receive a vaccine for a communicable disease, their receiving it could lower the chance of those around them contracting the infectious disease because it changes the probability of exposure).
 *Ideal* randomized trials resolves the issue of exchangeability because the exposed and unexposed populations (in the limit) are inherently the same since their exposure status was determined by a random process (not by any factors that might make them different from each other).
 Great!
 In reality, we often see this assumption violated by issues such as *drop out* or *non-adherence* in randomized trials.
@@ -23,9 +23,8 @@ Therefore, in @tbl-assump-solved we have two columns, one for the *ideal* random
 
 | Assumption            | Ideal Randomized Trial | Realistic Randomized Trial | Observational Study  |
 |-----------------|-----------------|---------------------|-------------------|
-| Consistency           | `r emo::ji("smile")`   | `r emo::ji("smile")`       | `r emo::ji("shrug")` |
-| Well defined exposure | `r emo::ji("smile")`   | `r emo::ji("smile")`       | `r emo::ji("shrug")` |
-| No interference       | `r emo::ji("shrug")`   | `r emo::ji("shrug")`       | `r emo::ji("shrug")` |
+| Consistency (Well defined exposure) | `r emo::ji("smile")`   | `r emo::ji("smile")`       | `r emo::ji("shrug")` |
+| Consistency (No interference)       | `r emo::ji("shrug")`   | `r emo::ji("shrug")`       | `r emo::ji("shrug")` |
 | Positivity            | `r emo::ji("smile")`   | `r emo::ji("smile")`       | `r emo::ji("shrug")` |
 | Exchangeability       | `r emo::ji("smile")`   | `r emo::ji("shrug")`       | `r emo::ji("shrug")` |
 
@@ -47,9 +46,8 @@ In @tbl-protocol we map each of these elements to the corresponding assumption t
 
 Assumption | Eligibility Criteria | Exposure Definition| Assignment Procedures | Follow-up Period | Outcome Definition | Causal contrast | Analysis Plan
 ------------|----------------- | ------------------|---------|----------|----------|--------- | -------
-Consistency | |`r emo::ji("heavy_check_mark")`||| | |
-Well defined exposure | |`r emo::ji("heavy_check_mark")`|| | |
-No interference | | `r emo::ji("heavy_check_mark")`|`r emo::ji("heavy_check_mark")` | | `r emo::ji("heavy_check_mark")` | | `r emo::ji("heavy_check_mark")`
+Consistency (Well defined exposure) | |`r emo::ji("heavy_check_mark")`|| | |
+Consistency (No interference) | | `r emo::ji("heavy_check_mark")`|`r emo::ji("heavy_check_mark")` | | `r emo::ji("heavy_check_mark")` | | `r emo::ji("heavy_check_mark")`
 Positivity |`r emo::ji("heavy_check_mark")`||`r emo::ji("heavy_check_mark")`|| | | `r emo::ji("heavy_check_mark")`
 Exchangeability |`r emo::ji("heavy_check_mark")`||`r emo::ji("heavy_check_mark")`|`r emo::ji("heavy_check_mark")`|| | `r emo::ji("heavy_check_mark")`
 : Mapping assumptions to elements of a study protocol {#tbl-protocol}
