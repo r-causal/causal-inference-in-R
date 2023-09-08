@@ -161,7 +161,7 @@ data |>
   )
 ```
 
-For example, examining @tbl-po, the causal effect of eating chocolate ice cream (versus vanilla) for individual `4` is `r data |> filter(id == 4) |> pull(causal_effect)`, whereas the causal effect for individual `9` is `r data |> filter(id == 9) |> pull(causal_effect)`. The *average* potential happiness after eating chocolate is `r mean(data |> pull(y_chocolate))` and the *average* potential happiness after eating vanilla is `r mean(data |> pull(y_vanilla))`. The *average* treatment effect of eating chocolate (versus vanilla) ice cream among the five individuals in this study is `r mean(data |> pull(causal_effect))`. 
+For example, examining @tbl-po, the causal effect of eating chocolate ice cream (versus vanilla) for individual `4` is `r data |> filter(id == 4) |> pull(causal_effect)`, whereas the causal effect for individual `9` is `r data |> filter(id == 9) |> pull(causal_effect)`. The *average* potential happiness after eating chocolate is `r mean(data |> pull(y_chocolate))` and the *average* potential happiness after eating vanilla is `r mean(data |> pull(y_vanilla))`. The *average* treatment effect of eating chocolate (versus vanilla) ice cream among the ten individuals in this study is `r mean(data |> pull(causal_effect))`. 
 
 In reality, we cannot observe both potential outcomes, in any moment in time, each individual in our study can only eat *one* flavor of ice cream. Suppose we let our participants choose which ice cream they wanted to eat and each choose their favorite (i.e. they knew which would make them "happier" and picked that one. Now what we *observe* is shown in @tbl-obs.
 
@@ -250,26 +250,23 @@ At any given time, only one of these *potential outcomes* is observable -- namel
 Under certain assumptions, we can leverage data from individuals exposed to different inputs to compare the average differences in their observed outcomes.
 The most common assumptions across the approaches we describe in this book are:
 
-1.  **Consistency**: We assume that the causal question you claim you are answering is consistent with the one you are *actually* answering with your analysis. Mathematically, this means that $Y_{obs} = (X)Y(1) + (1 - X)Y(0)$, in other words, the outcome you observe is exactly equal to the potential outcome under the exposure you received.
-
-2.  **Well defined exposure**: We assume that for each value of the exposure, there is no difference between subjects in the delivery of that exposure.
+1.  **Consistency**: We assume that the causal question you claim you are answering is consistent with the one you are *actually* answering with your analysis. Mathematically, this means that $Y_{obs} = (X)Y(1) + (1 - X)Y(0)$, in other words, the outcome you observe is exactly equal to the potential outcome under the exposure you received. Two common ways to discuss this assumption are: 
+    * **Well defined exposure**: We assume that for each value of the exposure, there is no difference between subjects in the delivery of that exposure.
 Put another way, multiple versions of the treatment do not exist. 
+    * **No interference**: We assume that the outcome (technically all *potential* outcomes, regardless of whether they are observed) for any subject does not depend on another subject's exposure.
 
-3.  **No interference**: We assume that the outcome (technically all *potential* outcomes, regardless of whether they are observed) for any subject does not depend on another subject's exposure.
-
-4.  **Exchangeability**: We assume that within levels of relevant variables (confounders), exposed and unexposed subjects have an equal likelihood of experiencing any outcome prior to exposure; i.e. the exposed and unexposed subjects are exchangeable.
+2.  **Exchangeability**: We assume that within levels of relevant variables (confounders), exposed and unexposed subjects have an equal likelihood of experiencing any outcome prior to exposure; i.e. the exposed and unexposed subjects are exchangeable.
 This assumption is sometimes referred to as **no unmeasured confounding**.
 
-5.  **Positivity**: We assume that within each level and combination of the study variables used to achieve exchangeability, there are exposed and unexposed subjects.
+3.  **Positivity**: We assume that within each level and combination of the study variables used to achieve exchangeability, there are exposed and unexposed subjects.
 Said differently, each individual has some chance of experiencing every available exposure level.
 Sometimes this is referred to as the **probabilistic** assumption.
 
 ::: callout-tip
 ## Jargon
 
-Assumptions 1 through 3 are sometimes referred to as *stable-unit-treatment-value-assumption* or SUTVA [@imbens2015causal].
-Likewise, assumptions 1, 4, and 5 are referred to as *identifiability conditions* since we need them to hold in order to identify causal estimates.
-Technically, assumption 2 (well defined exposure) is part of assumption 1 (consistency), but we find it useful in practice to check the concerns separately.
+Assumption 1 is sometimes referred to as *stable-unit-treatment-value-assumption* or SUTVA [@imbens2015causal].
+Likewise, these assumptions are sometimes referred to as *identifiability conditions* since we need them to hold in order to identify causal estimates.
 :::
 
 ### Causal Assumptions Simulation
@@ -278,41 +275,11 @@ Let's bring back our simulation from @sec-po-sim. Recall that we have individual
 
 #### Consistency violation
 
-Suppose although we want to answer a causal question about the impact of chocolate versus vanilla ice cream, what we *actually* have is data on participants who had a choice of vanilla or cookies and cream. What we actually want to the average effect of `y_chocolate - y_vanilla`, but what we are *observing* is an estimate of `y_cookiesandcreme - y_vanilla`. Let's see how this could impact our result.
+Two ways the consistency assumption can be violated is (1) lack of a well defined exposure and (2) interference. Let's see how these impact our ability to accurately estimate a causal effect.
 
-```{r}
-data <- data.frame(
-  id = 1:10,
-  y_cookiesandcreme = c(3, 3, 3, 2, 2, 3, 3, 4, 2, 3),
-  y_chocolate = c(4, 4, 6, 5, 6, 5, 6, 7, 5, 6),
-  y_vanilla = c(1, 3, 4, 5, 5, 6, 8, 6, 3, 5)
-) |>
-  mutate(causal_effect = y_chocolate - y_vanilla)
+##### Well defined exposure
 
-set.seed(11)
-data_observed <- data |>
-  mutate(
-    exposure = case_when(
-      rbinom(10, 1, 0.5) == 1 ~ "chocolate (but actually cookies and creme)",
-      TRUE ~ "vanilla"
-    ),
-    observed_outcome = case_when(
-      exposure == "chocolate (but actually cookies and creme)" ~ y_cookiesandcreme,
-      exposure == "vanilla" ~ y_vanilla
-    )
-  ) |>
-  select(id, exposure, observed_outcome)
-
-data_observed |>
-  group_by(exposure) |>
-  summarise(avg_outcome = mean(observed_outcome))
-```
-
-We know the *true* average causal effect in the sample is `r mean(data |> pull(causal_effect))`, however our estimated causal effect (because our data are not consistent with the question we are asking) is `r data_observed |> group_by(exposure) |> summarise(avg_outcome = mean(observed_outcome)) |> mutate(exposure = c(1, 0)) |> pivot_wider(names_from = exposure, values_from = avg_outcome, names_prefix = "x_") |> summarise(estimate = x_1 - x_0) |> pull() |> round(1)`. This demonstrates what can go wrong when *consistency* is violated.
-
-#### Well defined exposure violation
-
-As we mentioned, the "well defined exposure" assumption really falls under "consistency", but we think it can be helpful to be sure to explicitly think through what we mean by "no multiple versions of treatment". For example, suppose that there were in fact two containers of chocolate ice cream, one of which was spoiled. Therefore, despite the fact that having an exposure "chocolate" could mean different things depending on where the individual's scoop came from (regular chocolate ice cream, or spoiled chocolate ice cream), we are lumping them all together under a single umbrella (hence the violation, we have "multiple versions of treatment"). You can see how this falls under consistency because the issue here is that the potential outcome we think we are estimating is not the one we are actually observing.
+Suppose that there were in fact two containers of chocolate ice cream, one of which was spoiled. Therefore, despite the fact that having an exposure "chocolate" could mean different things depending on where the individual's scoop came from (regular chocolate ice cream, or spoiled chocolate ice cream), we are lumping them all together under a single umbrella (hence the violation, we have "multiple versions of treatment"). You can see how this falls under consistency because the issue here is that the potential outcome we think we are estimating is not the one we are actually observing.
 
 ```{r}
 data <- data.frame(
@@ -348,9 +315,9 @@ data_observed |>
   summarise(avg_outcome = mean(observed_outcome))
 ```
 
-Again, we know the *true* average causal effect of (unspoiled) chocolate in the sample is `r mean(data |> pull(causal_effect))`, however our estimated causal effect (because our data are not consistent with the question we are asking) is `r data_observed |> group_by(exposure) |> summarise(avg_outcome = mean(observed_outcome)) |> mutate(exposure = c(1, 0)) |> pivot_wider(names_from = exposure, values_from = avg_outcome, names_prefix = "x_") |> summarise(estimate = x_1 - x_0) |> pull() |> round(1)`. This demonstrates what can go wrong when *well defined exposure* is violated.
+We know the *true* average causal effect of (unspoiled) chocolate in the sample is `r mean(data |> pull(causal_effect))`, however our estimated causal effect (because our data are not consistent with the question we are asking) is `r data_observed |> group_by(exposure) |> summarise(avg_outcome = mean(observed_outcome)) |> mutate(exposure = c(1, 0)) |> pivot_wider(names_from = exposure, values_from = avg_outcome, names_prefix = "x_") |> summarise(estimate = x_1 - x_0) |> pull() |> round(1)`. This demonstrates what can go wrong when *well defined exposure* is violated.
 
-#### Interference violation
+##### Interference 
 
 Interference would mean that an individual's exposure does not impact another's potential outcome. For example, let's say each individual has a partner, and their potential outcome depends on both what flavor of ice cream they ate *and* what flavor their partner ate. For example, in the simulation below, having a partner that received a different flavor of ice cream increases the happiness by two units.
 
