@@ -16,6 +16,7 @@ Depends:
 Imports: 
     broom,
     causalworkshop (>= 0.1.0),
+    emo,
     ggdag (>= 0.2.7),
     ggokabeito,
     ggtext,
