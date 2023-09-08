@@ -148,7 +148,7 @@ data
 #| echo: false
 data |>
   knitr::kable(
-    col.names = c("id", "$$P_i(\\textrm{chocolate})$$", "$$P_i(\\textrm{vanilla})$$", "$$P_i(\\textrm{chocolate}) - P_i(\\textrm{vanilla})$$")) |>
+    col.names = c("id", "$$Y_i(\\textrm{chocolate})$$", "$$Y_i(\\textrm{vanilla})$$", "$$Y_i(\\textrm{chocolate}) - Y_i(\\textrm{vanilla})$$")) |>
   kableExtra::add_header_above(c(" " = 1, "Potential Outcomes" = 2, "Causal Effect" = 1), escape = FALSE)
 ```
 
