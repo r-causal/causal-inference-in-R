@@ -399,7 +399,8 @@ We'll dive more deeply into this topic in @sec-causal-pred-revisit.
 
 ## Diagraming a causal claim {#sec-diag}
 
-Let's return to the idea of a causal question.
+Each analysis task, whether descriptive, predictive, or inferential, should start with a clear, precise question. 
+To better understand the structure of causal questions (to which we'll return our focus), let's diagram them. 
 Diagramming sentences is a grammatical method used to visually represent the structure of a sentence, occasionally taught in grammar school.
 In this technique, sentences are deconstructed into their constituent parts, such as subjects, verbs, objects, and modifiers, and then displayed using a series of lines and symbols.
 The arrangement of these elements on the diagram reflects their syntactic roles and how they interact within the sentence's overall structure.
