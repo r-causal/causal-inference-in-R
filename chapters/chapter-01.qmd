@@ -11,9 +11,9 @@ This book, being applied in nature, deals primarily with the analysis stage of c
 Relative to the complexity of specifying a good causal question, the analysis stage is considerably more straightforward.
 In the first six chapters of this book, we'll discuss what a causal question is, how to improve our questions, and consider some examples.
 
-Causal questions are part of a broader set of questions we can ask with statistical techniques related to the primary tasks of data science: description, prediction, and causal inference [@hernán2019].
+Causal questions are part of a broader set of questions we can ask with statistical techniques related to the primary tasks of data science: description, prediction, and causal inference [@hernan2019].
 Unfortunately, these tasks are often muddled by both the techniques we use (regression, for instance, is helpful for all three tasks) and the way we talk about them.
-When researchers are interested in causal inference from non-randomized data, we often use euphemistic language like "association" instead of declaring our intent to estimate a causal effect [@Hernán2018].
+When researchers are interested in causal inference from non-randomized data, we often use euphemistic language like "association" instead of declaring our intent to estimate a causal effect [@Hernan2018].
 
 In a recent study of the language of analyses in epidemiologic research, for instance, the most common root word describing the estimated effect was "associate," but many researchers also felt that "associate" implied at least *some* causal effect (@fig-word-ranking) [@haber_causal_language].
 Only around 1% of the studies analyzed used the root word "cause" at all.
