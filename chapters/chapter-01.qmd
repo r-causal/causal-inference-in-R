@@ -200,6 +200,7 @@ The biggest thing to be cautious of when your goal is to describe is making the 
 
 But of course, descriptive analysis is helpful, too, when we *are* estimating causal effects.
 It helps us understand the population we're working with, the distribution of the outcomes, exposures (variables we think might be causal), and confounders (variables we need to account for to get unbiased causal effects for the exposure).
+It also helps us be certain that the data structure we're using matches the question we're trying to answer, as we'll see in [Chapter -@sec-data-causal-qs].
 You should always do descriptive analyses of your data when conducting causal research.
 
 Finally, as we'll see in [Chapter -@sec-trials-std], there are certain circumstances where we can make causal inferences with basic statics.
@@ -289,7 +290,7 @@ In practice, this means using techniques like study design (e.g., a randomized t
 As with prediction and description, it's better to start with a clear, precise question to get a clear, precise answer.
 In statistics and data science, particularly as we swim through the ocean of data of the modern world, we often end up with an answer without a question (e.g., `42`).
 This, of course, makes interpretation of the answer difficult.
-In @sec-diag, we'll discuss the nature of causal questions.
+In @sec-diag, we'll discuss the structure of causal questions.
 In [Chapter -@sec-counterfactuals] and [Chapter -@sec-trials-std], we'll discuss philosophical and practical ways to sharpen our questions.
 
 ::: callout-note

@@ -1,17 +1,22 @@
-# Preparing data to answer causal questions
+# Preparing data to answer causal questions {#sec-data-causal-qs}
 
 {{< include 00-setup.qmd >}}
 
 ## Introduction to the data {#sec-data}
 
-Throughout this book we will be using data obtained from [Touring Plans](https://touringplans.com). Touring Plans is a company that helps folks plan their trips to Disney and Universal theme parks. One of their goals is to accurately predict attraction wait times at these theme parks by leveraging data and statistical modeling. The `{touringplans}` R package includes several datasets containing information about Disney theme park attractions. A summary of the attractions included in the package can be found by running the following:
+Throughout this book we will be using data obtained from [Touring Plans](https://touringplans.com).
+Touring Plans is a company that helps folks plan their trips to Disney and Universal theme parks.
+One of their goals is to accurately predict attraction wait times at these theme parks by leveraging data and statistical modeling.
+The `{touringplans}` R package includes several datasets containing information about Disney theme park attractions.
+A summary of the attractions included in the package can be found by running the following:
 
 ```{r}
 library(touringplans)
 attractions_metadata
 ```
 
-Additionally, this package contains a dataset with raw metadata about the parks, with observations recorded daily. This metadata includes information like the Walt Disney World ticket season on the particular day (was it high season -- think Christmas -- or low season -- think right when school started), what the historic temperatures were in the park on that day, and whether there was a special event, such as "extra magic hours" in the park on that day (did the park open early to guests staying in the Walt Disney World resorts?).
+Additionally, this package contains a dataset with raw metadata about the parks, with observations recorded daily.
+This metadata includes information like the Walt Disney World ticket season on the particular day (was it high season -- think Christmas -- or low season -- think right when school started), what the historic temperatures were in the park on that day, and whether there was a special event, such as "extra magic hours" in the park on that day (did the park open early to guests staying in the Walt Disney World resorts?).
 
 ```{r}
 parks_metadata_raw
@@ -19,7 +24,7 @@ parks_metadata_raw
 
 Suppose the causal question of interest is:
 
-**Is there a relationship between whether there were "Extra Magic Hours" in the morning at Magic Kingdom and the average wait time for an attraction called the "Seven Dwarfs Mine Train" the same day between 9am and 10am in 2018?** 
+**Is there a relationship between whether there were "Extra Magic Hours" in the morning at Magic Kingdom and the average wait time for an attraction called the "Seven Dwarfs Mine Train" the same day between 9am and 10am in 2018?**
 
 Let's begin by diagramming this causal question (@fig-seven-diag).
 
@@ -45,6 +50,7 @@ ggplot(data, aes(x = x, y = y)) +
   ylim(c(0.5, 1.2)) +
   theme_void() 
 ```
+
 Historically, guests who stayed in a Walt Disney World resort hotel could access the park during "Extra Magic Hours," during which the park was closed to all other guests.
 These extra hours could be in the morning or evening.
 The Seven Dwarfs Mine Train is a ride at Walt Disney World's Magic Kingdom.
@@ -114,41 +120,57 @@ dagify(
   )
 ```
 
-Since we are not in charge of Walt Disney World's operations, we cannot randomize dates to have (or not) "Extra Magic Hours", therefore, we need to rely on previously collected observational data and do our best to emulate the *target trial* that we would have created, should it have been possible. Here, our observations are *days*. Looking at the diagram above, we can map each element of the causal question to elements of our target trial protocol:
+Since we are not in charge of Walt Disney World's operations, we cannot randomize dates to have (or not) "Extra Magic Hours", therefore, we need to rely on previously collected observational data and do our best to emulate the *target trial* that we would have created, should it have been possible.
+Here, our observations are *days*.
+Looking at the diagram above, we can map each element of the causal question to elements of our target trial protocol:
 
-* **Eligibility criteria**: Days must be from 2018
-* **Exposure definition**: Magic kingdom had "Extra Magic Hours" in the morning
-* **Assignment procedures**: Observed -- if the historic data suggests there were "Extra Magic Hours" in the morning on a particular day, that day is classified as "exposed" otherwise it is "unexposed"
-* **Follow-up period**: From park open to 10am. 
-* **Outcome definition**: The average posted wait time between 9am and 10am
-* **Causal contrast of interest**: Average treatment effect (we will discuss this in @sec-estimands)
-* **Analysis plan**: We use inverse probability waiting after fitting a propensity score model to estimate the average treatment effect of the exposure on the outcome of interest. We will adjust for variables as determined by our DAG (@fig-dag-magic)
+-   **Eligibility criteria**: Days must be from 2018
+-   **Exposure definition**: Magic kingdom had "Extra Magic Hours" in the morning
+-   **Assignment procedures**: Observed -- if the historic data suggests there were "Extra Magic Hours" in the morning on a particular day, that day is classified as "exposed" otherwise it is "unexposed"
+-   **Follow-up period**: From park open to 10am.
+-   **Outcome definition**: The average posted wait time between 9am and 10am
+-   **Causal contrast of interest**: Average treatment effect (we will discuss this in @sec-estimands)
+-   **Analysis plan**: We use inverse probability waiting after fitting a propensity score model to estimate the average treatment effect of the exposure on the outcome of interest. We will adjust for variables as determined by our DAG (@fig-dag-magic)
 
 ## Data wrangling and recipes
 
-Most of our data manipulation tools come from the `{dplyr}` package (@tbl-dplyr). We will also use `{lubridate}` to help us manipulate dates. 
+Most of our data manipulation tools come from the `{dplyr}` package (@tbl-dplyr).
+We will also use `{lubridate}` to help us manipulate dates.
 
-Target trial protocol element | {dplyr} functions
-------------------------------|--------------------
-Eligibility criteria | `filter()`
-Exposure definition | `mutate()`
-Assignment procedures | `mutate()`
-Follow-up period | `mutate()` `pivot_longer()` `pivot_wider()` 
-Outcome definition | `mutate()`
-Analysis plan | `select()` `mutate()`
+| Target trial protocol element | {dplyr} functions                           |
+|-------------------------------|---------------------------------------------|
+| Eligibility criteria          | `filter()`                                  |
+| Exposure definition           | `mutate()`                                  |
+| Assignment procedures         | `mutate()`                                  |
+| Follow-up period              | `mutate()` `pivot_longer()` `pivot_wider()` |
+| Outcome definition            | `mutate()`                                  |
+| Analysis plan                 | `select()` `mutate()`                       |
+
 : Mapping target trial protocol elements to commonly used `{dplyr}` functions {#tbl-dplyr}
 
-To answer this question, we are going to need to manipulate both the `seven_dwarfs_train` dataset as well as the `parks_metadata_raw` dataset. Let's start with the `seven_dwarfs_train` data set. The Seven Dwarfs Mine Train ride is an attraction at Walt Disney World's Magic Kingdom. The `seven_dwarfs_train` dataset in the {touringplans} package contains information about the date a particular wait time was recorded (`park_date`), the time of the wait time (`wait_datetime`), the actual wait time (`wait_minutes_actual`), and the posted wait time (`wait_minutes_posted`). Let's take a look at this dataset. The {skimr} package is great for getting a quick glimpse at a new dataset.
+To answer this question, we are going to need to manipulate both the `seven_dwarfs_train` dataset as well as the `parks_metadata_raw` dataset.
+Let's start with the `seven_dwarfs_train` data set.
+The Seven Dwarfs Mine Train ride is an attraction at Walt Disney World's Magic Kingdom.
+The `seven_dwarfs_train` dataset in the {touringplans} package contains information about the date a particular wait time was recorded (`park_date`), the time of the wait time (`wait_datetime`), the actual wait time (`wait_minutes_actual`), and the posted wait time (`wait_minutes_posted`).
+Let's take a look at this dataset.
+The {skimr} package is great for getting a quick glimpse at a new dataset.
 
 ```{r}
 library(skimr)
 skim(seven_dwarfs_train)
 ```
 
-Examining the output above, we learn that this dataset contains four columns and 321,631 rows. We also learn that the dates span from 2015 to 2021. We can also examine the distribution of each of the variables to detect any potential anomalies. Notice anything strange? Look at the `p0` (that is the minimum value) for `wait_minutes_actual`. It is `-92918`! We are not using this variable for this analysis, but we will for future analyses, so this is good to keep in mind.
+Examining the output above, we learn that this dataset contains four columns and 321,631 rows.
+We also learn that the dates span from 2015 to 2021.
+We can also examine the distribution of each of the variables to detect any potential anomalies.
+Notice anything strange?
+Look at the `p0` (that is the minimum value) for `wait_minutes_actual`.
+It is `-92918`!
+We are not using this variable for this analysis, but we will for future analyses, so this is good to keep in mind.
 
-We need this dataset to calculate our *outcome*. Recall from above that our outcome is defined as the average posted wait time between 9am and 10am. Additionally, recall our eligibility criteria states that we need to restrict our analysis to days in 2018. 
-
+We need this dataset to calculate our *outcome*.
+Recall from above that our outcome is defined as the average posted wait time between 9am and 10am.
+Additionally, recall our eligibility criteria states that we need to restrict our analysis to days in 2018.
 
 ```{r}
 #| message: false
@@ -172,20 +194,28 @@ seven_dwarfs_train_2018 <- seven_dwarfs_train |>
 seven_dwarfs_train_2018
 ```
 
-Now that we have our outcome settled, we need to get our exposure variable, as well as any other park-specific variables about the day in question that may be used as variables that we adjust for. Examining @fig-dag-magic, we see that we need data for three proposed confounders: the ticket season, the time the park closed, and the historic high temperature. These are in the `parks_metadata_raw` dataset. This data will require extra cleaning, since the names are in the original format.
+Now that we have our outcome settled, we need to get our exposure variable, as well as any other park-specific variables about the day in question that may be used as variables that we adjust for.
+Examining @fig-dag-magic, we see that we need data for three proposed confounders: the ticket season, the time the park closed, and the historic high temperature.
+These are in the `parks_metadata_raw` dataset.
+This data will require extra cleaning, since the names are in the original format.
 
 ::: callout-tip
-We like to have our variable names follow a clean convention -- one way to do this is to follow Emily Riederer's "Column Names as Contracts" format [@Riederer_2020]. The basic idea is to predefine a set of words, phrases, or stubs with clear meanings to index information, and use these consistently when naming variables. For example, in these data, variables that are specific to a particular wait time are prepended with the term `wait` (e.g. `wait_datetime` and `wait_minutes_actual`), variables that are specific to the park on a particular day, acquired from parks metadata, are prepended with the term `park` (e.g. `park_date` or `park_temperature_high`). 
+We like to have our variable names follow a clean convention -- one way to do this is to follow Emily Riederer's "Column Names as Contracts" format [@Riederer_2020].
+The basic idea is to predefine a set of words, phrases, or stubs with clear meanings to index information, and use these consistently when naming variables.
+For example, in these data, variables that are specific to a particular wait time are prepended with the term `wait` (e.g. `wait_datetime` and `wait_minutes_actual`), variables that are specific to the park on a particular day, acquired from parks metadata, are prepended with the term `park` (e.g. `park_date` or `park_temperature_high`).
 :::
 
-Let's first decide what variables we will need. In practice, this decision may involve an iterative process. For example, after drawing our DAG or after conducting diagnostic, we may determine that we need more variables than what we originally cleaned. Let's start by skimming this dataframe.
+Let's first decide what variables we will need.
+In practice, this decision may involve an iterative process.
+For example, after drawing our DAG or after conducting diagnostic, we may determine that we need more variables than what we originally cleaned.
+Let's start by skimming this dataframe.
 
 ```{r}
 skim(parks_metadata_raw)
 ```
 
-
-This dataset contains many more variables than the one we worked with previously. For this analysis, we are going to select `date` (the observation date), `wdw_ticket_season` (the ticket season for the observation), `wdwmaxtemp` (the maximum temperature), `mkclose` (the time Magic Kingdom closed), `mkemhmorn` (whether Magic Kingdom had an "Extra Magic Hour" in the morning).
+This dataset contains many more variables than the one we worked with previously.
+For this analysis, we are going to select `date` (the observation date), `wdw_ticket_season` (the ticket season for the observation), `wdwmaxtemp` (the maximum temperature), `mkclose` (the time Magic Kingdom closed), `mkemhmorn` (whether Magic Kingdom had an "Extra Magic Hour" in the morning).
 
 ```{r}
 parks_metadata_clean <- parks_metadata_raw |>
@@ -203,26 +233,33 @@ parks_metadata_clean <- parks_metadata_raw |>
   )
 ```
 
-
 ## Working with multiple data sources
 
-Frequently we find ourselves merging data from multiple sources when attempting to answer causal questions in order to ensure that all of the necessary factors are accounted for. The way we can combine datasets is via *joins* -- joining two or more datasets based on a set or sets of common variables. We can think of three main types of *joins*: left, right, and inner. A *left* join combines data from two datasets based on a common variable and includes all records from the *left* dataset along with matching records from the *right* dataset (in `{dplyr}`, `left_join()`), while a *right* join includes all records from the *right* dataset and their corresponding matches from the *left* dataset (in `{dplyr}` `right_join()`); an inner join, on the other hand, includes only the records with matching values in *both* datasets, excluding non-matching records (in `{dplyr}` `inner_join()`. For this analysis, we need to use a left join to pull in the cleaned parks metadata.
+Frequently we find ourselves merging data from multiple sources when attempting to answer causal questions in order to ensure that all of the necessary factors are accounted for.
+The way we can combine datasets is via *joins* -- joining two or more datasets based on a set or sets of common variables.
+We can think of three main types of *joins*: left, right, and inner.
+A *left* join combines data from two datasets based on a common variable and includes all records from the *left* dataset along with matching records from the *right* dataset (in `{dplyr}`, `left_join()`), while a *right* join includes all records from the *right* dataset and their corresponding matches from the *left* dataset (in `{dplyr}` `right_join()`); an inner join, on the other hand, includes only the records with matching values in *both* datasets, excluding non-matching records (in `{dplyr}` `inner_join()`.
+For this analysis, we need to use a left join to pull in the cleaned parks metadata.
 
 ```{r}
 seven_dwarfs_train_2018 <- seven_dwarfs_train_2018 |>
   left_join(parks_metadata_clean, by = "park_date")
 ```
 
-
 ## Recognizing missing data
 
-It is important to recognize whether we have any missing data in our variables. The `{visdat}` package is great for getting a quick sense of whether we have any missing data.
+It is important to recognize whether we have any missing data in our variables.
+The `{visdat}` package is great for getting a quick sense of whether we have any missing data.
 
 ```{r}
 library(visdat)
 vis_miss(seven_dwarfs_train_2018)
 ```
-It looks like we only have a few observations (2%) missing our outcome of interest. This is not too bad. For this first analysis we will ignore the missing values. We can explicitly drop them using the `drop_na()` function from `{dplyr}`.
+
+It looks like we only have a few observations (2%) missing our outcome of interest.
+This is not too bad.
+For this first analysis we will ignore the missing values.
+We can explicitly drop them using the `drop_na()` function from `{dplyr}`.
 
 ```{r}
 seven_dwarfs_train_2018 <- seven_dwarfs_train_2018 |>
@@ -231,11 +268,13 @@ seven_dwarfs_train_2018 <- seven_dwarfs_train_2018 |>
 
 ## Exploring and visualizing data and assumptions
 
-The *positivity* assumption requires that within each level and combination of the study variables used to achieve exchangeability, there are exposed and unexposed subjects (@sec-assump). We can explore this by visualizing the distribution of each of our proposed confounders stratified by the exposure. 
+The *positivity* assumption requires that within each level and combination of the study variables used to achieve exchangeability, there are exposed and unexposed subjects (@sec-assump).
+We can explore this by visualizing the distribution of each of our proposed confounders stratified by the exposure.
 
 ### Single variable checks for positivity violations
 
-@fig-close shows the distribution of Magic Kingdom park closing time by whether the date had extra magic hours in the morning. There is not clear evidence of a lack of positivity here as both exposure levels span the majority of the covariate space.
+@fig-close shows the distribution of Magic Kingdom park closing time by whether the date had extra magic hours in the morning.
+There is not clear evidence of a lack of positivity here as both exposure levels span the majority of the covariate space.
 
 ```{r}
 #| label: fig-close
@@ -247,7 +286,12 @@ ggplot(seven_dwarfs_train_2018, aes(x = factor(park_close),
   labs(fill = "Extra Magic Morning",
        x = "Time of Park Close")
 ```
-To examine the distribution of historic temperature high at Magic Kingdom by whether the date had extra magic hours in the morning we can use a mirrored histogram. We'll use the {halfmoon} package's `geom_mirror_histogram()` to create one. Examining @fig-temp, it does look like there are very few days in the exposed group with maximum temperatures less than 60 degrees, while not necessarily a positivity violation it is worth keeping an eye on, particularly because the dataset is not very large, so this could make it difficult to estimate an average exposure effect across this whole space. If we found this to be particularly difficult, we could posit changing our causal question to instead restrict the analysis to warmer days. This of course would also restrict which days we could draw conclusions about for the future. 
+
+To examine the distribution of historic temperature high at Magic Kingdom by whether the date had extra magic hours in the morning we can use a mirrored histogram.
+We'll use the {halfmoon} package's `geom_mirror_histogram()` to create one.
+Examining @fig-temp, it does look like there are very few days in the exposed group with maximum temperatures less than 60 degrees, while not necessarily a positivity violation it is worth keeping an eye on, particularly because the dataset is not very large, so this could make it difficult to estimate an average exposure effect across this whole space.
+If we found this to be particularly difficult, we could posit changing our causal question to instead restrict the analysis to warmer days.
+This of course would also restrict which days we could draw conclusions about for the future.
 
 ```{r}
 #| label: fig-temp
@@ -261,7 +305,8 @@ ggplot(seven_dwarfs_train_2018, aes(x = park_temperature_high,
        x = "Historic maximum temperature (degrees F)")
 ```
 
-Finally, let's look at the distribution of ticket season by whether there were extra magic hours in the morning. Examining @fig-ticket, we do not see any positivity violations.
+Finally, let's look at the distribution of ticket season by whether there were extra magic hours in the morning.
+Examining @fig-ticket, we do not see any positivity violations.
 
 ```{r}
 #| label: fig-ticket
@@ -273,9 +318,12 @@ ggplot(seven_dwarfs_train_2018, aes(x = park_ticket_season,
   labs(fill = "Extra Magic Morning",
        x = "Magic Kingdom Ticket Season")
 ```
+
 ### Multiple variable checks for positivity violations
 
-We have confirmed that for each of the three confounders, we do not see strong evidence of positivity violations. Because we have so few variables here, we can examine this a bit more closely. Let's start by discretizing the `park_temperature_high` variable a bit (we will cut it into tertiles). 
+We have confirmed that for each of the three confounders, we do not see strong evidence of positivity violations.
+Because we have so few variables here, we can examine this a bit more closely.
+Let's start by discretizing the `park_temperature_high` variable a bit (we will cut it into tertiles).
 
 ```{r}
 #| label: fig-positivity
@@ -302,7 +350,12 @@ ggplot(aes(x = park_close_bin, y = park_temperature_high_bin, fill = prop_expose
        fill = "Proportion of Days Exposed")
 ```
 
-Interesting! @fig-positivity shows an interesting potential violation. It looks like 100% of days with lower temperatures (historic highs between 51 and 65 degrees) that are in the peak ticket season have extra magic hours in the morning. This actually makes sense if we think a bit about this data set. The only days with cold temperatures in Florida that would also be considered a "peak" time to visit Walt Disney World would be over Christmas / New Years. During this time there historically were always extra magic hours.
+Interesting!
+@fig-positivity shows an interesting potential violation.
+It looks like 100% of days with lower temperatures (historic highs between 51 and 65 degrees) that are in the peak ticket season have extra magic hours in the morning.
+This actually makes sense if we think a bit about this data set.
+The only days with cold temperatures in Florida that would also be considered a "peak" time to visit Walt Disney World would be over Christmas / New Years.
+During this time there historically were always extra magic hours.
 
 We are going to proceed with the analysis, but we will keep these observations in mind.
 
