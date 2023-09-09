@@ -93,14 +93,16 @@ EDA benefits both predictive and causal analyses, but descriptive analyses are v
 Ask any data scientist who thought they'd be developing complex machine learning models and found themselves spending most of their time on dashboards.
 Understanding the distributions of the data, particularly for key analysis goals (say, KPIs in industry or disease incidence in epidemiology), is critical for many types of decision-making.
 
-One of the best recent examples of descriptive analyses is the COVID-19 pandemic.
+One of the best recent examples of descriptive analyses is the COVID-19 pandemic [@Fox2022].
 In 2020, particularly in the early months of the pandemic, descriptive analyses were vital to understanding risk and allocating resources.
 Since the coronavirus is similar to other respiratory diseases, we had many public health tools to use (e.g., distancing and, later, face masks).
 Descriptive statistics of cases by region were vital for deciding local policies and the strength of those policies.
 
-A great example of a more complex descriptive analysis during the pandemic was an ongoing report by the Financial Times of expected deaths vs. observed deaths in various countries and regions.
+A great example of a more complex descriptive analysis during the pandemic was an [ongoing report by the Financial Times of expected deaths vs. observed deaths](https://www.ft.com/content/a2901ce8-5eb7-4633-b89c-cbdf5b386938) in various countries and regions\[\^3\].
 While the calculation of expected deaths is slightly more sophisticated than most descriptive statistics, it provided a tremendous amount of information about current deaths without needing to untangle causal effects (e.g., were they due to COVID-19 directly? Inaccessible healthcare? Cardiovascular events post-COVID?).
-In this (simplified) recreation of their plot, you can see the staggering effect of the pandemic's early months.
+In this (simplified) recreation of their plot from July 2020, you can see the staggering effect of the pandemic's early months.
+
+\[\^3\]: John Burn-Murdoch was responsible for many of these presentations and gave a [very interesting talk on the subject](https://cloud.rstudio.com/resources/rstudioglobal-2021/reporting-on-and-visualising-the-pandemic/).
 
 ```{r}
 #| label: fig-ft-chart
@@ -222,7 +224,7 @@ There are many excellent texts on predictive modeling, and so we refer you to th
 Prediction is the most popular topic in data science, largely thanks to machine learning applications in industry.
 Prediction, of course, has a long history in statistics, and many models popular today have been used for decades in and outside of academia.
 
-Let's stick with the COVID-19 example [^2].
+Let's stick with the COVID-19 example [^chapter-01-1].
 In 2021, researchers published the ISARIC 4C Deterioration model, a clinical prognostic model for predicting severe adverse outcomes for acute COVID-19 [@Gupta2021].
 The authors included a descriptive analysis to understand the population from which this model was developed, particularly the distribution of the outcome and candidate predictors.
 One useful aspect of this model is that it uses items commonly measured on day 1 of COVID-related hospitalization.
@@ -231,7 +233,7 @@ The final model included 11 items and a description of their model attributes, r
 Notably, the authors used clinical domain knowledge to select candidate variables but did not fall into the temptation of interpreting the model coefficients as causal.
 Without question, some of the predictive value of this model stems from the causal structure of the variables, but this model had a different goal entirely and stuck to it.
 
-[^2]: A natural model here is predicting cases, but infectious disease modeling is complex and usually uses techniques outside the usual workflow of predictive modeling. 
+[^chapter-01-1]: A natural model here is predicting cases, but infectious disease modeling is complex and usually uses techniques outside the usual workflow of predictive modeling.
 
 Here is some other work in the predictive space:
 
@@ -247,9 +249,9 @@ Here is some other work in the predictive space:
 
 The key measure of validity in prediction modeling is predictive accuracy, which can be measured in several ways, such as root mean squared error (RMSE), mean absolute error (MAE), area under the curve (AUC), and many more.
 A convenient detail about predictive modeling is that we can often assess if we're right, which is not true of descriptive statistics for which we only have a subset of data or causal inference for which we don't know the true causal structure.
-We aren't always able to assess against the truth, but it's almost always required for fitting the initial model [^1].
+We aren't always able to assess against the truth, but it's almost always required for fitting the initial model [^chapter-01-2].
 
-[^1]: We say model singular but usually data scientists fit many models for experimentation and often the best prediction models are some combination of predictions from several models, called a stacked model
+[^chapter-01-2]: We say model singular but usually data scientists fit many models for experimentation and often the best prediction models are some combination of predictions from several models, called a stacked model
 
 Measurement error is also a concern for predictive modeling because we usually need accurate data for accurate predictions.
 Interestingly, measurement error and missingness can be informative in predictive settings.
@@ -293,9 +295,14 @@ In [Chapter -@sec-counterfactuals] and [Chapter -@sec-trials-std], we'll discuss
 ::: callout-note
 ## Causal inference and explanation
 
-Some authors use the phrases "causal inference" and "explanation" interchangeably. We're a little more cautious about that. Causal inference always has a relationship to explaination, but we can accurately estimate the effect of one thing on another without understanding how it happens.
+Some authors use the phrases "causal inference" and "explanation" interchangeably.
+We're a little more cautious about that.
+Causal inference always has a relationship to explaination, but we can accurately estimate the effect of one thing on another without understanding how it happens.
 
-Consider John Snow, the so-called father of epidemiology. In 1854, Snow famously investigated a cholera outbreak in London and identified that specific sources of water were to blame for the disease. He was right: contaminated water was a mechansim for cholera transmission. Yet, he didn't have enough information to explain how; Vibrio cholerae, the bacteria responsible for cholera, wasn't identified until nearly thirty years later.
+Consider John Snow, the so-called father of epidemiology.
+In 1854, Snow famously investigated a cholera outbreak in London and identified that specific sources of water were to blame for the disease.
+He was right: contaminated water was a mechansim for cholera transmission.
+Yet, he didn't have enough information to explain how; Vibrio cholerae, the bacteria responsible for cholera, wasn't identified until nearly thirty years later.
 :::
 
 #### Examples
@@ -321,7 +328,8 @@ Here are a few other interesting examples:
     Researchers used synthetic controls to simulate the impact on viewership with and without these delays.
     Presumably, the timing of the pandemic-related delays was unrelated to many factors that would typically be related to dubbing processes, thus reducing some of the potential confounding.
 
--   The Tuskegee Study is one of modern history's most infamous examples of medical abuse. It is commonly pointed to as a source of distrust in the medical community from Black Americans.
+-   The Tuskegee Study is one of modern history's most infamous examples of medical abuse.
+    It is commonly pointed to as a source of distrust in the medical community from Black Americans.
     Health economics researchers used a variation of difference-in-difference techniques to assess the effect of the Tuskegee Study on distrust and life expectancy in older Black men [@Alsan2018].
     The results are important and disturbing: "We find that the disclosure of the study in 1972 is correlated with increases in medical mistrust and mortality and decreases in both outpatient and inpatient physician interactions for older black men. Our estimates imply life expectancy at age 45 for black men fell by up to 1.5 years in response to the disclosure, accounting for approximately 35% of the 1980 life expectancy gap between black and white men and 25% of the gap between black men and women."
 
