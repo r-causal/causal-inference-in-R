@@ -296,3 +296,7 @@ bind_rows(
 ```
 
 <!-- ## Common Structures of Bias -->
+
+<!-- ## Causal Inference is not (just) a statistical problem {#sec-quartets} -->
+
+<!-- ## Causal and Predictive Models, Revisited {#sec-causal-pred-revisit} -->

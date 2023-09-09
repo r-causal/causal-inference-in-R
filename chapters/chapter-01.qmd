@@ -61,6 +61,8 @@ Instead of clear questions with obvious assumptions and goals, we end up with "S
 >
 > --- @haber_causal_language
 
+## Description, prediction, and explanation
+
 An excellent first step to address this problem is recognizing that questions about description, prediction, and explanation are fundamentally different.
 Data science in industry isn't quite as burdened by Schrödinger's causal inference as the academic sciences, but being explicit in the differences in these analyses is still helpful.
 For instance, when a stakeholder asks for "drivers" of a particular event, what are they asking?
@@ -68,8 +70,7 @@ For a model to predict the event?
 For a deeper understanding of what causes the event?
 It's a vague request, but it smacks of causal interest to us.
 When we're clear about our goals, we can use all three approaches more effectively (and, as we'll see, both descriptive analysis and prediction models are still helpful when the goal is to make causal inferences).
-
-## Description, prediction, and explanation
+Moreover, all three approaches are useful decision-making tools.
 
 ### Description
 
@@ -200,7 +201,7 @@ The biggest thing to be cautious of when your goal is to describe is making the 
 
 But of course, descriptive analysis is helpful, too, when we *are* estimating causal effects.
 It helps us understand the population we're working with, the distribution of the outcomes, exposures (variables we think might be causal), and confounders (variables we need to account for to get unbiased causal effects for the exposure).
-It also helps us be certain that the data structure we're using matches the question we're trying to answer, as we'll see in [Chapter -@sec-data-causal-qs].
+It also helps us be certain that the data structure we're using matches the question we're trying to answer, as we'll see in [Chapter -@sec-data-causal].
 You should always do descriptive analyses of your data when conducting causal research.
 
 Finally, as we'll see in [Chapter -@sec-trials-std], there are certain circumstances where we can make causal inferences with basic statics.
@@ -341,21 +342,27 @@ Unlike prediction, we generally cannot confirm that our causal models are correc
 In other words, most assumptions we need to make are unverifiable.
 We'll come back to this topic time and time again in the book---from the basics of these assumptions to practical decision-making to probing our models for problems.
 
-### Why isn't the best causal model just the best prediction model? {#sec-pred-or-explain}
+### Why isn't the right causal model just the best prediction model? {#sec-pred-or-explain}
 
-At this point, you may wonder why the best causal model isn't just the best prediction model.
+At this point, you may wonder why the right causal model isn't just the best prediction model.
 It makes sense that the two would be related: naturally, things that cause other things would be predictors.
-Doesn't it stand to reason that predictors would be causal, too?
-Unfortunately, this is not always the case; causal effects needn't predict particularly well and good predictors needn't be causal [@shmueli2010a].
-Most importantly, there is no way to distinguish these situations using data alone.
+It's causality all the way down, so any predictive information *is* related, in some capacity, to the causal structure of the thing we're predicting. 
+Doesn't it stand to reason that a model that predicts well is causal, too?
+It's true that *some* predictive models can be great causal models and vice versa.
+Unfortunately, this is not always the case; causal effects needn't predict particularly well and good predictors needn't be themselves causally unbiased [@shmueli2010a]. 
+There is no way to know using data alone.
 
-Let's consider the causal perspective first because it's a bit simpler: if an outcome has many causes, then a model that accurately describes such a relationship likely won't predict the outcome very well.
-Likewise, if a true causal effect is small, it will bring little predictive value.
+Let's consider the causal perspective first because it's a bit simpler. 
+Consider a model that is unbiased for an exposure but only includes variables related to the outcome *and* the exposure. 
+In other words, this is a model that provides us the right answer but doesn't include other predictors of the outcome (which can sometimes be a good idea, as discussed in @sec-data-causal).
+If an outcome has many causes, then a model that accurately describes the relationship with the exposure likely won't predict the outcome very well.
+Likewise, if a true causal effect of the exposure on the outcome is small, it will bring little predictive value.
 Of course, low predictive power might also indicate that a causal effect isn't much use from an applied perspective, although that depends on several statistical factors.
+In other words, the predictive ability of a model, whether high or small, can't help us distinguish if the model is giving us the right answer.
 
-There are two more complex reasons that predictive models won't always be good causal models.
+There are two more complex reasons that predictive models won't always be unbiased causal models.
 For the first reason, let's consider an accurate model from a causal perspective: it estimates effects on an outcome, and all of these effects are unbiased.
-You might get better predictions using a different model, even in this ideal setting.
+Even in this ideal setting, you might get better predictions using a different model.
 The reason has to do with the bias-variance trade-off in predictive modeling.
 When effects are small, data are noisy, predictors are highly correlated, or there's not much data, then it might make sense to use a biased model like penalized regression.
 These models intentionally introduce bias in favor of improved variance in out-of-data predictions.
@@ -385,9 +392,10 @@ The problem is that in some situations, the model to estimate an unbiased effect
 In other words, we can't interpret the effects of confounders as causal because they might *themselves* be confounded by another variable unrelated to the original exposure.
 
 Descriptive, predictive, and causal analyses will always contain some aspect of each other.
-A predictive model leans on causality in some respect, and a causal model has some predictive power.
+A predictive model gains some of its predictive power from the causal structure of the outcome, and a causal model has some predictive power because it contains information about the outcome.
 However, the same model in the same data with different goals will have different usefulness depending on those goals.
 Be cautious and be thoughtful.
+We'll dive more deeply into this topic in @sec-causal-pred-revisit.
 
 ## Diagraming a causal claim {#sec-diag}
 
