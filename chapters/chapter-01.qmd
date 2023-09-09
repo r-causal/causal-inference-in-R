@@ -288,6 +288,14 @@ This, of course, makes interpretation of the answer difficult.
 In @sec-diag, we'll discuss the nature of causal questions.
 In [Chapter -@sec-counterfactuals] and [Chapter -@sec-trials-std], we'll discuss philosophical and practical ways to sharpen our questions.
 
+::: callout-note
+## Causal inference and explanation
+
+Some authors use the phrases "causal inference" and "explanation" interchangeably. We're a little more cautious about that. Causal inference always has a relationship to explaination, but we can accurately estimate the effect of one thing on another without understanding how it happens.
+
+Consider John Snow, the so-called father of epidemiology. In 1854, Snow famously investigated a cholera outbreak in London and identified that specific sources of water were to blame for the disease. He was right: contaminated water was a mechansim for cholera transmission. Yet, he didn't have enough information to explain how; Vibrio cholerae, the bacteria responsible for cholera, wasn't identified until nearly thirty years later.
+:::
+
 #### Examples
 
 We'll see a lot of examples of causal inference in this book, but let's continue on with an example related to COVID-19.
