@@ -96,14 +96,14 @@ Understanding the distributions of the data, particularly for key analysis goals
 
 One of the best recent examples of descriptive analyses is the COVID-19 pandemic [@Fox2022].
 In 2020, particularly in the early months of the pandemic, descriptive analyses were vital to understanding risk and allocating resources.
-Since the coronavirus is similar to other respiratory diseases, we had many public health tools to use (e.g., distancing and, later, face masks).
+Since the coronavirus is similar to other respiratory diseases, we had many public health tools to reduce risk (e.g., distancing and, later, face masks).
 Descriptive statistics of cases by region were vital for deciding local policies and the strength of those policies.
 
-A great example of a more complex descriptive analysis during the pandemic was an [ongoing report by the Financial Times of expected deaths vs. observed deaths](https://www.ft.com/content/a2901ce8-5eb7-4633-b89c-cbdf5b386938) in various countries and regions\[\^3\].
+A great example of a more complex descriptive analysis during the pandemic was an [ongoing report by the Financial Times of expected deaths vs. observed deaths](https://www.ft.com/content/a2901ce8-5eb7-4633-b89c-cbdf5b386938) in various countries and regions[^3].
 While the calculation of expected deaths is slightly more sophisticated than most descriptive statistics, it provided a tremendous amount of information about current deaths without needing to untangle causal effects (e.g., were they due to COVID-19 directly? Inaccessible healthcare? Cardiovascular events post-COVID?).
 In this (simplified) recreation of their plot from July 2020, you can see the staggering effect of the pandemic's early months.
 
-\[\^3\]: John Burn-Murdoch was responsible for many of these presentations and gave a [very interesting talk on the subject](https://cloud.rstudio.com/resources/rstudioglobal-2021/reporting-on-and-visualising-the-pandemic/).
+[^3]: John Burn-Murdoch was responsible for many of these presentations and gave a [very interesting talk on the subject](https://cloud.rstudio.com/resources/rstudioglobal-2021/reporting-on-and-visualising-the-pandemic/).
 
 ```{r}
 #| label: fig-ft-chart
@@ -160,7 +160,7 @@ ggplot(
 Here are some other great examples of descriptive analyses.
 
 -   Deforestation around the world. Our World in Data [@owidforestsanddeforestation] is a data journalism organization that produces thoughtful, usually descriptive reports on various topics. In this report, the present data visualizations of both absolute change in forest coverage (forest transitions) and relative change (deforestation or reforestation), using basic statistics and forestry theory to present helpful information about the state of forests over time.
--   The Prevalence of chlamydial and gonococcal infections [@Miller2004]. Measuring the prevalence of disease (how many people currently have a disease, usually expressed as a rate per number of people) is helpful for basic public health (resources, prevention, education) and scientific understanding. In this study, the authors conducted a complex survey meant to be representative of all high schools in the United States (the target population); they used survey weights to address a variety of factors related to their question, then calculated prevalence rates and other statistics. As we'll see, weights are helpful in causal inference for the same reason: targeting a particular population. That said, not all weighting techniques are causal in nature, and they were not here.
+-   The prevalence of chlamydial and gonococcal infections [@Miller2004]. Measuring the prevalence of disease (how many people currently have a disease, usually expressed as a rate per number of people) is helpful for basic public health (resources, prevention, education) and scientific understanding. In this study, the authors conducted a complex survey meant to be representative of all high schools in the United States (the target population); they used survey weights to address a variety of factors related to their question, then calculated prevalence rates and other statistics. As we'll see, weights are helpful in causal inference for the same reason: targeting a particular population. That said, not all weighting techniques are causal in nature, and they were not here.
 -   Estimating race and ethnicity-specific hysterectomy inequalities [@Gartner2020]. Descriptive techniques also help us understand disparities in areas like economics and epidemiology. In this study, the authors asked: Does the risk of hysterectomy differ by racial or ethnic background? Although the analysis is stratified by a key variable, it's still descriptive. Another interesting aspect of this paper is the authors' work to ensure the research was answering questions about the right target population. Their analysis combined several data sources to better estimate the true population prevalence (instead of the prevalence among those in hospitals, as commonly presented). They also adjusted for the prevalence of hysterectomy, e.g., they calculated the incidence (new case) rate only among those who could actually have a hysterectomy (e.g., they hadn't had one yet).
 
 #### Validity
@@ -179,24 +179,24 @@ Consider a dataset generated by an online survey.
 Who are the people who are answering these questions, and how do they relate to the people we want to describe?
 For many analyses, the people who take the time to answer surveys are different than the people we want to describe, e.g., the group of people who fill out surveys may have a different distribution of variables than those who don't.
 Results from data like these are not technically biased because, outside of sample size-related uncertainty and measurement error, the descriptions are accurate---they're just not for the right group of people!
-In other words, we've gotten an answer to the wrong question.
+In other words, *we've gotten an answer to the wrong question*.
 
 Notably, sometimes our data represent the entire population (or close enough) that sampling error is irrelevant.
 Consider a company with certain types of data on every customer using their service.
 For many analyses, this represents the entire population (current customers) about whom we want information.
 Similarly, in countries with population-wide health registries, the data available for specific practical purposes is close enough to the entire population that no sampling is needed (although researchers might use sampling for simpler computations).
 In these cases, there's not really such a thing as uncertainty.
-Assuming everything is well-measured; the summary statistics we generate *are inherently unbiased and precise* because we have information from everyone in the population.
+Assuming everything is well-measured, the summary statistics we generate *are inherently unbiased and precise* because we have information from everyone in the population.
 Of course, in practice, we usually have some mixture of measurement error, missing data, and so on, even in the best of circumstances.
 
 One crucial detail of descriptive analysis is that confounding bias, one of the chief concerns of this book, is undefined.
 That's because confounding is a causal concern.
-Descriptive analyses cannot be confounded because they are a statistical description of relationships as-is, not the mechanisms behind those relationships.
+Descriptive analyses cannot be confounded because they are a statistical description of relationships *as-is*, not the mechanisms behind those relationships.
 
 #### Relationship to causal inference
 
 Humans see patterns very well; we can't help but see them, particularly in data analysis.
-Pattern-finding is a helpful feature of our brains, but it can also lead down a slippery slope of inference when we need to work with data or methods that can allow us to do that validly.
+Pattern-finding is a helpful feature of our brains, but it can also lead down a slippery slope of inference when we're not working with data or methods that can allow us to do that validly.
 The biggest thing to be cautious of when your goal is to describe is making the leap from description to causation (implicitly or explicitly).
 
 But of course, descriptive analysis is helpful, too, when we *are* estimating causal effects.
@@ -205,7 +205,8 @@ It also helps us be certain that the data structure we're using matches the ques
 You should always do descriptive analyses of your data when conducting causal research.
 
 Finally, as we'll see in [Chapter -@sec-trials-std], there are certain circumstances where we can make causal inferences with basic statics.
-Be cautious about the distinction between the causal question and the descriptive component here, too: just because we're using the same calculation (e.g., a difference in means) doesn't mean that all descriptions you can generate are causal.
+Be cautious about the distinction between the causal question and the descriptive component here, too: just because we're using the same calculation (e.g., a difference in means) doesn't mean that all descriptions you can generate are causal. 
+Whether a descriptive analysis overlaps with a causal analysis is a function of the data and the question.
 
 ### Prediction
 
@@ -226,18 +227,18 @@ There are many excellent texts on predictive modeling, and so we refer you to th
 Prediction is the most popular topic in data science, largely thanks to machine learning applications in industry.
 Prediction, of course, has a long history in statistics, and many models popular today have been used for decades in and outside of academia.
 
-Let's stick with the COVID-19 example [^chapter-01-1].
+Let's look at an example of prediction about COVID-19 [^chapter-01-1].
 In 2021, researchers published the ISARIC 4C Deterioration model, a clinical prognostic model for predicting severe adverse outcomes for acute COVID-19 [@Gupta2021].
 The authors included a descriptive analysis to understand the population from which this model was developed, particularly the distribution of the outcome and candidate predictors.
-One useful aspect of this model is that it uses items commonly measured on day 1 of COVID-related hospitalization.
-The authors built this model using cross-validation by region and then tested the model on data from a hold-out region.
-The final model included 11 items and a description of their model attributes, relation with the outcome, and so on.
+One useful aspect of this model is that it uses items commonly measured on day one of COVID-related hospitalization.
+The authors built this model using cross-validation by region of the UK and then tested the model on data from a hold-out region.
+The final model included eleven items and a description of their model attributes, relation with the outcome, and so on.
 Notably, the authors used clinical domain knowledge to select candidate variables but did not fall into the temptation of interpreting the model coefficients as causal.
-Without question, some of the predictive value of this model stems from the causal structure of the variables, but this model had a different goal entirely and stuck to it.
+Without question, some of the predictive value of this model stems from the causal structure of the variables as they relate to the outcome, but the researchers had a different goal entirely for this model and stuck to it.
 
 [^chapter-01-1]: A natural model here is predicting cases, but infectious disease modeling is complex and usually uses techniques outside the usual workflow of predictive modeling.
 
-Here is some other work in the predictive space:
+Here are other good examples from the predictive space:
 
 -   Some of the most interesting work in predictive modeling is in industry.
     Netflix regularly shares details on their modeling success and novel strategies in their [research blog](https://research.netflix.com/).
@@ -251,7 +252,7 @@ Here is some other work in the predictive space:
 
 The key measure of validity in prediction modeling is predictive accuracy, which can be measured in several ways, such as root mean squared error (RMSE), mean absolute error (MAE), area under the curve (AUC), and many more.
 A convenient detail about predictive modeling is that we can often assess if we're right, which is not true of descriptive statistics for which we only have a subset of data or causal inference for which we don't know the true causal structure.
-We aren't always able to assess against the truth, but it's almost always required for fitting the initial model [^chapter-01-2].
+We aren't always able to assess against the truth, but it's almost always required for fitting the initial predictive model [^chapter-01-2].
 
 [^chapter-01-2]: We say model singular but usually data scientists fit many models for experimentation and often the best prediction models are some combination of predictions from several models, called a stacked model
 
@@ -261,7 +262,7 @@ In a causal setting, this might induce bias, but predictive models can consume t
 For instance, in the famous Netflix Prize, winning models leveraged information about whether or not a customer rated a movie at all to improve recommendation systems.
 
 Like descriptive analysis, confounding is undefined for predictive modeling.
-A coefficient in a prediction model cannot be confounded; we usually only care about whether or not the variable provides predictive information, not if that information is because of a causal relationship or something else.
+A coefficient in a prediction model cannot be confounded; we only care about whether or not the variable provides predictive information, not if that information is because of a causal relationship or something else.
 
 #### Relationship to causal inference
 
@@ -304,7 +305,7 @@ Causal inference always has a relationship to explanation, but we can accurately
 Consider John Snow, the so-called father of epidemiology.
 In 1854, Snow famously investigated a cholera outbreak in London and identified that specific sources of water were to blame for the disease.
 He was right: contaminated water was a mechanism for cholera transmission.
-Yet, he didn't have enough information to explain how: Vibrio cholerae, the bacteria responsible for cholera, wasn't identified until nearly thirty years later.
+Yet, he didn't have enough information to explain how: *Vibrio cholerae*, the bacteria responsible for cholera, wasn't identified until nearly thirty years later.
 :::
 
 #### Examples
@@ -324,7 +325,7 @@ Here are a few other interesting examples:
 -   Netflix regularly uses causal inference in their work.
     In 2022, they published a [blog post summarizing some causal tasks](https://netflixtechblog.com/a-survey-of-causal-inference-applications-at-netflix-b62d25175e6f) they have engaged with.
     One interesting example is localization.
-    Netflix, being worldwide, localizes content through subs and dubs.
+    Netflix, being worldwide, localizes content through subtitles and dubbing.
     Randomized experiments were a bad idea because they meant withholding content from users, so researchers at Netflix used several approaches to understand the value of localization while addressing potential confounding.
     One example is studying the impact of pandemic-related delays in dubbing.
     Researchers used synthetic controls to simulate the impact on viewership with and without these delays.
@@ -352,13 +353,13 @@ It's true that *some* predictive models can be great causal models and vice vers
 Unfortunately, this is not always the case; causal effects needn't predict particularly well and good predictors needn't be themselves causally unbiased [@shmueli2010a]. 
 There is no way to know using data alone.
 
-Let's consider the causal perspective first because it's a bit simpler. 
+Let's look at the causal perspective first because it's a bit simpler. 
 Consider a model that is unbiased for an exposure but only includes variables related to the outcome *and* the exposure. 
 In other words, this is a model that provides us the right answer but doesn't include other predictors of the outcome (which can sometimes be a good idea, as discussed in @sec-data-causal).
 If an outcome has many causes, then a model that accurately describes the relationship with the exposure likely won't predict the outcome very well.
 Likewise, if a true causal effect of the exposure on the outcome is small, it will bring little predictive value.
-Of course, low predictive power might also indicate that a causal effect isn't much use from an applied perspective, although that depends on several statistical factors.
 In other words, the predictive ability of a model, whether high or small, can't help us distinguish if the model is giving us the right answer.
+Of course, low predictive power might also indicate that a causal effect isn't much use from an applied perspective, although that depends on several statistical factors.
 
 There are two more complex reasons that predictive models won't always be unbiased causal models.
 For the first reason, let's consider an accurate model from a causal perspective: it estimates effects on an outcome, and all of these effects are unbiased.
@@ -395,7 +396,7 @@ Descriptive, predictive, and causal analyses will always contain some aspect of 
 A predictive model gains some of its predictive power from the causal structure of the outcome, and a causal model has some predictive power because it contains information about the outcome.
 However, the same model in the same data with different goals will have different usefulness depending on those goals.
 Be cautious and be thoughtful.
-We'll dive more deeply into this topic in @sec-causal-pred-revisit.
+<!-- TODO: uncomment this when section is written -- We'll dive more deeply into this topic in @sec-causal-pred-revisit. -->
 
 ## Diagraming a causal claim {#sec-diag}
 
