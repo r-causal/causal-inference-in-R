@@ -195,11 +195,11 @@ Descriptive analyses cannot be confounded because they are a statistical descrip
 
 #### Relationship to causal inference
 
-Humans see patterns very well; we can't help but see them, particularly in data analysis.
+Humans see patterns very well.
 Pattern-finding is a helpful feature of our brains, but it can also lead down a slippery slope of inference when we're not working with data or methods that can allow us to do that validly.
 The biggest thing to be cautious of when your goal is to describe is making the leap from description to causation (implicitly or explicitly).
 
-But of course, descriptive analysis is helpful, too, when we *are* estimating causal effects.
+But of course, descriptive analysis is helpful when we *are* estimating causal effects.
 It helps us understand the population we're working with, the distribution of the outcomes, exposures (variables we think might be causal), and confounders (variables we need to account for to get unbiased causal effects for the exposure).
 It also helps us be certain that the data structure we're using matches the question we're trying to answer, as we'll see in [Chapter -@sec-data-causal].
 You should always do descriptive analyses of your data when conducting causal research.
@@ -274,7 +274,7 @@ We'll see more about this in @sec-pred-or-explain and the rest of the book.
 Often, people mistakenly use methods for selecting features (variables) for prediction models to select confounders in causal models.
 Aside from their risk of overfitting, these methods are appropriate for prediction models but not for causal models.
 Prediction metrics cannot determine the causal structure of your question, and predictive value for the outcome does not make a variable a confounder.
-In general, background knowledge (not prediction or associational properties) should drive variable selection for causal models @robinsImpossible; we'll discuss this process in detail in [Chapter -@sec-dags].
+In general, background knowledge (not prediction or associational statistics) should should help you select variables for causal models @robinsImpossible; we'll discuss this process in detail in [Chapter -@sec-dags] and [Chapter -@sec-building-models].
 
 Prediction is nevertheless crucial to causal inference.
 From a philosophical perspective, we're comparing predictions from different *what if* scenarios: What would the outcome had one thing happened vs. if another thing happened?
@@ -319,6 +319,8 @@ The researchers included a descriptive analysis of the school districts to under
 To estimate the effect of universal masking on cases, the authors used a technique common in policy-related causal inference called difference-in-differences to estimate this effect.
 Their design alleviates some problematic assumptions needed for causal inference, but they also wisely controlled for potential confounders despite that advantage.
 The authors found that districts that continued masking saw a drastically lower caseload than those that didn't; their analysis concluded that almost 12,000 additional cases occurred due to the policy change, nearly 30% of the cases in the districts during the 15 weeks of the study.
+
+<!-- TODO: add example when code and data are available -->
 
 Here are a few other interesting examples:
 
@@ -395,7 +397,6 @@ In other words, we can't interpret the effects of confounders as causal because 
 Descriptive, predictive, and causal analyses will always contain some aspect of each other.
 A predictive model gains some of its predictive power from the causal structure of the outcome, and a causal model has some predictive power because it contains information about the outcome.
 However, the same model in the same data with different goals will have different usefulness depending on those goals.
-Be cautious and be thoughtful.
 <!-- TODO: uncomment this when section is written -- We'll dive more deeply into this topic in @sec-causal-pred-revisit. -->
 
 ## Diagraming a causal claim {#sec-diag}
@@ -492,7 +493,7 @@ ggplot(data, aes(x = x, y = y)) +
   theme_void() 
 ```
 
-Translating this idea into asking good causal questions, we can map the following terms that you will see throughout this book to these diagrams: *exposure* (the cause), *outcome* (the effect), *eligibility criteria* (for whom?), *time zero* (when did the participants begin to be followed?), *target population*, (who can we estimate an outcome effect for?) and *follow up period* (when?).
+Translating this idea into asking good causal questions, we can map the following terms that you will see throughout this book to these diagrams: *exposure* (the cause), *outcome* (the effect), *eligibility criteria* (for whom?), *time zero* (when did the participants begin to be followed?), *target population*, (who can we estimate an outcome effect for?) and *follow-up period* (when?).
 
 ```{r}
 #| echo: false
@@ -519,7 +520,7 @@ ggplot(data, aes(x = x, y = y)) +
 Asking good causal questions means we map the *question* to the observable *evidence*.
 Let's return to the smoking example.
 Our initial question was: *Does smoking causes lung cancer?*; using our study, the evidence shows *For people who smoke 15+ cigarettes a day, reducing smoking by 50% reduces the risk of lung cancer over 5-10 years*.
-Do the answer match the question?
+Does the answer match the question?
 Not quite.
-Let's update our question to match what the study actually was able to show: *For people who smoke 15+ cigarettes a day, does reducing smoking by 50% reduce the lung cancer risk over 5-10 years?*.
+Let's update our question to match what the study actually was able to show: *For people who smoke 15+ cigarettes a day, does reducing smoking by 50% reduce the lung cancer risk over 5-10 years?*
 Honing this skill — asking answerable causal questions — is important, and one that we will discuss throughout this book.
