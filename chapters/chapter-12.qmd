@@ -230,7 +230,7 @@ wait_times_wts <- wait_times |>
 
 The stabilized weights are much less extreme.
 Stabilized weights should have a mean close to 1 (in this example, it is `round(mean(wait_times_wts$swts), digits = 2)`); when that is the case, then the pseudo-population (that is, the equivalent number of observations after weighting) is equal to the original sample size.
-If the mean is far from 1, we may have issues with model misspecification or positivity violations [@hernán2021].
+If the mean is far from 1, we may have issues with model misspecification or positivity violations [@hernan2021].
 
 ```{r}
 #| label: fig-hist-sd-stable
