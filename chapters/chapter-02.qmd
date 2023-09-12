@@ -34,7 +34,7 @@ Herodotus, the 5th century BC Greek author of *The Histories*, observed Egyptian
 Many modern nets are also treated with insecticide, dating back to Russian soldiers in World War II [@nevill1996], although some people still use them as fishing nets [@gettleman2015].
 
 It's easy to imagine a randomized trial that deals with this question: participants in a study are randomly assigned to use a bed net, and we follow them over time to see if there is a difference in malaria risk between groups.
-Randomization is often the best way to estimate a causal effect of an intervention because it reduces the number of assumptions we need to make for that estimate to be valid (we discussed the assumptions we need to make for causal inference in @sec-causal-question).
+Randomization is often the best way to estimate a causal effect of an intervention because it reduces the number of assumptions we need to make for that estimate to be valid (we will discuss these assumptions @sec-assump).
 In particular, randomization addresses confounding very well, accounting for confounders about which we may not even know.
 
 Several landmark trials have studied the effects of bed net use on malaria risk, with several essential studies in the 1990s.
@@ -44,7 +44,7 @@ Still, a follow-up analysis of trials found that it has yet to impact the public
 
 Trials have also been influential in determining the economics of bed net programs.
 For instance, one trial compared free net distribution versus a cost-share program (where participants pay a subsidized fee for nets).
-The study's authors found that net uptake was similar between the groups and that free net distribution---because it was easier to access--saved more lives, and was cheaper per life saved than the cost-sharing program [@cohen2010].
+The study's authors found that net uptake was similar between the groups and that free net distribution --- because it was easier to access --- saved more lives, and was cheaper per life saved than the cost-sharing program [@cohen2010].
 
 There are several reasons we might not be able to conduct a randomized trial, including ethics, cost, and time.
 We have substantial, robust evidence in favor of bed net use.
@@ -96,7 +96,7 @@ In this particular data, [simulated by Dr. Andrew Heiss](https://evalsp21.classe
 
 Because we're using simulated data, we'll have direct access to a variable that measures the likelihood of contracting malaria, something we wouldn't likely have in real life.
 We'll stick with this measure because we know the actual effect size.
-We'll use simulated data, `net_data`, from the {causalworkshop} package, which includes ten variables:
+We'll use simulated data, `net_data`, from the {[causalworkshop](https://github.com/r-causal/causalworkshop)} package, which includes ten variables:
 
 <!-- (TODO: move this to causaldata?) -->
 
@@ -203,7 +203,7 @@ Here's the DAG that we're proposing for this question.
 library(ggdag, warn.conflicts = FALSE)
 library(ggokabeito)
 mosquito_dag <- dagify(
-  malaria_risk ~ net + income + health + temperature + resistance,
+  malaria_risk ~ net + income + health + temperature,
   net ~ income + health + temperature + eligible + household,
   eligible ~ income + household,
   health ~ income,
@@ -216,7 +216,6 @@ mosquito_dag <- dagify(
       income = 4,
       health = 5,
       temperature = 6,
-      resistance = 8.5,
       eligible = 2,
       household = 1
     ),
@@ -226,7 +225,6 @@ mosquito_dag <- dagify(
       income = 3,
       health = 1,
       temperature = 3,
-      resistance = 2,
       eligible = 3,
       household = 2
     )
@@ -237,7 +235,6 @@ mosquito_dag <- dagify(
     income = "Income",
     health = "Health",
     temperature = "Nighttime temperatures",
-    resistance = "Insecticide resistance",
     eligible = "Eligible for program",
     household = "Number in the household"
   )
