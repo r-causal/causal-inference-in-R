@@ -280,7 +280,7 @@ As in the case above, it appears that confounding bias is often the worse of the
 
 By and large, metrics commonly used for building prediction models are inappropriate for building causal models.
 Researchers and data scientists often make decisions about models using metrics like R^2^, AUC, accuracy, and (often inappropriately) p-values.
-However, a causal model's goal is not to predict as much about the outcome as possible [@hernán2021]; the goal is to estimate the relationship between the exposure and outcome accurately.
+However, a causal model's goal is not to predict as much about the outcome as possible [@hernan2021]; the goal is to estimate the relationship between the exposure and outcome accurately.
 A causal model needn't predict particularly well to be unbiased.
 
 These metrics, however, may help identify a model's best *functional form*.
