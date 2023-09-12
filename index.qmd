@@ -52,7 +52,7 @@ The first is the native pipe, `|>`.
 This R feature is similar to the tidyverse's `%>%`, with which you may be more familiar.
 In typical cases, the two work interchangeably.
 One notable difference is that `|>` uses the `_` symbol to direct the pipe's results, e.g., `.df |> lm(y ~ x, data = _)`.
-See [R for Data Science's chapter on pipes](https://r4ds.hadley.nz/workflow-pipes.html#magrittr-and-the-pipe) for more on this topic.
+See [this Tidyverse Blog post](https://www.tidyverse.org/blog/2023/04/base-vs-magrittr-pipe/) for more on this topic.
 
 Another modern R feature we use is the native lamda, a way of writing short functions that looks like `\(.x) do_something(.x)`.
 It is similar to purrr's `~` lamda notation.
