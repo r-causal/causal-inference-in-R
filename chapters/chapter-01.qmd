@@ -416,23 +416,7 @@ We've pulled out the *cause*, the *effect*, the *subject* (for whom?), and the *
 #| fig-cap: "Example of diagraming a causal claim"
 #| fig-height: 2
 #| label: fig-diagram-1
-library(ggplot2)
-
-data <- data.frame(labels = c("cause", "effect", "for whom?", "when?", "for whom?", "when?"),
-                   x = c(1.25, 1.75, 1.25, 1.55, 1.8, 2.05),
-                   y = c(1, 1, 0.8, 0.7, 0.8, 0.7),
-                   angle = c(0, 0, -30, 0, -30, 0))  
-
-ggplot(data, aes(x = x, y = y)) +
-  geom_text(aes(label = labels, angle = angle, vjust = 0), 
-            size = 7) +
-  geom_segment(aes(x = 1, xend = 2, y = 0.95, yend = 0.95)) +  
-  geom_segment(aes(x = 1.5, xend = 1.5, y = 0.95, yend = 1.1)) +
-  geom_segment(aes(x = 1, xend = 1.35, y = 0.95, yend = 0.65)) +
-  geom_segment(aes(x = 1.35, xend = 1.65, y = 0.65, yend = 0.65)) +
-  geom_segment(aes(x = 1.55, xend = 1.9, y = 0.95, yend = 0.65)) +
-  geom_segment(aes(x = 1.9, xend = 2.15, y = 0.65, yend = 0.65)) +
-  theme_void()
+knitr::include_graphics("../images/sentence-diagram-1.png")
 ```
 
 Let's start with a basic causal question: **Does smoking cause lung cancer?**
@@ -445,21 +429,7 @@ The causal claim here could be *smoking causes lung cancer*.
 #| label: fig-diagram-2
 #| fig-height: 2
 #| fig-cap: "Diagram of the causal claim \"smoking causes lung cancer\"."
-data <- data.frame(labels = c("smoking", "lung cancer", "for everyone?", "immediately?", "for everyone?", "immediately?"),
-                   x = c(1.25, 1.75, 1.25, 1.55, 1.8, 2.05),
-                   y = c(1, 1, 0.8, 0.7, 0.8, 0.7),
-                   angle = c(0, 0, -30, 0, -30, 0))  
-
-ggplot(data, aes(x = x, y = y)) +
-  geom_text(aes(label = labels, angle = angle, vjust = 0), 
-            size = 6) +
-  geom_segment(aes(x = 1, xend = 2, y = 0.95, yend = 0.95)) +  
-  geom_segment(aes(x = 1.5, xend = 1.5, y = 0.95, yend = 1.1)) +
-  geom_segment(aes(x = 1, xend = 1.35, y = 0.95, yend = 0.65)) +
-  geom_segment(aes(x = 1.35, xend = 1.65, y = 0.65, yend = 0.65)) +
-  geom_segment(aes(x = 1.55, xend = 1.9, y = 0.95, yend = 0.65)) +
-  geom_segment(aes(x = 1.9, xend = 2.15, y = 0.65, yend = 0.65)) +
-  theme_void()
+knitr::include_graphics("../images/sentence-diagram-2.png")
 ```
 
 Let's try to get more specific.
@@ -474,23 +444,7 @@ In @sec-estimands we will discuss other potential target populations.
 #| echo: false
 #| fig-cap: "Example diagram of a more specific causal claim based on results from @godtfredsen2005effect"
 #| label: fig-diagram-3
-
-data <- data.frame(labels = c("Reducing smoking by 50%", "Reduced lung cancer", "People who\nsmoke 15+\ncigarettes per day", "when they stopped", "People who\nsmoke 15+\ncigarettes per day", "between 5-10 years"),
-                   x = c(1, 2, .83, 1.4, 1.88, 2.45),
-                   y = c(1, 1, 0.77, 0.7, 0.77, 0.7),
-                   angle = c(0, 0, -52, 0, -52, 0))  
-
-ggplot(data, aes(x = x, y = y)) +
-  geom_text(aes(label = labels, angle = angle, vjust = 0), size = 5) +
-  geom_segment(aes(x = 0.5, xend = 2.5, y = 0.95, yend = 0.95)) +  
-  geom_segment(aes(x = 1.5, xend = 1.5, y = 0.95, yend = 1.1)) +
-  geom_segment(aes(x = 0.5, xend = 1, y = 0.95, yend = 0.65)) +
-  geom_segment(aes(x = 1, xend = 1.5, y = 0.65, yend = 0.65)) +
-  geom_segment(aes(x = 1.55, xend = 2.05, y = 0.95, yend = 0.65)) +
-  geom_segment(aes(x = 2.05, xend = 2.55, y = 0.65, yend = 0.65)) +
-  xlim(c(0.5, 2.75)) +
-  ylim(c(0.5, 1.2)) +
-  theme_void() 
+knitr::include_graphics("../images/sentence-diagram-3.png")
 ```
 
 Translating this idea into asking good causal questions, we can map the following terms that you will see throughout this book to these diagrams: *exposure* (the cause), *outcome* (the effect), *eligibility criteria* (for whom?), *time zero* (when did the participants begin to be followed?), *target population*, (who can we estimate an outcome effect for?) and *follow-up period* (when?).
@@ -500,21 +454,7 @@ Translating this idea into asking good causal questions, we can map the followin
 #| label: fig-diagram-4
 #| fig-height: 2
 #| fig-cap: "Example diagram mapped to causal analysis terminology"
-data <- data.frame(labels = c("exposure", "outcome", "eligibility criteria", "time zero", "target population", "follow-up time"),
-                   x = c(1.25, 1.75, 1.25, 1.55, 1.8, 2.15),
-                   y = c(1, 1, 0.8, 0.7, 0.8, 0.7),
-                   angle = c(0, 0, -30, 0, -30, 0))  
-
-ggplot(data, aes(x = x, y = y)) +
-  geom_text(aes(label = labels, angle = angle, vjust = 0), 
-            size = 7) +
-  geom_segment(aes(x = 1, xend = 2, y = 0.95, yend = 0.95)) +  
-  geom_segment(aes(x = 1.5, xend = 1.5, y = 0.95, yend = 1.1)) +
-  geom_segment(aes(x = 1, xend = 1.35, y = 0.95, yend = 0.65)) +
-  geom_segment(aes(x = 1.35, xend = 1.65, y = 0.65, yend = 0.65)) +
-  geom_segment(aes(x = 1.55, xend = 1.9, y = 0.95, yend = 0.65)) +
-  geom_segment(aes(x = 1.9, xend = 2.15, y = 0.65, yend = 0.65)) +
-  theme_void()
+knitr::include_graphics("../images/sentence-diagram-4.png")
 ```
 
 Asking good causal questions means we map the *question* to the observable *evidence*.
