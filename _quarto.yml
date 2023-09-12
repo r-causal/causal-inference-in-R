@@ -24,12 +24,6 @@ book:
   title: "Causal Inference in R"
   author: "Malcolm Barrett, Lucy D'Agostino McGowan, Travis Gerke"
   date: "today"
-  description: > 
-      Answering causal questions is critical for scientific and business 
-      purposes, but techniques like randomized clinical trials and A/B testing 
-      are not always practical or successful. The tools in this book will
-      allow readers better make causal inferences with 
-      observational data with the R programming language.
   repo-url: https://github.com/malcolmbarrett/causal-inference-in-r
   repo-actions: [edit, issue]
   chapters:
@@ -74,6 +68,7 @@ format:
     theme:
       - cosmo
       - style.scss
+    include-in-header: "plausible.html"
   #pdf:
     #tbl-cap-location: bottom
     #documentclass: krantz
