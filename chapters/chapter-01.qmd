@@ -6,7 +6,7 @@
 
 ## Schrödinger's Causality
 
-The heart of causal analysis is the causal question; it dictates what data we analyze, how we analyze it, and to which populations we make inferences about.
+The heart of causal analysis is the causal question; it dictates what data we analyze, how we analyze it, and to which populations our inferences apply.
 This book, being applied in nature, deals primarily with the analysis stage of causal inference.
 Relative to the complexity of specifying a good causal question, the analysis stage is considerably more straightforward.
 In the first six chapters of this book, we'll discuss what a causal question is, how to improve our questions, and consider some examples.
@@ -57,14 +57,14 @@ rankings |>
 
 Instead of clear questions with obvious assumptions and goals, we end up with "Schrödinger's causal inference":
 
-> Our results suggest that "Schrödinger's causal inference," - where studies avoid stating (or even explicitly deny) an interest in estimating causal effects yet are otherwise embedded with causal intent, inference, implications, and recommendations - is common.
+> Our results suggest that "Schrödinger's causal inference," — where studies avoid stating (or even explicitly deny) an interest in estimating causal effects yet are otherwise embedded with causal intent, inference, implications, and recommendations — is common.
 >
 > --- @haber_causal_language
 
 ## Description, prediction, and explanation
 
 An excellent first step to address this problem is recognizing that questions about description, prediction, and explanation are fundamentally different.
-Data science in industry isn't quite as burdened by Schrödinger's causal inference as the academic sciences, but being explicit in the differences in these analyses is still helpful.
+Data science in industry isn't quite as burdened by Schrödinger's causal inference as the academic sciences, but being explicit in the differences in analytic intent is still helpful.
 For instance, when a stakeholder asks for "drivers" of a particular event, what are they asking?
 For a model to predict the event?
 For a deeper understanding of what causes the event?
@@ -79,7 +79,7 @@ A closely related idea is exploratory data analysis (EDA), although descriptive 
 
 Descriptive analyses are usually based on statistical summaries such as measures of centrality (means, medians) and spread (minimums, maximums, quartiles), but they also occasionally use techniques like regression modeling.
 The goal of applying more advanced techniques like regression is different in descriptive analyses than in either predictive or causal studies.
-"Adjusting" for a variable in descriptive analyses means that we are removing its effect (and thus changing our question), *not* that we are controlling for confounding.
+"Adjusting" for a variable in descriptive analyses means that we are removing its associational effect (and thus changing our question), *not* that we are controlling for confounding.
 
 In epidemiology, a valuable concept for descriptive analyses is "person, place, and time" -- who has what disease, where, and when.
 This concept is also a good template for descriptive analyses in other fields.
@@ -94,7 +94,7 @@ EDA benefits both predictive and causal analyses, but descriptive analyses are v
 Ask any data scientist who thought they'd be developing complex machine learning models and found themselves spending most of their time on dashboards.
 Understanding the distributions of the data, particularly for key analysis goals (say, KPIs in industry or disease incidence in epidemiology), is critical for many types of decision-making.
 
-One of the best recent examples of descriptive analyses is the COVID-19 pandemic [@Fox2022].
+One of the best recent examples of descriptive analyses arose from the COVID-19 pandemic [@Fox2022].
 In 2020, particularly in the early months of the pandemic, descriptive analyses were vital to understanding risk and allocating resources.
 Since the coronavirus is similar to other respiratory diseases, we had many public health tools to reduce risk (e.g., distancing and, later, face masks).
 Descriptive statistics of cases by region were vital for deciding local policies and the strength of those policies.
@@ -159,7 +159,7 @@ ggplot(
 
 Here are some other great examples of descriptive analyses.
 
--   Deforestation around the world. Our World in Data [@owidforestsanddeforestation] is a data journalism organization that produces thoughtful, usually descriptive reports on various topics. In this report, the present data visualizations of both absolute change in forest coverage (forest transitions) and relative change (deforestation or reforestation), using basic statistics and forestry theory to present helpful information about the state of forests over time.
+-   Deforestation around the world. Our World in Data [@owidforestsanddeforestation] is a data journalism organization that produces thoughtful, usually descriptive reports on various topics. In this report, they present data visualizations of both absolute change in forest coverage (forest transitions) and relative change (deforestation or reforestation), using basic statistics and forestry theory to present helpful information about the state of forests over time.
 -   The prevalence of chlamydial and gonococcal infections [@Miller2004]. Measuring the prevalence of disease (how many people currently have a disease, usually expressed as a rate per number of people) is helpful for basic public health (resources, prevention, education) and scientific understanding. In this study, the authors conducted a complex survey meant to be representative of all high schools in the United States (the target population); they used survey weights to address a variety of factors related to their question, then calculated prevalence rates and other statistics. As we'll see, weights are helpful in causal inference for the same reason: targeting a particular population. That said, not all weighting techniques are causal in nature, and they were not here.
 -   Estimating race and ethnicity-specific hysterectomy inequalities [@Gartner2020]. Descriptive techniques also help us understand disparities in areas like economics and epidemiology. In this study, the authors asked: Does the risk of hysterectomy differ by racial or ethnic background? Although the analysis is stratified by a key variable, it's still descriptive. Another interesting aspect of this paper is the authors' work to ensure the research was answering questions about the right target population. Their analysis combined several data sources to better estimate the true population prevalence (instead of the prevalence among those in hospitals, as commonly presented). They also adjusted for the prevalence of hysterectomy, e.g., they calculated the incidence (new case) rate only among those who could actually have a hysterectomy (e.g., they hadn't had one yet).
 
@@ -204,7 +204,7 @@ It helps us understand the population we're working with, the distribution of th
 It also helps us be certain that the data structure we're using matches the question we're trying to answer, as we'll see in [Chapter -@sec-data-causal].
 You should always do descriptive analyses of your data when conducting causal research.
 
-Finally, as we'll see in [Chapter -@sec-trials-std], there are certain circumstances where we can make causal inferences with basic statics.
+Finally, as we'll see in [Chapter -@sec-trials-std], there are certain circumstances where we can make causal inferences with basic statistics.
 Be cautious about the distinction between the causal question and the descriptive component here, too: just because we're using the same calculation (e.g., a difference in means) doesn't mean that all descriptions you can generate are causal. 
 Whether a descriptive analysis overlaps with a causal analysis is a function of the data and the question.
 
@@ -274,7 +274,7 @@ We'll see more about this in @sec-pred-or-explain and the rest of the book.
 Often, people mistakenly use methods for selecting features (variables) for prediction models to select confounders in causal models.
 Aside from their risk of overfitting, these methods are appropriate for prediction models but not for causal models.
 Prediction metrics cannot determine the causal structure of your question, and predictive value for the outcome does not make a variable a confounder.
-We'll discuss methods for choosing variables for causal models in [Chapter -@sec-dags].
+In general, background knowledge (not prediction or associational properties) should drive variable selection for causal models @robinsImpossible; we'll discuss this process in detail in [Chapter -@sec-dags].
 
 Prediction is nevertheless crucial to causal inference.
 From a philosophical perspective, we're comparing predictions from different *what if* scenarios: What would the outcome had one thing happened vs. if another thing happened?
@@ -354,8 +354,8 @@ Unfortunately, this is not always the case; causal effects needn't predict parti
 There is no way to know using data alone.
 
 Let's look at the causal perspective first because it's a bit simpler. 
-Consider a model that is unbiased for an exposure but only includes variables related to the outcome *and* the exposure. 
-In other words, this is a model that provides us the right answer but doesn't include other predictors of the outcome (which can sometimes be a good idea, as discussed in @sec-data-causal).
+Consider a model that is causally unbiased for an exposure but only includes variables related to the outcome *and* the exposure. 
+In other words, this is a model that provides us the right answer for the exposure of interest, but doesn't include other predictors of the outcome (which can sometimes be a good idea, as discussed in @sec-data-causal).
 If an outcome has many causes, then a model that accurately describes the relationship with the exposure likely won't predict the outcome very well.
 Likewise, if a true causal effect of the exposure on the outcome is small, it will bring little predictive value.
 In other words, the predictive ability of a model, whether high or small, can't help us distinguish if the model is giving us the right answer.
@@ -434,16 +434,16 @@ ggplot(data, aes(x = x, y = y)) +
   theme_void()
 ```
 
-Let's start with a basic causal question: **Does smoking cause cancer?**
+Let's start with a basic causal question: **Does smoking cause lung cancer?**
 
-The causal claim here could be *smoking causes cancer*.
+The causal claim here could be *smoking causes lung cancer*.
 @fig-diagram-2 shows a potential diagram of this causal claim.
 
 ```{r}
 #| echo: false
 #| label: fig-diagram-2
 #| fig-height: 2
-#| fig-cap: "Diagram of the causal claim \"smoking causes cancer\"."
+#| fig-cap: "Diagram of the causal claim \"smoking causes lung cancer\"."
 data <- data.frame(labels = c("smoking", "lung cancer", "for everyone?", "immediately?", "for everyone?", "immediately?"),
                    x = c(1.25, 1.75, 1.25, 1.55, 1.8, 2.05),
                    y = c(1, 1, 0.8, 0.7, 0.8, 0.7),
@@ -519,7 +519,7 @@ ggplot(data, aes(x = x, y = y)) +
 Asking good causal questions means we map the *question* to the observable *evidence*.
 Let's return to the smoking example.
 Our initial question was: *Does smoking causes lung cancer?*; using our study, the evidence shows *For people who smoke 15+ cigarettes a day, reducing smoking by 50% reduces the risk of lung cancer over 5-10 years*.
-Do these match?
+Do the answer match the question?
 Not quite.
 Let's update our question to match what the study actually was able to show: *For people who smoke 15+ cigarettes a day, does reducing smoking by 50% reduce the lung cancer risk over 5-10 years?*.
-Honing this skill, asking answerable causal questions, is important, and one that we will discuss throughout this book.
+Honing this skill — asking answerable causal questions — is important, and one that we will discuss throughout this book.
