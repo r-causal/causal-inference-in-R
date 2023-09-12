@@ -42,7 +42,7 @@ A few books you might like:
 
 The first book is focused on epidemiology.
 The latter two are focused on econometrics.
-We also recommend *The Book of Why* for more on causal diagrams.
+We also recommend *The Book of Why* @pearl2018book for more on causal diagrams.
 
 ## Conventions
 
@@ -55,12 +55,12 @@ In typical cases, the two work interchangeably.
 One notable difference is that `|>` uses the `_` symbol to direct the pipe's results, e.g., `.df |> lm(y ~ x, data = _)`.
 See [this Tidyverse Blog post](https://www.tidyverse.org/blog/2023/04/base-vs-magrittr-pipe/) for more on this topic.
 
-Another modern R feature we use is the native lamda, a way of writing short functions that looks like `\(.x) do_something(.x)`.
-It is similar to purrr's `~` lamda notation.
-It's also helpful to realize the native lamda is identical to `function(.x) do_something(.x)`, where `\` is shorthand for `function`.
+Another modern R feature we use is the native lambda, a way of writing short functions that looks like `\(.x) do_something(.x)`.
+It is similar to purrr's `~` lambda notation.
+It's also helpful to realize the native lambda is identical to `function(.x) do_something(.x)`, where `\` is shorthand for `function`.
 See [R for Data Science's chapter on iteration](https://r4ds.hadley.nz/iteration.html) for more on this topic.
 
-## Themeing
+## Theming
 
 The plots in this book use a consistent theme that we don't include in every code chunk, meaning if you run the code for a visualization, you might get a slightly different-looking result.
 We set the following defaults related to ggplot2:
