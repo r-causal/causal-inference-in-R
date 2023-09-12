@@ -16,6 +16,7 @@ Depends:
 Imports: 
     broom,
     causalworkshop (>= 0.1.0),
+    emo (>= 0.0.0.9000),
     ggdag (>= 0.2.7),
     ggokabeito,
     ggtext,
@@ -26,6 +27,7 @@ Imports:
     lubridate,
     MatchIt,
     propensity (>= 0.0.0.9000),
+    PSW,
     ragg,
     rsample (>= 0.0.5),
     skimr,
@@ -46,7 +48,8 @@ Remotes:
     LucyMcGowan/touringplans,
     malcolmbarrett/causalworkshop,
     malcolmbarrett/halfmoon,
-    malcolmbarrett/propensity
+    malcolmbarrett/propensity,
+    hadley/emo
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)

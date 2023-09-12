@@ -1,4 +1,4 @@
-# Target Trials and Standard Methods
+# Target Trials and Standard Methods {#sec-trials-std}
 
 {{< include 00-setup.qmd >}}
 

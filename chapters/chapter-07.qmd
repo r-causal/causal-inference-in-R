@@ -221,7 +221,7 @@ Here are some questions to ask to gain diagnostic insights we gain from @fig-mir
 
 <!-- *TODO* This may be a "nice" example -- should we also show a bad model (maybe only with ticket season or possibly overspecifying it) -->
 
-## Choosing what variables to include
+## Choosing what variables to include {#sec-choosing-vars}
 
 The best way to decide what variables to include in your propensity score model is to look at your DAG and have at least a minimal adjustment set of confounders.
 Of course, sometimes, essential variables are missing or measured with error.
