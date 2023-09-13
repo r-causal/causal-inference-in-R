@@ -254,6 +254,13 @@ The most common assumptions across the approaches we describe in this book are:
     * **Well defined exposure**: We assume that for each value of the exposure, there is no difference between subjects in the delivery of that exposure.
 Put another way, multiple versions of the treatment do not exist. 
     * **No interference**: We assume that the outcome (technically all *potential* outcomes, regardless of whether they are observed) for any subject does not depend on another subject's exposure.
+    
+::: callout-tip
+## Jargon
+
+Assumption 1 is sometimes referred to as *stable-unit-treatment-value-assumption* or SUTVA [@imbens2015causal].
+Likewise, these assumptions are sometimes referred to as *identifiability conditions* since we need them to hold in order to identify causal estimates.
+:::
 
 2.  **Exchangeability**: We assume that within levels of relevant variables (confounders), exposed and unexposed subjects have an equal likelihood of experiencing any outcome prior to exposure; i.e. the exposed and unexposed subjects are exchangeable.
 This assumption is sometimes referred to as **no unmeasured confounding**.
@@ -262,11 +269,23 @@ This assumption is sometimes referred to as **no unmeasured confounding**.
 Said differently, each individual has some chance of experiencing every available exposure level.
 Sometimes this is referred to as the **probabilistic** assumption.
 
-::: callout-tip
-## Jargon
 
-Assumption 1 is sometimes referred to as *stable-unit-treatment-value-assumption* or SUTVA [@imbens2015causal].
-Likewise, these assumptions are sometimes referred to as *identifiability conditions* since we need them to hold in order to identify causal estimates.
+
+
+::: callout-note
+## Apples-to-apples
+
+Practically, most of the assumptions we need to make for causal inference are so we can make an *apples-to-apples* comparison: we want to make sure we're comparing individuals that are similar --- who would serve as good proxies for each other's counterfactuals. 
+
+The phrase *apples-to-apples* stems from the saying "comparing apples to oranges", e.g. comparing two things that are incomparable. 
+
+That's only one way to say it. [There are a lot of variations worldwide](https://en.wikipedia.org/wiki/Apples_and_oranges). Here are some other things people incorrectly compare:
+
+* Cheese and chalk (UK English)
+* Apples and pears (German)
+* Potatoes and sweet potatoes (Latin American Spanish)
+* Grandmothers and toads (Serbian)
+* Horses and donkeys (Hindi)
 :::
 
 ### Causal Assumptions Simulation
