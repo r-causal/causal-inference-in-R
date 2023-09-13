@@ -79,7 +79,13 @@ ggplot(data, aes(x = x, y = y)) +
 
 ## Target Trials
 
-There are many reasons why randomization may not be possible. For example, it might not be ethical to randomly assign people to a particular exposure, there may not be funding available to run a randomized trial, or there might not be enough time to conduct a full trial. In these situations, we rely on observational data to help us answer causal questions by implementing a *target trial*. A *target trial* answers: What experiment would you design if you could? 
+There are many reasons why randomization may not be possible. For example, it might not be ethical to randomly assign people to a particular exposure, there may not be funding available to run a randomized trial, or there might not be enough time to conduct a full trial. In these situations, we rely on observational data to help us answer causal questions by implementing a *target trial*.
+
+A *target trial* answers: What experiment would you design if you could?
+Specifying a target trial is nearly identical to the process we described for a randomized trial.
+We define eligibility, exposure, follow-up period, outcome, estimate of interest, and the analysis plan. 
+The key difference with the target trial in the observational setting, of course, is that we cannot assign exposure.
+The analysis planning and execution step of the target trial is the most technically involved and a core focus of this book; e.g. using DAGs to ensure that we have measured and are controlling for the right set of confounders, composing statistical programs that invoke an appropriate adjustment method such as IP weighting, and conducting sensitivity analyses to assess how sensitive our conclusions are to unmeasured confounding or misspecification. 
 
 ## Causal inference with `group_by()` and `summarize()` {#sec-group-sum}
 
