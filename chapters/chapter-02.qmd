@@ -203,7 +203,7 @@ Here's the DAG that we're proposing for this question.
 library(ggdag, warn.conflicts = FALSE)
 library(ggokabeito)
 mosquito_dag <- dagify(
-  malaria_risk ~ net + income + health + temperature,
+  malaria_risk ~ net + income + health + temperature + resistance,
   net ~ income + health + temperature + eligible + household,
   eligible ~ income + household,
   health ~ income,
@@ -216,6 +216,7 @@ mosquito_dag <- dagify(
       income = 4,
       health = 5,
       temperature = 6,
+      resistance = 8.5,
       eligible = 2,
       household = 1
     ),
@@ -225,6 +226,7 @@ mosquito_dag <- dagify(
       income = 3,
       health = 1,
       temperature = 3,
+      resistance = 2,
       eligible = 3,
       household = 2
     )
@@ -235,6 +237,7 @@ mosquito_dag <- dagify(
     income = "Income",
     health = "Health",
     temperature = "Nighttime temperatures",
+    resistance = "Insecticide resistance",
     eligible = "Eligible for program",
     household = "Number in the household"
   )
@@ -261,7 +264,7 @@ In DAGs, each point represents a variable, and each arrow represents a cause.
 In other words, this diagram declares what we think the causal relationships are between these variables.
 In @fig-net-data-dag, we're saying that we believe:
 
--   Malaria risk is causally impacted by net usage, income, health, temperature, and insecticide resistance. Insecticide resistance, however, does not affect our exposure (net usage), so we omit it from the DAG.
+-   Malaria risk is causally impacted by net usage, income, health, temperature, and insecticide resistance.
 -   Net usage is causally impacted by income, health, temperature, eligibility for the free net program, and the number of people in a household.
 -   Eligibility for the free net programs is determined by income and the number of people in a household.
 -   Health is causally impacted by income.
@@ -806,7 +809,7 @@ The true effect of net use on malaria is about -10, and the true DAG that genera
 #| fig.cap: >
 #|   The true causal diagram for `net_data`. This DAG is identical to the one we proposed with one addition: genetic resistance to malaria causally reduces the risk of malaria and impacts net use. It's thus a confounder and a part of the minimal adjustment set required to get an unbiased effect estimate. In otherwords, by not including it, we've calculated the wrong effect.
 mosquito_dag_full <- dagify(
-  malaria_risk ~ net + income + health + temperature + genetic_resistance,
+  malaria_risk ~ net + income + health + temperature + insecticide_resistance + genetic_resistance,
   net ~ income + health + temperature + eligible + household + genetic_resistance,
   eligible ~ income + household,
   health ~ income,
@@ -819,6 +822,7 @@ mosquito_dag_full <- dagify(
       income = 4,
       health = 5,
       temperature = 6,
+      insecticide_resistance = 8.5,
       eligible = 2,
       household = 1,
       genetic_resistance = 8.5
@@ -829,6 +833,7 @@ mosquito_dag_full <- dagify(
       income = 3,
       health = 1,
       temperature = 3,
+      insecticide_resistance = 2,
       eligible = 3,
       household = 2,
       genetic_resistance = 1
@@ -840,6 +845,7 @@ mosquito_dag_full <- dagify(
     income = "Income",
     health = "Health",
     temperature = "Nighttime temperatures",
+    insecticide_resistance = "Insecticide resistance",
     eligible = "Eligible for program",
     household = "Number in household",
     genetic_resistance = "Malaria resistance"
