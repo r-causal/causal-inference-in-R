@@ -12,7 +12,7 @@ Relative to the complexity of specifying a good causal question, the analysis st
 In the first six chapters of this book, we'll discuss what a causal question is, how to improve our questions, and consider some examples.
 
 Causal questions are part of a broader set of questions we can ask with statistical techniques related to the primary tasks of data science: description, prediction, and causal inference [@hernan2019].
-Unfortunately, these tasks are often muddled by both the techniques we use (regression, for instance, is helpful for all three tasks) and the way we talk about them.
+Unfortunately, these tasks are often muddled by the techniques we use (regression, for instance, is helpful for all three tasks) and how we talk about them.
 When researchers are interested in causal inference from non-randomized data, we often use euphemistic language like "association" instead of declaring our intent to estimate a causal effect [@Hernan2018].
 
 In a recent study of the language of analyses in epidemiologic research, for instance, the most common root word describing the estimated effect was "associate," but many researchers also felt that "associate" implied at least *some* causal effect (@fig-word-ranking) [@haber_causal_language].
@@ -103,7 +103,7 @@ A great example of a more complex descriptive analysis during the pandemic was a
 While the calculation of expected deaths is slightly more sophisticated than most descriptive statistics, it provided a tremendous amount of information about current deaths without needing to untangle causal effects (e.g., were they due to COVID-19 directly? Inaccessible healthcare? Cardiovascular events post-COVID?).
 In this (simplified) recreation of their plot from July 2020, you can see the staggering effect of the pandemic's early months.
 
-[^3]: John Burn-Murdoch was responsible for many of these presentations and gave a [very interesting talk on the subject](https://cloud.rstudio.com/resources/rstudioglobal-2021/reporting-on-and-visualising-the-pandemic/).
+[^3]: John Burn-Murdoch was responsible for many of these presentations and gave a [fascinating talk on the subject](https://cloud.rstudio.com/resources/rstudioglobal-2021/reporting-on-and-visualising-the-pandemic/).
 
 ```{r}
 #| label: fig-ft-chart
@@ -161,7 +161,7 @@ Here are some other great examples of descriptive analyses.
 
 -   Deforestation around the world. Our World in Data [@owidforestsanddeforestation] is a data journalism organization that produces thoughtful, usually descriptive reports on various topics. In this report, they present data visualizations of both absolute change in forest coverage (forest transitions) and relative change (deforestation or reforestation), using basic statistics and forestry theory to present helpful information about the state of forests over time.
 -   The prevalence of chlamydial and gonococcal infections [@Miller2004]. Measuring the prevalence of disease (how many people currently have a disease, usually expressed as a rate per number of people) is helpful for basic public health (resources, prevention, education) and scientific understanding. In this study, the authors conducted a complex survey meant to be representative of all high schools in the United States (the target population); they used survey weights to address a variety of factors related to their question, then calculated prevalence rates and other statistics. As we'll see, weights are helpful in causal inference for the same reason: targeting a particular population. That said, not all weighting techniques are causal in nature, and they were not here.
--   Estimating race and ethnicity-specific hysterectomy inequalities [@Gartner2020]. Descriptive techniques also help us understand disparities in areas like economics and epidemiology. In this study, the authors asked: Does the risk of hysterectomy differ by racial or ethnic background? Although the analysis is stratified by a key variable, it's still descriptive. Another interesting aspect of this paper is the authors' work to ensure the research was answering questions about the right target population. Their analysis combined several data sources to better estimate the true population prevalence (instead of the prevalence among those in hospitals, as commonly presented). They also adjusted for the prevalence of hysterectomy, e.g., they calculated the incidence (new case) rate only among those who could actually have a hysterectomy (e.g., they hadn't had one yet).
+-   Estimating race and ethnicity-specific hysterectomy inequalities [@Gartner2020]. Descriptive techniques also help us understand disparities in areas like economics and epidemiology. In this study, the authors asked: Does the risk of hysterectomy differ by racial or ethnic background? Although the analysis is stratified by a key variable, it's still descriptive. Another interesting aspect of this paper is the authors' work ensuring the research answered questions about the right target population. Their analysis combined several data sources to better estimate the true population prevalence (instead of the prevalence among those in hospitals, as commonly presented). They also adjusted for the prevalence of hysterectomy, e.g., they calculated the incidence (new case) rate only among those who could actually have a hysterectomy (e.g., they hadn't had one yet).
 
 #### Validity
 
@@ -182,7 +182,7 @@ Results from data like these are not technically biased because, outside of samp
 In other words, *we've gotten an answer to the wrong question*.
 
 Notably, sometimes our data represent the entire population (or close enough) that sampling error is irrelevant.
-Consider a company with certain types of data on every customer using their service.
+Consider a company with certain data on every customer using their service.
 For many analyses, this represents the entire population (current customers) about whom we want information.
 Similarly, in countries with population-wide health registries, the data available for specific practical purposes is close enough to the entire population that no sampling is needed (although researchers might use sampling for simpler computations).
 In these cases, there's not really such a thing as uncertainty.
@@ -195,13 +195,13 @@ Descriptive analyses cannot be confounded because they are a statistical descrip
 
 #### Relationship to causal inference
 
-Humans see patterns very well; we can't help but see them, particularly in data analysis.
+Humans see patterns very well.
 Pattern-finding is a helpful feature of our brains, but it can also lead down a slippery slope of inference when we're not working with data or methods that can allow us to do that validly.
 The biggest thing to be cautious of when your goal is to describe is making the leap from description to causation (implicitly or explicitly).
 
-But of course, descriptive analysis is helpful, too, when we *are* estimating causal effects.
+But, of course, descriptive analysis is helpful when we *are* estimating causal effects.
 It helps us understand the population we're working with, the distribution of the outcomes, exposures (variables we think might be causal), and confounders (variables we need to account for to get unbiased causal effects for the exposure).
-It also helps us be certain that the data structure we're using matches the question we're trying to answer, as we'll see in [Chapter -@sec-data-causal].
+It also helps us be sure that the data structure we're using matches the question we're trying to answer, as we'll see in [Chapter -@sec-data-causal].
 You should always do descriptive analyses of your data when conducting causal research.
 
 Finally, as we'll see in [Chapter -@sec-trials-std], there are certain circumstances where we can make causal inferences with basic statistics.
@@ -217,7 +217,7 @@ Even large language models like the ones ChatGPT is based on are prediction mode
 
 Predictive modeling generally uses a different workflow than the workflow for causal modeling we'll present in this book.
 Since the goal of prediction is usually related to making predictions on new data, the workflow of this type of modeling focuses on maximizing predictive accuracy while retaining generalization to new data, sometimes called the bias-variance trade-off.
-In practice, this means splitting your data into training sets (the part of the data you build your model on) and test sets (the part of the data you assess your model with, a proxy for how it would perform on new data).
+In practice, this means splitting your data into training sets (the part of the data you build your model on) and test sets (the part you assess your model with, a proxy for how it would perform on new data).
 Usually, data scientists use cross-validation or other sampling techniques to reduce further the risk of overfitting your model to the training set.
 
 There are many excellent texts on predictive modeling, and so we refer you to those for a deeper exploration of the goals and methods of these techniques [@kuhn2013a; @harrell2001; @Kuhn_Silge_2022; @James_Witten_Hastie_Tibshirani_2022].
@@ -225,22 +225,22 @@ There are many excellent texts on predictive modeling, and so we refer you to th
 #### Examples
 
 Prediction is the most popular topic in data science, largely thanks to machine learning applications in industry.
-Prediction, of course, has a long history in statistics, and many models popular today have been used for decades in and outside of academia.
+Prediction, of course, has a long history in statistics, and many models popular today have been used for decades in and outside academia.
 
 Let's look at an example of prediction about COVID-19 [^chapter-01-1].
 In 2021, researchers published the ISARIC 4C Deterioration model, a clinical prognostic model for predicting severe adverse outcomes for acute COVID-19 [@Gupta2021].
 The authors included a descriptive analysis to understand the population from which this model was developed, particularly the distribution of the outcome and candidate predictors.
-One useful aspect of this model is that it uses items commonly measured on day one of COVID-related hospitalization.
+One helpful aspect of this model is that it uses items commonly measured on day one of COVID-related hospitalization.
 The authors built this model using cross-validation by region of the UK and then tested the model on data from a hold-out region.
 The final model included eleven items and a description of their model attributes, relation with the outcome, and so on.
 Notably, the authors used clinical domain knowledge to select candidate variables but did not fall into the temptation of interpreting the model coefficients as causal.
 Without question, some of the predictive value of this model stems from the causal structure of the variables as they relate to the outcome, but the researchers had a different goal entirely for this model and stuck to it.
 
-[^chapter-01-1]: A natural model here is predicting cases, but infectious disease modeling is complex and usually uses techniques outside the usual workflow of predictive modeling.
+[^chapter-01-1]: A natural model here is predicting cases, but infectious disease modeling is complex and usually uses techniques outside the usual predictive modeling workflow.
 
 Here are other good examples from the predictive space:
 
--   Some of the most interesting work in predictive modeling is in industry.
+-   Some of the most exciting work in predictive modeling is in industry.
     Netflix regularly shares details on their modeling success and novel strategies in their [research blog](https://research.netflix.com/).
     They also recently published a paper reviewing their use of deep learning models for recommender systems (in this case, recommending shows and movies to users) [@steck2021].
     The authors explain their experimentation with models, the details of those models, and many of the challenges they faced, resulting in a practical guide on using such models.
@@ -254,7 +254,7 @@ The key measure of validity in prediction modeling is predictive accuracy, which
 A convenient detail about predictive modeling is that we can often assess if we're right, which is not true of descriptive statistics for which we only have a subset of data or causal inference for which we don't know the true causal structure.
 We aren't always able to assess against the truth, but it's almost always required for fitting the initial predictive model [^chapter-01-2].
 
-[^chapter-01-2]: We say model singular but usually data scientists fit many models for experimentation and often the best prediction models are some combination of predictions from several models, called a stacked model
+[^chapter-01-2]: We say model singular, but usually data scientists fit many models for experimentation, and often the best prediction models are some combination of predictions from several models, called a stacked model
 
 Measurement error is also a concern for predictive modeling because we usually need accurate data for accurate predictions.
 Interestingly, measurement error and missingness can be informative in predictive settings.
@@ -274,13 +274,13 @@ We'll see more about this in @sec-pred-or-explain and the rest of the book.
 Often, people mistakenly use methods for selecting features (variables) for prediction models to select confounders in causal models.
 Aside from their risk of overfitting, these methods are appropriate for prediction models but not for causal models.
 Prediction metrics cannot determine the causal structure of your question, and predictive value for the outcome does not make a variable a confounder.
-In general, background knowledge (not prediction or associational properties) should drive variable selection for causal models @robinsImpossible; we'll discuss this process in detail in [Chapter -@sec-dags].
+In general, background knowledge (not prediction or associational statistics) should help you select variables for causal models @robinsImpossible; we'll discuss this process in detail in [Chapter -@sec-dags] and [Chapter -@sec-building-models].
 
 Prediction is nevertheless crucial to causal inference.
 From a philosophical perspective, we're comparing predictions from different *what if* scenarios: What would the outcome had one thing happened vs. if another thing happened?
 We'll spend much time on this subject, particularly in [Chapter -@sec-counterfactuals].
 We'll also talk a lot about prediction from a practical perspective: just like in prediction and some description, we'll use modeling techniques to answer causal questions.
-Techniques like propensity score methods and g-computation use model predictions to answer causal questions, but the workflow for building models and interpreting the models themselves are quite different.
+Techniques like propensity score methods and g-computation use model predictions to answer causal questions, but the workflow for building and interpreting the models themselves are quite different.
 
 ### Causal Inference
 
@@ -293,7 +293,7 @@ As with prediction and description, it's better to start with a clear, precise q
 In statistics and data science, particularly as we swim through the ocean of data of the modern world, we often end up with an answer without a question (e.g., `42`).
 This, of course, makes interpretation of the answer difficult.
 In @sec-diag, we'll discuss the structure of causal questions.
-In [Chapter -@sec-counterfactuals] and [Chapter -@sec-trials-std], we'll discuss philosophical and practical ways to sharpen our questions.
+We'll discuss philosophical and practical ways to sharpen our questions in [Chapter -@sec-counterfactuals] and [Chapter -@sec-trials-std].
 
 ::: callout-note
 ## Causal inference and explanation
@@ -303,14 +303,14 @@ We're a little more cautious about that.
 Causal inference always has a relationship to explanation, but we can accurately estimate the effect of one thing on another without understanding how it happens.
 
 Consider John Snow, the so-called father of epidemiology.
-In 1854, Snow famously investigated a cholera outbreak in London and identified that specific sources of water were to blame for the disease.
+In 1854, Snow famously investigated a cholera outbreak in London and identified that specific water sources were to blame for the disease.
 He was right: contaminated water was a mechanism for cholera transmission.
 Yet, he didn't have enough information to explain how: *Vibrio cholerae*, the bacteria responsible for cholera, wasn't identified until nearly thirty years later.
 :::
 
 #### Examples
 
-We'll see a lot of examples of causal inference in this book, but let's continue on with an example related to COVID-19.
+We'll see many examples of causal inference in this book, but let's continue with an example related to COVID-19.
 As the pandemic continued and tools like vaccines and anti-viral treatments became available, policies like universal masking also began to change.
 In February 2022, the US state of Massachusetts rescinded a statewide policy that required universal masking in public schools [@Cowger2022].
 In the greater Boston area, some school districts continued the policy while others discontinued it; those that discontinued it also did so at different times over the following weeks after the policy change.
@@ -319,6 +319,8 @@ The researchers included a descriptive analysis of the school districts to under
 To estimate the effect of universal masking on cases, the authors used a technique common in policy-related causal inference called difference-in-differences to estimate this effect.
 Their design alleviates some problematic assumptions needed for causal inference, but they also wisely controlled for potential confounders despite that advantage.
 The authors found that districts that continued masking saw a drastically lower caseload than those that didn't; their analysis concluded that almost 12,000 additional cases occurred due to the policy change, nearly 30% of the cases in the districts during the 15 weeks of the study.
+
+<!-- TODO: add example when code and data are available -->
 
 Here are a few other interesting examples:
 
@@ -350,22 +352,22 @@ It makes sense that the two would be related: naturally, things that cause other
 It's causality all the way down, so any predictive information *is* related, in some capacity, to the causal structure of the thing we're predicting. 
 Doesn't it stand to reason that a model that predicts well is causal, too?
 It's true that *some* predictive models can be great causal models and vice versa.
-Unfortunately, this is not always the case; causal effects needn't predict particularly well and good predictors needn't be themselves causally unbiased [@shmueli2010a]. 
+Unfortunately, this is not always the case; causal effects needn't predict particularly well, and good predictors needn't be causally unbiased [@shmueli2010a]. 
 There is no way to know using data alone.
 
 Let's look at the causal perspective first because it's a bit simpler. 
-Consider a model that is causally unbiased for an exposure but only includes variables related to the outcome *and* the exposure. 
-In other words, this is a model that provides us the right answer for the exposure of interest, but doesn't include other predictors of the outcome (which can sometimes be a good idea, as discussed in @sec-data-causal).
-If an outcome has many causes, then a model that accurately describes the relationship with the exposure likely won't predict the outcome very well.
+Consider a causally unbiased model for an exposure but only includes variables related to the outcome *and* the exposure. 
+In other words, this model provides us with the correct answer for the exposure of interest but doesn't include other predictors of the outcome (which can sometimes be a good idea, as discussed in @sec-data-causal).
+If an outcome has many causes, a model that accurately describes the relationship with the exposure likely won't predict the outcome very well.
 Likewise, if a true causal effect of the exposure on the outcome is small, it will bring little predictive value.
-In other words, the predictive ability of a model, whether high or small, can't help us distinguish if the model is giving us the right answer.
+In other words, the predictive ability of a model, whether high or small, can't help us distinguish if the model is giving us the correct answer.
 Of course, low predictive power might also indicate that a causal effect isn't much use from an applied perspective, although that depends on several statistical factors.
 
 There are two more complex reasons that predictive models won't always be unbiased causal models.
 For the first reason, let's consider an accurate model from a causal perspective: it estimates effects on an outcome, and all of these effects are unbiased.
 Even in this ideal setting, you might get better predictions using a different model.
 The reason has to do with the bias-variance trade-off in predictive modeling.
-When effects are small, data are noisy, predictors are highly correlated, or there's not much data, then it might make sense to use a biased model like penalized regression.
+When effects are small, data are noisy, predictors are highly correlated, or there's not much data, using a biased model like penalized regression might make sense.
 These models intentionally introduce bias in favor of improved variance in out-of-data predictions.
 Since the goals of prediction and causal inference are different (accurate predictions, usually for out-of-data observations vs. an unbiased effect), the best model for inference is not necessarily the best prediction model.
 
@@ -395,13 +397,12 @@ In other words, we can't interpret the effects of confounders as causal because 
 Descriptive, predictive, and causal analyses will always contain some aspect of each other.
 A predictive model gains some of its predictive power from the causal structure of the outcome, and a causal model has some predictive power because it contains information about the outcome.
 However, the same model in the same data with different goals will have different usefulness depending on those goals.
-Be cautious and be thoughtful.
 <!-- TODO: uncomment this when section is written -- We'll dive more deeply into this topic in @sec-causal-pred-revisit. -->
 
 ## Diagraming a causal claim {#sec-diag}
 
 Each analysis task, whether descriptive, predictive, or inferential, should start with a clear, precise question. 
-To better understand the structure of causal questions (to which we'll return our focus), let's diagram them. 
+Let's diagram them to understand better the structure of causal questions (to which we'll return our focus). 
 Diagramming sentences is a grammatical method used to visually represent the structure of a sentence, occasionally taught in grammar school.
 In this technique, sentences are deconstructed into their constituent parts, such as subjects, verbs, objects, and modifiers, and then displayed using a series of lines and symbols.
 The arrangement of these elements on the diagram reflects their syntactic roles and how they interact within the sentence's overall structure.
@@ -412,31 +413,15 @@ We've pulled out the *cause*, the *effect*, the *subject* (for whom?), and the *
 
 ```{r}
 #| echo: false
-#| fig-cap: "Example of diagraming a causal claim"
+#| fig-cap: "Example of diagraming a causal claim."
 #| fig-height: 2
 #| label: fig-diagram-1
-library(ggplot2)
-
-data <- data.frame(labels = c("cause", "effect", "for whom?", "when?", "for whom?", "when?"),
-                   x = c(1.25, 1.75, 1.25, 1.55, 1.8, 2.05),
-                   y = c(1, 1, 0.8, 0.7, 0.8, 0.7),
-                   angle = c(0, 0, -30, 0, -30, 0))  
-
-ggplot(data, aes(x = x, y = y)) +
-  geom_text(aes(label = labels, angle = angle, vjust = 0), 
-            size = 7) +
-  geom_segment(aes(x = 1, xend = 2, y = 0.95, yend = 0.95)) +  
-  geom_segment(aes(x = 1.5, xend = 1.5, y = 0.95, yend = 1.1)) +
-  geom_segment(aes(x = 1, xend = 1.35, y = 0.95, yend = 0.65)) +
-  geom_segment(aes(x = 1.35, xend = 1.65, y = 0.65, yend = 0.65)) +
-  geom_segment(aes(x = 1.55, xend = 1.9, y = 0.95, yend = 0.65)) +
-  geom_segment(aes(x = 1.9, xend = 2.15, y = 0.65, yend = 0.65)) +
-  theme_void()
+knitr::include_graphics("../images/sentence-diagram-1.png")
 ```
 
 Let's start with a basic causal question: **Does smoking cause lung cancer?**
 
-The causal claim here could be *smoking causes lung cancer*.
+The causal claim here could be that *smoking causes lung cancer*.
 @fig-diagram-2 shows a potential diagram of this causal claim.
 
 ```{r}
@@ -444,82 +429,38 @@ The causal claim here could be *smoking causes lung cancer*.
 #| label: fig-diagram-2
 #| fig-height: 2
 #| fig-cap: "Diagram of the causal claim \"smoking causes lung cancer\"."
-data <- data.frame(labels = c("smoking", "lung cancer", "for everyone?", "immediately?", "for everyone?", "immediately?"),
-                   x = c(1.25, 1.75, 1.25, 1.55, 1.8, 2.05),
-                   y = c(1, 1, 0.8, 0.7, 0.8, 0.7),
-                   angle = c(0, 0, -30, 0, -30, 0))  
-
-ggplot(data, aes(x = x, y = y)) +
-  geom_text(aes(label = labels, angle = angle, vjust = 0), 
-            size = 6) +
-  geom_segment(aes(x = 1, xend = 2, y = 0.95, yend = 0.95)) +  
-  geom_segment(aes(x = 1.5, xend = 1.5, y = 0.95, yend = 1.1)) +
-  geom_segment(aes(x = 1, xend = 1.35, y = 0.95, yend = 0.65)) +
-  geom_segment(aes(x = 1.35, xend = 1.65, y = 0.65, yend = 0.65)) +
-  geom_segment(aes(x = 1.55, xend = 1.9, y = 0.95, yend = 0.65)) +
-  geom_segment(aes(x = 1.9, xend = 2.15, y = 0.65, yend = 0.65)) +
-  theme_void()
+knitr::include_graphics("../images/sentence-diagram-2.png")
 ```
 
-Let's try to get more specific.
-A study was published in *JAMA* (the Journal of the American Medical Association) in 2005 titled "Effect of Smoking Reduction on Lung Cancer Risk".
+Let's get more specific.
+A study was published in *JAMA* (the Journal of the American Medical Association) in 2005 titled "Effect of Smoking Reduction on Lung Cancer Risk."
 This study concluded: "Among individuals who smoke 15 or more cigarettes per day, smoking reduction by 50% significantly reduces the risk of lung cancer".
-[@godtfredsen2005effect] The study goes on to describe the time frame studied as 5-10 years.
+[@godtfredsen2005effect] The study describes the time frame studied as 5-10 years.
 Let's diagram this causal claim.
-Here, we are assuming that the eligibility criteria and the target population for the estimated causal effect are the same (individuals who smoke 15 or more cigarettes per day), this need not always be the case.
-In @sec-estimands we will discuss other potential target populations.
+Here, we assume that the eligibility criteria and the target population for the estimated causal effect are the same (individuals who smoke 15 or more cigarettes per day); this need not always be the case.
+In @sec-estimands, we will discuss other potential target populations.
 
 ```{r}
 #| echo: false
-#| fig-cap: "Example diagram of a more specific causal claim based on results from @godtfredsen2005effect"
+#| fig-cap: "Example diagram of a more specific causal claim based on results from @godtfredsen2005effect."
 #| label: fig-diagram-3
-
-data <- data.frame(labels = c("Reducing smoking by 50%", "Reduced lung cancer", "People who\nsmoke 15+\ncigarettes per day", "when they stopped", "People who\nsmoke 15+\ncigarettes per day", "between 5-10 years"),
-                   x = c(1, 2, .83, 1.4, 1.88, 2.45),
-                   y = c(1, 1, 0.77, 0.7, 0.77, 0.7),
-                   angle = c(0, 0, -52, 0, -52, 0))  
-
-ggplot(data, aes(x = x, y = y)) +
-  geom_text(aes(label = labels, angle = angle, vjust = 0), size = 5) +
-  geom_segment(aes(x = 0.5, xend = 2.5, y = 0.95, yend = 0.95)) +  
-  geom_segment(aes(x = 1.5, xend = 1.5, y = 0.95, yend = 1.1)) +
-  geom_segment(aes(x = 0.5, xend = 1, y = 0.95, yend = 0.65)) +
-  geom_segment(aes(x = 1, xend = 1.5, y = 0.65, yend = 0.65)) +
-  geom_segment(aes(x = 1.55, xend = 2.05, y = 0.95, yend = 0.65)) +
-  geom_segment(aes(x = 2.05, xend = 2.55, y = 0.65, yend = 0.65)) +
-  xlim(c(0.5, 2.75)) +
-  ylim(c(0.5, 1.2)) +
-  theme_void() 
+knitr::include_graphics("../images/sentence-diagram-3.png")
 ```
 
-Translating this idea into asking good causal questions, we can map the following terms that you will see throughout this book to these diagrams: *exposure* (the cause), *outcome* (the effect), *eligibility criteria* (for whom?), *time zero* (when did the participants begin to be followed?), *target population*, (who can we estimate an outcome effect for?) and *follow up period* (when?).
+Translating this idea into asking good causal questions, we can map the following terms that you will see throughout this book to these diagrams: *exposure* (the cause), *outcome* (the effect), *eligibility criteria* (for whom?), *time zero* (when did the participants begin to be followed?), *target population*, (who can we estimate an outcome effect for?) and *follow-up period* (when?).
 
 ```{r}
 #| echo: false
 #| label: fig-diagram-4
 #| fig-height: 2
 #| fig-cap: "Example diagram mapped to causal analysis terminology"
-data <- data.frame(labels = c("exposure", "outcome", "eligibility criteria", "time zero", "target population", "follow-up time"),
-                   x = c(1.25, 1.75, 1.25, 1.55, 1.8, 2.15),
-                   y = c(1, 1, 0.8, 0.7, 0.8, 0.7),
-                   angle = c(0, 0, -30, 0, -30, 0))  
-
-ggplot(data, aes(x = x, y = y)) +
-  geom_text(aes(label = labels, angle = angle, vjust = 0), 
-            size = 7) +
-  geom_segment(aes(x = 1, xend = 2, y = 0.95, yend = 0.95)) +  
-  geom_segment(aes(x = 1.5, xend = 1.5, y = 0.95, yend = 1.1)) +
-  geom_segment(aes(x = 1, xend = 1.35, y = 0.95, yend = 0.65)) +
-  geom_segment(aes(x = 1.35, xend = 1.65, y = 0.65, yend = 0.65)) +
-  geom_segment(aes(x = 1.55, xend = 1.9, y = 0.95, yend = 0.65)) +
-  geom_segment(aes(x = 1.9, xend = 2.15, y = 0.65, yend = 0.65)) +
-  theme_void()
+knitr::include_graphics("../images/sentence-diagram-4.png")
 ```
 
 Asking good causal questions means we map the *question* to the observable *evidence*.
 Let's return to the smoking example.
-Our initial question was: *Does smoking causes lung cancer?*; using our study, the evidence shows *For people who smoke 15+ cigarettes a day, reducing smoking by 50% reduces the risk of lung cancer over 5-10 years*.
-Do the answer match the question?
+Our initial question was: *Does smoking cause lung cancer?*; The evidence in the study shows: *For people who smoke 15+ cigarettes a day, reducing smoking by 50% reduces the risk of lung cancer over 5-10 years*.
+Does the answer match the question?
 Not quite.
-Let's update our question to match what the study actually was able to show: *For people who smoke 15+ cigarettes a day, does reducing smoking by 50% reduce the lung cancer risk over 5-10 years?*.
-Honing this skill — asking answerable causal questions — is important, and one that we will discuss throughout this book.
+Let's update our question to match what the study actually showed: *For people who smoke 15+ cigarettes a day, does reducing smoking by 50% reduce the lung cancer risk over 5-10 years?*
+Honing this skill — asking answerable causal questions — is essential and one we will discuss throughout this book.

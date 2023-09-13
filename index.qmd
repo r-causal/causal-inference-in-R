@@ -42,7 +42,7 @@ A few books you might like:
 
 The first book is focused on epidemiology.
 The latter two are focused on econometrics.
-We also recommend *The Book of Why* @pearl2018book for more on causal diagrams.
+We also recommend *The Book of Why* @pearl2018why for more on causal diagrams.
 
 ## Conventions
 
