@@ -479,7 +479,7 @@ Unfortunately, we still may have unmeasured confounding, which we'll discuss bel
 Randomization is one causal inference technique that *does* deal with unmeasured confounding, one of the reasons it is so powerful.
 :::
 
-We might also want to know how well-balanced the groups are by confounders.
+We might also want to know how well-balanced the groups are by each confounder.
 One way to do this is to calculate the standardized mean differences (SMDs) for each confounder with and without weights.
 We'll calculate the SMDs with `tidy_smd()` then plot them with `geom_love()`.
 
