@@ -24,6 +24,7 @@ Imports:
     halfmoon (>= 0.0.0.9000),
     here,
     janitor,
+    kableExtra,
     lubridate,
     MatchIt,
     propensity (>= 0.0.0.9000),
@@ -44,12 +45,12 @@ Suggests:
     xml2
 Remotes: 
     gadenbuie/grkstyle,
+    hadley/emo,
     LucyMcGowan/tipr,
     LucyMcGowan/touringplans,
     malcolmbarrett/causalworkshop,
     malcolmbarrett/halfmoon,
-    malcolmbarrett/propensity,
-    hadley/emo
+    malcolmbarrett/propensity
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
