@@ -46,7 +46,7 @@ In @tbl-protocol we map each of these elements to the corresponding assumption t
 
 Assumption | Eligibility Criteria | Exposure Definition| Assignment Procedures | Follow-up Period | Outcome Definition | Causal contrast | Analysis Plan
 ------------|----------------- | ------------------|---------|----------|----------|--------- | -------
-Consistency (Well defined exposure) | |`r emo::ji("heavy_check_mark")`|| | |
+Consistency (Well defined exposure) |`r emo::ji("heavy_check_mark")`|`r emo::ji("heavy_check_mark")`|| | |
 Consistency (No interference) | | `r emo::ji("heavy_check_mark")`|`r emo::ji("heavy_check_mark")` | | `r emo::ji("heavy_check_mark")` | | `r emo::ji("heavy_check_mark")`
 Positivity |`r emo::ji("heavy_check_mark")`||`r emo::ji("heavy_check_mark")`|| | | `r emo::ji("heavy_check_mark")`
 Exchangeability |`r emo::ji("heavy_check_mark")`||`r emo::ji("heavy_check_mark")`|`r emo::ji("heavy_check_mark")`|| | `r emo::ji("heavy_check_mark")`
