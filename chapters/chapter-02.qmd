@@ -34,7 +34,7 @@ Herodotus, the 5th century BC Greek author of *The Histories*, observed Egyptian
 Many modern nets are also treated with insecticide, dating back to Russian soldiers in World War II [@nevill1996], although some people still use them as fishing nets [@gettleman2015].
 
 It's easy to imagine a randomized trial that deals with this question: participants in a study are randomly assigned to use a bed net, and we follow them over time to see if there is a difference in malaria risk between groups.
-Randomization is often the best way to estimate a causal effect of an intervention because it reduces the number of assumptions we need to make for that estimate to be valid (we will discuss these assumptions @sec-assump).
+Randomization is often the best way to estimate a causal effect of an intervention because it reduces the number of assumptions we need to make for that estimate to be valid (we will discuss these assumptions in @sec-assump).
 In particular, randomization addresses confounding very well, accounting for confounders about which we may not even know.
 
 Several landmark trials have studied the effects of bed net use on malaria risk, with several essential studies in the 1990s.
@@ -482,7 +482,7 @@ Unfortunately, we still may have unmeasured confounding, which we'll discuss bel
 Randomization is one causal inference technique that *does* deal with unmeasured confounding, one of the reasons it is so powerful.
 :::
 
-We might also want to know how well-balanced the groups are by confounders.
+We might also want to know how well-balanced the groups are by each confounder.
 One way to do this is to calculate the standardized mean differences (SMDs) for each confounder with and without weights.
 We'll calculate the SMDs with `tidy_smd()` then plot them with `geom_love()`.
 
