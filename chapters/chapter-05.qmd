@@ -173,6 +173,7 @@ In the previous section, we discussed *backdoor paths*. These are paths between 
 
 ```{r}
 #| label: fig-paths
+#| fig-cap: "Open paths based on the proposed DAG in @fig-dag-podcast"
 ggdag_paths(podcast_dag)
 ```
 In @fig-paths we see two open paths, one through `mood` and one through `prepared`. This tells us we need to find a way to account for these open, non-causal paths. Some ways to do this include:
