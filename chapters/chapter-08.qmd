@@ -2,10 +2,79 @@
 
 {{< include 00-setup.qmd >}}
 
+The propensity score is a *balancing* tool -- we use it to help us make our exposure groups *exchangeable*. There are many ways to incorporate the propensity score into an analysis. Commonly used techniques include stratification (estimating the causal effect within propensity score stratum), matching, weighting, and direct covariate adjustment. In this section, we will focus on *matching* and *weighting*; other techniques will be discussed once we introduce the *outcome model*. Recall at this point in the book we are still in the *design* phase. We have not yet incorporated the outcome into our analysis at all. 
+
 ## Matching
 
+Ultimately, we want the exposed and unexposed observations to be *exchangeable* with respect to the confounders we have proposed in our DAG (so we can use the observed effect for one to estimate the counterfactual for the other). One way to do this is to ensure that each observation in our analysis sample has at least one observation of the opposite exposure that has *match*ing values for each of these confounders. If we had a small number of binary confounders, for example, we might be able to construct an *exact match* for observations (and only include those for whom such a match exists), but as the number and continuity of confounders increases, exact matching becomes less feasible. This is where the propensity score, a summary measure of all of the confounders, comes in to play. 
+
+Let's setup the data as we did in @sec-building-models.
+
 ```{r}
-rnorm(5)
+library(broom)
+library(touringplans)
+
+seven_dwarfs_9 <- seven_dwarfs_train_2018 |> filter(wait_hour == 9)
+```
+
+We can re-fit the propensity score using the `{MatchIt}` package, as below. Notice here the `matchit` function fit a logistic regression model for our propensity score, as we had in @sec-building-models. There were 60 days in 2018 where the Magic Kingdom had extra magic morning hours. For each of these 60 exposed days, `matchit` found a comparable unexposed day, by implementing a nearest-neighbor match using the constructed propensity score. Examining the output, we also see that the target estimand is an "ATT" (do not worry about this yet, we will discuss this and several other estimands in @sec-estimands).
+
+```{r}
+library(MatchIt)
+m <- matchit(
+  park_extra_magic_morning ~ park_ticket_season + park_close + park_temperature_high,
+  data = seven_dwarfs_9)
+m
+```
+We can use the `get_matches` function to create a data frame with the original variables that only consists of those who were matched. Notice here our sample size has been reduced from the original 354 days to 120. 
+
+```{r}
+matched_data <- get_matches(m)
+glimpse(matched_data)
 ```
 
 ## Weighting
+
+One way to think about matching is as a crude "weight" where everyone who was matched gets a weight of 1 and everyone who was not matched gets a weight of 0 in the final sample. Another option is to allow this weight to be smooth, applying a weight to allow, on average, the covariates of interest to be balanced in the weighted population. To do this, we will construct a weight using the propensity score. There are many different weights that can be applied, depending on your target estimand of interest (see @sec-estimand for details). For this section, we will focus on the "Average Treatment Effect" weights, commonly referred to as an "inverse probability weight". The weight is constructed as follows, where each observation is weighted by the *inverse* of the probability of receiving the exposure they received. 
+
+$$w_{ATE} = \frac{X}{p} + \frac{(1 - X)}{1 - p}$$
+
+For example, if observation 1 had a very high likelihood of being exposed given their pre-exposure covariates ($p = 0.9$), but they in fact were *not* exposed, their weight would be 10 ($w_1 = 1 / (1 - 0.9)$). Likewise, if observation 2 had a very high likelihood of being exposed given their pre-exposure covariates ($p = 0.9$), and they *were* exposed, their weight would be 1.1 ($w_2 = 1 / 0.9$). Intuitively, we give *more* weight to observations who, based on their measured confounders, appear to have useful information for constructing a counterfactual -- we would have predicted that they were exposed and but by chance they were not, or vice-versa. The `{propensity}` package is useful for implementing propensity score weighting.
+
+```{r}
+library(propensity)
+
+seven_dwarfs_9_with_ps <-
+  glm(
+    park_extra_magic_morning ~ park_ticket_season + park_close + park_temperature_high,
+    data = seven_dwarfs_9,
+    family = binomial()
+  ) |>
+  augment(type.predict = "response", data = seven_dwarfs_9)
+seven_dwarfs_9_with_wt <- seven_dwarfs_9_with_ps |>
+  mutate(w_ate = wt_ate(.fitted, park_extra_magic_morning)) 
+```
+
+@tbl-df-wt shows the weights in the first column.
+
+```{r}
+#| label: tbl-df-wt
+#| tbl-cap: >
+#|   The first six observations in the `seven_dwarfs_9_with_wt` dataset, including their propensity scores in the `.fitted` column and weight in the `w_ate` column.
+seven_dwarfs_9_with_wt |>
+  select(
+    w_ate,
+    .fitted,
+    park_date,
+    park_extra_magic_morning,
+    park_ticket_season,
+    park_close,
+    park_temperature_high
+  ) |>
+  head() |>
+  knitr::kable()
+```
+
+
+
+
