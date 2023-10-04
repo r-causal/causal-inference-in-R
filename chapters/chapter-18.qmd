@@ -1,4 +1,4 @@
-# Sensitivity analysis
+# Sensitivity analysis  {#sec-sensitivity}
 
 ## Quantitative bias analyses
 

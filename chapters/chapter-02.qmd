@@ -19,9 +19,9 @@ We'll focus on the broader ideas behind each step and what they look like all to
 In this guided exercise, we'll attempt to answer a causal question: does using a bed net reduce the risk of malaria?
 
 Malaria remains a serious public health issue.
-Additionally, while malaria incidence has decreased since 2000, 2020 and the COVID-19 pandemic saw an increase in cases and deaths due primarily to service interruption [@worldma].
+While malaria incidence has decreased since 2000, 2020 and the COVID-19 pandemic saw an increase in cases and deaths due primarily to service interruption [@worldma].
 About 86% of malaria deaths occurred in 29 countries.
-Still, nearly half of all malaria deaths occurred in just six countries: Nigeria (27%), the Democratic Republic of the Congo (12%), Uganda (5%), Mozambique (4%), Angola (3%), and Burkina Faso (3%).
+Nearly half of all malaria deaths occurred in just six of those countries: Nigeria (27%), the Democratic Republic of the Congo (12%), Uganda (5%), Mozambique (4%), Angola (3%), and Burkina Faso (3%).
 Most of these deaths occurred in children under 5 [@mosquito].
 Malaria also poses severe health risks to pregnant women and worsens birth outcomes, including early delivery and low birth weight.
 
@@ -40,15 +40,14 @@ In particular, randomization addresses confounding very well, accounting for con
 Several landmark trials have studied the effects of bed net use on malaria risk, with several essential studies in the 1990s.
 A 2004 meta-analysis found that insecticide-treated nets reduced childhood mortality by 17%, malarial parasite prevalence by 13%, and cases of uncomplicated and severe malaria by about 50% (compared to no nets) [@lengeler2004].
 Since the World Health Organization began recommending insecticide-treated nets, insecticide resistance has been a big concern.
-Still, a follow-up analysis of trials found that it has yet to impact the public health benefits of bed nets [@pryce2018].
+However, a follow-up analysis of trials found that it has yet to impact the public health benefits of bed nets [@pryce2018].
 
 Trials have also been influential in determining the economics of bed net programs.
 For instance, one trial compared free net distribution versus a cost-share program (where participants pay a subsidized fee for nets).
 The study's authors found that net uptake was similar between the groups and that free net distribution --- because it was easier to access --- saved more lives, and was cheaper per life saved than the cost-sharing program [@cohen2010].
 
 There are several reasons we might not be able to conduct a randomized trial, including ethics, cost, and time.
-We have substantial, robust evidence in favor of bed net use.
-Still, let's consider some conditions where observational causal inference helps answer questions about bed nets and malaria prevention.
+We have substantial, robust evidence in favor of bed net use, but let's consider some conditions where observational causal inference could help.
 
 -   Imagine we are at a time before trials on this subject, and let's say people have started to use bed nets for this purpose on their own.
     Our goal may still be to conduct a randomized trial, but we can answer questions more quickly with observed data.
@@ -62,13 +61,13 @@ Still, let's consider some conditions where observational causal inference helps
 -   We may also want to estimate a different effect or the effect for another population than in previous trials.
     For example, both randomized and observational studies helped us better understand that insecticide-based nets improve malaria resistance in the entire community, not just among those who use nets, so long as net usage is high enough [@howard2000; @hawley2003].
 
-As we saw in @sec-causal-question and we'll see in @sec-g-comp, the causal inference techniques that we'll discuss in this book are often beneficial even when we're able to randomize.
+As we'll see in @sec-trials-std and @sec-g-comp, the causal inference techniques that we'll discuss in this book are often beneficial even when we're able to randomize.
 
 When we conduct an observational study, it's still helpful to think through the randomized trial we would run were it possible.
 The trial we're trying to emulate in this causal analysis is the *target trial.* Considering the target trial helps us make our causal question more accurate.
 Let's consider the causal question posed earlier: does using a bed net (a mosquito net) reduce the risk of malaria?
 This question is relatively straightforward, but it is still vague.
-In conducting an analysis, we'll need to address several key questions:
+As we saw in @sec-causal-question, we need to clarify some key areas:
 
 -   What do we mean by "bed net"?
     There are several types of nets: untreated bed nets, insecticide-treated bed nets, and newer long-lasting insecticide-treated bed nets.
@@ -87,7 +86,7 @@ In conducting an analysis, we'll need to address several key questions:
     Who is it practical to include in our study?
     Who might we need to exclude?
 
-We will use simulated data to answer a more specific question: Does using insecticide-treated bed nets decrease the risk of contracting malaria?
+We will use simulated data to answer a more specific question: Does using insecticide-treated bed nets compared to no nets decrease the risk of contracting malaria after 1 year?
 In this particular data, [simulated by Dr. Andrew Heiss](https://evalsp21.classes.andrewheiss.com/example/matching-ipw/#program-background):
 
 > researchers are interested in whether using mosquito nets decreases an individual's risk of contracting malaria.
@@ -96,7 +95,8 @@ In this particular data, [simulated by Dr. Andrew Heiss](https://evalsp21.classe
 
 Because we're using simulated data, we'll have direct access to a variable that measures the likelihood of contracting malaria, something we wouldn't likely have in real life.
 We'll stick with this measure because we know the actual effect size.
-We'll use simulated data, `net_data`, from the {[causalworkshop](https://github.com/r-causal/causalworkshop)} package, which includes ten variables:
+We can also safely assume that the population in our dataset represents the population we want to make inferences about (the unnamed country) because the data are simulated as such.
+We can find the simulated data in `net_data` from the {[causalworkshop](https://github.com/r-causal/causalworkshop)} package, which includes ten variables:
 
 <!-- (TODO: move this to causaldata?) -->
 
@@ -408,7 +408,7 @@ broom's `augment()` function extracts prediction-related information from the mo
 propensity's `wt_ate()` function calculates the inverse probability weight given the propensity score and exposure.
 
 For inverse probability weighting, the ATE weight is the probability of receiving the treatment you actually received.
-In other words, if you used a bed net, the ATE weight is the probability that you used a net, and if you did *not* use a net, it is the probability that you did not use a net.
+In other words, if you used a bed net, the ATE weight is the probability that you used a net, and if you did *not* use a net, it is the probability that you did *not* use a net.
 
 ```{r}
 library(broom)
@@ -425,17 +425,17 @@ net_data_wts |>
 ```
 
 `wts` represents the amount each observation will be up-weighted or down-weighted in the outcome model we will soon fit.
-For instance, the first household used a bed net and had a predicted probability of `r round(net_data_wts$.fitted[[1]], digits = 2)`.
-That's a pretty low probability considering they did, in fact, use a net, so their weight is higher at `r round(net_data_wts$wts[[1]], digits = 2)`.
-In other words, this household will be up-weighted almost three times compared to the naive linear model we fit above.
-The second household did *not* use a bed net; they're predicted probability of net use was `r round(net_data_wts$.fitted[[2]], digits = 2)` (or put differently, a predicted probability of *not* using a net of `r 1 - round(net_data_wts$.fitted[[2]], digits = 2)`).
+For instance, the 16th household used a bed net and had a predicted probability of `r round(net_data_wts$.fitted[[16]], digits = 2)`.
+That's a pretty low probability considering they did, in fact, use a net, so their weight is higher at `r round(net_data_wts$wts[[16]], digits = 2)`.
+In other words, this household will be up-weighted compared to the naive linear model we fit above.
+The first household did *not* use a bed net; they're predicted probability of net use was `r round(net_data_wts$.fitted[[1]], digits = 2)` (or put differently, a predicted probability of *not* using a net of `r 1 - round(net_data_wts$.fitted[[1]], digits = 2)`).
 That's more in line with their observed value of `net`, but there's still some predicted probability of using a net, so their weight is `r round(net_data_wts$wts[[2]], digits = 2)`.
 
 ## Diagnose our models
 
 The goal of propensity score weighting is to weight the population of observations such that the distribution of confounders is balanced between the exposure groups.
-Put another way, we are, in principle, removing the associational arrows between confounders and exposure in the DAG, so that the confounding paths no longer affect our estimates.
-Here's the distribution of the propensity score by group, created by `geom_mirror_histogram()` from the halfmoon package for assessing balance in propensity score models (as well as visualizing the pseudo-population the weights simulate):
+Put another way, we are, in principle, removing the arrows between the confounders and exposure in the DAG, so that the confounding paths no longer distort our estimates.
+Here's the distribution of the propensity score by group, created by `geom_mirror_histogram()` from the halfmoon package for assessing balance in propensity score models:
 
 ```{r}
 #| label: fig-mirror-histogram-net-data-unweighted
@@ -471,7 +471,7 @@ ggplot(net_data_wts, aes(.fitted)) +
   labs(x = "propensity score")
 ```
 
-In this example, the unweighted distributions are not awful---the shapes are fairly similar here---but the weighted distributions in @fig-mirror-histogram-net-data-weighted are much more similar.
+In this example, the unweighted distributions are not awful---the shapes are somewhat similar here, and the overlap quite a bit---but the weighted distributions in @fig-mirror-histogram-net-data-weighted are much more similar.
 
 ::: callout-caution
 ## Unmeasured confounding
@@ -667,7 +667,7 @@ At its heart, the calculation we're doing is
 fit_ipw(bootstrapped_net_data$splits[[n]])
 ```
 
-Where *n* is one of 1,000.
+Where *n* is one of 1,000 indices.
 We'll use purrr's `map()` function to iterate across each `split` object.
 
 ```{r}
@@ -774,11 +774,11 @@ Now we have to consider: which of these scenarios are plausible given our domain
 
 Now let's consider a much more specific sensitivity analysis.
 Some ethnic groups, such as the Fulani, have a genetic resistance to malaria [@arama2015].
-Let's say that in our simulated data, an unnamed ethnic group shares this genetic resistance to malaria.
-For historical reasons, bed net use in this fictional group is also very high.
+Let's say that in our simulated data, an unnamed ethnic group in the unnamed country shares this genetic resistance to malaria.
+For historical reasons, bed net use in this group is also very high.
 We don't have this variable in `net_data`, but let's say we know from the literature that in this sample, we can estimate at:
 
-1.  People with this genetic resistance have, on average, about 10 lower malaria risk.
+1.  People with this genetic resistance have, on average, a lower malaria risk by about 10.
 2.  About 26% of people who use nets in our study have this genetic resistance.
 3.  About 5% of people who don't use nets have this genetic resistance.
 
@@ -913,7 +913,7 @@ What do you think?
 Is this estimate reliable?
 Did we do a good job addressing the assumptions we need to make for a causal effect, mainly that there is no confounding?
 How might you criticize this model, and what would you do differently?
-Ok, we know that -10 is the correct answer because the data are simulated, but in practice, we can never be sure, so we need to continue probing our assumptions until we're confident they are robust.
+Ok, we know that -10 is the correct answer because the data are simulated, but in practice, we can never be sure, so we need to continue probing our assumptions until we're confident they are robust. We'll explore these techniques and others in @sec-sensitivity.
 <!-- TODO: Maybe use sickle cell as an example of a precision variable in the variable selection section later in the book. Interesting instance because sickle cell can't be downstream. Consider in the context of over adjustment. -->
 
 To calculate this effect, we:
@@ -926,4 +926,4 @@ To calculate this effect, we:
 6.  Conducted sensitivity analysis on the effect estimate (using tipping point analysis)
 
 Throughout the rest of the book, we'll follow these broad steps in several examples from medicine, economics, and industry.
-We'll dive more deeply into propensity score techniques, explore alternative methods for calculating causal effects, and, most importantly, make sure, over and over again, that the assumptions we're making are reasonable---even if we'll never know for sure.
+We'll dive more deeply into propensity score techniques, explore other methods for estimating causal effects, and, most importantly, make sure, over and over again, that the assumptions we're making are reasonable---even if we'll never know for sure.
