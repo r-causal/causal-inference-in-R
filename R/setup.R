@@ -1,9 +1,9 @@
 options(
-  tidyverse.quiet = TRUE, 
+  tidyverse.quiet = TRUE,
   propensity.quiet = TRUE,
   tipr.verbose = FALSE,
-  htmltools.dir.version = FALSE, 
-  width = 55, 
+  htmltools.dir.version = FALSE,
+  width = 55,
   digits = 4,
   ggplot2.discrete.colour = ggokabeito::palette_okabe_ito(),
   ggplot2.discrete.fill = ggokabeito::palette_okabe_ito(),
@@ -17,9 +17,9 @@ library(ggplot2)
 
 theme_set(
   theme_minimal(
-    base_size = getOption("book.base_size"), 
+    base_size = getOption("book.base_size"),
     base_family = getOption("book.base_family")
-  ) %+replace% 
+  ) %+replace%
     theme(
       panel.grid.minor = element_blank(),
       legend.position = "bottom"
@@ -33,16 +33,16 @@ theme_dag <- function() {
 geom_dag_label_repel <- function(..., seed = 10) {
   ggdag::geom_dag_label_repel(
     aes(x, y, label = label),
-    box.padding = 3.5, 
+    box.padding = 3.5,
     inherit.aes = FALSE,
-    max.overlaps = Inf, 
+    max.overlaps = Inf,
     family = getOption("book.base_family"),
     seed = seed,
-    label.size = NA, 
+    label.size = NA,
     label.padding = 0.1,
     size = getOption("book.base_size") / 3,
     ...
-  ) 
+  )
 }
 
 est_ci <- function(.df, rsample = FALSE) {
@@ -51,7 +51,7 @@ est_ci <- function(.df, rsample = FALSE) {
       glue::glue("{round(.df[[1]], digits = 1)} (95% CI {round(.df[[2]], digits = 1)}, {round(.df[[3]], digits = 1)})")
     )
   }
-  
+
   if (rsample) {
     glue::glue("{round(.df$.estimate, digits = 1)} (95% CI {round(.df$.lower, digits = 1)}, {round(.df$.upper, digits = 1)})")
   } else {
