@@ -43,15 +43,15 @@ Suggests:
     grkstyle (>= 0.0.3),
     styler,
     xml2
-Remotes:  
+Remotes: 
     gadenbuie/grkstyle,
     hadley/emo,
     LucyMcGowan/tipr,
     LucyMcGowan/touringplans,
     malcolmbarrett/causalworkshop,
+    malcolmbarrett/ggdag,
     malcolmbarrett/halfmoon,
-    malcolmbarrett/propensity,
-    malcolmbarrett/ggdag
+    malcolmbarrett/propensity
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
