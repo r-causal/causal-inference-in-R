@@ -17,7 +17,7 @@ Imports:
     broom,
     causalworkshop (>= 0.1.0),
     emo (>= 0.0.0.9000),
-    ggdag (>= 0.2.7),
+    ggdag (>= 0.2.10.9000),
     ggokabeito,
     ggtext,
     gtsummary (>= 1.7.0),
@@ -43,14 +43,15 @@ Suggests:
     grkstyle (>= 0.0.3),
     styler,
     xml2
-Remotes: 
+Remotes:  
     gadenbuie/grkstyle,
     hadley/emo,
     LucyMcGowan/tipr,
     LucyMcGowan/touringplans,
     malcolmbarrett/causalworkshop,
     malcolmbarrett/halfmoon,
-    malcolmbarrett/propensity
+    malcolmbarrett/propensity,
+    malcolmbarrett/ggdag
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
