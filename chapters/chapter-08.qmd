@@ -23,7 +23,8 @@ We can re-fit the propensity score using the `{MatchIt}` package, as below. Noti
 library(MatchIt)
 m <- matchit(
   park_extra_magic_morning ~ park_ticket_season + park_close + park_temperature_high,
-  data = seven_dwarfs_9)
+  data = seven_dwarfs_9
+)
 m
 ```
 We can use the `get_matches` function to create a data frame with the original variables that only consists of those who were matched. Notice here our sample size has been reduced from the original 354 days to 120. 
@@ -52,7 +53,7 @@ seven_dwarfs_9_with_ps <-
   ) |>
   augment(type.predict = "response", data = seven_dwarfs_9)
 seven_dwarfs_9_with_wt <- seven_dwarfs_9_with_ps |>
-  mutate(w_ate = wt_ate(.fitted, park_extra_magic_morning)) 
+  mutate(w_ate = wt_ate(.fitted, park_extra_magic_morning))
 ```
 
 @tbl-df-wt shows the weights in the first column.

@@ -45,40 +45,40 @@ labels <- c(
 )
 
 dagify(
-    y ~ x + close + Season + weather + extra,
-    x ~ weather + close + Season + extra,
-    extra ~ weather + close + Season,
-    coords = coord_dag,
-    labels = labels,
-    exposure = "x",
-    outcome = "y"
+  y ~ x + close + Season + weather + extra,
+  x ~ weather + close + Season + extra,
+  extra ~ weather + close + Season,
+  coords = coord_dag,
+  labels = labels,
+  exposure = "x",
+  outcome = "y"
 ) |>
-    tidy_dagitty() |>
-    node_status() |>
-    ggplot(
-        aes(x, y, xend = xend, yend = yend, color = status)
-    ) +
-    geom_dag_edges_arc(curvature = c(rep(0, 7), .2, 0, .2, .2, 0), edge_colour = "grey70") +
-    geom_dag_point() +
-    geom_dag_label_repel(seed = 1602) + 
-    scale_color_okabe_ito(na.value = "grey90") +
-    theme_dag() +
-    theme(
-        legend.position = "none",
-        axis.text.x = element_text()
-    ) +
-    coord_cartesian(clip = "off") +
-    scale_x_continuous(
-        limits = c(-2.25, 2.25),
-        breaks = c(-2, -1, 0, 1, 2),
-        labels = c(
-            "\n(one year ago)",
-            "\n(6 months ago)",
-            "\n(3 months ago)",
-            "8am-9am\n(Today)",
-            "9am-10am\n(Today)"
-        )
+  tidy_dagitty() |>
+  node_status() |>
+  ggplot(
+    aes(x, y, xend = xend, yend = yend, color = status)
+  ) +
+  geom_dag_edges_arc(curvature = c(rep(0, 7), .2, 0, .2, .2, 0), edge_colour = "grey70") +
+  geom_dag_point() +
+  geom_dag_label_repel(seed = 1602) +
+  scale_color_okabe_ito(na.value = "grey90") +
+  theme_dag() +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text()
+  ) +
+  coord_cartesian(clip = "off") +
+  scale_x_continuous(
+    limits = c(-2.25, 2.25),
+    breaks = c(-2, -1, 0, 1, 2),
+    labels = c(
+      "\n(one year ago)",
+      "\n(6 months ago)",
+      "\n(3 months ago)",
+      "8am-9am\n(Today)",
+      "9am-10am\n(Today)"
     )
+  )
 ```
 
 In @fig-dag-avg-wait, we're assuming that our primary confounders are when the park closes, historic high temperatures, whether or not the ride has extra magic morning hours, and the ticket season.
@@ -194,7 +194,7 @@ denominators |>
   mutate(wts = 1 / denominator) |>
   ggplot(aes(wts)) +
   geom_histogram(fill = "#E69F00", color = "white", bins = 50) +
-  scale_x_log10(name = "weights") 
+  scale_x_log10(name = "weights")
 ```
 
 In @fig-hist-sd-unstable, we see several weights over 100 and one over 10,000; these extreme weights will put undue stress on specific points, complicating the results we will estimate.
@@ -238,7 +238,7 @@ If the mean is far from 1, we may have issues with model misspecification or pos
 #|   A histogram of the stabilized inverse probability weights for posted waiting time. These weights are much more reasonable and will allow the outcome model to behave better.
 ggplot(wait_times_wts, aes(swts)) +
   geom_histogram(fill = "#E69F00", color = "white", bins = 50) +
-  scale_x_log10(name = "weights") 
+  scale_x_log10(name = "weights")
 ```
 
 When we compare the exposure---average posted wait times---to the standardized weights, we still have one exceptionally high weight.
@@ -268,11 +268,11 @@ ggplot(wait_times_wts, aes(wait_minutes_posted_avg, swts)) +
 ```
 
 ```{r}
-wait_times_wts |> 
-  filter(swts > 10) |> 
+wait_times_wts |>
+  filter(swts > 10) |>
   select(
-    park_date, wait_minutes_posted_avg, .fitted, 
-    park_close, park_extra_magic_morning, 
+    park_date, wait_minutes_posted_avg, .fitted,
+    park_close, park_extra_magic_morning,
     park_temperature_high, park_ticket_season
   ) |>
   knitr::kable()

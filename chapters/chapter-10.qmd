@@ -265,13 +265,15 @@ If we fit a propensity score model using the one confounder $Z$ and calculate th
 ```{r}
 ## fit the propensity score model
 finite_sample_wts <- glm(
-  x ~ z, data = finite_sample, family = binomial("probit")) |>
+  x ~ z,
+  data = finite_sample, family = binomial("probit")
+) |>
   augment(newdata = finite_sample, type.predict = "response") |>
   mutate(wts = wt_ate(.fitted, x))
 
 finite_sample_wts |>
   summarize(
-    effect = sum(y * x * wts) / sum(x * wts) - 
+    effect = sum(y * x * wts) / sum(x * wts) -
       sum(y * (1 - x) * wts) / sum((1 - x) * wts)
   )
 ```
@@ -296,14 +298,16 @@ sim <- function(n) {
     y = z + rnorm(n)
   )
   finite_sample_wts <- glm(
-    x ~ z, data = finite_sample, family = binomial("probit")) |>
+    x ~ z,
+    data = finite_sample, family = binomial("probit")
+  ) |>
     augment(newdata = finite_sample, type.predict = "response") |>
     mutate(wts = wt_ate(.fitted, x))
   bias <- finite_sample_wts |>
     summarize(
-      effect = sum(y * x * wts) / sum(x * wts) - 
+      effect = sum(y * x * wts) / sum(x * wts) -
         sum(y * (1 - x) * wts) / sum((1 - x) * wts)
-    ) |> 
+    ) |>
     pull()
   tibble(
     n = n,
@@ -314,7 +318,8 @@ sim <- function(n) {
 ## Examine 5 different sample sizes, simulate each 1000 times
 set.seed(1)
 finite_sample_sims <- map_df(rep(c(50, 100, 500, 1000, 5000, 10000),
-                                 each = 1000), sim)
+  each = 1000
+), sim)
 
 bias <- finite_sample_sims %>%
   group_by(n) %>%
@@ -327,8 +332,8 @@ Let's plot our results:
 #| label: fig-finite-sample-bias
 #| fig-cap: "Finite sample bias present with ATE weights created using correctly specified propensity score model, varying the sample size from n = 50 to n = 10,000"
 ggplot(bias, aes(x = n, y = bias)) +
-  geom_point() + 
-  geom_line() + 
+  geom_point() +
+  geom_line() +
   geom_hline(yintercept = 0, lty = 2)
 ```
 
@@ -684,15 +689,19 @@ sim <- function(n) {
     y = z + rnorm(n)
   )
   finite_sample_wts <- glm(
-    x ~ z, data = finite_sample, family = binomial("probit")) |>
+    x ~ z,
+    data = finite_sample, family = binomial("probit")
+  ) |>
     augment(newdata = finite_sample, type.predict = "response") |>
-    mutate(wts_ate = wt_ate(.fitted, x),
-           wts_ato = wt_ato(.fitted, x))
+    mutate(
+      wts_ate = wt_ate(.fitted, x),
+      wts_ato = wt_ato(.fitted, x)
+    )
   bias <- finite_sample_wts |>
     summarize(
-      effect_ate = sum(y * x * wts_ate) / sum(x * wts_ate) - 
+      effect_ate = sum(y * x * wts_ate) / sum(x * wts_ate) -
         sum(y * (1 - x) * wts_ate) / sum((1 - x) * wts_ate),
-      effect_ato = sum(y * x * wts_ato) / sum(x * wts_ato) - 
+      effect_ato = sum(y * x * wts_ato) / sum(x * wts_ato) -
         sum(y * (1 - x) * wts_ato) / sum((1 - x) * wts_ato)
     )
   tibble(
@@ -704,8 +713,9 @@ sim <- function(n) {
 
 ## Examine 5 different sample sizes, simulate each 1000 times
 set.seed(1)
-finite_sample_sims <- map_df(rep(c(50, 100, 500, 1000, 5000, 10000), 
-                                 each = 1000), sim)
+finite_sample_sims <- map_df(rep(c(50, 100, 500, 1000, 5000, 10000),
+  each = 1000
+), sim)
 
 bias <- finite_sample_sims %>%
   group_by(n, weight) %>%
@@ -718,8 +728,8 @@ Let's plot our results:
 #| label: fig-finite-sample-bias-2
 #| fig-cap: "Finite sample bias with ATE weights (orange) and ATO weights (blue) created using correctly specified propensity score model, varying the sample size from n = 50 to n = 10,000"
 ggplot(bias, aes(x = n, y = bias, color = weight)) +
-  geom_point() + 
-  geom_line() + 
+  geom_point() +
+  geom_line() +
   geom_hline(yintercept = 0, lty = 2)
 ```
 

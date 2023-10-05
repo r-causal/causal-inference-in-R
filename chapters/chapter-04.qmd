@@ -59,15 +59,18 @@ Recall our diagrams from @sec-diag (@fig-diagram-4); several of these protocol e
 #| label: fig-diagram-4
 #| fig-height: 2
 #| fig-cap: "Example diagram mapped to causal analysis terminology"
-data <- data.frame(labels = c("exposure", "outcome", "eligibility criteria", "time zero", "target population", "follow-up time"),
-                   x = c(1.25, 1.75, 1.25, 1.55, 1.8, 2.15),
-                   y = c(1, 1, 0.8, 0.7, 0.8, 0.7),
-                   angle = c(0, 0, -30, 0, -30, 0))  
+data <- data.frame(
+  labels = c("exposure", "outcome", "eligibility criteria", "time zero", "target population", "follow-up time"),
+  x = c(1.25, 1.75, 1.25, 1.55, 1.8, 2.15),
+  y = c(1, 1, 0.8, 0.7, 0.8, 0.7),
+  angle = c(0, 0, -30, 0, -30, 0)
+)
 
 ggplot(data, aes(x = x, y = y)) +
-  geom_text(aes(label = labels, angle = angle, vjust = 0), 
-            size = 7) +
-  geom_segment(aes(x = 1, xend = 2, y = 0.95, yend = 0.95)) +  
+  geom_text(aes(label = labels, angle = angle, vjust = 0),
+    size = 7
+  ) +
+  geom_segment(aes(x = 1, xend = 2, y = 0.95, yend = 0.95)) +
   geom_segment(aes(x = 1.5, xend = 1.5, y = 0.95, yend = 1.1)) +
   geom_segment(aes(x = 1, xend = 1.35, y = 0.95, yend = 0.65)) +
   geom_segment(aes(x = 1.35, xend = 1.65, y = 0.65, yend = 0.65)) +
@@ -95,12 +98,12 @@ Let's suppose this confounder is binary, see the simulation below:
 
 ```{r}
 set.seed(1)
-n <- 10000 
+n <- 10000
 sim <- tibble(
   # generate the confounder from a binomial distribution
-  # with a probability 0.5 for being in either group 
+  # with a probability 0.5 for being in either group
   confounder = rbinom(n, 1, 0.5),
-  # make the probability of exposure dependent on the 
+  # make the probability of exposure dependent on the
   # confounder value
   p_exposure = case_when(
     confounder == 1 ~ 0.75,
@@ -109,8 +112,8 @@ sim <- tibble(
   # generate the exposure from a binomial distribution
   # with the probability of exposure dependent on the confounder
   exposure = rbinom(n, 1, p_exposure),
-  # generate the "true" average treatment effect of 0 
-  # to do this, we are going to generate the potential outcomes, first 
+  # generate the "true" average treatment effect of 0
+  # to do this, we are going to generate the potential outcomes, first
   # the potential outcome if exposure = 0
   # (notice exposure is not in the equation below, only the confounder)
   # we use rnorm(n) to add the random error term that is normally
@@ -119,7 +122,7 @@ sim <- tibble(
   # because the true effect is 0, the potential outcome if exposure = 1
   # is identical
   y1 = y0,
-  # now, in practice we will only see one of these, outcome is what is 
+  # now, in practice we will only see one of these, outcome is what is
   # observed
   outcome = (1 - exposure) * y0 + exposure * y1,
   observed_potential_outcome = case_when(
@@ -163,11 +166,11 @@ sim |>
   group_by(exposure) |>
   summarise(avg_outcome = mean(outcome)) |>
   pivot_wider(
-    names_from = exposure, 
-    values_from = avg_outcome,  
+    names_from = exposure,
+    values_from = avg_outcome,
     names_prefix = "x_"
   ) |>
-  summarise(estimate = x_1 - x_0) 
+  summarise(estimate = x_1 - x_0)
 ```
 
 Ok, so assuming the exposure groups are exchangeable (and assuming the rest of the assumptions from @sec-assump hold), we estimate the effect of the exposure on the outcome to be 0.53.
@@ -196,11 +199,11 @@ sim |>
   group_by(confounder, exposure) |>
   summarise(avg_outcome = mean(outcome)) |>
   pivot_wider(
-    names_from = exposure, 
-    values_from = avg_outcome,  
+    names_from = exposure,
+    values_from = avg_outcome,
     names_prefix = "x_"
   ) |>
-  summarise(estimate = x_1 - x_0) 
+  summarise(estimate = x_1 - x_0)
 
 ## Overall average effect
 
@@ -208,8 +211,8 @@ sim |>
   group_by(confounder, exposure) |>
   summarise(avg_outcome = mean(outcome)) |>
   pivot_wider(
-    names_from = exposure, 
-    values_from = avg_outcome,  
+    names_from = exposure,
+    values_from = avg_outcome,
     names_prefix = "x_"
   ) |>
   summarise(estimate = x_1 - x_0) |>
@@ -234,8 +237,7 @@ set.seed(1)
 n <- 10000
 sim2 <- tibble(
   confounder_1 = rbinom(n, 1, 0.5),
-  confounder_2 = rbinom(n, 1, 0.5), 
-  
+  confounder_2 = rbinom(n, 1, 0.5),
   p_exposure = case_when(
     confounder_1 == 1 & confounder_2 == 1 ~ 0.75,
     confounder_1 == 0 & confounder_2 == 1 ~ 0.9,
@@ -243,7 +245,7 @@ sim2 <- tibble(
     confounder_1 == 0 & confounder_2 == 0 ~ 0.1,
   ),
   exposure = rbinom(n, 1, p_exposure),
-  outcome = confounder_1 + confounder_2 + rnorm(n) 
+  outcome = confounder_1 + confounder_2 + rnorm(n)
 )
 ```
 
@@ -257,10 +259,10 @@ sim2 |>
   summarise(avg_y = mean(outcome)) |>
   pivot_wider(
     names_from = exposure,
-    values_from = avg_y,  
+    values_from = avg_y,
     names_prefix = "x_"
   ) |>
-  summarise(estimate = x_1 - x_0) 
+  summarise(estimate = x_1 - x_0)
 ```
 
 We can also estimate the overall causal effect:
@@ -272,12 +274,12 @@ sim2 |>
   group_by(confounder_1, confounder_2, exposure) |>
   summarise(avg_outcome = mean(outcome)) |>
   pivot_wider(
-    names_from = exposure, 
-    values_from = avg_outcome,  
+    names_from = exposure,
+    values_from = avg_outcome,
     names_prefix = "x_"
   ) |>
   summarise(estimate = x_1 - x_0, .groups = "drop") |>
-  summarise(mean(estimate)) 
+  summarise(mean(estimate))
 ```
 
 ### Continuous confounder
@@ -288,12 +290,12 @@ Let's create another simulation:
 
 ```{r}
 set.seed(1)
-n <- 10000 
+n <- 10000
 sim3 <- tibble(
-  confounder = rnorm(n), 
+  confounder = rnorm(n),
   p_exposure = exp(confounder) / (1 + exp(confounder)),
   exposure = rbinom(n, 1, p_exposure),
-  outcome = confounder + rnorm(n) 
+  outcome = confounder + rnorm(n)
 )
 ```
 
@@ -312,10 +314,10 @@ sim3 |>
   summarise(avg_y = mean(outcome)) |>
   pivot_wider(
     names_from = exposure,
-    values_from = avg_y,  
+    values_from = avg_y,
     names_prefix = "x_"
   ) |>
-  summarise(estimate = x_1 - x_0) 
+  summarise(estimate = x_1 - x_0)
 
 sim3 |>
   mutate(confounder_q = ntile(confounder, 5)) |>
@@ -323,12 +325,11 @@ sim3 |>
   summarise(avg_y = mean(outcome)) |>
   pivot_wider(
     names_from = exposure,
-    values_from = avg_y,  
+    values_from = avg_y,
     names_prefix = "x_"
   ) |>
   summarise(estimate = x_1 - x_0) |>
   summarise(estimate = mean(estimate))
-
 ```
 
 Great!
@@ -386,13 +387,13 @@ We can draw a causal diagram of the relationship described in the code above (@f
 library(ggdag)
 
 x <- data.frame(
-  name = c("y", "trt", "age", "weight"), 
+  name = c("y", "trt", "age", "weight"),
   time = c(3, 2, 1, 1)
 )
 dagify(
   y ~ trt + age + weight,
   coords = time_ordered_coords(x)
-) |> 
+) |>
   ggdag() + theme_dag()
 ```
 
@@ -432,10 +433,11 @@ d |>
   as.data.frame() -> d
 library(PSW)
 df <- as.data.frame(d)
-x <- psw(df, 
-         "treatment ~ weight + age", 
-         weight = "ATE", wt = TRUE,
-         out.var = "y")
+x <- psw(df,
+  "treatment ~ weight + age",
+  weight = "ATE", wt = TRUE,
+  out.var = "y"
+)
 tibble(
   Characteristic = "treatment",
   Beta = round(x$est.wt, 1),
@@ -492,14 +494,14 @@ d <- tibble(
 #| fig-cap: "Causal Diagram of Example Observation Study"
 
 x <- data.frame(
-  name = c("y", "trt", "age", "weight"), 
+  name = c("y", "trt", "age", "weight"),
   time = c(3, 2, 1, 1)
 )
 dagify(
   y ~ trt + age + weight,
   trt ~ age + weight,
   coords = time_ordered_coords(x)
-) |> 
+) |>
   ggdag() + theme_dag()
 ```
 
@@ -536,10 +538,11 @@ d |>
   as.data.frame() -> d
 library(PSW)
 df <- as.data.frame(d)
-x <- psw(df, 
-         "treatment ~ weight + age", 
-         weight = "ATE", wt = TRUE,
-         out.var = "y")
+x <- psw(df,
+  "treatment ~ weight + age",
+  weight = "ATE", wt = TRUE,
+  out.var = "y"
+)
 tibble(
   Characteristic = "treatment",
   Beta = round(x$est.wt, 1),
