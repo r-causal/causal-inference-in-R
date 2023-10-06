@@ -1,7 +1,7 @@
 {
-  "hash": "4295ad1482e0a56a886c07d3b85f2c3b",
+  "hash": "35e28ba55bdcd7229ce521d2f04664ff",
   "result": {
-    "markdown": "# Causal mediation analysis\n\n\n\n\n\n## Estimating direct effects\n\n\n::: {.cell}\n\n```{.r .cell-code}\nrnorm(5)\n```\n\n::: {.cell-output .cell-output-stdout}\n\n```\n[1] 1.64179 1.65583 0.22422 0.02398 0.86649\n```\n\n\n:::\n:::\n\n\n## Estimating indirect effects\n\n## Allowing for interactions\n",
+    "markdown": "# Causal mediation analysis {#sec-mediation}\n\n\n\n\n\n## Estimating direct effects\n\n\n::: {.cell}\n\n```{.r .cell-code}\nrnorm(5)\n```\n\n::: {.cell-output .cell-output-stdout}\n\n```\n[1] -1.5916 -1.7506  1.0102 -0.3248  1.0481\n```\n\n\n:::\n:::\n\n\n## Estimating indirect effects\n\n## Allowing for interactions\n",
     "supporting": [
       "chapter-17_files"
     ],

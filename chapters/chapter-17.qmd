@@ -1,4 +1,4 @@
-# Causal mediation analysis
+# Causal mediation analysis {#sec-mediation}
 
 {{< include 00-setup.qmd >}}
 

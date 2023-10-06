@@ -4,86 +4,39 @@
 
 ## Visualizing Causal Assumptions
 
-So you think correlation isn't causation?
-You better be ready to name some proposed confounders!
-In @sec-assump we discuss several assumptions that allow us to estimate unbiased causal effects with our current statistical tools; one of the main assumptions is *exchangeability*, also known as "no unmeasured confounders".
-There is no statistical test that can confirm whether this assumption is met.
-Instead, we often use domain knowledge to construct an assumed world view of how different measured (or unmeasured) factors interact, and then *assuming that world view is correct* determine whether the proposed analysis included any unmeasured confounders.
-One way to communicate one's world view with respect to how different factors interact is via a directed acyclic graph (DAG).
+> Draw your assumptions before your conclusions --@hernan2021
 
-::: callout-tip
-## Jargon
+Causal diagrams are a tool to visualize your assumptions about the causal structure of the questions you're trying to answer. In a randomized experiment, the causal structure is quite simple: while there may be many causes of an outcome, the only cause of the exposure is the randomization process itself (we hope!). In many non-randomized settings, however, the structure of your question can be a complex web of causality. Causal diagrams help communicate what we think this structure looks like. In addition to being open about what we think the causal structure is, causal diagrams have incredible mathematics properties that allow us to identify a way to estimate unbiased causal effects even with observational data.
 
-Why is it called a *directed acyclic graph*?
-Let's start with the third word: **graph**.
-A graph, as defined here, is a collection of *nodes* (sometimes these are called *vertices*) and *edges* that connect the nodes.
-In mathematics, there is a whole field called *graph theory* which studies these graphs.
-For our use, each *node* is a variable or factor, for example the exposure would be a node and likewise the outcome would be a node.
-Edges between nodes are depicted with *arrows* that imply causality.
-So if we think the exposure causes the outcome we would draw an arrow from the exposure to the outcome.
-This one way connection between nodes (*from* causes *to* effects) makes this graph **directed**.
-Finally, **acyclic** refers to the fact that there are no cycles or loops in the graph.
-This makes sense because when thinking about causes and effects, loops are not possible without breaking the space-time continuum.
-Often when a DAG erroneously includes a "loop" it is because the analyst did not appropriately consider the timing of the factors in question.
+The type of causal diagrams we use are also called directed acyclic graphs (DAGs). These graphs are directed because they include arrows going in a specific direction. They're acyclic because they don't go in circles; a variable can't cause itself, for instance. DAGs are used for a wide variety of problems, but we're specificaly concerned with *causal* DAGs. This class of DAGs is also sometimes referred to as Structural Causal Models (SCMs) because they are a model of the causal structure of a question. 
+
+::: {.callout-tip}
+## DAGs down under
+
+We highly recommend asking an Australian friend about DAGs. 
 :::
 
-For example, @fig-dag-ex, adapted from @mcgowan2023causal shows a sample DAG that suggests that `cause` causes `effect` and `other cause` causes both cause and effect.
+DAGs depict causal relationships between variables. Visually, the way they depict variables is as *edges* and *nodes*. Edges are the arrows going from one variable to another, also sometimes called arcs or just arrows. Nodes are the variables themselves, sometimes called vertices, points, or just variables. in @fig-dag-basic, there are two nodes: `x` and `y` and one edge going from `x` to `y`. Here, we are saying that `x` causes `y`. In some capacity, `y` "listens" to `x`.
 
 ```{r}
 #| echo: false
-#| label: fig-dag-ex
 #| message: false
-#| warning: false
-#| fig-cap: "Example DAG adapted from @mcgowan2023causal. Here, there are three nodes representing three factors: `cause`, `other cause`, and `effect`. The arrows demonstrate the causal relationships between these factors such that `cause` causes `effect` and `other cause` causes both `cause` and `effect`."
+#| label: fig-dag-basic
+#| fig-width: 4
+# TODO: add caption
 library(ggdag)
-library(ggokabeito)
-
-coords <- list(
-  x = c(cause = 2, Z = 1, effect = 3),
-  y = c(cause = 1, Z = 1.1, effect = 1)
-)
-d_conf <- dagify(
-  cause ~ Z,
-  effect ~ cause + Z,
-  exposure = "cause",
-  outcome = "effect",
-  labels = c(cause = "cause", effect = "effect", Z = "Z"),
-  coords = coords
-)
-
-d_conf |>
-  tidy_dagitty() |>
-  mutate(name = ifelse(name == "Z", "other\ncause", name)) |>
-  ggplot(
-    aes(x = x, y = y, xend = xend, yend = yend)
-  ) +
-  geom_dag_point(aes(color = label)) +
-  geom_dag_edges() +
-  geom_dag_text(size = 3) +
-  theme_dag() +
-  coord_cartesian(clip = "off") +
-  theme(legend.position = "none")
+dagify(y ~ x, coords = time_ordered_coords()) |> 
+  ggdag() + 
+  theme_dag()
 ```
 
-Thinking about any three nodes in a DAG, there are three ways they can be connected, via a *fork*, a *chain*, or a *collider*.
-Examining @fig-dag-3, the fork describes the scenario where the `q` node has two arrows extending from it, one pointing to `x` and one pointing to `y`.
-This implies that `q` causes both `x` and `y`.
-If `x` were an exposure and `y` and outcome, `q` would be a classic *confounder*.
-If we were trying to quantify the causal relationship between `x` and `y`, the forking caused by `q` provides a potential *backdoor path* from `x` to `y` that could lead to a spurious estimate of the relationship between `x` and `y` if not accounted for (sometimes we refer to this "accounting" as closing the backdoor path).
-Associations can flow through forks.
-The second panel of @fig-dag-3 in @fig-dag-3 displays a chain.
-Here, the `x` node has an arrow to the `q` node which in turn has an arrow to the `y` node.
-If `x` were an exposure and `y` and outcome, `q` would be a classic *mediator*.
-In the final panel of @fig-dag-3, we see the collider.
-Here `y` has an arrow to `q` and `x` has an arrow to `q`.
-Colliders *block* backdoor paths.
-Opposite from confounders, adjusting for a collider can actually *open* a backdoor path.
+If we're interested in the causal effect of `x` on `y`, we're trying to estimate a numeric representation of that arrow. Usually, though, there are many other variables and arrows in the causal structure of a given question. A series of arrows is called a *path*. There are three types of paths you'll see in DAGs: forks, chains, and colliders (sometimes called inverse forks).
+
 
 ```{r}
 #| echo: false
-#| fig-width: 10
-#| label: fig-dag-3
-#| fig-cap: "Three types of paths connecting three nodes, `x`, `y`, and `q`: a fork, a chain, and a collider."
+#| label: fig-dag-path-types
+# TODO: add caption
 coords <- list(x = c(x = 0, y = 2, q = 1), y = c(x = 0, y = 0, q = 1))
 
 fork <- dagify(
@@ -109,197 +62,189 @@ collider <- dagify(
   coords = coords
 )
 
-map(list(fork = fork, chain = chain, collider = collider), tidy_dagitty, layout = "time_ordered") |>
-  map("data") |>
-  list_rbind(names_to = "dag") |>
-  mutate(dag = factor(dag, levels = c("fork", "chain", "collider"))) |>
+dag_flows <- map(list(fork = fork, chain = chain, collider = collider), tidy_dagitty) |> 
+  map("data") |> 
+  list_rbind(names_to = "dag") |> 
+  mutate(dag = factor(dag, levels = c("fork", "chain", "collider")))
+
+dag_flows |> 
   ggplot(aes(x = x, y = y, xend = xend, yend = yend)) +
-  geom_dag_edges(edge_width = 1) +
-  geom_dag_point() +
-  geom_dag_text() +
-  facet_wrap(~dag) +
+  geom_dag_edges(edge_width = 1) + 
+  geom_dag_point() + 
+  geom_dag_text() + 
+  facet_wrap(~ dag) +
   expand_plot(
-    expand_x = expansion(c(.1, .1)),
+    expand_x = expansion(c(0.2, 0.2)),
     expand_y = expansion(c(0.2, 0.2))
   ) +
   theme_dag()
 ```
 
-Often, the goal in causal inference is to quantify the relationship between some exposure and some outcome.
-One way this estimate can be biased is if we are actually reporting the *correlation* between these two factors rather than the *causal relationship*.
-Thinking about these DAGs, spurious correlations can often be attributed to *open backdoor paths*, i.e. the relationship between other factors and our exposure and outcome of interest.
-One way to think about these paths is to conceptualize associations *flowing* along the paths.
-Without adjustment, associations flow through forks and chains, and are *blocked* by colliders.
-With adjustment, the opposite is true, associations are blocked by forks and chains if the node in question is adjusted for, however an association *will* flow through a collider if it is adjusted for.
+Forks represent a common cause of two variables. Here, we're saying that `q` causes both `x` and `y`. This is the traditional definition of a confounder. They're called forks because the arrows from `x` to `y` are in different directions. Chains, on the other hand, represent a series of arrows going in the same direction. Here `q` is called a *mediator*: it is along the causal path from `x` to `y`. In this diagram, the only path from `x` to `y` is the one mediated through `q`. Finally, a collider is a path where two arrowheads meet at a variable. Because causality always goes forward in time, this naturally means that the collider variable is caused by two other variables. Here, we're saying that `x` and `y` both cause `q`.
 
-While not strictly necessary, we recommend that DAGs are *time-ordered* from left to right.
-This helps the analyst ensure that they are not erroneously making assumptions that violate the space-time continuum (for example it is impossible for something in the future to cause something from the past).
+::: {.callout-tip}
+## Are DAGs SEMs?
+If you're familiar with structural equation models (SEMs), a modeling technique commonly used in psychology and other social science settings, you may notice some similarities between SEMs and DAGs. In fact, DAGs are a form of *non-parametric* SEM. SEMs estimate entire graphs using parametric assumptions. Causal DAGs, on the other hand, don't estimate anything; an arrow going from one variable to another says nothing about the strength or functional form of that relationship, only that we think it exists.
+:::
 
-How do we use these in practice?
-The basic idea is:
+One of the major benefits of DAGs is that they help us identify sources of bias and, often, provide clues in how to address them. However, talking about an unbiased effect estimate only makes sense when we have a specific causal question in mind. Since each arrow represents a cause, it's causality all the way down, so no individual arrow is inherently problematic. Here, we're interested in the effect of `x` on `y`. This question defines which paths we're interested in and which we're not. 
 
-1.  Specify your causal question
-2.  Using domain knowledge:
+These three types of paths have different implications for the statistical relationship between `x` and `y`. If we only look at the correlation between the two variables under these assumptions:
 
--   Write all relevant variables as *nodes*
--   Draw causal pathways as arrows (*edges*)
+1. In the fork, `x` and `y` will be associated, despite there being no arrow from `x` to `y`.
+2. In the chain, `x` and `y` are related but only through `q`.
+3. In the collider, `x` and `y` will *not* be related.
 
-## DAGs in R
+Paths that transmit association are called *open paths*. Paths that do not transmit association are called *closed paths*. Forks and chains are open while colliders are closed. 
 
-Let's begin by specifying our causal question: Does listening to a comedy podcast the morning before an exam improve graduate students test scores?
-We can diagram this using the method describe in @sec-diag (@fig-podcast).
+So, should we adjust for `q`? That depends on the nature of the path. Forks are confounding paths. Because `q` causes both `x` and `y`, `x` and `y` will have a spurious association. They both contain information from `q`, their mutual cause, and that mutual causal relationship makes `x` and `y` associated statistically. Adjusting for `q` will *block* the bias from confounding and give us the true relationship between `x` and `y`. 
+
+::: {.callout-tip}
+## Adjustment
+We can use a variety of techniques to account for a variable. We use the term "adjustment" to generally refer to any technique that removes the effect of variables we're not interested in.
+:::
+
+For chains, whether or not we adjusting for mediators depends on the research question. Here, adjusting for `q` would result in a null estimate of the effect of `x` on `y`. Because the only effect of `x` on `y` is via `q`, no other effect remains. The effect of `x` on `y` mediated by `q` is called the *indirect* effect, while the effect of `x` on `y` directly is called the *direct* effect. If we're only interested in the direct effect, controlling for `q` might be what we want. If we want to know about both effects, we shouldn't try to adjust for `q`. We'll learn more estimating different mediation effects in @sec-mediation.
+
+Colliders are different. In this diagram, `x` and `y` are *not* associated, but both cause `q`. Adjusting for `q` has the opposite effect than with confounding: it *opens* a biasing pathway. Sometimes, people draw the path opened up by conditioning on a collider connecting `x` and `y`. 
+
+Since `x` and `y` happen before `q`, `q` can't have an impact on them. If we break down the two time points in @fig-collider-time, at time point 1, `q` hasn't happened yet, and `x` and `y` are unrelated. At time point 2, `q` happens due to `x` and `y`. But causality only goes forward in time. `q` happening can't change the fact that `x` and `y` happened independently at time point 1.
 
 ```{r}
 #| echo: false
-#| fig-cap: "Does listening to a comedy podcast the morning before an exam improve graduate students test scores?"
-#| fig-height: 2
-#| label: fig-podcast
+#| label: fig-collider-time
+collider_t <- collider |> 
+  tidy_dagitty() |> 
+  mutate(time = "time point 1", direction = NA, to = NA) |> 
+  filter(name != "q")
 
-data <- data.frame(
-  labels = c("comedy podcast", "test scores", "graduate students", "morning", "graduate students", "after exam"),
-  x = c(1.25, 1.75, 1.25, 1.55, 1.8, 2.05),
-  y = c(1, 1, 0.8, 0.7, 0.8, 0.7),
-  angle = c(0, 0, -30, 0, -30, 0)
-)
+t2 <- collider |> 
+ tidy_dagitty() |> 
+ mutate(time = "time point 2") |> 
+  pull_dag_data()
 
-ggplot(data, aes(x = x, y = y)) +
-  geom_text(aes(label = labels, angle = angle, vjust = 0),
-    size = 5
-  ) +
-  geom_segment(aes(x = 1, xend = 2, y = 0.95, yend = 0.95)) +
-  geom_segment(aes(x = 1.5, xend = 1.5, y = 0.95, yend = 1.1)) +
-  geom_segment(aes(x = 1, xend = 1.35, y = 0.95, yend = 0.65)) +
-  geom_segment(aes(x = 1.35, xend = 1.65, y = 0.65, yend = 0.65)) +
-  geom_segment(aes(x = 1.55, xend = 1.9, y = 0.95, yend = 0.65)) +
-  geom_segment(aes(x = 1.9, xend = 2.15, y = 0.65, yend = 0.65)) +
-  theme_void()
-```
+collider_t$data <- bind_rows(collider_t$data, t2)
 
-The first step is to specify your DAG.
-In R, we can use the {ggdag} package for this along with the `dagify()` function.
-The `dagify()` function takes formulas, separated by commas, that specify cause and effect, with the left element of of the formula specifying the effect and the right all of the factors that cause it.
-What are all of the factors that "cause" graduate students to listen to a podcast the morning before an exam?
-What are all of the factors that could "cause" a graduate student to do well on a test?
-Let's posit some here.
-
-```{r}
-library(ggdag)
-dagify(
-  podcast ~ mood + humor + prepared,
-  exam ~ mood + prepared
-)
-```
-
-In the code chunk above, we have posited that a graduate students mood, sense of humor, and how prepared they feel for the exam could influence whether they listened to a podcast the morning of the text.
-Likewise, we posit that their mood and how prepared they are also influences their exam score.
-Notice we *do not* see `podcast` in the `exam` equation -- this means that we assume that there is no causal relationship between podcast and the exam score.
-We can add additional arguments to `dagify()`, for example, we can time order the coordinates, tag the exposure and outcome, and add labels.
-We can save this `dagify` object and use the `ggdag()` function to visualize this DAG.
-This function is a wrapper for a `ggplot2` call, meaning we can add layers like we would to a ggplot object.
-For example, we can update the theme by adding `+ theme_dag()`.
-
-```{r}
-#| label: fig-dag-podcast
-#| fig-cap: "Proposed DAG to answer the question: Does listening to a comedy podcast the morning before an exam improve graduate students test scores?"
-podcast_dag <- dagify(
-  podcast ~ mood + humor + prepared,
-  exam ~ mood + prepared,
-  coords = time_ordered_coords(),
-  exposure = "podcast",
-  outcome = "exam",
-  labels = c(
-    podcast = "podcast",
-    exam = "exam score",
-    mood = "mood",
-    humor = "humor",
-    prepared = "prepared"
-  )
-)
-ggdag(podcast_dag, use_labels = "label", text = FALSE) +
+collider_t |> 
+  ggplot(aes(x = x, y = y, xend = xend, yend = yend)) +
+  geom_dag_edges(edge_width = 1) + 
+  geom_dag_point() + 
+  geom_dag_text() + 
+  facet_wrap(~ time) + 
   theme_dag()
 ```
 
-In the previous section, we discussed *backdoor paths*.
-These are paths between factors that could potentially lead us to drawing spurious conclusions about the relationship between our exposure and outcome.
-The `ggdag_paths()` function will help us identify potential backdoor paths.
+Causality only goes forward. Association, however, is time-agnostic. It's just an observation about the numerical relationships between variables. When we control for `q`, we introduce an association between `x` and `y`. How can this be? Consider a case where `x` and `y` are the only causes of `q`, and all three variables are binary. When either `x` or `y` equals 1, then `m` happens. If we know `q = 1` and `x = 0` then logically it must be that `y = 1`. Thus, knowing about `q` gives us information about `y` via `x`. 
+
+Visually, we can see this happen when `x` and `y` are continuous and `q` is binary. In @fig-collider-scatter, when we don't include `q`, we find there is no relationship between `x` and `y`. That's the correct result. However, when we include `q`, we can information about both `x` and `y`, and they appear correlated: across levels of `x`, those with `q = 0` have lower levels of `y`. Association seemingly flows back in time. Of course, that can't happen from a causal perspective, so controlling for `q` is the wrong thing to do. We end up with a biased effect of `x` on `y`.
 
 ```{r}
-#| label: fig-paths
-ggdag_paths(podcast_dag)
+#| echo: false
+#| label: fig-collider-scatter
+#| message: false
+set.seed(123)
+library(patchwork)
+n <- 500
+x <- rnorm(n)
+y <- rnorm(n)
+linear_pred <- 2*x + 3*y + rnorm(n)
+prob <- 1 / (1 + exp(-linear_pred))
+
+q <- rbinom(n, size = 1, prob = prob)
+
+collider_data <- tibble(x, y, q = as.factor(q))
+
+p1 <- collider_data |> 
+  ggplot(aes(x, y)) + 
+  geom_point(alpha = .35) + 
+  geom_smooth(method = "lm", se = FALSE, color = "black") + 
+  facet_wrap(~"not adjusting for `q`")
+
+p2 <- collider_data |> 
+  ggplot(aes(x, y, color = q)) + 
+  geom_point(alpha = .35) + 
+  geom_smooth(method = "lm", se = FALSE) + 
+  facet_wrap(~"adjusting for `q`")
+
+p1 + p2
 ```
 
-In @fig-paths we see two open paths, one through `mood` and one through `prepared`.
-This tells us we need to find a way to account for these open, non-causal paths.
-Some ways to do this include:
+::: {.callout-tip}
+## Exchangability revisited
+We commonly refer exchangability as the assumption of no confounding. Actually, this isn't quite right. It's the assumption of no open non-causal paths. Many times, these are confounding pathways. However, paths can also be opened by conditioning on a collider. Even though these aren't colliders, it creates non-exchangability between the two groups: they are different in a way that matters to the exposure and outcome.
+:::
 
--   Randomization
--   Stratification, adjustment, weighting, matching, etc.
 
-In this particular scenario, randomization is likely not possible.
-It would be challenging to justify randomizing students to listening to a full podcast prior to taking an exam (and it would likely have lots of issues with adherence!).
-Stratification is similar to what we demonstrated in @sec-group-sum.
-We could stratify the students into all possible mood and prepared categories and analyze the causal effect within each stratum -- again, this might pose challenges depending on the sample size and the number of categories we believe exists in each of these factors.
-The next section will dive into some of these other tools we could use to account for these potential backdoor paths.
 
-The {ggdag} package can also help us identify adjustment sets.
-In this particular example, this yields the same result as above, since we need to adjust for both `mood` and `prepared` in order to close the backdoor paths.
-It is possible, however, to have different ways to close backdoor paths depending on the number of factors and complexity causal relationships assumed.
+- basic terms
+- types of paths
+- what to adjust for
+- popout: intuition for colliders
+- popout: exchangability revisited
+- popout: what about interaction?
 
-```{r}
-ggdag_adjustment_set(
-  podcast_dag,
-  use_labels = "label",
-  text = FALSE
-)
-```
+## DAGs in R
 
-Using our proposed DAG, let's simulate some data to see how this might occur in practice!
+- building
+- popout: coordinates. show manual. mention dagitty.net. mention `time_ordered`.
+- paths
+- adjustment sets
+- with ggplot
 
-```{r}
-set.seed(10)
-sim_data <- podcast_dag |>
-  simulate_data()
-```
+## Common Structures of Bias
 
-```{r}
-sim_data
-```
+- advanced forms of confounding, e.g. L happens after X
+- Selection bias, M-Bias, Butterfly bias. L2FU later.
+- instrumental variables, precision/competing exposure variables
 
-Since we have simulated this data, we know that this is a case where *standard methods will succeed* (see @sec-standard), and therefore can estimate the causal effect using a basic linear regression model.
-@fig-dag-sim shows a forest plot of the simulated data based on our DAG.
-Notice the model that only included the exposure resulted in a spurious effect (an estimate of -0.1 when we know the truth is 0), whereas the model that adjusted for the two variables as suggested by `ggdag_adjustment_set()` is not spurious (0.0).
+## Recommendations in building DAGs
 
-```{r}
-#| label: fig-dag-sim
-#| fig-cap: "Forest plot of simulated data based on the DAG described in @fig-dag-podcast"
-## Model that does not close backdoor paths
-unadjusted_model <- lm(exam ~ podcast, sim_data) |>
-  broom::tidy(conf.int = TRUE) |>
-  dplyr::filter(term == "podcast") |>
-  mutate(formula = "podcast")
+### Iterate early and often
 
-## Model that closes backdoor paths
-adjusted_model <- lm(exam ~ podcast + mood + prepared, sim_data) |>
-  broom::tidy(conf.int = TRUE) |>
-  dplyr::filter(term == "podcast") |>
-  mutate(formula = "podcast + mood + prepared")
+- Ideally before when designing your research, at least before analyzing data (avoid overfitting)
 
-bind_rows(
-  unadjusted_model,
-  adjusted_model
-) |>
-  ggplot(aes(x = estimate, y = formula, xmin = conf.low, xmax = conf.high)) +
-  geom_vline(xintercept = 0, linewidth = 1, color = "grey80") +
-  geom_pointrange(fatten = 3, size = 1) +
-  theme_minimal(18) +
-  labs(
-    y = NULL,
-    caption = "correct effect size: 0"
-  )
-```
+### Consider your question
 
-<!-- ## Common Structures of Bias -->
+- estimand
+- population and context
 
-<!-- ## Causal Inference is not (just) a statistical problem {#sec-quartets} -->
+### Order nodes by time
 
-<!-- ## Causal and Predictive Models, Revisited {#sec-causal-pred-revisit} -->
+- Time ordering algorithm
+- Feedback loops: global warming and A/C use
+
+### Consider the whole data collection process
+
+- race/shooting
+- healthy worker bias
+
+### Include variables you don't have
+
+- Examples where you can and can't adjust depending
+
+### Saturate your DAG by default
+
+### Include instruments and competing exposures
+
+### Focus on the causal structure, then consider measurement bias
+
+### Be accurate, but focus on clarity
+
+### Pick adjustment sets most likely to be succesful
+
+- measurement error, certainty
+- use the path with the most observed variables
+
+### Use robustness checks
+
+- Negative controls/Falsification end-points, dag-data consitency, alternate adjustment sets
+
+## Causal Inference is not (just) a statistical problem {#sec-quartets}
+
+### Causal and Predictive Models, Revisited {#sec-causal-pred-revisit}
+
+- Probably too long, but if possible, condense to a popout
+- DAGs showing examples where prediction can lean on measured confounders, colliders. It's the amount of information a variable brings, not whether the coeffecient is unbiased affect of variable on outcome.
+- Not practical to fit a prediction model with future variable
+- Table 2 Bias examples. Unmeasure confounding of Z-Y relationship. Mediation example.
+
