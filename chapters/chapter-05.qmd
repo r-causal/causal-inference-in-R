@@ -22,12 +22,14 @@ DAGs depict causal relationships between variables. Visually, the way they depic
 #| echo: false
 #| message: false
 #| label: fig-dag-basic
-#| fig-width: 4
+#| fig-width: 3
+#| fig-height: 2
 # TODO: add caption
 library(ggdag)
 dagify(y ~ x, coords = time_ordered_coords()) |> 
   ggdag() + 
-  theme_dag()
+  theme_dag() + 
+  expand_plot(expand_x = expansion(c(.2, .2)))
 ```
 
 If we're interested in the causal effect of `x` on `y`, we're trying to estimate a numeric representation of that arrow. Usually, though, there are many other variables and arrows in the causal structure of a given question. A series of arrows is called a *path*. There are three types of paths you'll see in DAGs: forks, chains, and colliders (sometimes called inverse forks).
@@ -104,15 +106,138 @@ So, should we adjust for `q`? That depends on the nature of the path. Forks are 
 We can use a variety of techniques to account for a variable. We use the term "adjustment" to generally refer to any technique that removes the effect of variables we're not interested in.
 :::
 
+@fig-confounder-scatter depicts this effect visually. Here, `x` and `y` are continuous, and by definition of the DAG, they are unrelated. `q`, however, causes both. The unadjusted effect is biased because it includes information about the open path from `x` to `y` via `z`. Within levels of `z`, however, `x` and `y` are unrelated. 
+
+```{r}
+#| echo: false
+#| label: fig-confounder-scatter
+#| message: false
+set.seed(123)
+library(patchwork)
+n <- 1000
+
+### q
+q <- rbinom(n, size = 1, prob = .35)
+###
+
+### x
+x <- 2 * q + rnorm(n)
+###
+
+### y
+y <- -3 * q + rnorm(n)
+###
+
+confounder_data <- tibble(x, y, q = as.factor(q))
+
+p1 <- confounder_data |> 
+  ggplot(aes(x, y)) + 
+  geom_point(alpha = .2) + 
+  geom_smooth(method = "lm", se = FALSE, color = "black") + 
+  facet_wrap(~ "not adjusting for `q`\n(biased)")
+
+p2 <- confounder_data |> 
+  ggplot(aes(x, y, color = q)) + 
+  geom_point(alpha = .2) + 
+  geom_smooth(method = "lm", se = FALSE) +
+  facet_wrap(~ "adjusting for `q`\n(unbiased)")
+
+p1 + p2
+```
+
 For chains, whether or not we adjusting for mediators depends on the research question. Here, adjusting for `q` would result in a null estimate of the effect of `x` on `y`. Because the only effect of `x` on `y` is via `q`, no other effect remains. The effect of `x` on `y` mediated by `q` is called the *indirect* effect, while the effect of `x` on `y` directly is called the *direct* effect. If we're only interested in the direct effect, controlling for `q` might be what we want. If we want to know about both effects, we shouldn't try to adjust for `q`. We'll learn more estimating different mediation effects in @sec-mediation.
 
-Colliders are different. In this diagram, `x` and `y` are *not* associated, but both cause `q`. Adjusting for `q` has the opposite effect than with confounding: it *opens* a biasing pathway. Sometimes, people draw the path opened up by conditioning on a collider connecting `x` and `y`. 
+@fig-mediator-scatter shows this effect visually. The unadjusted effect of `x` on `y` represents the total effect. Since the total effect is due entirely to the path mediated by `q`, when we adjust for `q`, no relationship remains. This is the direct effect. Neither of these effects is due to bias but rather each answers a different research question. 
 
-Since `x` and `y` happen before `q`, `q` can't have an impact on them. If we break down the two time points in @fig-collider-time, at time point 1, `q` hasn't happened yet, and `x` and `y` are unrelated. At time point 2, `q` happens due to `x` and `y`. But causality only goes forward in time. `q` happening can't change the fact that `x` and `y` happened independently at time point 1.
+```{r}
+#| echo: false
+#| label: fig-mediator-scatter
+#| message: false
+### x
+x <- rnorm(n)
+###
+
+### q
+linear_pred <- 2*x + rnorm(n)
+prob <- 1 / (1 + exp(-linear_pred))
+q <- rbinom(n, size = 1, prob = prob)
+###
+
+### y
+y <- 2 * q + rnorm(n)
+###
+
+mediator_data <- tibble(x, y, q = as.factor(q))
+
+p1 <- mediator_data |> 
+  ggplot(aes(x, y)) + 
+  geom_point(alpha = .2) + 
+  geom_smooth(method = "lm", se = FALSE, color = "black") + 
+  facet_wrap(~ "not adjusting for `q`\n(total effect)")
+
+p2 <- mediator_data |> 
+  ggplot(aes(x, y, color = q)) + 
+  geom_point(alpha = .2) + 
+  geom_smooth(method = "lm", se = FALSE) +
+  facet_wrap(~ "adjusting for `q`\n(direct effect)")
+
+p1 + p2
+```
+
+Colliders are different. In the collider DAG of @fig-dag-path-types, `x` and `y` are *not* associated, but both cause `q`. Adjusting for `q` has the opposite effect than with confounding: it *opens* a biasing pathway. Sometimes, people draw the path opened up by conditioning on a collider connecting `x` and `y`. 
+
+Visually, we can see this happen when `x` and `y` are continuous and `q` is binary. In @fig-collider-scatter, when we don't include `q`, we find there is no relationship between `x` and `y`. That's the correct result. However, when we include `q`, we can detect information about both `x` and `y`, and they appear correlated: across levels of `x`, those with `q = 0` have lower levels of `y`. Association seemingly flows back in time. Of course, that can't happen from a causal perspective, so controlling for `q` is the wrong thing to do. We end up with a biased effect of `x` on `y`.
+
+```{r}
+#| echo: false
+#| label: fig-collider-scatter
+#| message: false
+
+### x
+x <- rnorm(n)
+###
+
+### y
+y <- rnorm(n)
+###
+
+### q
+linear_pred <- 2*x + 3*y + rnorm(n)
+prob <- 1 / (1 + exp(-linear_pred))
+q <- rbinom(n, size = 1, prob = prob)
+###
+
+collider_data <- tibble(x, y, q = as.factor(q))
+
+p1 <- collider_data |> 
+  ggplot(aes(x, y)) + 
+  geom_point(alpha = .2) + 
+  geom_smooth(method = "lm", se = FALSE, color = "black") + 
+  facet_wrap(~"not adjusting for `q`\n(unbiased)")
+
+p2 <- collider_data |> 
+  ggplot(aes(x, y, color = q)) + 
+  geom_point(alpha = .2) + 
+  geom_smooth(method = "lm", se = FALSE) + 
+  facet_wrap(~"adjusting for `q`\n(biased)")
+
+p1 + p2
+```
+
+How can this be? Since `x` and `y` happen before `q`, `q` can't have an impact on them. Let's turn the DAG on its side and consider @fig-collider-time. If we break down the two time points, at time point 1, `q` hasn't happened yet, and `x` and `y` are unrelated. At time point 2, `q` happens due to `x` and `y`. But causality only goes forward in time. `q` happening later can't change the fact that `x` and `y` happened independently at time point 1.
 
 ```{r}
 #| echo: false
 #| label: fig-collider-time
+
+coords <- list(x = c(x = 0, y = 2, q = 1), y = c(x = 0, y = 0, q = -1))
+collider <- dagify(
+    q ~ x + y,
+    exposure = "x",
+    outcome = "y",
+    coords = time_ordered_coords()
+)
+
 collider_t <- collider |> 
   tidy_dagitty() |> 
   mutate(time = "time point 1", direction = NA, to = NA) |> 
@@ -126,64 +251,41 @@ t2 <- collider |>
 collider_t$data <- bind_rows(collider_t$data, t2)
 
 collider_t |> 
+  mutate(deemphasize = (name %in% c("x", "y") & time == 
+           "time point 2")) |> 
   ggplot(aes(x = x, y = y, xend = xend, yend = yend)) +
-  geom_dag_edges(edge_width = 1) + 
-  geom_dag_point() + 
+  geom_dag_edges(edge_width = 1, edge_color = "grey85") + 
+  geom_dag_point(aes(color = deemphasize), show.legend = FALSE) + 
   geom_dag_text() + 
   facet_wrap(~ time) + 
-  theme_dag()
+  theme_dag() + 
+  scale_color_manual(values = c("TRUE" = "grey85", "FALSE" = "black"))
 ```
 
-Causality only goes forward. Association, however, is time-agnostic. It's just an observation about the numerical relationships between variables. When we control for `q`, we introduce an association between `x` and `y`. How can this be? Consider a case where `x` and `y` are the only causes of `q`, and all three variables are binary. When either `x` or `y` equals 1, then `m` happens. If we know `q = 1` and `x = 0` then logically it must be that `y = 1`. Thus, knowing about `q` gives us information about `y` via `x`. 
-
-Visually, we can see this happen when `x` and `y` are continuous and `q` is binary. In @fig-collider-scatter, when we don't include `q`, we find there is no relationship between `x` and `y`. That's the correct result. However, when we include `q`, we can information about both `x` and `y`, and they appear correlated: across levels of `x`, those with `q = 0` have lower levels of `y`. Association seemingly flows back in time. Of course, that can't happen from a causal perspective, so controlling for `q` is the wrong thing to do. We end up with a biased effect of `x` on `y`.
-
-```{r}
-#| echo: false
-#| label: fig-collider-scatter
-#| message: false
-set.seed(123)
-library(patchwork)
-n <- 500
-x <- rnorm(n)
-y <- rnorm(n)
-linear_pred <- 2*x + 3*y + rnorm(n)
-prob <- 1 / (1 + exp(-linear_pred))
-
-q <- rbinom(n, size = 1, prob = prob)
-
-collider_data <- tibble(x, y, q = as.factor(q))
-
-p1 <- collider_data |> 
-  ggplot(aes(x, y)) + 
-  geom_point(alpha = .35) + 
-  geom_smooth(method = "lm", se = FALSE, color = "black") + 
-  facet_wrap(~"not adjusting for `q`")
-
-p2 <- collider_data |> 
-  ggplot(aes(x, y, color = q)) + 
-  geom_point(alpha = .35) + 
-  geom_smooth(method = "lm", se = FALSE) + 
-  facet_wrap(~"adjusting for `q`")
-
-p1 + p2
-```
+Causality only goes forward. Association, however, is time-agnostic. It's just an observation about the numerical relationships between variables. When we control for `q`, we introduce an association between `x` and `y`. It's challenging to develop an intuition for this. Consider a case where `x` and `y` are the only causes of `q`, and all three variables are binary. When either `x` or `y` equals 1, then `m` happens. If we know `q = 1` and `x = 0` then logically it must be that `y = 1`. Thus, knowing about `q` gives us information about `y` via `x`. This is an unrealistic, extreme example, but it shows how this type of bias, sometimes called *collider-stratification bias* or *selection bias*, occurs: conditioning on `q` provides statistical information about `x` and `y` and distorts their relationship.
 
 ::: {.callout-tip}
 ## Exchangability revisited
-We commonly refer exchangability as the assumption of no confounding. Actually, this isn't quite right. It's the assumption of no open non-causal paths. Many times, these are confounding pathways. However, paths can also be opened by conditioning on a collider. Even though these aren't colliders, it creates non-exchangability between the two groups: they are different in a way that matters to the exposure and outcome.
+We commonly refer exchangability as the assumption of no confounding. Actually, this isn't quite right. It's the assumption of no *open, non-causal* paths. Many times, these are confounding pathways. However, paths can also be opened by conditioning on a collider. Even though these aren't confounders, it creates non-exchangability between the two groups: they are different in a way that matters to the exposure and outcome.
 :::
 
+Correctly identifying the causal structure between the exposure and outcome thus helps us 1) communicate the assumptions we're making about the relationships between variables and 2) identify sources of bias. Importantly, in doing 2), we are also often able to identify ways to prevent bias based on the assumptions in 1). In the simple case of three DAGs in @fig-dag-path-types, we know whether or not to control for `q` depending on the nature of the causal structure. The set or sets of variables we need to adjust for is called the *adjustment set*. DAGs can help us identify adjustment sets even in complex settings.
 
+::: {.callout-tip}
+## What about interaction?
 
-- basic terms
-- types of paths
-- what to adjust for
-- popout: intuition for colliders
-- popout: exchangability revisited
-- popout: what about interaction?
+DAGs don't make a statement about interaction or effect estimate modification even though they are an important part of inference. Technically, interaction is a matter of the functional form of the relationships. Much as we don't need to specify how we're going to model a variable in the DAG (e.g., with splines), we don't need to specify how variables statistically interact with one another.
+
+There are several ways we use interactions in causal inference. In one extreme, they are simply a matter of functional form: interaction terms are included in models but marginalized over to get an overall causal effect. In the other extreme, we're interested in *joint causal effects*, where the two variables interacting with each other are both causal. In between, we can use interaction terms to identify *heterogenous causal effects*, effects which vary by a second variable that is not assumed to be causal. As with many tools in causal inference, we use the same statistical technique many ways to answer different questions. 
+
+Many people have tried ways of expressing interaction in DAGs using different types of arcs, nodes, and other annotations, but no approach has taken off as the preferred way.
+:::
+
+Let's take a look at an example in R. We'll learn how to build DAGs, visualize them, and identify important information like adjustment sets.
 
 ## DAGs in R
+
+
 
 - building
 - popout: coordinates. show manual. mention dagitty.net. mention `time_ordered`.
@@ -240,6 +342,8 @@ We commonly refer exchangability as the assumption of no confounding. Actually, 
 - Negative controls/Falsification end-points, dag-data consitency, alternate adjustment sets
 
 ## Causal Inference is not (just) a statistical problem {#sec-quartets}
+
+* This may be better off as the next chapter
 
 ### Causal and Predictive Models, Revisited {#sec-causal-pred-revisit}
 
