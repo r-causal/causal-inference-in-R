@@ -262,7 +262,7 @@ collider_t |>
   scale_color_manual(values = c("TRUE" = "grey85", "FALSE" = "black"))
 ```
 
-Causality only goes forward. Association, however, is time-agnostic. It's just an observation about the numerical relationships between variables. When we control for `q`, we introduce an association between `x` and `y`. It's challenging to develop an intuition for this. Consider a case where `x` and `y` are the only causes of `q`, and all three variables are binary. When either `x` or `y` equals 1, then `m` happens. If we know `q = 1` and `x = 0` then logically it must be that `y = 1`. Thus, knowing about `q` gives us information about `y` via `x`. This is an unrealistic, extreme example, but it shows how this type of bias, sometimes called *collider-stratification bias* or *selection bias*, occurs: conditioning on `q` provides statistical information about `x` and `y` and distorts their relationship.
+Causality only goes forward. Association, however, is time-agnostic. It's just an observation about the numerical relationships between variables. When we control for the future, we run the risk of introducing bias. It's challenging to develop an intuition for this. Consider a case where `x` and `y` are the only causes of `q`, and all three variables are binary. When either `x` or `y` equals 1, then `m` happens. If we know `q = 1` and `x = 0` then logically it must be that `y = 1`. Thus, knowing about `q` gives us information about `y` via `x`. This is an unrealistic, extreme example, but it shows how this type of bias, sometimes called *collider-stratification bias* or *selection bias*, occurs: conditioning on `q` provides statistical information about `x` and `y` and distorts their relationship.
 
 ::: {.callout-tip}
 ## Exchangability revisited
