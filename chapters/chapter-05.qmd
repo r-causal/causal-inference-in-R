@@ -262,7 +262,7 @@ collider_t |>
   scale_color_manual(values = c("TRUE" = "grey85", "FALSE" = "black"))
 ```
 
-Causality only goes forward. Association, however, is time-agnostic. It's just an observation about the numerical relationships between variables. When we control for the future, we run the risk of introducing bias. It's challenging to develop an intuition for this. Consider a case where `x` and `y` are the only causes of `q`, and all three variables are binary. When either `x` or `y` equals 1, then `m` happens. If we know `q = 1` and `x = 0` then logically it must be that `y = 1`. Thus, knowing about `q` gives us information about `y` via `x`. This is an unrealistic, extreme example, but it shows how this type of bias, sometimes called *collider-stratification bias* or *selection bias*, occurs: conditioning on `q` provides statistical information about `x` and `y` and distorts their relationship.
+Causality only goes forward. Association, however, is time-agnostic. It's just an observation about the numerical relationships between variables. When we control for the future, we run the risk of introducing bias. It's challenging to develop an intuition for this. Consider a case where `x` and `y` are the only causes of `q`, and all three variables are binary. When *either* `x` or `y` equals 1, then `m` happens. If we know `q = 1` and `x = 0` then logically it must be that `y = 1`. Thus, knowing about `q` gives us information about `y` via `x`. This is an extreme example, but it shows how this type of bias, sometimes called *collider-stratification bias* or *selection bias*, occurs: conditioning on `q` provides statistical information about `x` and `y` and distorts their relationship.
 
 ::: {.callout-tip}
 ## Exchangability revisited
@@ -274,17 +274,141 @@ Correctly identifying the causal structure between the exposure and outcome thus
 ::: {.callout-tip}
 ## What about interaction?
 
-DAGs don't make a statement about interaction or effect estimate modification even though they are an important part of inference. Technically, interaction is a matter of the functional form of the relationships. Much as we don't need to specify how we're going to model a variable in the DAG (e.g., with splines), we don't need to specify how variables statistically interact with one another.
+DAGs don't make a statement about interaction or effect estimate modification even though they are an important part of inference. Technically, interaction is a matter of the functional form of the relationships in the DAG. Much as we don't need to specify how we're going to model a variable in the DAG (e.g., with splines), we don't need to specify how variables statistically interact with one another. That's a matter for the modeling stage.
 
 There are several ways we use interactions in causal inference. In one extreme, they are simply a matter of functional form: interaction terms are included in models but marginalized over to get an overall causal effect. In the other extreme, we're interested in *joint causal effects*, where the two variables interacting with each other are both causal. In between, we can use interaction terms to identify *heterogenous causal effects*, effects which vary by a second variable that is not assumed to be causal. As with many tools in causal inference, we use the same statistical technique many ways to answer different questions. 
 
-Many people have tried ways of expressing interaction in DAGs using different types of arcs, nodes, and other annotations, but no approach has taken off as the preferred way.
+<!-- TODO: expand on this later in the book and link to chapter where we'll discuss -->
+
+Many people have tried ways of expressing interaction in DAGs using different types of arcs, nodes, and other annotations, but no approach has taken off as the preferred way. 
 :::
 
 Let's take a look at an example in R. We'll learn how to build DAGs, visualize them, and identify important information like adjustment sets.
 
 ## DAGs in R
 
+First, let's consider the a research question: Does listening to a comedy podcast the morning before an exam improve graduate students test scores? We can diagram this using the method describe in @sec-diag (@fig-diagram-podcast).
+
+```{r}
+#| echo: false
+#| fig-cap: "Does listening to a comedy podcast the morning before an exam improve graduate student test scores?"
+#| fig-height: 2
+#| label: fig-diagram-podcast
+knitr::include_graphics("../images/podcast-diagram.png")
+```
+
+The main tool we'll use for making DAGs is ggdag. ggdag is a package that connects ggplot2, the most powerful visualization tool in R, to dagitty, an R package with sophisticated algorithms for querying DAGs. 
+
+To create a DAG object, we'll use the `dagify()` function. The `dagify()` function takes formulas, separated by commas, that specify causes and effects, with the left element of of the formula specifying the effect and the right all of the factors that cause it. This is just like the type of formula we specify for most regression models in R. `dagify()` returns a `dagitty` object that works with both the dagitty and ggdag packages.
+
+What are all of the factors that cause graduate students to listen to a podcast the morning before an exam? What are all of the factors that could cause a graduate student to do well on a test? Let’s posit some here.
+
+```{r}
+library(ggdag)
+dagify(
+  podcast ~ mood + humor + prepared,
+  exam ~ mood + prepared
+)
+```
+
+In the code above, we assume that a graduate student's mood, sense of humor, and how prepared they feel for the exam could influence whether they listened to a podcast the morning of the test. Likewise, we assume that their mood and how prepared they are also influences their exam score. Notice we *do not* see podcast in the exam equation; this means that we assume that there is no causal relationship between podcast and the exam score.
+
+There are some other useful arguments you'll often find yourself supplying to `dagify()`: 
+
+* `exposure` and `outcome`: Telling ggdag the variables that are the exposure and outcome of your research question is required for many of the most useful queries we can make of DAGs. 
+* `latent`: This argument lets us tell ggdag that some variables in the DAG are unmeasured. This is really useful for identifying valid adjustment sets with the data we actually have.
+* `coords`: Coordinates for the variables. You can choose between algorithmic or manual layouts, as discussed in below. We'll use `time_ordered_coords()` here.
+* `labels`: A character vector of labels for the variables. 
+
+Let's create a DAG object, `podcast_dag`, that has some of these attributes, then visualize the DAG with `ggdag()`. `ggdag()` returns a ggplot object, so we can add additional layers to the plot like themes.
+
+```{r}
+#| label: fig-dag-podcast
+#| fig-cap: "Proposed DAG to answer the question: Does listening to a comedy podcast the morning before an exam improve graduate students test scores?"
+#| fig-width: 4
+#| fig-height: 4
+podcast_dag <- dagify(
+  podcast ~ mood + humor + prepared,
+  exam ~ mood + prepared,
+  coords = time_ordered_coords(),
+  exposure = "podcast",
+  outcome = "exam",
+  labels = c(
+    podcast = "podcast",
+    exam = "exam score",
+    mood = "mood",
+    humor = "humor",
+    prepared = "prepared"
+  )
+)
+ggdag(podcast_dag, use_labels = "label", text = FALSE) +
+  theme_dag()
+```
+
+::: {.callout-note}
+For the rest of the chapter, we'll use `theme_dag()`, a ggplot theme from ggdag meant for DAGs.
+
+```{r}
+theme_set(
+  theme_dag() %+replace%
+    theme(legend.position = "bottom")
+)
+```
+:::
+
+::: {.callout-tip}
+## DAG coordinates 
+You don't need to specify coordinates to ggdag. If you don't, it uses algorithms designed for automatic layouts. There are many such algorithms, and they focus on different aspects of the layout, e.g. the shape, the space between the nodes, minimizing how many edges cross, etc. These layout algorithms usually have a component of randomness, so it's good to use a seed if you want to get the same result.
+
+```{r}
+# no coordinates specified
+set.seed(123)
+pod_dag <- dagify(
+  podcast ~ mood + humor + prepared,
+  exam ~ mood + prepared
+)
+
+# automatically determine layouts
+pod_dag |> 
+  ggdag(text_size = 2.8)
+```
+
+We can also ask for a specific layout, e.g. the popular Sugiyama algorithm for DAGs
+
+```{r}
+pod_dag |> 
+  ggdag(layout = "sugiyama", text_size = 2.8)
+```
+
+For causal DAGs, the time-ordered layout algorithm is often best, which we can specify with `time_ordered_coords()` or `layout = "time_ordered"`. We'll discuss time ordering in greater detail in @sec-time-ordered
+
+```{r}
+pod_dag |> 
+  ggdag(layout = "time_ordered", text_size = 2.8)
+```
+
+You can also manually specify coordinates using a list or data frame and provide them to the `coords` argument of `dagify()`. 
+
+Additionally, because ggdag is based on dagitty, you can use `dagitty.net` to create and organize a DAG using a graphical interface, then export the result as dagitty code for ggdag to consume.
+
+Algorithmic layouts are often nice for fast visualization of DAGs or particularly complex graphs. Once you want to share your DAG, it's usually best to be a little more intentional about the layout, perhaps by specifying the coordinates manually. `time_ordered_coords()` is often the best of both worlds, and we'll use it for most DAGs in this book.
+:::
+
+```{r}
+#| label: fig-paths
+# TODO: Why aren't okabe-ito colors propgating here and other spots in ggdag?
+podcast_dag |> 
+  ggdag_paths(shadow = TRUE, text_size = 2.8)
+```
+
+```{r}
+ggdag_adjustment_set(podcast_dag, text_size = 2.8)
+```
+
+
+```{r}
+dagitty::adjustmentSets(podcast_dag)
+```
 
 
 - building
@@ -310,7 +434,7 @@ Let's take a look at an example in R. We'll learn how to build DAGs, visualize t
 - estimand
 - population and context
 
-### Order nodes by time
+### Order nodes by time {#sec-time-ordered}
 
 - Time ordering algorithm
 - Feedback loops: global warming and A/C use
