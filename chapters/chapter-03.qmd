@@ -339,7 +339,7 @@ We know the *true* average causal effect of (unspoiled) chocolate in the sample 
 
 ##### Interference 
 
-Interference would mean that an individual's exposure does not impact another's potential outcome. For example, let's say each individual has a partner, and their potential outcome depends on both what flavor of ice cream they ate *and* what flavor their partner ate. For example, in the simulation below, having a partner that received a different flavor of ice cream increases the happiness by two units.
+Interference would mean that an individual's exposure impacts another's potential outcome. For example, let's say each individual has a partner, and their potential outcome depends on both what flavor of ice cream they ate *and* what flavor their partner ate. For example, in the simulation below, having a partner that received a different flavor of ice cream increases the happiness by two units.
 
 ```{r}
 data <- data.frame(
