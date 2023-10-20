@@ -299,7 +299,16 @@ knitr::include_graphics("../images/podcast-diagram.png")
 
 The main tool we'll use for making DAGs is ggdag. ggdag is a package that connects ggplot2, the most powerful visualization tool in R, to dagitty, an R package with sophisticated algorithms for querying DAGs. 
 
-To create a DAG object, we'll use the `dagify()` function. The `dagify()` function takes formulas, separated by commas, that specify causes and effects, with the left element of of the formula specifying the effect and the right all of the factors that cause it. This is just like the type of formula we specify for most regression models in R. `dagify()` returns a `dagitty` object that works with both the dagitty and ggdag packages.
+To create a DAG object, we'll use the `dagify()` function.`dagify()` returns a `dagitty` object that works with both the dagitty and ggdag packages. The `dagify()` function takes formulas, separated by commas, that specify causes and effects, with the left element of of the formula specifying the effect and the right all of the factors that cause it. This is just like the type of formula we specify for most regression models in R. 
+
+```{r}
+#| eval: false
+dagify(
+  effect1 ~ cause1 + cause2 + cause3,
+  effect2 ~ cause1 + cause4,
+  ...
+)
+```
 
 What are all of the factors that cause graduate students to listen to a podcast the morning before an exam? What are all of the factors that could cause a graduate student to do well on a test? Let’s posit some here.
 
