@@ -361,6 +361,9 @@ theme_set(
 You don't need to specify coordinates to ggdag. If you don't, it uses algorithms designed for automatic layouts. There are many such algorithms, and they focus on different aspects of the layout, e.g. the shape, the space between the nodes, minimizing how many edges cross, etc. These layout algorithms usually have a component of randomness, so it's good to use a seed if you want to get the same result.
 
 ```{r}
+#| fig-width: 4
+#| fig-height: 4
+#| fig-align: center
 # no coordinates specified
 set.seed(123)
 pod_dag <- dagify(
@@ -376,6 +379,9 @@ pod_dag |>
 We can also ask for a specific layout, e.g. the popular Sugiyama algorithm for DAGs
 
 ```{r}
+#| fig-width: 4
+#| fig-height: 4
+#| fig-align: center
 pod_dag |> 
   ggdag(layout = "sugiyama", text_size = 2.8)
 ```
@@ -383,6 +389,9 @@ pod_dag |>
 For causal DAGs, the time-ordered layout algorithm is often best, which we can specify with `time_ordered_coords()` or `layout = "time_ordered"`. We'll discuss time ordering in greater detail in @sec-time-ordered
 
 ```{r}
+#| fig-width: 4
+#| fig-height: 4
+#| fig-align: center
 pod_dag |> 
   ggdag(layout = "time_ordered", text_size = 2.8)
 ```
@@ -398,11 +407,18 @@ Algorithmic layouts are often nice for fast visualization of DAGs or particularl
 #| label: fig-paths
 # TODO: Why aren't okabe-ito colors propgating here and other spots in ggdag?
 podcast_dag |> 
-  ggdag_paths(shadow = TRUE, text_size = 2.8)
+  ggdag_paths(shadow = TRUE, text = FALSE, use_labels = "label")
 ```
 
 ```{r}
-ggdag_adjustment_set(podcast_dag, text_size = 2.8)
+#| fig-width: 4
+#| fig-height: 4
+#| fig-align: center
+ggdag_adjustment_set(
+  podcast_dag, 
+  text = FALSE, 
+  use_labels = "label"
+)
 ```
 
 
@@ -411,8 +427,6 @@ dagitty::adjustmentSets(podcast_dag)
 ```
 
 
-- building
-- popout: coordinates. show manual. mention dagitty.net. mention `time_ordered`.
 - paths
 - adjustment sets
 - with ggplot
