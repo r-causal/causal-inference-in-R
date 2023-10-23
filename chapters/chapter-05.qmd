@@ -267,6 +267,8 @@ Causality only goes forward. Association, however, is time-agnostic. It's just a
 ::: {.callout-tip}
 ## Exchangability revisited
 We commonly refer exchangability as the assumption of no confounding. Actually, this isn't quite right. It's the assumption of no *open, non-causal* paths. Many times, these are confounding pathways. However, paths can also be opened by conditioning on a collider. Even though these aren't confounders, it creates non-exchangability between the two groups: they are different in a way that matters to the exposure and outcome.
+
+Open, non-causal paths are also called *backdoor paths*. We'll use this terminology often because it captures the idea well: these are any open paths that are biasing the effect we're interested in estimating
 :::
 
 Correctly identifying the causal structure between the exposure and outcome thus helps us 1) communicate the assumptions we're making about the relationships between variables and 2) identify sources of bias. Importantly, in doing 2), we are also often able to identify ways to prevent bias based on the assumptions in 1). In the simple case of three DAGs in @fig-dag-path-types, we know whether or not to control for `q` depending on the nature of the causal structure. The set or sets of variables we need to adjust for is called the *adjustment set*. DAGs can help us identify adjustment sets even in complex settings.
@@ -320,7 +322,12 @@ dagify(
 )
 ```
 
-In the code above, we assume that a graduate student's mood, sense of humor, and how prepared they feel for the exam could influence whether they listened to a podcast the morning of the test. Likewise, we assume that their mood and how prepared they are also influences their exam score. Notice we *do not* see podcast in the exam equation; this means that we assume that there is no causal relationship between podcast and the exam score.
+In the code above, we assume that: 
+
+* a graduate student's mood, sense of humor, and how prepared they feel for the exam could influence whether they listened to a podcast the morning of the test
+* their mood and how prepared they are also influences their exam score
+
+Notice we *do not* see podcast in the exam equation; this means that we assume that there is **no** causal relationship between podcast and the exam score. 
 
 There are some other useful arguments you'll often find yourself supplying to `dagify()`: 
 
@@ -339,7 +346,16 @@ Let's create a DAG object, `podcast_dag`, that has some of these attributes, the
 podcast_dag <- dagify(
   podcast ~ mood + humor + prepared,
   exam ~ mood + prepared,
-  coords = time_ordered_coords(),
+  coords = time_ordered_coords(
+    list(
+      # time point 1
+      c("prepared", "humor", "mood"), 
+      # time point 2
+      "podcast",  
+      # time point 3
+      "exam"
+    )
+  ),
   exposure = "podcast",
   outcome = "exam",
   labels = c(
@@ -395,7 +411,9 @@ pod_dag |>
   ggdag(layout = "sugiyama", text_size = 2.8)
 ```
 
-For causal DAGs, the time-ordered layout algorithm is often best, which we can specify with `time_ordered_coords()` or `layout = "time_ordered"`. We'll discuss time ordering in greater detail in @sec-time-ordered
+For causal DAGs, the time-ordered layout algorithm is often best, which we can specify with `time_ordered_coords()` or `layout = "time_ordered"`. We'll discuss time ordering in greater detail in @sec-time-ordered. Earlier, we explicitly told ggdag which variables were at which time points, but we don't need to. Notice, though, that the time ordering algorithm puts `podcast` and `exam` at the same timepoint since one doesn't cause another (and thus predate it). We know that's not the case: listening to the podcast happened before taking the exam.
+
+<!-- TODO: if implementing a better way to use this algorithm while specifying on or more time points then update this -->
 
 ```{r}
 #| fig-width: 4
@@ -406,20 +424,54 @@ pod_dag |>
 ```
 
 You can also manually specify coordinates using a list or data frame and provide them to the `coords` argument of `dagify()`. 
-
 Additionally, because ggdag is based on dagitty, you can use `dagitty.net` to create and organize a DAG using a graphical interface, then export the result as dagitty code for ggdag to consume.
 
 Algorithmic layouts are often nice for fast visualization of DAGs or particularly complex graphs. Once you want to share your DAG, it's usually best to be a little more intentional about the layout, perhaps by specifying the coordinates manually. `time_ordered_coords()` is often the best of both worlds, and we'll use it for most DAGs in this book.
 :::
 
+We've specified the DAG for this question and told ggdag what the exposure and outcome of interest are. According to the DAG, there is no direct causal relationship between listening to a podcast and exam scores. Are there any other open paths? `ggdag_paths()` takes a DAG and visualizes the open paths. In @fig-paths-podcast, we see two open paths: `podcast <- mood -> exam"` and `podcast <- prepared -> exam`. These are both forks---*confounding pathways*. Since there is no causal relationship between listening to a podcast and exam scores, the only open paths are *backdoor* paths, these two confounding pathways.
+
 ```{r}
-#| label: fig-paths
+#| label: fig-paths-podcast
 # TODO: Why aren't okabe-ito colors propgating here and other spots in ggdag?
 podcast_dag |> 
+  # show the whole dag as a light gray "shadow" 
+  # rather than just the paths
   ggdag_paths(shadow = TRUE, text = FALSE, use_labels = "label")
 ```
 
+::: {.callout-tip}
+`dagify()` returns a `dagitty()` object, but underneath the hood, ggdag converts `dagitty` objects to tidy DAGs, a structure that holds both the `dagitty` object and a `dataframe` about the DAG. This is handy if you want to manipulate the DAG programatically.
+
 ```{r}
+podcast_dag_tidy <- podcast_dag |> 
+  tidy_dagitty()
+
+podcast_dag_tidy
+```
+
+Most of the quick plotting functions transform the `dagitty` object to a tidy DAG if it's not already, then manipulate the data in some capacity. For instance, `dag_paths()` underlies `ggdag_paths()`; it returns a tidy DAG with data about the paths. You can use several dplyr functions on these objects directly.
+
+```{r}
+podcast_dag_tidy |> 
+  dag_paths() |> 
+  filter(set == 2, path == "open path")
+```
+
+Tidy DAGs are not pure data frames, but you can retrieve either the `dataframe` or `dagitty` object to work with them directly using `pull_dag_data()` or `pull_dag()`. `pull_dag()` can be useful when you want to work with dagitty functions:
+
+```{r}
+library(dagitty)
+podcast_dag_tidy |> 
+  pull_dag() |> 
+  paths()
+```
+:::
+
+Backdoor paths pollute the statistical association between `podcast` and `exam`, so we need to account for them. `ggdag_adjustment_set()` visualizes any valid adjustment sets implied by the DAG. @fig-podcast-adustment-set shows variables that are adjusted for as squares. Any arrows that were coming out of adjusted variables are removed from the DAG, because the path is longer open at that variable. 
+
+```{r}
+#| label: fig-podcast-adustment-set
 #| fig-width: 4
 #| fig-height: 4
 #| fig-align: center
@@ -430,16 +482,105 @@ ggdag_adjustment_set(
 )
 ```
 
+@fig-podcast-adustment-set shows the *minimal adjustment set*. By default, ggdag returns the set(s) that can close all backdoor paths with the fewest number of variables possible. In this DAG, that's just one set: `mood` and `prepared`. This makes sense, because there are two backdoor paths and the only other variables on them besides the exposure and outcome are these two variables. So, at minimum, we need to account for both to get a valid estimate.
+
+::: {.callout-tip} 
+`ggdag()` and friends usually use `tidy_dagitty()` and `dag_*()` or `node_*()` functions to change the underlying data frame. Similarly, the quick plotting functions use ggdag's geoms to visualize the resulting DAG(s). In other words, you can use the same data manipulation and visualization strategies that you use day-to-day directly with ggdag.
+
+Here's a condensed version of what `ggdag_adjustment_set()` is doing:
 
 ```{r}
-dagitty::adjustmentSets(podcast_dag)
+#| fig-width: 5
+#| fig-height: 5
+#| fig-align: center
+podcast_dag_tidy |> 
+  # add adjustment sets to data
+  dag_adjustment_sets() |>
+  ggplot(aes(x = x, y = y, xend = xend, yend = yend, color = adjusted, shape = adjusted)) + 
+  # ggdag's custom geoms: add nodes, edges, and labels
+  geom_dag_point() + 
+  # remove adjusted paths
+  geom_dag_edges_link(data = \(.df) filter(.df, adjusted != "adjusted")) + 
+  geom_dag_label_repel() + 
+  # you can use any ggplot function, too
+  facet_wrap(~ set) +
+  scale_shape_manual(values = c(adjusted = 15, unadjusted = 19))
 ```
 
+:::
 
-- paths
-- adjustment sets
-- with ggplot
+Minimal adjustment sets are only one type of valid adjustment sets. Sometimes, there are other combinations of variables that can get us an unbiased effect estimate. Two other options available in ggdag are full adjustment sets and canonical adjustment sets. Full adjustment sets are are every combination of variables that result in a valid set. 
 
+```{r}
+#| label: fig-adustment-set-all
+#| fig-width: 6.5
+#| fig-height: 5
+#| fig-align: center
+ggdag_adjustment_set(
+  podcast_dag, 
+  text = FALSE, 
+  use_labels = "label",
+  # get full adjustment sets
+  type = "all"
+)
+```
+
+It turns out that we can also control for `humor` without biasing the result.
+
+Canonical adjusment sets are a bit more complex: they are all possible ancestors of the exposure and outcome minus any possible descendants. In fully saturated DAGs (DAGs where every node causes anything that comes after it in time), the canonical adjustment set is the minimal adjustment set.
+
+::: {.callout-tip}
+Most of the functions in ggdag use dagitty underneath the hood. It's often useful to call dagitty functions directly.
+
+```{r}
+adjustmentSets(podcast_dag, type = "canonical")
+```
+:::
+
+Using our proposed DAG, let's simulate some data to see how accounting for the minimal adjustment set might occur in practice.
+
+```{r}
+set.seed(10)
+sim_data <- podcast_dag |>
+  simulate_data()
+```
+
+```{r}
+sim_data
+```
+
+Since we have simulated this data, we know that this is a case where *standard methods will succeed* (see @sec-standard) and therefore can estimate the causal effect using a basic linear regression model.
+@fig-dag-sim shows a forest plot of the simulated data based on our DAG.
+Notice the model that only included the exposure resulted in a spurious effect (an estimate of -0.1 when we know the truth is 0), whereas the model that adjusted for the two variables as suggested by `ggdag_adjustment_set()` is not spurious (0.0).
+
+```{r}
+#| label: fig-dag-sim
+#| fig-cap: "Forest plot of simulated data based on the DAG described in @fig-dag-podcast"
+## Model that does not close backdoor paths
+unadjusted_model <- lm(exam ~ podcast, sim_data) |>
+  broom::tidy(conf.int = TRUE) |>
+  dplyr::filter(term == "podcast") |>
+  mutate(formula = "podcast")
+
+## Model that closes backdoor paths
+adjusted_model <- lm(exam ~ podcast + mood + prepared, sim_data) |>
+  broom::tidy(conf.int = TRUE) |>
+  dplyr::filter(term == "podcast") |>
+  mutate(formula = "podcast + mood + prepared")
+
+bind_rows(
+  unadjusted_model,
+  adjusted_model
+) |>
+  ggplot(aes(x = estimate, y = formula, xmin = conf.low, xmax = conf.high)) +
+  geom_vline(xintercept = 0, linewidth = 1, color = "grey80") +
+  geom_pointrange(fatten = 3, size = 1) +
+  theme_minimal(18) +
+  labs(
+    y = NULL,
+    caption = "correct effect size: 0"
+  )
+```
 ## Common Structures of Bias
 
 - advanced forms of confounding, e.g. L happens after X
@@ -464,7 +605,7 @@ dagitty::adjustmentSets(podcast_dag)
 
 ### Consider the whole data collection process
 
-- race/shooting
+- race/shooting (show the `effect` argument of `adjustmentSets` to get direct effect)
 - healthy worker bias
 
 ### Include variables you don't have
