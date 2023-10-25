@@ -6,17 +6,76 @@
 
 > Draw your assumptions before your conclusions --@hernan2021
 
-Causal diagrams are a tool to visualize your assumptions about the causal structure of the questions you're trying to answer. In a randomized experiment, the causal structure is quite simple: while there may be many causes of an outcome, the only cause of the exposure is the randomization process itself (we hope!). In many non-randomized settings, however, the structure of your question can be a complex web of causality. Causal diagrams help communicate what we think this structure looks like. In addition to being open about what we think the causal structure is, causal diagrams have incredible mathematics properties that allow us to identify a way to estimate unbiased causal effects even with observational data.
+Causal diagrams are a tool to visualize your assumptions about the causal structure of the questions you're trying to answer.
+In a randomized experiment, the causal structure is quite simple: while there may be many causes of an outcome, the only cause of the exposure is the randomization process itself (we hope!).
+In many non-randomized settings, however, the structure of your question can be a complex web of causality.
+Causal diagrams help communicate what we think this structure looks like.
+In addition to being open about what we think the causal structure is, causal diagrams have incredible mathematics properties that allow us to identify a way to estimate unbiased causal effects even with observational data.
 
-The type of causal diagrams we use are also called directed acyclic graphs (DAGs). These graphs are directed because they include arrows going in a specific direction. They're acyclic because they don't go in circles; a variable can't cause itself, for instance. DAGs are used for a wide variety of problems, but we're specificaly concerned with *causal* DAGs. This class of DAGs is also sometimes referred to as Structural Causal Models (SCMs) because they are a model of the causal structure of a question. 
+Causal diagrams are also increasingly common.
+Data collected as a review of the use of causal diagrams in applied health research papers show a drastic increase in use over time [@Tennant2021].
 
-::: {.callout-tip}
+```{r}
+#| label: fig-dag-usage
+#| echo: false
+#| warning: false
+#| fig-cap: "Percentage of health research papers using causal diagrams over time."
+dag_data <- readxl::read_xlsx(here::here("data", "dag_data.xlsx"))
+
+dag_data <- dag_data |> 
+  separate(
+    dag_number, 
+    into = c("dag_number", "dag_location"), 
+    convert = TRUE, 
+    extra = "merge"
+  ) |> 
+  separate(
+    consistent_direction, 
+    into = c("consistent_direction", "dag_ordering"),
+    extra = "merge"
+  ) |> 
+  separate(
+    report_adjset, 
+    into = c("report_adjset", "report_adjset_loc"),
+    extra = "merge"
+  ) |> 
+  mutate(
+    year = str_extract(citation, "\\d{4}") |> as.integer(),
+    used_dag = !is.na(nodes),
+    reported_estimand = !str_detect(report_estimand, "Not reported")
+  )
+
+dag_data |> 
+  count(year, used_dag) |> 
+  mutate(pct = n / sum(n)) |> 
+  filter(used_dag, year < max(year)) |> 
+  ggplot(aes(year, pct)) +
+  geom_line(color = "#0072B2", linewidth = .9) + 
+  scale_y_continuous(
+    name = "percent of papers", 
+    labels = scales::label_percent()
+  )
+```
+
+The type of causal diagrams we use are also called directed acyclic graphs (DAGs).
+These graphs are directed because they include arrows going in a specific direction.
+They're acyclic because they don't go in circles; a variable can't cause itself, for instance.
+DAGs are used for a wide variety of problems, but we're specificaly concerned with *causal* DAGs.
+This class of DAGs is also sometimes referred to as Structural Causal Models (SCMs) because they are a model of the causal structure of a question.
+
+::: callout-tip
 ## DAGs down under
 
-We highly recommend asking an Australian friend about DAGs. 
+We highly recommend asking an Australian friend about DAGs.
 :::
 
-DAGs depict causal relationships between variables. Visually, the way they depict variables is as *edges* and *nodes*. Edges are the arrows going from one variable to another, also sometimes called arcs or just arrows. Nodes are the variables themselves, sometimes called vertices, points, or just variables. in @fig-dag-basic, there are two nodes: `x` and `y` and one edge going from `x` to `y`. Here, we are saying that `x` causes `y`. In some capacity, `y` "listens" to `x`.
+DAGs depict causal relationships between variables.
+Visually, the way they depict variables is as *edges* and *nodes*.
+Edges are the arrows going from one variable to another, also sometimes called arcs or just arrows.
+Nodes are the variables themselves, sometimes called vertices, points, or just variables.
+in @fig-dag-basic, there are two nodes: `x` and `y` and one edge going from `x` to `y`.
+Here, we are saying that `x` causes `y`.
+In some capacity, `y` "listens" to `x`.
 
 ```{r}
 #| echo: false
@@ -32,8 +91,10 @@ dagify(y ~ x, coords = time_ordered_coords()) |>
   expand_plot(expand_x = expansion(c(.2, .2)))
 ```
 
-If we're interested in the causal effect of `x` on `y`, we're trying to estimate a numeric representation of that arrow. Usually, though, there are many other variables and arrows in the causal structure of a given question. A series of arrows is called a *path*. There are three types of paths you'll see in DAGs: forks, chains, and colliders (sometimes called inverse forks).
-
+If we're interested in the causal effect of `x` on `y`, we're trying to estimate a numeric representation of that arrow.
+Usually, though, there are many other variables and arrows in the causal structure of a given question.
+A series of arrows is called a *path*.
+There are three types of paths you'll see in DAGs: forks, chains, and colliders (sometimes called inverse forks).
 
 ```{r}
 #| echo: false
@@ -82,31 +143,62 @@ dag_flows |>
   theme_dag()
 ```
 
-Forks represent a common cause of two variables. Here, we're saying that `q` causes both `x` and `y`. This is the traditional definition of a confounder. They're called forks because the arrows from `x` to `y` are in different directions. Chains, on the other hand, represent a series of arrows going in the same direction. Here `q` is called a *mediator*: it is along the causal path from `x` to `y`. In this diagram, the only path from `x` to `y` is the one mediated through `q`. Finally, a collider is a path where two arrowheads meet at a variable. Because causality always goes forward in time, this naturally means that the collider variable is caused by two other variables. Here, we're saying that `x` and `y` both cause `q`.
+Forks represent a common cause of two variables.
+Here, we're saying that `q` causes both `x` and `y`.
+This is the traditional definition of a confounder.
+They're called forks because the arrows from `x` to `y` are in different directions.
+Chains, on the other hand, represent a series of arrows going in the same direction.
+Here `q` is called a *mediator*: it is along the causal path from `x` to `y`.
+In this diagram, the only path from `x` to `y` is the one mediated through `q`.
+Finally, a collider is a path where two arrowheads meet at a variable.
+Because causality always goes forward in time, this naturally means that the collider variable is caused by two other variables.
+Here, we're saying that `x` and `y` both cause `q`.
 
-::: {.callout-tip}
+::: callout-tip
 ## Are DAGs SEMs?
-If you're familiar with structural equation models (SEMs), a modeling technique commonly used in psychology and other social science settings, you may notice some similarities between SEMs and DAGs. In fact, DAGs are a form of *non-parametric* SEM. SEMs estimate entire graphs using parametric assumptions. Causal DAGs, on the other hand, don't estimate anything; an arrow going from one variable to another says nothing about the strength or functional form of that relationship, only that we think it exists.
+
+If you're familiar with structural equation models (SEMs), a modeling technique commonly used in psychology and other social science settings, you may notice some similarities between SEMs and DAGs.
+In fact, DAGs are a form of *non-parametric* SEM.
+SEMs estimate entire graphs using parametric assumptions.
+Causal DAGs, on the other hand, don't estimate anything; an arrow going from one variable to another says nothing about the strength or functional form of that relationship, only that we think it exists.
 :::
 
-One of the major benefits of DAGs is that they help us identify sources of bias and, often, provide clues in how to address them. However, talking about an unbiased effect estimate only makes sense when we have a specific causal question in mind. Since each arrow represents a cause, it's causality all the way down, so no individual arrow is inherently problematic. Here, we're interested in the effect of `x` on `y`. This question defines which paths we're interested in and which we're not. 
+One of the major benefits of DAGs is that they help us identify sources of bias and, often, provide clues in how to address them.
+However, talking about an unbiased effect estimate only makes sense when we have a specific causal question in mind.
+Since each arrow represents a cause, it's causality all the way down, so no individual arrow is inherently problematic.
+Here, we're interested in the effect of `x` on `y`.
+This question defines which paths we're interested in and which we're not.
 
-These three types of paths have different implications for the statistical relationship between `x` and `y`. If we only look at the correlation between the two variables under these assumptions:
+These three types of paths have different implications for the statistical relationship between `x` and `y`.
+If we only look at the correlation between the two variables under these assumptions:
 
-1. In the fork, `x` and `y` will be associated, despite there being no arrow from `x` to `y`.
-2. In the chain, `x` and `y` are related but only through `q`.
-3. In the collider, `x` and `y` will *not* be related.
+1.  In the fork, `x` and `y` will be associated, despite there being no arrow from `x` to `y`.
+2.  In the chain, `x` and `y` are related but only through `q`.
+3.  In the collider, `x` and `y` will *not* be related.
 
-Paths that transmit association are called *open paths*. Paths that do not transmit association are called *closed paths*. Forks and chains are open while colliders are closed. 
+Paths that transmit association are called *open paths*.
+Paths that do not transmit association are called *closed paths*.
+Forks and chains are open while colliders are closed.
 
-So, should we adjust for `q`? That depends on the nature of the path. Forks are confounding paths. Because `q` causes both `x` and `y`, `x` and `y` will have a spurious association. They both contain information from `q`, their mutual cause, and that mutual causal relationship makes `x` and `y` associated statistically. Adjusting for `q` will *block* the bias from confounding and give us the true relationship between `x` and `y`. 
+So, should we adjust for `q`?
+That depends on the nature of the path.
+Forks are confounding paths.
+Because `q` causes both `x` and `y`, `x` and `y` will have a spurious association.
+They both contain information from `q`, their mutual cause, and that mutual causal relationship makes `x` and `y` associated statistically.
+Adjusting for `q` will *block* the bias from confounding and give us the true relationship between `x` and `y`.
 
-::: {.callout-tip}
+::: callout-tip
 ## Adjustment
-We can use a variety of techniques to account for a variable. We use the term "adjustment" to generally refer to any technique that removes the effect of variables we're not interested in.
+
+We can use a variety of techniques to account for a variable.
+We use the term "adjustment" to generally refer to any technique that removes the effect of variables we're not interested in.
 :::
 
-@fig-confounder-scatter depicts this effect visually. Here, `x` and `y` are continuous, and by definition of the DAG, they are unrelated. `q`, however, causes both. The unadjusted effect is biased because it includes information about the open path from `x` to `y` via `z`. Within levels of `z`, however, `x` and `y` are unrelated. 
+@fig-confounder-scatter depicts this effect visually.
+Here, `x` and `y` are continuous, and by definition of the DAG, they are unrelated.
+`q`, however, causes both.
+The unadjusted effect is biased because it includes information about the open path from `x` to `y` via `z`.
+Within levels of `z`, however, `x` and `y` are unrelated.
 
 ```{r}
 #| echo: false
@@ -145,9 +237,19 @@ p2 <- confounder_data |>
 p1 + p2
 ```
 
-For chains, whether or not we adjusting for mediators depends on the research question. Here, adjusting for `q` would result in a null estimate of the effect of `x` on `y`. Because the only effect of `x` on `y` is via `q`, no other effect remains. The effect of `x` on `y` mediated by `q` is called the *indirect* effect, while the effect of `x` on `y` directly is called the *direct* effect. If we're only interested in the direct effect, controlling for `q` might be what we want. If we want to know about both effects, we shouldn't try to adjust for `q`. We'll learn more estimating different mediation effects in @sec-mediation.
+For chains, whether or not we adjusting for mediators depends on the research question.
+Here, adjusting for `q` would result in a null estimate of the effect of `x` on `y`.
+Because the only effect of `x` on `y` is via `q`, no other effect remains.
+The effect of `x` on `y` mediated by `q` is called the *indirect* effect, while the effect of `x` on `y` directly is called the *direct* effect.
+If we're only interested in the direct effect, controlling for `q` might be what we want.
+If we want to know about both effects, we shouldn't try to adjust for `q`.
+We'll learn more estimating different mediation effects in @sec-mediation.
 
-@fig-mediator-scatter shows this effect visually. The unadjusted effect of `x` on `y` represents the total effect. Since the total effect is due entirely to the path mediated by `q`, when we adjust for `q`, no relationship remains. This is the direct effect. Neither of these effects is due to bias but rather each answers a different research question. 
+@fig-mediator-scatter shows this effect visually.
+The unadjusted effect of `x` on `y` represents the total effect.
+Since the total effect is due entirely to the path mediated by `q`, when we adjust for `q`, no relationship remains.
+This is the direct effect.
+Neither of these effects is due to bias but rather each answers a different research question.
 
 ```{r}
 #| echo: false
@@ -184,9 +286,18 @@ p2 <- mediator_data |>
 p1 + p2
 ```
 
-Colliders are different. In the collider DAG of @fig-dag-path-types, `x` and `y` are *not* associated, but both cause `q`. Adjusting for `q` has the opposite effect than with confounding: it *opens* a biasing pathway. Sometimes, people draw the path opened up by conditioning on a collider connecting `x` and `y`. 
+Colliders are different.
+In the collider DAG of @fig-dag-path-types, `x` and `y` are *not* associated, but both cause `q`.
+Adjusting for `q` has the opposite effect than with confounding: it *opens* a biasing pathway.
+Sometimes, people draw the path opened up by conditioning on a collider connecting `x` and `y`.
 
-Visually, we can see this happen when `x` and `y` are continuous and `q` is binary. In @fig-collider-scatter, when we don't include `q`, we find there is no relationship between `x` and `y`. That's the correct result. However, when we include `q`, we can detect information about both `x` and `y`, and they appear correlated: across levels of `x`, those with `q = 0` have lower levels of `y`. Association seemingly flows back in time. Of course, that can't happen from a causal perspective, so controlling for `q` is the wrong thing to do. We end up with a biased effect of `x` on `y`.
+Visually, we can see this happen when `x` and `y` are continuous and `q` is binary.
+In @fig-collider-scatter, when we don't include `q`, we find there is no relationship between `x` and `y`.
+That's the correct result.
+However, when we include `q`, we can detect information about both `x` and `y`, and they appear correlated: across levels of `x`, those with `q = 0` have lower levels of `y`.
+Association seemingly flows back in time.
+Of course, that can't happen from a causal perspective, so controlling for `q` is the wrong thing to do.
+We end up with a biased effect of `x` on `y`.
 
 ```{r}
 #| echo: false
@@ -224,7 +335,13 @@ p2 <- collider_data |>
 p1 + p2
 ```
 
-How can this be? Since `x` and `y` happen before `q`, `q` can't have an impact on them. Let's turn the DAG on its side and consider @fig-collider-time. If we break down the two time points, at time point 1, `q` hasn't happened yet, and `x` and `y` are unrelated. At time point 2, `q` happens due to `x` and `y`. But causality only goes forward in time. `q` happening later can't change the fact that `x` and `y` happened independently at time point 1.
+How can this be?
+Since `x` and `y` happen before `q`, `q` can't have an impact on them.
+Let's turn the DAG on its side and consider @fig-collider-time.
+If we break down the two time points, at time point 1, `q` hasn't happened yet, and `x` and `y` are unrelated.
+At time point 2, `q` happens due to `x` and `y`.
+But causality only goes forward in time.
+`q` happening later can't change the fact that `x` and `y` happened independently at time point 1.
 
 ```{r}
 #| echo: false
@@ -262,34 +379,63 @@ collider_t |>
   scale_color_manual(values = c("TRUE" = "grey85", "FALSE" = "black"))
 ```
 
-Causality only goes forward. Association, however, is time-agnostic. It's just an observation about the numerical relationships between variables. When we control for the future, we run the risk of introducing bias. It's challenging to develop an intuition for this. Consider a case where `x` and `y` are the only causes of `q`, and all three variables are binary. When *either* `x` or `y` equals 1, then `q` happens. If we know `q = 1` and `x = 0` then logically it must be that `y = 1`. Thus, knowing about `q` gives us information about `y` via `x`. This is an extreme example, but it shows how this type of bias, sometimes called *collider-stratification bias* or *selection bias*, occurs: conditioning on `q` provides statistical information about `x` and `y` and distorts their relationship.
+Causality only goes forward.
+Association, however, is time-agnostic.
+It's just an observation about the numerical relationships between variables.
+When we control for the future, we run the risk of introducing bias.
+It's challenging to develop an intuition for this.
+Consider a case where `x` and `y` are the only causes of `q`, and all three variables are binary.
+When *either* `x` or `y` equals 1, then `q` happens.
+If we know `q = 1` and `x = 0` then logically it must be that `y = 1`.
+Thus, knowing about `q` gives us information about `y` via `x`.
+This is an extreme example, but it shows how this type of bias, sometimes called *collider-stratification bias* or *selection bias*, occurs: conditioning on `q` provides statistical information about `x` and `y` and distorts their relationship.
 
-::: {.callout-tip}
+::: callout-tip
 ## Exchangability revisited
-We commonly refer exchangability as the assumption of no confounding. Actually, this isn't quite right. It's the assumption of no *open, non-causal* paths. Many times, these are confounding pathways. However, paths can also be opened by conditioning on a collider. Even though these aren't confounders, it creates non-exchangability between the two groups: they are different in a way that matters to the exposure and outcome.
 
-Open, non-causal paths are also called *backdoor paths*. We'll use this terminology often because it captures the idea well: these are any open paths that are biasing the effect we're interested in estimating
+We commonly refer exchangability as the assumption of no confounding.
+Actually, this isn't quite right.
+It's the assumption of no *open, non-causal* paths.
+Many times, these are confounding pathways.
+However, paths can also be opened by conditioning on a collider.
+Even though these aren't confounders, it creates non-exchangability between the two groups: they are different in a way that matters to the exposure and outcome.
+
+Open, non-causal paths are also called *backdoor paths*.
+We'll use this terminology often because it captures the idea well: these are any open paths that are biasing the effect we're interested in estimating
 :::
 
-Correctly identifying the causal structure between the exposure and outcome thus helps us 1) communicate the assumptions we're making about the relationships between variables and 2) identify sources of bias. Importantly, in doing 2), we are also often able to identify ways to prevent bias based on the assumptions in 1). In the simple case of three DAGs in @fig-dag-path-types, we know whether or not to control for `q` depending on the nature of the causal structure. The set or sets of variables we need to adjust for is called the *adjustment set*. DAGs can help us identify adjustment sets even in complex settings.
+Correctly identifying the causal structure between the exposure and outcome thus helps us 1) communicate the assumptions we're making about the relationships between variables and 2) identify sources of bias.
+Importantly, in doing 2), we are also often able to identify ways to prevent bias based on the assumptions in 1).
+In the simple case of three DAGs in @fig-dag-path-types, we know whether or not to control for `q` depending on the nature of the causal structure.
+The set or sets of variables we need to adjust for is called the *adjustment set*.
+DAGs can help us identify adjustment sets even in complex settings.
 
-::: {.callout-tip}
+::: callout-tip
 ## What about interaction?
 
-DAGs don't make a statement about interaction or effect estimate modification even though they are an important part of inference. Technically, interaction is a matter of the functional form of the relationships in the DAG. Much as we don't need to specify how we're going to model a variable in the DAG (e.g., with splines), we don't need to specify how variables statistically interact with one another. That's a matter for the modeling stage.
+DAGs don't make a statement about interaction or effect estimate modification even though they are an important part of inference.
+Technically, interaction is a matter of the functional form of the relationships in the DAG.
+Much as we don't need to specify how we're going to model a variable in the DAG (e.g., with splines), we don't need to specify how variables statistically interact with one another.
+That's a matter for the modeling stage.
 
-There are several ways we use interactions in causal inference. In one extreme, they are simply a matter of functional form: interaction terms are included in models but marginalized over to get an overall causal effect. In the other extreme, we're interested in *joint causal effects*, where the two variables interacting with each other are both causal. In between, we can use interaction terms to identify *heterogenous causal effects*, effects which vary by a second variable that is not assumed to be causal. As with many tools in causal inference, we use the same statistical technique many ways to answer different questions. 
+There are several ways we use interactions in causal inference.
+In one extreme, they are simply a matter of functional form: interaction terms are included in models but marginalized over to get an overall causal effect.
+In the other extreme, we're interested in *joint causal effects*, where the two variables interacting with each other are both causal.
+In between, we can use interaction terms to identify *heterogenous causal effects*, effects which vary by a second variable that is not assumed to be causal.
+As with many tools in causal inference, we use the same statistical technique many ways to answer different questions.
 
 <!-- TODO: expand on this later in the book and link to chapter where we'll discuss -->
 
-Many people have tried ways of expressing interaction in DAGs using different types of arcs, nodes, and other annotations, but no approach has taken off as the preferred way. 
+Many people have tried ways of expressing interaction in DAGs using different types of arcs, nodes, and other annotations, but no approach has taken off as the preferred way.
 :::
 
-Let's take a look at an example in R. We'll learn how to build DAGs, visualize them, and identify important information like adjustment sets.
+Let's take a look at an example in R.
+We'll learn how to build DAGs, visualize them, and identify important information like adjustment sets.
 
 ## DAGs in R
 
-First, let's consider the a research question: Does listening to a comedy podcast the morning before an exam improve graduate students test scores? We can diagram this using the method describe in @sec-diag (@fig-diagram-podcast).
+First, let's consider the a research question: Does listening to a comedy podcast the morning before an exam improve graduate students test scores?
+We can diagram this using the method describe in @sec-diag (@fig-diagram-podcast).
 
 ```{r}
 #| echo: false
@@ -299,9 +445,12 @@ First, let's consider the a research question: Does listening to a comedy podcas
 knitr::include_graphics("../images/podcast-diagram.png")
 ```
 
-The main tool we'll use for making DAGs is ggdag. ggdag is a package that connects ggplot2, the most powerful visualization tool in R, to dagitty, an R package with sophisticated algorithms for querying DAGs. 
+The main tool we'll use for making DAGs is ggdag.
+ggdag is a package that connects ggplot2, the most powerful visualization tool in R, to dagitty, an R package with sophisticated algorithms for querying DAGs.
 
-To create a DAG object, we'll use the `dagify()` function.`dagify()` returns a `dagitty` object that works with both the dagitty and ggdag packages. The `dagify()` function takes formulas, separated by commas, that specify causes and effects, with the left element of of the formula specifying the effect and the right all of the factors that cause it. This is just like the type of formula we specify for most regression models in R. 
+To create a DAG object, we'll use the `dagify()` function.`dagify()` returns a `dagitty` object that works with both the dagitty and ggdag packages.
+The `dagify()` function takes formulas, separated by commas, that specify causes and effects, with the left element of of the formula specifying the effect and the right all of the factors that cause it.
+This is just like the type of formula we specify for most regression models in R.
 
 ```{r}
 #| eval: false
@@ -312,7 +461,9 @@ dagify(
 )
 ```
 
-What are all of the factors that cause graduate students to listen to a podcast the morning before an exam? What are all of the factors that could cause a graduate student to do well on a test? Let’s posit some here.
+What are all of the factors that cause graduate students to listen to a podcast the morning before an exam?
+What are all of the factors that could cause a graduate student to do well on a test?
+Let's posit some here.
 
 ```{r}
 library(ggdag)
@@ -322,21 +473,22 @@ dagify(
 )
 ```
 
-In the code above, we assume that: 
+In the code above, we assume that:
 
-* a graduate student's mood, sense of humor, and how prepared they feel for the exam could influence whether they listened to a podcast the morning of the test
-* their mood and how prepared they are also influences their exam score
+-   a graduate student's mood, sense of humor, and how prepared they feel for the exam could influence whether they listened to a podcast the morning of the test
+-   their mood and how prepared they are also influences their exam score
 
-Notice we *do not* see podcast in the exam equation; this means that we assume that there is **no** causal relationship between podcast and the exam score. 
+Notice we *do not* see podcast in the exam equation; this means that we assume that there is **no** causal relationship between podcast and the exam score.
 
-There are some other useful arguments you'll often find yourself supplying to `dagify()`: 
+There are some other useful arguments you'll often find yourself supplying to `dagify()`:
 
-* `exposure` and `outcome`: Telling ggdag the variables that are the exposure and outcome of your research question is required for many of the most useful queries we can make of DAGs. 
-* `latent`: This argument lets us tell ggdag that some variables in the DAG are unmeasured. This is really useful for identifying valid adjustment sets with the data we actually have.
-* `coords`: Coordinates for the variables. You can choose between algorithmic or manual layouts, as discussed in below. We'll use `time_ordered_coords()` here.
-* `labels`: A character vector of labels for the variables. 
+-   `exposure` and `outcome`: Telling ggdag the variables that are the exposure and outcome of your research question is required for many of the most useful queries we can make of DAGs.
+-   `latent`: This argument lets us tell ggdag that some variables in the DAG are unmeasured. This is really useful for identifying valid adjustment sets with the data we actually have.
+-   `coords`: Coordinates for the variables. You can choose between algorithmic or manual layouts, as discussed in below. We'll use `time_ordered_coords()` here.
+-   `labels`: A character vector of labels for the variables.
 
-Let's create a DAG object, `podcast_dag`, that has some of these attributes, then visualize the DAG with `ggdag()`. `ggdag()` returns a ggplot object, so we can add additional layers to the plot like themes.
+Let's create a DAG object, `podcast_dag`, that has some of these attributes, then visualize the DAG with `ggdag()`.
+`ggdag()` returns a ggplot object, so we can add additional layers to the plot like themes.
 
 ```{r}
 #| label: fig-dag-podcast
@@ -370,20 +522,27 @@ ggdag(podcast_dag, use_labels = "label", text = FALSE) +
   theme_dag()
 ```
 
-::: {.callout-note}
+::: callout-note
 For the rest of the chapter, we'll use `theme_dag()`, a ggplot theme from ggdag meant for DAGs.
 
 ```{r}
 theme_set(
   theme_dag() %+replace%
-    theme(legend.position = "bottom")
+    theme(
+      legend.position = "bottom",
+      strip.text.x = element_text(margin = margin(2, 0, 2, 0, "mm"))
+    )
 )
 ```
 :::
 
-::: {.callout-tip}
-## DAG coordinates 
-You don't need to specify coordinates to ggdag. If you don't, it uses algorithms designed for automatic layouts. There are many such algorithms, and they focus on different aspects of the layout, e.g. the shape, the space between the nodes, minimizing how many edges cross, etc. These layout algorithms usually have a component of randomness, so it's good to use a seed if you want to get the same result.
+::: callout-tip
+## DAG coordinates
+
+You don't need to specify coordinates to ggdag.
+If you don't, it uses algorithms designed for automatic layouts.
+There are many such algorithms, and they focus on different aspects of the layout, e.g. the shape, the space between the nodes, minimizing how many edges cross, etc.
+These layout algorithms usually have a component of randomness, so it's good to use a seed if you want to get the same result.
 
 ```{r}
 #| fig-width: 4
@@ -411,7 +570,11 @@ pod_dag |>
   ggdag(layout = "sugiyama", text_size = 2.8)
 ```
 
-For causal DAGs, the time-ordered layout algorithm is often best, which we can specify with `time_ordered_coords()` or `layout = "time_ordered"`. We'll discuss time ordering in greater detail in @sec-time-ordered. Earlier, we explicitly told ggdag which variables were at which time points, but we don't need to. Notice, though, that the time ordering algorithm puts `podcast` and `exam` at the same timepoint since one doesn't cause another (and thus predate it). We know that's not the case: listening to the podcast happened before taking the exam.
+For causal DAGs, the time-ordered layout algorithm is often best, which we can specify with `time_ordered_coords()` or `layout = "time_ordered"`.
+We'll discuss time ordering in greater detail in @sec-time-ordered.
+Earlier, we explicitly told ggdag which variables were at which time points, but we don't need to.
+Notice, though, that the time ordering algorithm puts `podcast` and `exam` at the same timepoint since one doesn't cause another (and thus predate it).
+We know that's not the case: listening to the podcast happened before taking the exam.
 
 <!-- TODO: if implementing a better way to use this algorithm while specifying on or more time points then update this -->
 
@@ -423,13 +586,19 @@ pod_dag |>
   ggdag(layout = "time_ordered", text_size = 2.8)
 ```
 
-You can also manually specify coordinates using a list or data frame and provide them to the `coords` argument of `dagify()`. 
+You can also manually specify coordinates using a list or data frame and provide them to the `coords` argument of `dagify()`.
 Additionally, because ggdag is based on dagitty, you can use `dagitty.net` to create and organize a DAG using a graphical interface, then export the result as dagitty code for ggdag to consume.
 
-Algorithmic layouts are often nice for fast visualization of DAGs or particularly complex graphs. Once you want to share your DAG, it's usually best to be a little more intentional about the layout, perhaps by specifying the coordinates manually. `time_ordered_coords()` is often the best of both worlds, and we'll use it for most DAGs in this book.
+Algorithmic layouts are often nice for fast visualization of DAGs or particularly complex graphs.
+Once you want to share your DAG, it's usually best to be a little more intentional about the layout, perhaps by specifying the coordinates manually.
+`time_ordered_coords()` is often the best of both worlds, and we'll use it for most DAGs in this book.
 :::
 
-We've specified the DAG for this question and told ggdag what the exposure and outcome of interest are. According to the DAG, there is no direct causal relationship between listening to a podcast and exam scores. Are there any other open paths? `ggdag_paths()` takes a DAG and visualizes the open paths. In @fig-paths-podcast, we see two open paths: `podcast <- mood -> exam"` and `podcast <- prepared -> exam`. These are both forks---*confounding pathways*. Since there is no causal relationship between listening to a podcast and exam scores, the only open paths are *backdoor* paths, these two confounding pathways.
+We've specified the DAG for this question and told ggdag what the exposure and outcome of interest are.
+According to the DAG, there is no direct causal relationship between listening to a podcast and exam scores.
+Are there any other open paths?
+`ggdag_paths()` takes a DAG and visualizes the open paths.
+In @fig-paths-podcast, we see two open paths: `podcast <- mood -> exam"` and `podcast <- prepared -> exam`. These are both forks---*confounding pathways*. Since there is no causal relationship between listening to a podcast and exam scores, the only open paths are *backdoor* paths, these two confounding pathways.
 
 ```{r}
 #| label: fig-paths-podcast
@@ -440,8 +609,9 @@ podcast_dag |>
   ggdag_paths(shadow = TRUE, text = FALSE, use_labels = "label")
 ```
 
-::: {.callout-tip}
-`dagify()` returns a `dagitty()` object, but underneath the hood, ggdag converts `dagitty` objects to tidy DAGs, a structure that holds both the `dagitty` object and a `dataframe` about the DAG. This is handy if you want to manipulate the DAG programatically.
+::: callout-tip
+`dagify()` returns a `dagitty()` object, but underneath the hood, ggdag converts `dagitty` objects to tidy DAGs, a structure that holds both the `dagitty` object and a `dataframe` about the DAG.
+This is handy if you want to manipulate the DAG programatically.
 
 ```{r}
 podcast_dag_tidy <- podcast_dag |> 
@@ -450,7 +620,9 @@ podcast_dag_tidy <- podcast_dag |>
 podcast_dag_tidy
 ```
 
-Most of the quick plotting functions transform the `dagitty` object to a tidy DAG if it's not already, then manipulate the data in some capacity. For instance, `dag_paths()` underlies `ggdag_paths()`; it returns a tidy DAG with data about the paths. You can use several dplyr functions on these objects directly.
+Most of the quick plotting functions transform the `dagitty` object to a tidy DAG if it's not already, then manipulate the data in some capacity.
+For instance, `dag_paths()` underlies `ggdag_paths()`; it returns a tidy DAG with data about the paths.
+You can use several dplyr functions on these objects directly.
 
 ```{r}
 podcast_dag_tidy |> 
@@ -458,7 +630,8 @@ podcast_dag_tidy |>
   filter(set == 2, path == "open path")
 ```
 
-Tidy DAGs are not pure data frames, but you can retrieve either the `dataframe` or `dagitty` object to work with them directly using `pull_dag_data()` or `pull_dag()`. `pull_dag()` can be useful when you want to work with dagitty functions:
+Tidy DAGs are not pure data frames, but you can retrieve either the `dataframe` or `dagitty` object to work with them directly using `pull_dag_data()` or `pull_dag()`.
+`pull_dag()` can be useful when you want to work with dagitty functions:
 
 ```{r}
 library(dagitty)
@@ -468,7 +641,10 @@ podcast_dag_tidy |>
 ```
 :::
 
-Backdoor paths pollute the statistical association between `podcast` and `exam`, so we need to account for them. `ggdag_adjustment_set()` visualizes any valid adjustment sets implied by the DAG. @fig-podcast-adustment-set shows variables that are adjusted for as squares. Any arrows that were coming out of adjusted variables are removed from the DAG, because the path is longer open at that variable. 
+Backdoor paths pollute the statistical association between `podcast` and `exam`, so we need to account for them.
+`ggdag_adjustment_set()` visualizes any valid adjustment sets implied by the DAG.
+@fig-podcast-adustment-set shows variables that are adjusted for as squares.
+Any arrows that were coming out of adjusted variables are removed from the DAG, because the path is longer open at that variable.
 
 ```{r}
 #| label: fig-podcast-adustment-set
@@ -482,21 +658,30 @@ ggdag_adjustment_set(
 )
 ```
 
-@fig-podcast-adustment-set shows the *minimal adjustment set*. By default, ggdag returns the set(s) that can close all backdoor paths with the fewest number of variables possible. In this DAG, that's just one set: `mood` and `prepared`. This makes sense, because there are two backdoor paths and the only other variables on them besides the exposure and outcome are these two variables. So, at minimum, we need to account for both to get a valid estimate.
+@fig-podcast-adustment-set shows the *minimal adjustment set*.
+By default, ggdag returns the set(s) that can close all backdoor paths with the fewest number of variables possible.
+In this DAG, that's just one set: `mood` and `prepared`.
+This makes sense, because there are two backdoor paths and the only other variables on them besides the exposure and outcome are these two variables.
+So, at minimum, we need to account for both to get a valid estimate.
 
-::: {.callout-tip} 
-`ggdag()` and friends usually use `tidy_dagitty()` and `dag_*()` or `node_*()` functions to change the underlying data frame. Similarly, the quick plotting functions use ggdag's geoms to visualize the resulting DAG(s). In other words, you can use the same data manipulation and visualization strategies that you use day-to-day directly with ggdag.
+::: {.callout-tip}
+`ggdag()` and friends usually use `tidy_dagitty()` and `dag_*()` or `node_*()` functions to change the underlying data frame.
+Similarly, the quick plotting functions use ggdag's geoms to visualize the resulting DAG(s).
+In other words, you can use the same data manipulation and visualization strategies that you use day-to-day directly with ggdag.
 
 Here's a condensed version of what `ggdag_adjustment_set()` is doing:
 
 ```{r}
-#| fig-width: 5
-#| fig-height: 5
+#| fig-width: 4.5
+#| fig-height: 4.5
 #| fig-align: center
 podcast_dag_tidy |> 
   # add adjustment sets to data
   dag_adjustment_sets() |>
-  ggplot(aes(x = x, y = y, xend = xend, yend = yend, color = adjusted, shape = adjusted)) + 
+  ggplot(aes(
+    x = x, y = y, xend = xend, yend = yend,
+    color = adjusted, shape = adjusted
+  )) + 
   # ggdag's custom geoms: add nodes, edges, and labels
   geom_dag_point() + 
   # remove adjusted paths
@@ -506,10 +691,12 @@ podcast_dag_tidy |>
   facet_wrap(~ set) +
   scale_shape_manual(values = c(adjusted = 15, unadjusted = 19))
 ```
-
 :::
 
-Minimal adjustment sets are only one type of valid adjustment sets. Sometimes, there are other combinations of variables that can get us an unbiased effect estimate. Two other options available in ggdag are full adjustment sets and canonical adjustment sets. Full adjustment sets are are every combination of variables that result in a valid set. 
+Minimal adjustment sets are only one type of valid adjustment sets.
+Sometimes, there are other combinations of variables that can get us an unbiased effect estimate.
+Two other options available in ggdag are full adjustment sets and canonical adjustment sets.
+Full adjustment sets are are every combination of variables that result in a valid set.
 
 ```{r}
 #| label: fig-adustment-set-all
@@ -527,10 +714,12 @@ ggdag_adjustment_set(
 
 It turns out that we can also control for `humor` without biasing the result.
 
-Canonical adjusment sets are a bit more complex: they are all possible ancestors of the exposure and outcome minus any possible descendants. In fully saturated DAGs (DAGs where every node causes anything that comes after it in time), the canonical adjustment set is the minimal adjustment set.
+Canonical adjusment sets are a bit more complex: they are all possible ancestors of the exposure and outcome minus any possible descendants.
+In fully saturated DAGs (DAGs where every node causes anything that comes after it in time), the canonical adjustment set is the minimal adjustment set.
 
-::: {.callout-tip}
-Most of the functions in ggdag use dagitty underneath the hood. It's often useful to call dagitty functions directly.
+::: callout-tip
+Most of the functions in ggdag use dagitty underneath the hood.
+It's often useful to call dagitty functions directly.
 
 ```{r}
 adjustmentSets(podcast_dag, type = "canonical")
@@ -581,38 +770,94 @@ bind_rows(
     caption = "correct effect size: 0"
   )
 ```
-## Common Structures of Bias
 
-- advanced forms of confounding, e.g. L happens after X
-- Selection bias, M-Bias, Butterfly bias. L2FU later.
-- instrumental variables, precision/competing exposure variables
+## Structures of Causality
+
+-   advanced forms of confounding, e.g. L happens after X
+-   Selection bias, M-Bias, Butterfly bias. L2FU later.
+-   instrumental variables, precision/competing exposure variables
 
 ## Recommendations in building DAGs
 
+In principle, using DAGs is easy: you specify the causal relationships you think exist and then query the DAG for information like valid adjustment sets. In practice, assembling DAGs takes considerable time and thought. In fact, next to defining the research question itself, it's one of the hardest steps in making causal inference. Very little guidance exists on best practices in assembling DAGs. @Tennant2021 collected data on DAGs in applied health research to better understand how they were being used. @tbl-dag-properties shows some information they collected: the median number of nodes and arcs in a DAG, their ration, the saturation percent of the DAG, and how many were fully saturated. Saturating DAGs means adding all possible arrows going forward in time, e.g. in a fully saturated DAG, any given variable at time point 1 has arrows going to all variables in future time points, and so on. Most DAGs were only about half saturated and very few were fully saturated. 
+
+Only about half of the papers using DAGs reported the adjustment set used. In other words, researchers presented their assumptions about the research question but not the implications about how they should handle the modeling stage or if in fact they did use a valid adjustment set. Similarly, the majority of studies did not report the estimand of interest.
+
+::: {.callout-note} 
+The estimand is the target of interest in terms of what it is we're trying to estimate, as discussed briefly in [Chapter -@sec-whole-game]. We'll discuss estimands in detail in [Chapter -@sec-estimands].
+:::
+
+```{r}
+#| label: tbl-dag-properties
+#| echo: false
+#| message: false
+library(gtsummary)
+library(gt)
+dag_data_used <- dag_data |> 
+  filter(used_dag)
+
+as_yes_no <- function(x) {
+  factor(x, c(TRUE, FALSE), labels = c("Yes", "No"))
+}
+
+dag_data_used |> 
+  mutate(
+    saturated = near(saturation, 1),
+    report_adjset = report_adjset == "Yes",
+    across(c(saturated, reported_estimand, report_adjset), as_yes_no)
+  ) |> 
+  select(nodes, arcs, ratio, saturation, saturated, reported_estimand, report_adjset) |> 
+  tbl_summary(label = list(
+    nodes ~ "Number of Nodes",
+    arcs ~ "Number of Arcs",
+    ratio ~ "Node to Arc Ratio",
+    saturation ~ "Saturation Proportion",
+    saturated ~ "Fully Saturated",
+    reported_estimand ~ "Reported Estimand",
+    report_adjset ~ "Reported Adjustment Set"
+  ),
+  digits = list(everything() ~ 0, c(ratio, saturation) ~ 2),
+  type = list(where(is.factor) ~ "categorical")
+) |> 
+  as_gt() |> 
+  tab_row_group(
+    label = md("**DAG properties**"),
+    rows = 1:7,
+    id = "dag_prop"
+  ) |> 
+  tab_row_group(
+    label = md("**Reporting**"),
+    rows = 8:13,
+    id = "reporting"
+  ) |> 
+  row_group_order(c("dag_prop", "reporting"))
+```
+In this section, we'll offer some advice from @Tennant2021 and our own experience assembling DAGs.
+
 ### Iterate early and often
 
-- Ideally before when designing your research, at least before analyzing data (avoid overfitting)
+-   Ideally before when designing your research, at least before analyzing data (avoid overfitting)
 
 ### Consider your question
 
-- estimand
-- population and context
+-   estimand
+-   population and context
 
-### Order nodes by time {#sec-time-ordered}
+### Order nodes by time {#chapter-05-sec-time-ordered}
 
-- Time ordering algorithm
-- Feedback loops: global warming and A/C use
+-   Time ordering algorithm
+-   Feedback loops: global warming and A/C use
 
 ### Consider the whole data collection process
 
-- race/shooting (show the `effect` argument of `adjustmentSets` to get direct effect)
-- healthy worker bias
+-   race/shooting (show the `effect` argument of `adjustmentSets` to get direct effect)
+-   healthy worker bias
 
 ### Include variables you don't have
 
-- Examples where you can and can't adjust depending
+-   Examples where you can and can't adjust depending
 
-### Saturate your DAG by default
+### Saturate your DAG then prune
 
 ### Include instruments and competing exposures
 
@@ -622,21 +867,20 @@ bind_rows(
 
 ### Pick adjustment sets most likely to be succesful
 
-- measurement error, certainty
-- use the path with the most observed variables
+-   measurement error, certainty
+-   use the path with the most observed variables
 
 ### Use robustness checks
 
-- Negative controls/Falsification end-points, dag-data consitency, alternate adjustment sets
+-   Negative controls/Falsification end-points, dag-data consitency, alternate adjustment sets
 
-## Causal Inference is not (just) a statistical problem {#sec-quartets}
+## Causal Inference is not (just) a statistical problem {#chapter-05-sec-quartets}
 
-* This may be better off as the next chapter
+-   This may be better off as the next chapter
 
-### Causal and Predictive Models, Revisited {#sec-causal-pred-revisit}
+### Causal and Predictive Models, Revisited {#chapter-05-sec-causal-pred-revisit}
 
-- Probably too long, but if possible, condense to a popout
-- DAGs showing examples where prediction can lean on measured confounders, colliders. It's the amount of information a variable brings, not whether the coeffecient is unbiased affect of variable on outcome.
-- Not practical to fit a prediction model with future variable
-- Table 2 Bias examples. Unmeasure confounding of Z-Y relationship. Mediation example.
-
+-   Probably too long, but if possible, condense to a popout
+-   DAGs showing examples where prediction can lean on measured confounders, colliders. It's the amount of information a variable brings, not whether the coeffecient is unbiased affect of variable on outcome.
+-   Not practical to fit a prediction model with future variable
+-   Table 2 Bias examples. Unmeasure confounding of Z-Y relationship. Mediation example.
