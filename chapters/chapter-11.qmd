@@ -4,10 +4,211 @@
 
 ## Using matched data sets
 
+When fitting an outcome model on matched data sets, we can simply subset the original data to only those who were matched and then fit a model on these data as we would otherwise. For example, re-performing the matching as we did in @sec-using-ps, we can extract the matched observations in a dataset called `matched_data` as follows.
+
 ```{r}
-rnorm(5)
+library(broom)
+library(touringplans)
+library(MatchIt)
+
+seven_dwarfs_9 <- seven_dwarfs_train_2018 |> 
+  filter(wait_hour == 9) 
+
+m <- matchit(
+  park_extra_magic_morning ~ park_ticket_season + park_close + park_temperature_high,
+  data = seven_dwarfs_9
+)
+matched_data <- get_matches(m)
 ```
+
+We can then fit the outcome model on this data. For this analysis, we are interested in the impact of extra magic morning hours on the average posted wait time between 9 and 10am. The linear model below will estimate this in the matched cohort.
+
+```{r}
+lm(wait_minutes_posted_avg ~ park_extra_magic_morning, data = matched_data) |>
+  tidy(conf.int = TRUE)
+```
+
+Recall that by default `{MatchIt}` estimates an average treatment effect among the treated. This means among days that have extra magic hours, the expected impact of having extra magic hours on the average posted wait time between 9 and 10am is 7.9 minutes (95% CI: 1.2-14.5). 
 
 ## Using weights in outcome models
 
+Now let's use propensity score weights to estimate this same estimand. We will use the ATT weights so the analysis matches that for matching above.
+
+```{r}
+library(propensity)
+
+seven_dwarfs_9_with_ps <-
+  glm(
+    park_extra_magic_morning ~ park_ticket_season + park_close + park_temperature_high,
+    data = seven_dwarfs_9,
+    family = binomial()
+  ) |>
+  augment(type.predict = "response", data = seven_dwarfs_9)
+seven_dwarfs_9_with_wt <- seven_dwarfs_9_with_ps |>
+  mutate(w_att = wt_att(.fitted, park_extra_magic_morning))
+```
+
+We can fit a *weighted* outcome model by using the `weights` argument. 
+
+```{r}
+lm(wait_minutes_posted_avg ~ park_extra_magic_morning, 
+   data = seven_dwarfs_9_with_wt,
+   weights = w_att) |>
+  tidy()
+```
+
+Using weighting, we estimate that among days that have extra magic hours, the expected impact of having extra magic hours on the average posted wait time between 9 and 10am is 6.2 minutes. 
+While this approach will get us the desired estimate for the point estimate, the default output using the `lm` function for the uncertainty (the standard errors and confidence intervals) are not correct.
+
+
 ## Estimating uncertainty
+
+There are three ways to estimate the uncertainty:
+
+1. A bootstrap
+2. A sandwich estimator that only takes into account the outcome model
+3. A sandwich estimator that takes into account the propensity score model
+
+The first option can be computationally intensive, but should get you the correct estimates.
+The second option is computationally the easiest, but tends to overestimate the variability. There are not many current solutions in R (aside from coding it up yourself) for the third; however, the `{PSW}` package will do this. 
+
+### The bootstrap
+
+1. Create a function to run your analysis once on a sample of your data
+
+```{r}
+fit_ipw <- function(split, ...) {
+  .df <- analysis(split)
+  
+  # fit propensity score model
+  propensity_model <- glm(
+    park_extra_magic_morning ~ park_ticket_season + park_close + park_temperature_high,
+    data = seven_dwarfs_9,
+    family = binomial()
+  ) 
+  
+  # calculate inverse probability weights
+  .df <- propensity_model |>
+    augment(type.predict = "response", data = .df) |>
+    mutate(wts = wt_att(.fitted, 
+                        park_extra_magic_morning,
+                        exposure_type = "binary"))
+  
+  # fit correctly bootstrapped ipw model
+  lm(wait_minutes_posted_avg ~ park_extra_magic_morning, 
+     data = .df, weights = wts) |>
+    tidy()
+}
+```
+
+
+2. Use {rsample} to bootstrap our causal effect
+
+```{r}
+library(rsample)
+
+# fit ipw model to bootstrapped samples
+bootstrapped_seven_dwarfs <- bootstraps(
+  seven_dwarfs_9, 
+  times = 1000, 
+  apparent = TRUE
+)
+
+ipw_results <- bootstrapped_seven_dwarfs |> 
+  mutate(boot_fits = map(splits, fit_ipw)) 
+
+ipw_results
+```
+
+
+Let's look at the results.
+
+```{r}
+ipw_results |>
+  mutate(
+    estimate = map_dbl(
+      boot_fits,
+      \(.fit) .fit |>
+        filter(term == "park_extra_magic_morning") |>
+        pull(estimate)
+    )
+  ) |>
+  ggplot(aes(estimate)) +
+  geom_histogram(bins = 30, fill = "#D55E00FF", color = "white", alpha = 0.8) + 
+  theme_minimal()
+```
+
+
+3. Pull out the causal effect
+
+```{r}
+# get t-based CIs
+boot_estimate <- int_t(ipw_results, boot_fits) |> 
+  filter(term == "park_extra_magic_morning")
+boot_estimate
+```
+
+We estimate that among days that have extra magic hours, the expected impact of having extra magic hours on the average posted wait time between 9 and 10am is `r round(boot_estimate$.estimate, 1)` minutes, 95% CI (`r round(boot_estimate$.lower, 1)`, `r round(boot_estimate$.upper, 1)`). 
+
+### The outcome model sandwich
+
+There are two ways to get the sandwich estimator. The first is to use the same weighted outcome model as above along with the `{sandwich}` package. Using the `sandwich` function, we can get the robust estimate for the variance for the parameter of interest, as shown below.
+
+```{r}
+library(sandwich)
+weighted_mod <- lm(wait_minutes_posted_avg ~ park_extra_magic_morning, 
+   data = seven_dwarfs_9_with_wt,
+   weights = w_att) 
+
+sandwich(weighted_mod)
+```
+
+Here, our robust variance estimate is `r round(sandwich(weighted_mod)[2,2], 3)`. We can then use this to construct a robust confidence interval.
+
+```{r}
+robust_var <- sandwich(weighted_mod)[2, 2]
+point_est <- coef(weighted_mod)[2]
+lb <- point_est - 1.96 * sqrt(robust_var)
+ub <- point_est + 1.96 * sqrt(robust_var)
+lb
+ub
+```
+We estimate that among days that have extra magic hours, the expected impact of having extra magic hours on the average posted wait time between 9 and 10am is `r round(point_est, 1)` minutes, 95% CI (`r round(lb, 1)`, `r round(ub, 1)`). 
+
+Alternatively, we could fit the model using the `{survey}` package. To do this, we need to create a design object, like we did when fitting weighted tables.
+
+```{r}
+library(survey)
+
+des <- svydesign(
+  ids = ~1,
+  weights = ~w_att,
+  data = seven_dwarfs_9_with_wt
+)
+```
+
+Then we can use `svyglm` to fit the outcome model.
+
+```{r}
+svyglm(wait_minutes_posted_avg ~ park_extra_magic_morning, des) |>
+  tidy(conf.int = TRUE)
+```
+### Sandwich estimator that takes into account the propensity score model
+
+The correct sandwich estimator will also take into account the propensity score model. The `{PSW}` will allow us to do this. This package has some quirks, for example it doesn't work well with categorical variables, so we need to create dummy variables for `park_ticket_season` to pass into the model. *Actually, the code below isn't working because it seems there is a bug in the package. Stay tuned!*
+
+```{r}
+#| eval: false
+library(PSW)
+
+seven_dwarfs_9 <- seven_dwarfs_9 |>
+  mutate(park_ticket_season_regular = ifelse(park_ticket_season == "regular", 1, 0),
+         park_ticket_season_value = ifelse(park_ticket_season == "value", 1, 0)
+  )
+psw(data = seven_dwarfs_9, 
+    form.ps = "park_extra_magic_morning ~ park_ticket_season_regular + park_ticket_season_value + park_close + park_temperature_high",
+    weight = "ATT",
+    wt = TRUE,
+    out.var = "wait_minutes_posted_avg")
+```
+
