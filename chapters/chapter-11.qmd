@@ -7,6 +7,8 @@
 When fitting an outcome model on matched data sets, we can simply subset the original data to only those who were matched and then fit a model on these data as we would otherwise. For example, re-performing the matching as we did in @sec-using-ps, we can extract the matched observations in a dataset called `matched_data` as follows.
 
 ```{r}
+#| message: false
+#| warning: false
 library(broom)
 library(touringplans)
 library(MatchIt)
@@ -35,6 +37,8 @@ Recall that by default `{MatchIt}` estimates an average treatment effect among t
 Now let's use propensity score weights to estimate this same estimand. We will use the ATT weights so the analysis matches that for matching above.
 
 ```{r}
+#| message: false
+#| warning: false
 library(propensity)
 
 seven_dwarfs_9_with_ps <-
@@ -105,6 +109,8 @@ fit_ipw <- function(split, ...) {
 2. Use {rsample} to bootstrap our causal effect
 
 ```{r}
+#| message: false
+#| warning: false
 library(rsample)
 
 # fit ipw model to bootstrapped samples
@@ -155,6 +161,8 @@ We estimate that among days that have extra magic hours, the expected impact of 
 There are two ways to get the sandwich estimator. The first is to use the same weighted outcome model as above along with the `{sandwich}` package. Using the `sandwich` function, we can get the robust estimate for the variance for the parameter of interest, as shown below.
 
 ```{r}
+#| message: false
+#| warning: false
 library(sandwich)
 weighted_mod <- lm(wait_minutes_posted_avg ~ park_extra_magic_morning, 
    data = seven_dwarfs_9_with_wt,
@@ -178,6 +186,8 @@ We estimate that among days that have extra magic hours, the expected impact of 
 Alternatively, we could fit the model using the `{survey}` package. To do this, we need to create a design object, like we did when fitting weighted tables.
 
 ```{r}
+#| message: false
+#| warning: false
 library(survey)
 
 des <- svydesign(
