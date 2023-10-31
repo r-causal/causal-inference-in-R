@@ -137,7 +137,31 @@ sim <- tibble(
 
 Here we have one binary `confounder`, the probability that `confounder = 1` is `0.5`.
 The probability of the being exposed is `0.75` for those for whom `confounder = 1` `0.25` for those for whom `confounder = 0`.
-There is no effect of the `exposure` on the `outcome` (the true causal effect is 0); the `outcome` effect is fully dependent on the `confounder`. In this simulation we generate the potential outcomes to drive home our assumptions; many of our simulations in this book will skip this step.
+There is no effect of the `exposure` on the `outcome` (the true causal effect is 0); the `outcome` effect is fully dependent on the `confounder`.
+
+```{r}
+#| label: basic-dag
+#| echo: false
+#| warning: false
+#| fig-cap: "Causal Diagram of Classic Confounding"
+library(ggdag)
+
+coords <- list(
+  x = c(confounder = 1, exposure = 2, outcome = 3),
+  y = c(confounder = -1, exposure = 0, outcome = 0)
+)
+
+dag <- dagify(
+  outcome ~ confounder,
+  exposure ~ confounder,
+  coords = coords
+)
+
+ggdag(dag) +
+  theme_dag()
+```
+
+In this simulation we generate the potential outcomes to drive home our assumptions; many of our simulations in this book will skip this step.
 Let's look at this generated data frame.
 
 ```{r}
