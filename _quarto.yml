@@ -22,7 +22,7 @@ execute:
   
 book:
   title: "Causal Inference in R"
-  author: "Malcolm Barrett, Lucy D'Agostino McGowan, Travis Gerke"
+  author: ["Malcolm Barrett", "Lucy D'Agostino McGowan", "Travis Gerke"]
   date: "today"
   repo-url: https://github.com/malcolmbarrett/causal-inference-in-r
   repo-actions: [edit, issue]

@@ -17,7 +17,7 @@ Imports:
     broom,
     causalworkshop (>= 0.1.0),
     emo (>= 0.0.0.9000),
-    ggdag (>= 0.2.7),
+    ggdag (>= 0.2.10.9000),
     ggokabeito,
     ggtext,
     gtsummary (>= 1.7.0),
@@ -49,6 +49,7 @@ Remotes:
     LucyMcGowan/tipr,
     LucyMcGowan/touringplans,
     malcolmbarrett/causalworkshop,
+    malcolmbarrett/ggdag,
     malcolmbarrett/halfmoon,
     malcolmbarrett/propensity
 Encoding: UTF-8

@@ -33,14 +33,16 @@ Let's begin by diagramming this causal question (@fig-seven-diag).
 #| fig-cap: "Diagram of the causal question \"Is there a relationship between whether there were \"Extra Magic Hours\" in the morning at Magic Kingdom and the average wait time for an attraction called the \"Seven Dwarfs Mine Train\" the same day between 9am and 10am in 2018?\""
 #| label: fig-seven-diag
 
-data <- data.frame(labels = c("Extra Magic Hours", "Change average wait time", "Magic Kingdom guests", "before the park opens (2018)", "Magic Kingdom guests", "9am and 10am (2018)"),
-                   x = c(1, 2, .83, 1.4, 1.88, 2.45),
-                   y = c(1, 1, 0.77, 0.7, 0.77, 0.7),
-                   angle = c(0, 0, -52, 0, -52, 0))  
+data <- data.frame(
+  labels = c("Extra Magic Hours", "Change average wait time", "Magic Kingdom guests", "before the park opens (2018)", "Magic Kingdom guests", "9am and 10am (2018)"),
+  x = c(1, 2, .83, 1.4, 1.88, 2.45),
+  y = c(1, 1, 0.77, 0.7, 0.77, 0.7),
+  angle = c(0, 0, -52, 0, -52, 0)
+)
 
 ggplot(data, aes(x = x, y = y)) +
   geom_text(aes(label = labels, angle = angle, vjust = 0), size = 4) +
-  geom_segment(aes(x = 0.5, xend = 2.5, y = 0.95, yend = 0.95)) +  
+  geom_segment(aes(x = 0.5, xend = 2.5, y = 0.95, yend = 0.95)) +
   geom_segment(aes(x = 1.5, xend = 1.5, y = 0.95, yend = 1.1)) +
   geom_segment(aes(x = 0.5, xend = 1, y = 0.95, yend = 0.65)) +
   geom_segment(aes(x = 1, xend = 1.5, y = 0.65, yend = 0.65)) +
@@ -48,7 +50,7 @@ ggplot(data, aes(x = x, y = y)) +
   geom_segment(aes(x = 2.05, xend = 2.55, y = 0.65, yend = 0.65)) +
   xlim(c(0.5, 2.75)) +
   ylim(c(0.5, 1.2)) +
-  theme_void() 
+  theme_void()
 ```
 
 Historically, guests who stayed in a Walt Disney World resort hotel could access the park during "Extra Magic Hours," during which the park was closed to all other guests.
@@ -178,15 +180,20 @@ Additionally, recall our eligibility criteria states that we need to restrict ou
 library(dplyr)
 library(lubridate)
 seven_dwarfs_train_2018 <- seven_dwarfs_train |>
-  filter(year(park_date) == 2018) |> # eligibility criteria 
+  filter(year(park_date) == 2018) |> # eligibility criteria
   mutate(hour = hour(wait_datetime)) |> # get hour from wait
   group_by(park_date, hour) |> # group by date
   summarise(
-    wait_minutes_posted_avg = mean(wait_minutes_posted, na.rm = TRUE), 
-    .groups = "drop") |> # get average wait time
-  mutate(wait_minutes_posted_avg = 
-           case_when(is.nan(wait_minutes_posted_avg) ~ NA,
-                     TRUE ~ wait_minutes_posted_avg)) |> # if it is NAN make it NA 
+    wait_minutes_posted_avg = mean(wait_minutes_posted, na.rm = TRUE),
+    .groups = "drop"
+  ) |> # get average wait time
+  mutate(
+    wait_minutes_posted_avg =
+      case_when(
+        is.nan(wait_minutes_posted_avg) ~ NA,
+        TRUE ~ wait_minutes_posted_avg
+      )
+  ) |> # if it is NAN make it NA
   filter(hour == 9) # only keep the average wait time between 9 and 10
 ```
 
@@ -279,12 +286,16 @@ There is not clear evidence of a lack of positivity here as both exposure levels
 ```{r}
 #| label: fig-close
 #| fig-cap: "Distribution of Magic Kingdom park closing time by whether the date had extra magic hours in the morning"
-ggplot(seven_dwarfs_train_2018, aes(x = factor(park_close), 
-                                    group = factor(park_extra_magic_morning),
-                                    fill = factor(park_extra_magic_morning))) +
-  geom_bar(position = position_dodge2(width = 0.9, preserve = "single")) + 
-  labs(fill = "Extra Magic Morning",
-       x = "Time of Park Close")
+ggplot(seven_dwarfs_train_2018, aes(
+  x = factor(park_close),
+  group = factor(park_extra_magic_morning),
+  fill = factor(park_extra_magic_morning)
+)) +
+  geom_bar(position = position_dodge2(width = 0.9, preserve = "single")) +
+  labs(
+    fill = "Extra Magic Morning",
+    x = "Time of Park Close"
+  )
 ```
 
 To examine the distribution of historic temperature high at Magic Kingdom by whether the date had extra magic hours in the morning we can use a mirrored histogram.
@@ -297,12 +308,16 @@ This of course would also restrict which days we could draw conclusions about fo
 #| label: fig-temp
 #| fig-cap: "Distribution of historic temperature high at Magic Kingdom by whether the date had extra magic hours in the morning"
 library(halfmoon)
-ggplot(seven_dwarfs_train_2018, aes(x = park_temperature_high, 
-                                    group = factor(park_extra_magic_morning),
-                                    fill = factor(park_extra_magic_morning))) +
-  geom_mirror_histogram(bins = 20) + 
-  labs(fill = "Extra Magic Morning",
-       x = "Historic maximum temperature (degrees F)")
+ggplot(seven_dwarfs_train_2018, aes(
+  x = park_temperature_high,
+  group = factor(park_extra_magic_morning),
+  fill = factor(park_extra_magic_morning)
+)) +
+  geom_mirror_histogram(bins = 20) +
+  labs(
+    fill = "Extra Magic Morning",
+    x = "Historic maximum temperature (degrees F)"
+  )
 ```
 
 Finally, let's look at the distribution of ticket season by whether there were extra magic hours in the morning.
@@ -311,12 +326,16 @@ Examining @fig-ticket, we do not see any positivity violations.
 ```{r}
 #| label: fig-ticket
 #| fig-cap: "Distribution of historic temperature high at Magic Kingdom by whether the date had extra magic hours in the morning"
-ggplot(seven_dwarfs_train_2018, aes(x = park_ticket_season, 
-                                    group = factor(park_extra_magic_morning),
-                                    fill = factor(park_extra_magic_morning))) +
-  geom_bar(position = "dodge") + 
-  labs(fill = "Extra Magic Morning",
-       x = "Magic Kingdom Ticket Season")
+ggplot(seven_dwarfs_train_2018, aes(
+  x = park_ticket_season,
+  group = factor(park_extra_magic_morning),
+  fill = factor(park_extra_magic_morning)
+)) +
+  geom_bar(position = "dodge") +
+  labs(
+    fill = "Extra Magic Morning",
+    x = "Magic Kingdom Ticket Season"
+  )
 ```
 
 ### Multiple variable checks for positivity violations
@@ -341,13 +360,15 @@ seven_dwarfs_train_2018 |>
   group_by(park_close_bin, park_temperature_high_bin, park_ticket_season) |>
   ## calculate the proportion exposed in each bin
   summarise(prop_exposed = mean(park_extra_magic_morning), .groups = "drop") |>
-ggplot(aes(x = park_close_bin, y = park_temperature_high_bin, fill = prop_exposed)) + 
-  geom_tile() + 
+  ggplot(aes(x = park_close_bin, y = park_temperature_high_bin, fill = prop_exposed)) +
+  geom_tile() +
   scale_fill_gradient2(midpoint = 0.5) +
-  facet_wrap(~park_ticket_season) + 
-  labs(y = "Historic Maximum Temperature (F)",
-       x = "Magic Kingdom Park Close Time",
-       fill = "Proportion of Days Exposed")
+  facet_wrap(~park_ticket_season) +
+  labs(
+    y = "Historic Maximum Temperature (F)",
+    x = "Magic Kingdom Park Close Time",
+    fill = "Proportion of Days Exposed"
+  )
 ```
 
 Interesting!

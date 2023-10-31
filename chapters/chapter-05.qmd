@@ -62,7 +62,7 @@ d_conf |>
   geom_dag_text(size = 3) +
   theme_dag() +
   coord_cartesian(clip = "off") +
-  theme(legend.position = "none") 
+  theme(legend.position = "none")
 ```
 
 Thinking about any three nodes in a DAG, there are three ways they can be connected, via a *fork*, a *chain*, or a *collider*.
@@ -109,15 +109,15 @@ collider <- dagify(
   coords = coords
 )
 
-map(list(fork = fork, chain = chain, collider = collider), tidy_dagitty, layout = "time_ordered") |> 
-  map("data") |> 
-  list_rbind(names_to = "dag") |> 
-  mutate(dag = factor(dag, levels = c("fork", "chain", "collider"))) |> 
+map(list(fork = fork, chain = chain, collider = collider), tidy_dagitty, layout = "time_ordered") |>
+  map("data") |>
+  list_rbind(names_to = "dag") |>
+  mutate(dag = factor(dag, levels = c("fork", "chain", "collider"))) |>
   ggplot(aes(x = x, y = y, xend = xend, yend = yend)) +
-  geom_dag_edges(edge_width = 1) + 
-  geom_dag_point() + 
-  geom_dag_text() + 
-  facet_wrap(~ dag) +
+  geom_dag_edges(edge_width = 1) +
+  geom_dag_point() +
+  geom_dag_text() +
+  facet_wrap(~dag) +
   expand_plot(
     expand_x = expansion(c(.1, .1)),
     expand_y = expansion(c(0.2, 0.2))
@@ -155,15 +155,18 @@ We can diagram this using the method describe in @sec-diag (@fig-podcast).
 #| fig-height: 2
 #| label: fig-podcast
 
-data <- data.frame(labels = c("comedy podcast", "test scores", "graduate students", "morning", "graduate students", "after exam"),
-                   x = c(1.25, 1.75, 1.25, 1.55, 1.8, 2.05),
-                   y = c(1, 1, 0.8, 0.7, 0.8, 0.7),
-                   angle = c(0, 0, -30, 0, -30, 0))  
+data <- data.frame(
+  labels = c("comedy podcast", "test scores", "graduate students", "morning", "graduate students", "after exam"),
+  x = c(1.25, 1.75, 1.25, 1.55, 1.8, 2.05),
+  y = c(1, 1, 0.8, 0.7, 0.8, 0.7),
+  angle = c(0, 0, -30, 0, -30, 0)
+)
 
 ggplot(data, aes(x = x, y = y)) +
-  geom_text(aes(label = labels, angle = angle, vjust = 0), 
-            size = 5) +
-  geom_segment(aes(x = 1, xend = 2, y = 0.95, yend = 0.95)) +  
+  geom_text(aes(label = labels, angle = angle, vjust = 0),
+    size = 5
+  ) +
+  geom_segment(aes(x = 1, xend = 2, y = 0.95, yend = 0.95)) +
   geom_segment(aes(x = 1.5, xend = 1.5, y = 0.95, yend = 1.1)) +
   geom_segment(aes(x = 1, xend = 1.35, y = 0.95, yend = 0.65)) +
   geom_segment(aes(x = 1.35, xend = 1.65, y = 0.65, yend = 0.65)) +
@@ -212,7 +215,7 @@ podcast_dag <- dagify(
     prepared = "prepared"
   )
 )
-ggdag(podcast_dag, use_labels = "label", text = FALSE) + 
+ggdag(podcast_dag, use_labels = "label", text = FALSE) +
   theme_dag()
 ```
 
@@ -284,9 +287,9 @@ adjusted_model <- lm(exam ~ podcast + mood + prepared, sim_data) |>
 bind_rows(
   unadjusted_model,
   adjusted_model
-) |> 
+) |>
   ggplot(aes(x = estimate, y = formula, xmin = conf.low, xmax = conf.high)) +
-  geom_vline(xintercept = 0, linewidth = 1, color = "grey80") + 
+  geom_vline(xintercept = 0, linewidth = 1, color = "grey80") +
   geom_pointrange(fatten = 3, size = 1) +
   theme_minimal(18) +
   labs(
