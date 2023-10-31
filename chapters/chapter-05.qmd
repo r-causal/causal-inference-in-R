@@ -773,13 +773,183 @@ bind_rows(
 
 ## Structures of Causality
 
--   advanced forms of confounding, e.g. L happens after X
--   Selection bias, M-Bias, Butterfly bias. L2FU later.
+### Advanced Confounding
+
+In `podcast_dag`, `mood` and `prepared` were *direct* confounders: there was an arrow going directly from them to `podcast` and `exam`. Often, backdoor paths are more complex. Let's consider such a case by adding two new variables: `alertness` and `skills_course`. `alertness` represents the feeling of alertness from a good mood, thus the arrow going from `mood` to `alertness`. `skills_course` represents whether the student took a College Skills Course and learned time management techniques. Now, `skills_course` is what frees up the time to listen to a podcast as well as being prepared for the exam. `mood` and `prepared` are no longer direct confounders: they are two variables along a more complex backdoor path. Additionally, we've added an arrow going from `humor` to `mood`. Let's take a look.
+
+```{r}
+podcast_dag2 <- dagify(
+    podcast ~ mood + humor + skills_course,
+    alertness ~ mood,
+    mood ~ humor,
+    prepared ~ skills_course,
+    exam ~ alertness + prepared,
+    coords = time_ordered_coords(),
+    exposure = "podcast",
+    outcome = "exam",
+    labels = c(
+        podcast = "podcast",
+        exam = "exam score",
+        mood = "mood",
+        alertness = "alertness",
+        skills_course = "college\nskills course",
+        humor = "humor",
+        prepared = "prepared"
+    )
+)
+
+ggdag(podcast_dag2, use_labels = "label", text = FALSE)
+```
+
+```{r}
+#| echo: false
+paths <- paths(podcast_dag2)
+open_paths <- glue::glue_collapse(glue::glue('`{paths$paths[paths$open]}`'), sep = ", ", last = ", and")
+adj_sets <- unclass(adjustmentSets(podcast_dag2)) |> map_chr(\(.x) glue::glue('{unlist(glue::glue_collapse(.x, sep = " + "))}'))
+adj_sets <- glue::glue("`{adj_sets}`")
+```
+
+Now there are *three* backdoor paths we need to close: `r open_paths`. 
+
+```{r}
+ggdag_paths(podcast_dag2, use_labels = "label", text = FALSE, shadow = TRUE)
+```
+
+There are `r length(adjustmentSets(podcast_dag2))` to close all three paths (and `r length(adjustmentSets(podcast_dag2, type = "all"))` full adjustment sets!). The minimal adjustment sets are `r adj_sets`. We can now block the open paths in several ways. `mood` and `prepared` still work, but we've got other options, now. Notably, `prepared` and `alertness` could happen at the same time or even after `podcast`. `skills_course` and `mood` still happen before both `podcast` and `exam`, so the idea is still the same: the confounding pathway starts before the exposure and outcome. 
+
+```{r}
+ggdag_adjustment_set(podcast_dag2, use_labels = "label", text = FALSE)
+```
+
+Deciding between these adjustment sets is a matter of judgment: if all data are perfectly measured, the DAG is correct, and we've modeled them correctly, then it doesn't matter which we use. Each adjustment set will result in an unbiased estimate. All three of those assumptions are usually untrue to some degree. Let's consider the path via `skills_course` and `prepared`. It may be that we are better able to assess whether or not someone took the College Skills Course than how prepared for the exam they are. In that case, an adjustment set with `skills_course` is a better option. But perhaps we better understand the relationship between preparedness and exam results. If we have it measured, controlling for that might be better. We could get the best of both worlds by including both variables: between the better measurement of `skills_course` and the better modeling of `prepared`, we might have a better chance of minimizing confounding from this path. 
+
+### Selection Bias and Mediation
+
+Selection bias is another name for the type of bias that is induced by adjusting for a collider. It's called "selection bias" because a common form of collider-induced bias is a variable that is inherently stratified upon by the design of the study. Let's consider a case based on the original `podcast_dag` but with one additional variable: whether or not the student showed up to the exam. Now there is an indirect effect of `podcast` on `exam`: listening to a podcast influences whether or not the students showed up for the exam. The true result of `exam` is missing for those who didn't show up; by studying the group of people who *did* show up, we are inherently stratifying on this variable.
+
+```{r}
+podcast_dag3 <- dagify(
+  podcast ~ mood + humor + prepared,
+  exam ~ mood + prepared + showed_up,
+  showed_up ~ podcast + mood + prepared,
+  coords = time_ordered_coords(
+    list(
+      # time point 1
+      c("prepared", "humor", "mood"), 
+      # time point 2
+      "podcast",  
+      "showed_up",  
+      # time point 3
+      "exam"
+    )
+  ),
+  exposure = "podcast",
+  outcome = "exam",
+  labels = c(
+    podcast = "podcast",
+    exam = "exam score",
+    mood = "mood",
+    humor = "humor",
+    prepared = "prepared",
+    showed_up = "showed up"
+  )
+)
+ggdag(podcast_dag3, use_labels = "label", text = FALSE)
+```
+
+The problem is that `showed_up` is both a collider and a mediator: stratifying on it induces a relationship between many of the variables in the DAG but blocks the the indirect effect of `podcast` on `exam`. Luckily, the adjustment sets can take care of the first problem; because `showed_up` happens *before* `exam`, we're less at risk of collider bias between the exposure and outcome. Unfortunately, we no have no way to calculate the total effect of `podcast` on `exam` because part of the effect is missing: the indirect effect is closed at `showed_up`.
+
+```{r}
+podcast_dag3 |> 
+  adjust_for("showed_up") |> 
+  ggdag_adjustment_set()
+```
+
+Sometimes, you can still estimate effects in this situation by changing the estimate you wish to calculate. We can't calculate the total effect because we are missing the indirect effect, but we can still calculate the direct effect of `podcast` on `exam`.
+
+```{r}
+podcast_dag3 |> 
+  adjust_for("showed_up") |> 
+  ggdag_adjustment_set(effect = "direct")
+```
+
+## M-Bias and Butterfly Bias
+
+A special case of selection bias that you'll often see people talk about is *M-bias*. It's called M-bias because it looks like an M when arranges top to bottom.
+
+```{r}
+m_bias() |> 
+  ggdag()
+```
+
+::: callout-tip
+ggdag has a number of quick-DAGs for demonstrating basic causal structures including `confounder_triangle()`, `collider_triangle()`, `m_bias()`, and `butterfly_bias()`.
+:::
+
+What's theoretically interesting about M-bias is that `m` is a collider but occurs before `x` and `y`. Remember that association is blocked at a collider, so there is no open path between `x` and `y`.
+
+```{r}
+paths(m_bias())
+```
+
+Let's focus on the `mood` path of the podcast-exam DAG. What if we were wrong about mood, and the actual relationship was M-shaped? Let's say that, rather than causing `podcast` and `exam`, mood was itself caused by two mutual causes of `podcast` and `exam`, `u1` and `u2`. We don't know what `u1` and `u2` are, and we don't have them measured. As above, there are no open paths in this subset of the DAG.
+
+```{r}
+podcast_dag4 <- dagify(
+  podcast ~ u1,
+  exam ~ u2,
+  mood ~ u1 + u2,
+  coords = time_ordered_coords(list(
+    c("u1", "u2"),
+    "mood",
+    "podcast", 
+    "exam"
+  )),
+  exposure = "podcast",
+  outcome = "exam",
+  labels = c(
+    podcast = "podcast",
+    exam = "exam score",
+    mood = "mood",
+    u1 = "unmeasured",
+    u2 = "unmeasured"
+  ),
+  # we don't have them measured
+  latent = c("u1", "u2")
+)
+
+ggdag(podcast_dag4, use_labels = "label", text = FALSE)
+```
+
+The problem arises when we think our original DAG is the right DAG: `mood` is in the adjustment set, so we control for it. But this induces bias! It opens up a path between `u1` and `u2`, thus creating a path from `podcast` to `exam`. If we had either `u1` or `u2` measured, we could adjust for them to close this path, but we don't. There's no way to close this open path. 
+
+```{r}
+podcast_dag4 |> 
+  adjust_for("mood") |> 
+  ggdag_adjustment_set(use_labels = "label", text = FALSE)
+```
+
+Of course, the best thing to do here is not control for `mood` at all. Sometimes, though, that is not an option. Imagine if, instead of `mood`, this turned out to be the real structure for `showed_up`: since we are inherently controlling for `showed_up`, and we don't have the unmeasured variables, our study results will always be biased. It's important to understand if we're in that situation so we can address it with sensitivity analysis to understand just how biased the effect would be.
+
+Let's consider a variation on M-bias where `mood` causes `podcast` and `exam` and `u1` and `u2` are mutual causes of `mood` and the exposure and outcome. This is sometimes called butterfly or bowtie bias, again because of its shape.
+
+```{r}
+butterfly_bias(x = "podcast", y = "exam", m = "mood", a = "u1", b = "u2") |> 
+  ggdag(text = FALSE, use_labels = "label")
+```
+
+Now, we're in a tough position: we need to control for `mood` because it's a confounder, but controlling for `mood` opens up the pathway from `u1` to `u2`. Because we don't have either variable measured, we can't then close the path opened from conditioning on `mood`. What should we do? It turns out that, when in doubt, controlling for `mood` is the better of the two options: confounding bias tends to be worse than collider bias, and M-shaped structures of colliders are very sensitive (e.g., a slight deviation from the M structure reduces the bias overall). 
+
+Another common form of selection bias is from *loss to follow-up*: people drop out of a study in a way that is related to the exposure and outcome. We'll come back to this topic in TODO.
+
+## Causes of the exposure, causes of the outcome
+
+
 -   instrumental variables, precision/competing exposure variables
 
 ## Recommendations in building DAGs
 
-In principle, using DAGs is easy: you specify the causal relationships you think exist and then query the DAG for information like valid adjustment sets. In practice, assembling DAGs takes considerable time and thought. In fact, next to defining the research question itself, it's one of the hardest steps in making causal inference. Very little guidance exists on best practices in assembling DAGs. @Tennant2021 collected data on DAGs in applied health research to better understand how they were being used. @tbl-dag-properties shows some information they collected: the median number of nodes and arcs in a DAG, their ration, the saturation percent of the DAG, and how many were fully saturated. Saturating DAGs means adding all possible arrows going forward in time, e.g. in a fully saturated DAG, any given variable at time point 1 has arrows going to all variables in future time points, and so on. Most DAGs were only about half saturated and very few were fully saturated. 
+In principle, using DAGs is easy: you specify the causal relationships you think exist and then query the DAG for information like valid adjustment sets. In practice, assembling DAGs takes considerable time and thought. In fact, next to defining the research question itself, it's one of the hardest steps in making causal inferences. Very little guidance exists on best practices in assembling DAGs. @Tennant2021 collected data on DAGs in applied health research to better understand how they were being used. @tbl-dag-properties shows some information they collected: the median number of nodes and arcs in a DAG, their ration, the saturation percent of the DAG, and how many were fully saturated. Saturating DAGs means adding all possible arrows going forward in time, e.g. in a fully saturated DAG, any given variable at time point 1 has arrows going to all variables in future time points, and so on. Most DAGs were only about half saturated and very few were fully saturated. 
 
 Only about half of the papers using DAGs reported the adjustment set used. In other words, researchers presented their assumptions about the research question but not the implications about how they should handle the modeling stage or if in fact they did use a valid adjustment set. Similarly, the majority of studies did not report the estimand of interest.
 
