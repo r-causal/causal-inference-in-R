@@ -174,7 +174,7 @@ sim |>
 
 Great! Let's begin by proving to ourselves that this violates the exchangeability assumption. Recall from @sec-assump:
 
-> **Exchangeability**: We assume that within levels of relevant variables (confounders), exposed and unexposed subjects have an equal likelihood of experiencing any outcome prior to exposure; i.e. the exposed and unexposed subjects are exchangeable. This assumption is sometimes referred to as **no unmeasured confounding**, though exchangeability implies more than that; specifically, that no backdoor paths exist between exposure and outcome (e.g. there is no selection bias and that confounder relationships are modelled appropriately).
+> **Exchangeability**: We assume that within levels of relevant variables (confounders), exposed and unexposed subjects have an equal likelihood of experiencing any outcome prior to exposure; i.e. the exposed and unexposed subjects are exchangeable. This assumption is sometimes referred to as **no unmeasured confounding**, though exchangeability implies more than that, such as no selection bias and that confounder relationships are appropriately specified. We will further define exchangeability through the lens of DAGs in the next chapter.
 
 Now, let's try to estimate the effect of the `exposure` on the `outcome` assuming the two exposed groups are exchangeable.
 
