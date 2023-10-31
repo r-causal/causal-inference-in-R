@@ -940,12 +940,50 @@ butterfly_bias(x = "podcast", y = "exam", m = "mood", a = "u1", b = "u2") |>
 
 Now, we're in a tough position: we need to control for `mood` because it's a confounder, but controlling for `mood` opens up the pathway from `u1` to `u2`. Because we don't have either variable measured, we can't then close the path opened from conditioning on `mood`. What should we do? It turns out that, when in doubt, controlling for `mood` is the better of the two options: confounding bias tends to be worse than collider bias, and M-shaped structures of colliders are very sensitive (e.g., a slight deviation from the M structure reduces the bias overall). 
 
-Another common form of selection bias is from *loss to follow-up*: people drop out of a study in a way that is related to the exposure and outcome. We'll come back to this topic in TODO.
+Another common form of selection bias is from *loss to follow-up*: people drop out of a study in a way that is related to the exposure and outcome. We'll come back to this topic in @sec-TODO.
 
 ## Causes of the exposure, causes of the outcome
 
+Let's consider one other type of causal structure that's important: causes of the exposure and not the outcome, and their opposites, causes of the outcome and not the exposure. Let's add a variable, `grader_mood`, to the original DAG.
 
--   instrumental variables, precision/competing exposure variables
+```{r}
+podcast_dag5 <- dagify(
+  podcast ~ mood + humor + prepared,
+  exam ~ mood + prepared + grader_mood,
+  coords = time_ordered_coords(
+    list(
+      # time point 1
+      c("prepared", "humor", "mood"), 
+      # time point 2
+      c("podcast", "grader_mood"),  
+      # time point 3
+      "exam"
+    )
+  ),
+  exposure = "podcast",
+  outcome = "exam",
+  labels = c(
+    podcast = "podcast",
+    exam = "exam score",
+    mood = "student\nmood",
+    humor = "humor",
+    prepared = "prepared",
+    grader_mood = "grader\nmood"
+  )
+)
+ggdag(podcast_dag5, use_labels = "label", text = FALSE)
+```
+There are now two variables that aren't related to *both* the exposure and the outcome: `humor`, which causes `podcast` but not `exam`, and `grader_mood`, which causes `exam` but not `podcast`. Let's start with `humor`.
+
+Variables that cause the exposure but not the outcome are also called *instrumental variables* (IVs). IVs are an unusual circumstance where, under certain conditions, controlling for them can make other types of bias worse. What's unusual about this is that IVs can *also* be used to conduct an entirely different approach to estimating an unbiased effect of the exposure on the outcome. IVs are commonly used this way in econometrics and are increasingly popular in other areas. In short, IV analysis allows us to estimate the causal effect using a different set of assumptions than the approaches we've talked about thus far. Sometimes, a problem that is intractible using propensity score methods is possible to address using IVs and vice versa. We'll talk more about IVs in @sec-TODO.
+
+So, if you're *not* using IV methods, should you include an IV in a model meant to address confounding? If you're not sure if the variable is an IV or not, you should probably add it to your model: it's more likely to be a confounder than an IV, and, it turns out, the bias from adding an IV is usually small in practice. So, like adjusting for a potential M-structure variable, the risk of bias is worse from confounding.
+
+Now let's talk about the opposite of an IV: a cause of the outcome that is not the cause of the exposure. These variables are sometimes called *competing exposures* (because they also cause the outcome) or *precision variables* (because, as we'll see, the increase the precision of causal estimates). We'll call them precision variables because we're concerned about the relationship to the research question at hand, not to another research question where they are exposures.
+
+Like IVs, precision variables do not occur along paths from the exposure to the outcome. Thus, including them is not necessary. Unlike IVs, including precision variables is beneficial. Including other causes of the outcomes helps a statistical model capture some of its variation. This doesn't impact the point estimate of the effect, but it does reduce the variance, resulting in smaller standard errors and narrower confidence intervals. Thus, we recommend including them when possible.
+
+So, even though we don't need to control for `grader_mood`, if we have it in the data set, we should. Similarly, `humor` is not a good addition to the model unless we think it really might be a confounder, but we might want to consider using IV methods to estimate the effect, instead.
 
 ## Recommendations in building DAGs
 
@@ -1002,6 +1040,7 @@ dag_data_used |>
   ) |> 
   row_group_order(c("dag_prop", "reporting"))
 ```
+
 In this section, we'll offer some advice from @Tennant2021 and our own experience assembling DAGs.
 
 ### Iterate early and often
