@@ -174,7 +174,7 @@ sim |>
 
 Great! Let's begin by proving to ourselves that this violates the exchangeability assumption. Recall from @sec-assump:
 
-> **Exchangeability**: We assume that within levels of relevant variables (confounders), exposed and unexposed subjects have an equal likelihood of experiencing any outcome prior to exposure; i.e. the exposed and unexposed subjects are exchangeable. This assumption is sometimes referred to as **no unmeasured confounding**.
+> **Exchangeability**: We assume that within levels of relevant variables (confounders), exposed and unexposed subjects have an equal likelihood of experiencing any outcome prior to exposure; i.e. the exposed and unexposed subjects are exchangeable. This assumption is sometimes referred to as **no unmeasured confounding**, though exchangeability implies more than that; specifically, that no backdoor paths exist between exposure and outcome (e.g. there is no selection bias and that confounder relationships are modelled appropriately).
 
 Now, let's try to estimate the effect of the `exposure` on the `outcome` assuming the two exposed groups are exchangeable.
 
@@ -204,7 +204,7 @@ sim |>
 ```
 
 Ok, so assuming the exposure groups are exchangeable (and assuming the rest of the assumptions from @sec-assump hold), we estimate the effect of the exposure on the outcome to be 0.53.
-We *know* the exchaneability assumption is violated based on how we simulated the data.
+We *know* the exchangeability assumption is violated based on how we simulated the data.
 How can we estimate an unbiased effect?
 The easiest way to do so is to estimate the effect within each confounder class.
 This will work because folks with the same value of the confounder have an equal probability of exposure.
@@ -381,7 +381,7 @@ When you have no confounders and there is a linear relationship between the expo
 Even in these cases, using the methods you will learn in this book can help.
 
 1.  Adjusting for baseline covariates can make an estimate *more efficient*
-2.  Propensity score weighting is *more efficient* that direct adjustment
+2.  Propensity score weighting is *more efficient* than direct adjustment
 3.  Sometimes we are *more comfortable with the functional form of the propensity score* (predicting exposure) than the outcome model
 
 Let's look at an example.
@@ -588,7 +588,7 @@ Three ways to estimate a causal effect in a non-randomized setting
 
 First, let's look at @tbl-panel-2-1.
 Here, we see that the unadjusted effect is *biased* (it differs from the true effect, 1, and the true effect is *not* contained in the reported 95% confidence interval).
-Now lets compare @tbl-panel-2-2 and @tbl-panel-2-3.
+Now let's compare @tbl-panel-2-2 and @tbl-panel-2-3.
 Technically, both are estimating unbiased causal effects.
 The output in the `Beta` column of @tbl-panel-2-2 is technically a *conditional* effect (and often in causal inference we want marginal effects), but because there is no treatment heterogeneity in this simulation, the conditional and marginal effects are equal.
 @tbl-panel-2-3, using the propensity score, also estimates an unbiased effect, but it is no longer the most *efficient* (that was true when the baseline covariates were merely causal for `y`, now that they are `confounders` the efficiency gains for using propensity score weighting are not as clear cut).
