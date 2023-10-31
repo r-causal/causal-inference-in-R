@@ -28,29 +28,29 @@ However, most discussed how such a cause might be justified by previous research
 #| fig.height: 9
 #| echo: false
 
-rankings <-  read_csv(here::here("data/word_rankings.csv"), show_col_types = FALSE) |> 
-  janitor::clean_names() 
+rankings <- read_csv(here::here("data/word_rankings.csv"), show_col_types = FALSE) |>
+  janitor::clean_names()
 
-lvls <- rankings |> 
-  count(rating, root_word) |> 
+lvls <- rankings |>
+  count(rating, root_word) |>
   filter(rating == "Strong") |>
-  arrange(desc(n)) |> 
-  mutate(root_word = fct_inorder(root_word)) |> 
-  pull(root_word) |> 
+  arrange(desc(n)) |>
+  mutate(root_word = fct_inorder(root_word)) |>
+  pull(root_word) |>
   levels()
 
 rankings |>
-  count(rating, root_word) |> 
-  mutate(root_word = factor(root_word, levels = lvls)) |> 
-  filter(!is.na(root_word)) |> 
-  group_by(rating) |> 
-  mutate(rank = n / sum(n)) |> 
-  ungroup() |> 
-  drop_na(rating) |> 
-  mutate(rating = factor(rating, levels = c("None", "Weak", "Moderate", "Strong"))) |> 
-  ggplot(aes(x = rank, y = root_word, fill = rating)) + 
+  count(rating, root_word) |>
+  mutate(root_word = factor(root_word, levels = lvls)) |>
+  filter(!is.na(root_word)) |>
+  group_by(rating) |>
+  mutate(rank = n / sum(n)) |>
+  ungroup() |>
+  drop_na(rating) |>
+  mutate(rating = factor(rating, levels = c("None", "Weak", "Moderate", "Strong"))) |>
+  ggplot(aes(x = rank, y = root_word, fill = rating)) +
   geom_col(position = position_fill(reverse = TRUE)) +
-  scale_fill_viridis_d( direction = -1)  +
+  scale_fill_viridis_d(direction = -1) +
   labs(y = "root word") +
   theme(axis.ticks = element_blank(), panel.grid = element_blank())
 ```
@@ -112,7 +112,7 @@ In this (simplified) recreation of their plot from July 2020, you can see the st
 #| fig-cap: "2020 excess deaths vs. historical expected deaths from any cause. Data from the Financial Times."
 #| echo: false
 #| message: false
-ft_excess_deaths <- read_csv(here::here("data/ft_excess_deaths.csv")) |> 
+ft_excess_deaths <- read_csv(here::here("data/ft_excess_deaths.csv")) |>
   mutate(year = factor(year))
 
 excess_deaths_prior_wk <- ft_excess_deaths %>%
@@ -125,36 +125,36 @@ excess_deaths_wk <- ft_excess_deaths %>%
   filter(year == 2020)
 
 ggplot(
-    data = excess_deaths_prior_wk,
-    aes(x = week, y = deaths, group = year) 
+  data = excess_deaths_prior_wk,
+  aes(x = week, y = deaths, group = year)
 ) +
-    geom_line(color = "grey75", alpha = 0.6) +
-    geom_line(
-        data = excess_deaths2020_wk,
-        color = "#D55E00"
-    ) +
-    geom_ribbon(
-        data = excess_deaths2020_wk,
-        aes(ymin = pmin(deaths, expected_deaths), ymax = deaths), 
-        fill = "#D55E00", 
-        alpha = 0.7
-    ) +
-    geom_line(
-        data = excess_deaths_wk,
-        aes(x = week, y = expected_deaths),
-        color = "steelblue",
-        linewidth = 0.9, 
-        inherit.aes = FALSE
-    ) +
-    facet_wrap(vars(country), scales = "free_y") +
-    scale_y_continuous(labels = scales::label_comma(), n.breaks = 4) + 
-    labs(
-        x = "Week", 
-        y = "Deaths",
-        title = "<span style = 'color:#D55E00;'>2020 deaths</span> compared to <span style = 'color:#4682b4;'>expected deaths</span>",
-        subtitle = "Number of deaths per week from all causes  vs. recent years"
-    ) +
-    theme(text = element_text(size = 18), plot.title = ggtext::element_markdown())
+  geom_line(color = "grey75", alpha = 0.6) +
+  geom_line(
+    data = excess_deaths2020_wk,
+    color = "#D55E00"
+  ) +
+  geom_ribbon(
+    data = excess_deaths2020_wk,
+    aes(ymin = pmin(deaths, expected_deaths), ymax = deaths),
+    fill = "#D55E00",
+    alpha = 0.7
+  ) +
+  geom_line(
+    data = excess_deaths_wk,
+    aes(x = week, y = expected_deaths),
+    color = "steelblue",
+    linewidth = 0.9,
+    inherit.aes = FALSE
+  ) +
+  facet_wrap(vars(country), scales = "free_y") +
+  scale_y_continuous(labels = scales::label_comma(), n.breaks = 4) +
+  labs(
+    x = "Week",
+    y = "Deaths",
+    title = "<span style = 'color:#D55E00;'>2020 deaths</span> compared to <span style = 'color:#4682b4;'>expected deaths</span>",
+    subtitle = "Number of deaths per week from all causes  vs. recent years"
+  ) +
+  theme(text = element_text(size = 18), plot.title = ggtext::element_markdown())
 ```
 
 Here are some other great examples of descriptive analyses.

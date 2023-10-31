@@ -133,7 +133,7 @@ data <- data.frame(
   id = 1:10,
   y_chocolate = c(4, 4, 6, 5, 6, 5, 6, 7, 5, 6),
   y_vanilla = c(1, 3, 4, 5, 5, 6, 8, 6, 3, 5)
-) 
+)
 
 data <- data |>
   mutate(causal_effect = y_chocolate - y_vanilla)
@@ -148,7 +148,8 @@ data
 #| echo: false
 data |>
   knitr::kable(
-    col.names = c("id", "$$Y_i(\\textrm{chocolate})$$", "$$Y_i(\\textrm{vanilla})$$", "$$Y_i(\\textrm{chocolate}) - Y_i(\\textrm{vanilla})$$")) |>
+    col.names = c("id", "$$Y_i(\\textrm{chocolate})$$", "$$Y_i(\\textrm{vanilla})$$", "$$Y_i(\\textrm{chocolate}) - Y_i(\\textrm{vanilla})$$")
+  ) |>
   kableExtra::add_header_above(c(" " = 1, "Potential Outcomes" = 2, "Causal Effect" = 1), escape = FALSE)
 ```
 
@@ -191,14 +192,14 @@ data_observed
 #| tbl-cap: "Potential Outcomes Simulation: The observed exposure and outcome used to estimate the effect of eating chocolate (versus vanilla) ice cream on happiness"
 #| echo: false
 
-avg_chocolate <- data_observed |> 
-  filter(exposure == "chocolate") |> 
+avg_chocolate <- data_observed |>
+  filter(exposure == "chocolate") |>
   pull(observed_outcome) |>
   mean()
-avg_vanilla <- data_observed |> 
-  filter(exposure == "vanilla") |> 
-  pull(observed_outcome) |> 
-  mean() 
+avg_vanilla <- data_observed |>
+  filter(exposure == "vanilla") |>
+  pull(observed_outcome) |>
+  mean()
 
 data_observed |>
   knitr::kable(
@@ -224,7 +225,7 @@ set.seed(11)
 data_observed <- data |>
   mutate(
     # change the exposure to randomized, generate from a binomial distribution
-    # with a probability 0.5 for being in either group 
+    # with a probability 0.5 for being in either group
     exposure = case_when(
       rbinom(10, 1, 0.5) == 1 ~ "chocolate",
       TRUE ~ "vanilla"
@@ -338,7 +339,7 @@ We know the *true* average causal effect of (unspoiled) chocolate in the sample 
 
 ##### Interference 
 
-Interference would mean that an individual's exposure does not impact another's potential outcome. For example, let's say each individual has a partner, and their potential outcome depends on both what flavor of ice cream they ate *and* what flavor their partner ate. For example, in the simulation below, having a partner that received a different flavor of ice cream increases the happiness by two units.
+Interference would mean that an individual's exposure impacts another's potential outcome. For example, let's say each individual has a partner, and their potential outcome depends on both what flavor of ice cream they ate *and* what flavor their partner ate. For example, in the simulation below, having a partner that received a different flavor of ice cream increases the happiness by two units.
 
 ```{r}
 data <- data.frame(
@@ -381,9 +382,9 @@ set.seed(11)
 partners <- data.frame(
   partner_id = 1:5,
   exposure = case_when(
-      rbinom(5, 1, 0.5) == 1 ~ "chocolate",
-      TRUE ~ "vanilla"
-    )
+    rbinom(5, 1, 0.5) == 1 ~ "chocolate",
+    TRUE ~ "vanilla"
+  )
 )
 data_observed <- data |>
   left_join(partners, by = "partner_id") |>
@@ -411,7 +412,7 @@ data <- data.frame(
   id = 1:10,
   y_chocolate = c(4, 4, 6, 5, 6, 5, 6, 7, 5, 6),
   y_vanilla = c(1, 3, 4, 5, 5, 6, 8, 6, 3, 5)
-) 
+)
 data_observed <- data |>
   mutate(
     exposure = case_when(
@@ -443,12 +444,12 @@ data <- data.frame(
   id = 1:10,
   y_chocolate = c(4, 4, 6, 5, 6, 5, 6, 7, 5, 6),
   y_vanilla = c(1, 3, 4, 5, 5, 6, 8, 6, 3, 5)
-) 
+)
 
 set.seed(11)
 data_observed <- data |>
   mutate(
-    prefer_chocolate = y_chocolate > y_vanilla ,
+    prefer_chocolate = y_chocolate > y_vanilla,
     exposure = case_when(
       # people who like chocolate more chose that 80% of the time
       prefer_chocolate ~ ifelse(rbinom(10, 1, 0.8), "chocolate", "vanilla"),
@@ -462,8 +463,10 @@ data_observed <- data |>
   ) |>
   select(id, prefer_chocolate, exposure, observed_outcome)
 
-lm(observed_outcome ~ I(exposure == "chocolate") + prefer_chocolate, 
-   data_observed)
+lm(
+  observed_outcome ~ I(exposure == "chocolate") + prefer_chocolate,
+  data_observed
+)
 ```
 After *adjusting* for this variable (chocolate preference), we recover the correct causal effect. This value is not exactly the same as the truth we obtain with the (unobservable) potential outcomes because we are dealing with a small sample -- as our sample size increases this will get closer to the truth.
 
