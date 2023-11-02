@@ -983,7 +983,7 @@ Now let's talk about the opposite of an IV: a cause of the outcome that is not t
 
 Like IVs, precision variables do not occur along paths from the exposure to the outcome. Thus, including them is not necessary. Unlike IVs, including precision variables is beneficial. Including other causes of the outcomes helps a statistical model capture some of its variation. This doesn't impact the point estimate of the effect, but it does reduce the variance, resulting in smaller standard errors and narrower confidence intervals. Thus, we recommend including them when possible.
 
-So, even though we don't need to control for `grader_mood`, if we have it in the data set, we should. Similarly, `humor` is not a good addition to the model unless we think it really might be a confounder, but we might want to consider using IV methods to estimate the effect, instead.
+So, even though we don't need to control for `grader_mood`, if we have it in the data set, we should. Similarly, `humor` is not a good addition to the model unless we think it really might be a confounder; if it is a true instrument, we might want to consider using IV methods to estimate the effect, instead.
 
 ## Recommendations in building DAGs
 
@@ -1045,17 +1045,68 @@ In this section, we'll offer some advice from @Tennant2021 and our own experienc
 
 ### Iterate early and often
 
--   Ideally before when designing your research, at least before analyzing data (avoid overfitting)
+One of the best things you can do for the quality of your results is to make the DAG before you conduct the study, ideally before you even collect the data. If you're already working with your data, at minimum build your DAG prior to doing data analysis. This advice is similar in spirit to pre-registered analysis plans: declaring your assumptions ahead of time can help clarify what you need to do, reduce risk of overfitting (e.g., determining confounders incorrectly from the data), and give you time to get feedback on your DAG.
+
+This last benefit is particularly important: you should ideally democratize your DAG. Share it early and often with others who are experts on the data, domain, and models. It's natural to create a DAG, present it to your colleagues, and realize you have missed something important. Sometimes you won't agree on every detail of the structure. That's a good thing: you know now where there is uncertainty in your DAG. You can then examine the results from more than one plausible DAG or address the uncertainty with sensitivity analyses.
+
+If you have more than one candidate DAG, it might be useful to check their adjustment sets. If two DAGs have overlapping adjustment sets, focus on those sets; then, you can move forward in a way that satisfies the plausible assumptions you have.  
 
 ### Consider your question
 
--   estimand
--   population and context
+As we saw in @fig-COLLIDER-MEDIATION-TODO, some questions can be difficult to answer with certain data, while others are more approachable. You should consider exactly what it is you want to estimate. This is an important topic and the subject of [Chapter -@sec-estimands].
+
+Another important detail about how your DAG relates to your question is the population and time. Many causal structures are not static over time and space. Consider lung cancer: the distribution of causes of lung cancer was considerably different before the spread of smoking. In medieval Japan, prior to the spread of tobacco from the Americas centuries later, the causal structure for lung cancer would have been practically different to what it is in Japan today, both in terms of tobacco use and other factors (age of the population, etc.) 
+
+The same is true for confounders. Even if something *can* cause the exposure and outcome, if the prevalence of that thing is zero in the population you're analyzing, it's irrelevant to the causal question. It may also be that, in some populations, it doesn't affect one of the two. The reverse is, of course, also true: there might be something unique to the target population. The use of tobacco in North America several centuries ago was unique among the world population, even though ceremonial tobacco use was quite different from modern recreational use. Many changes won't happen as dramatically as across centuries, but sometimes, they do, e.g. if regulation in one country effectively eliminates the population exposure to something.
 
 ### Order nodes by time {#chapter-05-sec-time-ordered}
 
--   Time ordering algorithm
--   Feedback loops: global warming and A/C use
+As we discussed earlier, we recommend ordering your variables by time, either left-to-right or up-to-down. There are two reasons for this. First, time ordering is an important part of your assumptions. After all, something happening before another thing is a requirement for it to be a cause. Thinking this through carefully will clarify your DAG and the variables you need to address. 
+
+Second, after a certain level of complexity, it's easier to read a DAG when it is arranged by time because you have to think less about that dimension; it's inherent to the layout. The time ordering algorithm in ggdag automates much of this for you, although as we saw earlier, it's sometimes helpful to give it more information about the order.
+
+A related topic is feedback loops. Often we think about two things that mutually cause each other as happening in a circle, like global warming and A/C use (A/C use increases global warming, which makes it hotter, which increases A/C use, and so on). It's tempting to visualize that relationship like this:
+
+```{r}
+#| fig-width: 3.5
+#| fig-height: 3.5
+dagify(
+  ac_use ~ global_temp,
+  global_temp ~ ac_use,
+  labels = c(ac_use = "A/C use", global_temp = "Global\ntemperature")
+) |> 
+  ggdag(layout = "circle", edge_type = "arc", text = FALSE, use_labels = "label")
+```
+
+From a DAG perspective, this is a problem because of the *A* part of *DAG*: it's cyclic! Importantly, though, it's also not correct from a causal perspective. Feedback loops are a shorthand for what really happens, which is that the two variables mutually affect each other *over time*. Causality only goes forward in time, so it doesn't make since for it to go back and forth like in @fig-TODO.
+
+The real DAG looks something like this:
+
+```{r}
+dagify(
+  global_temp_2000 ~ ac_use_1990 + global_temp_1990,
+  ac_use_2000 ~ ac_use_1990 + global_temp_1990,
+  global_temp_2010 ~ ac_use_2000 + global_temp_2000,
+  ac_use_2010 ~ ac_use_2000 + global_temp_2000,
+  global_temp_2020 ~ ac_use_2010 + global_temp_2010,
+  ac_use_2020 ~ ac_use_2010 + global_temp_2010,
+  coords = time_ordered_coords(),
+  labels = c(
+    ac_use_1990 = "A/C use\n(1990)", 
+    global_temp_1990 = "Global\ntemperature\n(1990)",
+    ac_use_2000 = "A/C use\n(2000)", 
+    global_temp_2000 = "Global\ntemperature\n(2000)",
+    ac_use_2010 = "A/C use\n(2010)", 
+    global_temp_2010 = "Global\ntemperature\n(2010)",
+    ac_use_2020 = "A/C use\n(2020)", 
+    global_temp_2020 = "Global\ntemperature\n(2020)"
+  )
+) |> 
+  ggdag(text = FALSE, use_labels = "label")
+```
+The two variables, rather than being in a feed*back* loop are actually in a feed*forward* loop: they co-evolve over time. Here, we only show four discrete moments in time (the decades from 1990 to 2020), but of course we could get much finer depending on the question and data. 
+
+As with any DAG, the right analysis approach depends on the question. The effect of A/C use in 2000 on global temperature in 2020 produces a different adjustment set than the global temperature in 2000 on A/C use in 2020. Similarly, whether we also model this change over time or just those two time points depends on the question. Often, these types of feedforward relationships require you to address *time-varying* confounding, which we'll discuss in @sec-TODO.
 
 ### Consider the whole data collection process
 
