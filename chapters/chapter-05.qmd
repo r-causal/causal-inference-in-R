@@ -1317,6 +1317,7 @@ This seems a little more reasonable. So, was our original DAG wrong? That depend
 
 ### Focus on the causal structure, then consider measurement bias
 
+<!-- TODO: I don't quite remember what I wanted to cover here, so revisit later to add or delete -->
 <!-- ### Be accurate, but focus on clarity -->
 
 ### Pick adjustment sets most likely to be succesful
