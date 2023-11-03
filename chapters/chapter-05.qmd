@@ -873,7 +873,7 @@ podcast_dag3 |>
   ggdag_adjustment_set(effect = "direct")
 ```
 
-## M-Bias and Butterfly Bias
+#### M-Bias and Butterfly Bias
 
 A special case of selection bias that you'll often see people talk about is *M-bias*. It's called M-bias because it looks like an M when arranges top to bottom.
 
@@ -942,7 +942,7 @@ Now, we're in a tough position: we need to control for `mood` because it's a con
 
 Another common form of selection bias is from *loss to follow-up*: people drop out of a study in a way that is related to the exposure and outcome. We'll come back to this topic in @sec-TODO.
 
-## Causes of the exposure, causes of the outcome
+### Causes of the exposure, causes of the outcome
 
 Let's consider one other type of causal structure that's important: causes of the exposure and not the outcome, and their opposites, causes of the outcome and not the exposure. Let's add a variable, `grader_mood`, to the original DAG.
 
@@ -973,6 +973,7 @@ podcast_dag5 <- dagify(
 )
 ggdag(podcast_dag5, use_labels = "label", text = FALSE)
 ```
+
 There are now two variables that aren't related to *both* the exposure and the outcome: `humor`, which causes `podcast` but not `exam`, and `grader_mood`, which causes `exam` but not `podcast`. Let's start with `humor`.
 
 Variables that cause the exposure but not the outcome are also called *instrumental variables* (IVs). IVs are an unusual circumstance where, under certain conditions, controlling for them can make other types of bias worse. What's unusual about this is that IVs can *also* be used to conduct an entirely different approach to estimating an unbiased effect of the exposure on the outcome. IVs are commonly used this way in econometrics and are increasingly popular in other areas. In short, IV analysis allows us to estimate the causal effect using a different set of assumptions than the approaches we've talked about thus far. Sometimes, a problem that is intractible using propensity score methods is possible to address using IVs and vice versa. We'll talk more about IVs in @sec-TODO.
@@ -984,6 +985,10 @@ Now let's talk about the opposite of an IV: a cause of the outcome that is not t
 Like IVs, precision variables do not occur along paths from the exposure to the outcome. Thus, including them is not necessary. Unlike IVs, including precision variables is beneficial. Including other causes of the outcomes helps a statistical model capture some of its variation. This doesn't impact the point estimate of the effect, but it does reduce the variance, resulting in smaller standard errors and narrower confidence intervals. Thus, we recommend including them when possible.
 
 So, even though we don't need to control for `grader_mood`, if we have it in the data set, we should. Similarly, `humor` is not a good addition to the model unless we think it really might be a confounder; if it is a true instrument, we might want to consider using IV methods to estimate the effect, instead.
+
+### Measurement Error
+
+TODO: forgot this!
 
 ## Recommendations in building DAGs
 
@@ -1112,43 +1117,44 @@ As with any DAG, the right analysis approach depends on the question. The effect
 
 As @fig-TODO showed us, it's important to consider the *way* we collected data as much as the causal structure of the question at hand. This is particularly true if you're working with "found" data---a data set not intentionally collected to answer the research question. We are always inherently conditioning on the data we have vs. the data we don't have. If the data collection process was influenced by other variables in the causal structure, you need to consider what the effect is. Do you need to control for additional variables? Do you need to change the effect you are trying to estimate? Can you answer the question at all?
 
-Let's consider an example: workers at a factory are potentially exposed to something (e.g., a carcinogenic) that may increase their risk of dying. Some workers are exposed, and some are not. The problem is that exposure *prior* to the study resulted in only those healthy enough to work being present at the start of the study. If there is another factor, say some important aspect of the worker's health, that also contributes to whether or not they are at work, we have selection bias. We are inherently stratifying on whether or not someone is at work.
+<!-- TODO: revisit this after I've thought it through a bit more -->
+<!-- Let's consider an example: workers at a factory are potentially exposed to something (e.g., a carcinogenic) that may increase their risk of dying. Some workers are exposed, and some are not. The problem is that exposure *prior* to the study resulted in only those healthy enough to work being present at the start of the study. If there is another factor, say some important aspect of the worker's health, that also contributes to whether or not they are at work, we have selection bias. We are inherently stratifying on whether or not someone is at work. -->
 
-```{r}
-dagify(
-    death ~ health,
-    exposed ~ exposed_prior + at_work,
-    at_work ~ exposed_prior + health,
-    exposure = "exposed",
-    outcome = "death",
-    latent = c("health", "exposed_prior"),
-    coords = time_ordered_coords(list(
-        c("health", "exposed_prior"),
-        "at_work",
-        "exposed",
-        "death"
-    )),
-    labels = c(
-        exposed_prior = "Exposed\n(prior)",
-        exposed = "Exposed\n(start)",
-        at_work = "Working",
-        health = "Health\nStatus",
-        death = "Death"
-    )
-) |> 
-  ggdag(text = FALSE, use_labels = "label")
-```
-`at_work` is a collider: both health status and prior exposure have arrows going into it. Controlling for it induces a ...
+<!-- ```{r} -->
+<!-- dagify( -->
+<!--     death ~ health, -->
+<!--     exposed ~ exposed_prior + at_work, -->
+<!--     at_work ~ exposed_prior + health, -->
+<!--     exposure = "exposed", -->
+<!--     outcome = "death", -->
+<!--     latent = c("health", "exposed_prior"), -->
+<!--     coords = time_ordered_coords(list( -->
+<!--         c("health", "exposed_prior"), -->
+<!--         "at_work", -->
+<!--         "exposed", -->
+<!--         "death" -->
+<!--     )), -->
+<!--     labels = c( -->
+<!--         exposed_prior = "Exposed\n(prior)", -->
+<!--         exposed = "Exposed\n(start)", -->
+<!--         at_work = "Working", -->
+<!--         health = "Health\nStatus", -->
+<!--         death = "Death" -->
+<!--     ) -->
+<!-- ) |>  -->
+<!--   ggdag(text = FALSE, use_labels = "label") -->
+<!-- ``` -->
+<!-- `at_work` is a collider: both health status and prior exposure have arrows going into it. Controlling for it induces a ... -->
 
--   race/shooting (show the `effect` argument of `adjustmentSets` to get direct effect)
--   healthy worker bias
+<!-- -   race/shooting (show the `effect` argument of `adjustmentSets` to get direct effect) -->
+<!-- -   healthy worker bias -->
 
 ::: .callout-fyi
 ## What about case-control studies? 
 
 A common study design in epidemiology is the case-control study. Case-control studies are particularly useful when the outcome under study is rare or take a very long time to happen (like many types of cancer). Participants are selected into the study based on their outcome: once a person has an event, the are entered as a case and matched with a control who hasn't had the event. Often, they are matched on other factors as well.
 
-Case-control studies are selection biased by design. In @fig-TODO, when we condition on selection into the study, we lose the ability to close all backdoor paths, even if we control for `confounder`. From the DAG, it would appear that the entire design is invalid!
+Matched case-control studies are selection biased by design. In @fig-TODO, when we condition on selection into the study, we lose the ability to close all backdoor paths, even if we control for `confounder`. From the DAG, it would appear that the entire design is invalid!
 
 ```{r}
 dagify(
