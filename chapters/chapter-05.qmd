@@ -1340,13 +1340,4 @@ Finally, we recommend checking your DAG for robustness. You can never truly veri
 
 We'll discuss each of these in detail in [Chapter -@sec-sensitivity]. The caveat here is that these should be complementary to your initial DAG not a way of *replacing* it. In fact, if you use more than one adjustment set during the course of your analysis, you should report the results from all of them to avoid overfitting your results to your data.
 
-## Causal Inference is not (just) a statistical problem {#chapter-05-sec-quartets}
 
--   This may be better off as the next chapter
-
-### Causal and Predictive Models, Revisited {#chapter-05-sec-causal-pred-revisit}
-
--   Probably too long, but if possible, condense to a popout
--   DAGs showing examples where prediction can lean on measured confounders, colliders. It's the amount of information a variable brings, not whether the coeffecient is unbiased affect of variable on outcome.
--   Not practical to fit a prediction model with future variable
--   Table 2 Bias examples. Unmeasure confounding of Z-Y relationship. Mediation example.

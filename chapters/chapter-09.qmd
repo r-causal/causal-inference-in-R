@@ -1,46 +1,49 @@
-# Evaluating your propensity score model {#sec-eval-ps-model}
+# Using the propensity score {#sec-using-ps}
 
 {{< include 00-setup.qmd >}}
 
-Propensity scores are inherently *balancing* scores. The goal is to *balance* the exposure groups across confounders. 
+The propensity score is a *balancing* tool -- we use it to help us make our exposure groups *exchangeable*. There are many ways to incorporate the propensity score into an analysis. Commonly used techniques include stratification (estimating the causal effect within propensity score stratum), matching, weighting, and direct covariate adjustment. In this section, we will focus on *matching* and *weighting*; other techniques will be discussed once we introduce the *outcome model*. Recall at this point in the book we are still in the *design* phase. We have not yet incorporated the outcome into our analysis at all. 
 
-## Calculating the standardized mean difference
+## Matching
 
-One way to assess balance is the *standardized mean difference*. This measure helps you assess whether the average value for the confounder is balanced between exposure groups. For example, if you have some continuous confounder, $Z$, and $\bar{z}_{exposed} = \frac{\sum Z_i(X_i)}{\sum X_i}$ is the mean value of $Z$ among the exposed,  $\bar{z}_{unexposed} = \frac{\sum Z_i(1-X_i)}{\sum 1-X_i}$ is the mean value of $Z$ among the unexposed, $s_{exposed}$ is the sample standard deviation of $Z$ among the exposed and $s_{unexposed}$ is the sample standard deviation of $Z$ among the unexposed, then the standardized mean difference can be expressed as follows:
+Ultimately, we want the exposed and unexposed observations to be *exchangeable* with respect to the confounders we have proposed in our DAG (so we can use the observed effect for one to estimate the counterfactual for the other). One way to do this is to ensure that each observation in our analysis sample has at least one observation of the opposite exposure that has *match*ing values for each of these confounders. If we had a small number of binary confounders, for example, we might be able to construct an *exact match* for observations (and only include those for whom such a match exists), but as the number and continuity of confounders increases, exact matching becomes less feasible. This is where the propensity score, a summary measure of all of the confounders, comes in to play. 
 
-$$
-d =\frac{\bar{z}_{exposed}-\bar{z}_{unexposued}}{\frac{\sqrt{s^2_{exposed}+s^2_{unexposed}}}{2}}
-$$
-In the case of a binary $Z$ (a confounder with just two levels), $\bar{z}$ is replaced with the sample proportion in each group (e.g., $\hat{p}_{exposed}$ or $\hat{p}_{unexposed}$ ) and $s^2=\hat{p}(1-\hat{p})$. In the case where $Z$ is categorical with more than two categories, $\bar{z}$ is the vector of proportions of each category level within a group and the denominator is the multinomial covariance matrix ($S$ below), as the above can be written more generally as:
-
-$$
-d = \sqrt{(\bar{z}_{exposed} - \bar{z}_{unexposed})^TS^{-1}(\bar{z}_{exposed} - \bar{z}_{unexposed})}
-$$
-
-Often, we calculate the standardized mean difference for each confounder in the full, unadjusted, data set and then compare this to an *adjusted* standardized mean difference. If the propensity score is incorporated using *matching*, this adjusted standardized mean difference uses the exact equation as above, but restricts the sample considered to only those that were matched. If the propensity score is incorporated using *weighting*, this adjusted standardized mean difference *weights* each of the above components using the constructed propensity score weight. 
-
-In R, the `{halfmoon}` package has a function `tidy_smd` that will calculate this for a data set.
-
-```{r}
-#| eval: false
-library(halfmoon)
-
-smds <- tidy_smd(
-  df,
-  .vars = c(confounder_1, confounder_2, ...),
-  .group = exposure,
-  .wts = wts # weight is optional
-)
-```
-
-Let's look at an example using the same data as @sec-using-ps. 
+Let's setup the data as we did in @sec-building-models.
 
 ```{r}
 library(broom)
 library(touringplans)
-library(propensity)
 
 seven_dwarfs_9 <- seven_dwarfs_train_2018 |> filter(wait_hour == 9)
+```
+
+We can re-fit the propensity score using the `{MatchIt}` package, as below. Notice here the `matchit` function fit a logistic regression model for our propensity score, as we had in @sec-building-models. There were 60 days in 2018 where the Magic Kingdom had extra magic morning hours. For each of these 60 exposed days, `matchit` found a comparable unexposed day, by implementing a nearest-neighbor match using the constructed propensity score. Examining the output, we also see that the target estimand is an "ATT" (do not worry about this yet, we will discuss this and several other estimands in @sec-estimands).
+
+```{r}
+library(MatchIt)
+m <- matchit(
+  park_extra_magic_morning ~ park_ticket_season + park_close + park_temperature_high,
+  data = seven_dwarfs_9
+)
+m
+```
+We can use the `get_matches` function to create a data frame with the original variables that only consists of those who were matched. Notice here our sample size has been reduced from the original 354 days to 120. 
+
+```{r}
+matched_data <- get_matches(m)
+glimpse(matched_data)
+```
+
+## Weighting
+
+One way to think about matching is as a crude "weight" where everyone who was matched gets a weight of 1 and everyone who was not matched gets a weight of 0 in the final sample. Another option is to allow this weight to be smooth, applying a weight to allow, on average, the covariates of interest to be balanced in the weighted population. To do this, we will construct a weight using the propensity score. There are many different weights that can be applied, depending on your target estimand of interest (see @sec-estimand for details). For this section, we will focus on the "Average Treatment Effect" weights, commonly referred to as an "inverse probability weight". The weight is constructed as follows, where each observation is weighted by the *inverse* of the probability of receiving the exposure they received. 
+
+$$w_{ATE} = \frac{X}{p} + \frac{(1 - X)}{1 - p}$$
+
+For example, if observation 1 had a very high likelihood of being exposed given their pre-exposure covariates ($p = 0.9$), but they in fact were *not* exposed, their weight would be 10 ($w_1 = 1 / (1 - 0.9)$). Likewise, if observation 2 had a very high likelihood of being exposed given their pre-exposure covariates ($p = 0.9$), and they *were* exposed, their weight would be 1.1 ($w_2 = 1 / 0.9$). Intuitively, we give *more* weight to observations who, based on their measured confounders, appear to have useful information for constructing a counterfactual -- we would have predicted that they were exposed and but by chance they were not, or vice-versa. The `{propensity}` package is useful for implementing propensity score weighting.
+
+```{r}
+library(propensity)
 
 seven_dwarfs_9_with_ps <-
   glm(
@@ -53,156 +56,26 @@ seven_dwarfs_9_with_wt <- seven_dwarfs_9_with_ps |>
   mutate(w_ate = wt_ate(.fitted, park_extra_magic_morning))
 ```
 
-Now, using the `tidy_smd` function, we can examine the standardized mean difference before and after weighting.
+@tbl-df-wt shows the weights in the first column.
 
 ```{r}
-library(halfmoon)
-smds <- 
-  seven_dwarfs_9_with_wt |>
-  mutate(park_close = as.numeric(park_close)) |>
-  tidy_smd(
-    .vars = c(park_ticket_season, park_close, park_temperature_high),
-    .group = park_extra_magic_morning,
-    .wts = w_ate
-  )
-smds
-```
-
-For example, we see above that the *observed* standardized mean difference (prior to incorporating the propensity score) for ticket season is `r smds |> filter(variable == "park_ticket_season" & method == "observed") |> pull(smd) |> round(2)`, however after incorporating the propensity score weight this is attenuated, now `r smds |> filter(variable == "park_ticket_season" & method == "w_ate") |> pull(smd) |> round(2)`.
-
-One downside of this metric is it only quantifying balance *on the mean*, which may not be sufficient for continuous confounders, as it is possible to be balanced on the mean but severely imbalanced in the tails. At the end of this chapter we will show you a few tools for examining balance across the full distribution of the confounder.
-
-## Visualizing balance
-
-### Love Plots
-
-Let's start by visualizing these standardized mean differences. To do so, we like to use a *Love Plot* (named for Thomas Love, as he was one of the first to popularize them). The `{halfmoon}` package has a function `geom_love` that simplifies this implementation.
-
-```{r}
-ggplot(
-  data = smds,
-  aes(
-    x = abs(smd), 
-    y = variable, 
-    group = method, 
-    color = method
-  )
-) +  
-  geom_love()
-```
-
-
-### Boxplots and eCDF plots
-
-As mentioned above, one issue with the standardized mean differences is they only quantify balance on a single point for continuous confounders (the mean). It can be helpful to visualize the whole distribution to ensure that there is not residual imbalance in the tails. Let's first use a boxplot. As an example, let's use the `park_temperature_high` variable. When we make boxplots, we prefer to always jitter the points on top to make sure we aren't masking and data anomolies -- we use `geom_jitter` to accomplish this. First, we will make the unweighted boxplot.
-
-```{r}
-#| label: fig-boxplot
-#| fig.cap: "Unweighted boxplot showing the difference in historical high temperature between days that had extra magic hours and those that did not."
-ggplot(
-  seven_dwarfs_9_with_wt, 
-  aes(
-    x = factor(park_extra_magic_morning), 
-    y = park_temperature_high,
-    group = park_extra_magic_morning
-    )
-) + 
-  geom_boxplot(outlier.color = NA) + 
-  geom_jitter() + 
-  labs(x = "Extra magic morning",
-       y = "Temperature high")
-```
-
-```{r}
-#| label: fig-weighted-boxplot
-#| fig.cap: "Weighted boxplot showing the difference in historical high temperature between days that had extra magic hours and those that did not after incorporating the propensity score weight (ATE weight)."
-ggplot(
-  seven_dwarfs_9_with_wt, 
-  aes(
-    x = factor(park_extra_magic_morning), 
-    y = park_temperature_high,
-    group = park_extra_magic_morning,
-    weight = w_ate
-    )
-) + 
-  geom_boxplot(outlier.color = NA) + 
-  geom_jitter() + 
-  labs(x = "Extra magic morning",
-       y = "Historic temperature high")
-```
-
-Similarly, we can also examine the empirical cumulative distribution function (eCDF) for the confounder stratified by each exposure group. The unweighted eCDF can be visualized using `geom_ecdf`
-
-```{r}
-#| label: fig-ecdf
-#| fig.cap: "Unweighted eCDF examining the difference in distribution for historic high temperature among days that had extra magic morning hours (purple) compared to those that did not (green)."
-
-ggplot(seven_dwarfs_9_with_wt, 
-       aes(x = park_temperature_high,
-           color = factor(park_extra_magic_morning))) + 
-  geom_ecdf() + 
-  scale_color_manual(
-    "Extra Magic Morning",
-    values = c("#5154B8", "#5DB854"),
-    labels = c("Yes", "No")
-  ) + 
-  labs(x = "Historic temperature high",
-       y = "Proportion <= x")
-```
-
-The `{halfmoon}` package allows for the additional `weight` argument to be passed to `geom_ecdf` to display a weighted eCDF plot.
-
-```{r}
-#| label: fig-weighted-ecdf
-#| fig.cap: "Weighted eCDF examining the difference in distribution for historic high temperature among days that had extra magic morning hours (purple) compared to those that did not (green) after incorporating the propensity score weight (ATE)."
-
-ggplot(seven_dwarfs_9_with_wt, 
-       aes(x = park_temperature_high,
-           color = factor(park_extra_magic_morning))) + 
-  geom_ecdf(aes(weights = w_ate)) + 
-  scale_color_manual(
-    "Extra Magic Morning",
-    values = c("#5154B8", "#5DB854"),
-    labels = c("Yes", "No")
-  ) + 
-  labs(x = "Historic temperature high",
-       y = "Proportion <= x")
-```
-
-Examining @fig-weighted-ecdf, we can notice a few things. First, compared to @fig-ecdf there is improvement in the overlap between the two distributions. In @fig-ecdf, the green line is almost always noticeably above the purple, whereas in @fig-weighted-ecdf the two lines appear to mostly overlap until we reach slightly above 80 degrees. After 80 degrees, the lines appear to diverge in the weighted plot. This is why it can be useful to examine the full distribution rather than a single summary measure. If we had just used the standardized mean difference, for example, we would have likely said these two groups are balanced and moved on. Looking at @fig-weighted-ecdf suggests that perhaps there is a non-linear relationship between the probability of having an extra magic morning and the historic high temperature. Let's try refitting our propensity score model using a natural spline. We can use the function `splines::ns` for this.
-
-<!-- TODO put a callout box here explaining what a natural spline is. -->
-
-```{r}
-seven_dwarfs_9_with_ps <-
-  glm(
-    park_extra_magic_morning ~ park_ticket_season + park_close +
-      splines::ns(park_temperature_high, df = 5), # refit model with a spline
-    data = seven_dwarfs_9,
-    family = binomial()
+#| label: tbl-df-wt
+#| tbl-cap: >
+#|   The first six observations in the `seven_dwarfs_9_with_wt` dataset, including their propensity scores in the `.fitted` column and weight in the `w_ate` column.
+seven_dwarfs_9_with_wt |>
+  select(
+    w_ate,
+    .fitted,
+    park_date,
+    park_extra_magic_morning,
+    park_ticket_season,
+    park_close,
+    park_temperature_high
   ) |>
-  augment(type.predict = "response", data = seven_dwarfs_9)
-seven_dwarfs_9_with_wt <- seven_dwarfs_9_with_ps |>
-  mutate(w_ate = wt_ate(.fitted, park_extra_magic_morning))
+  head() |>
+  knitr::kable()
 ```
 
-Now let's see how that impacts the weighted eCDF plot
 
-```{r}
-#| label: fig-weighted-ecdf-2
-#| fig.cap: "Weighted eCDF examining the difference in distribution for historic high temperature among days that had extra magic morning hours (purple) compared to those that did not (green) after incorporating the propensity score weight where historic high temperature was modeled flexibly with a spline."
 
-ggplot(seven_dwarfs_9_with_wt, 
-       aes(x = park_temperature_high,
-           color = factor(park_extra_magic_morning))) + 
-  geom_ecdf(aes(weights = w_ate)) + 
-  scale_color_manual(
-    "Extra Magic Morning",
-    values = c("#5154B8", "#5DB854"),
-    labels = c("Yes", "No")
-  ) + 
-  labs(x = "Historic temperature high",
-       y = "Proportion <= x")
-```
 
-Now in @fig-weighted-ecdf-2 the lines appear to overlap across the whole space.

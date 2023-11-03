@@ -1,10 +1,8 @@
 {
-  "hash": "35e28ba55bdcd7229ce521d2f04664ff",
+  "hash": "0c4033870d4c2666b8e9a897aaa34986",
   "result": {
-    "markdown": "# Causal mediation analysis {#sec-mediation}\n\n\n\n\n\n## Estimating direct effects\n\n\n::: {.cell}\n\n```{.r .cell-code}\nrnorm(5)\n```\n\n::: {.cell-output .cell-output-stdout}\n\n```\n[1] -1.5916 -1.7506  1.0102 -0.3248  1.0481\n```\n\n\n:::\n:::\n\n\n## Estimating indirect effects\n\n## Allowing for interactions\n",
-    "supporting": [
-      "chapter-17_files"
-    ],
+    "markdown": "# Causal survival analysis\n\n\n\n\n\n## Preparing data for survival analysis\n\n\n::: {.cell}\n\n```{.r .cell-code}\nrnorm(5)\n```\n\n::: {.cell-output .cell-output-stdout}\n\n```\n[1]  0.16354  0.99692  1.07709 -0.62800  0.01222\n```\n\n\n:::\n:::\n\n\n## Pooled logistic regression\n\n## Confidence intervals for causal survival models\n",
+    "supporting": [],
     "filters": [
       "rmarkdown/pagebreak.lua"
     ],

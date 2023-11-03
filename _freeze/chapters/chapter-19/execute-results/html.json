@@ -1,10 +1,8 @@
 {
-  "hash": "e048fceeeb7a0c5e7ada95e14bb9e9e4",
+  "hash": "36e848491cb5cef73186bb49bc886756",
   "result": {
-    "markdown": "# Other approaches to causal inference\n\n\n\n\n\n## Targeted Learning\n\n\n::: {.cell}\n\n```{.r .cell-code}\nrnorm(5)\n```\n\n::: {.cell-output .cell-output-stdout}\n\n```\n[1]  1.0362  2.1558 -0.2929  0.8677  0.2885\n```\n\n\n:::\n:::\n\n\n## Instrumental variable analysis\n\n## Regression discontinuity\n\n## Difference-in-Difference\n",
-    "supporting": [
-      "chapter-19_files"
-    ],
+    "markdown": "# Sensitivity analysis  {#sec-sensitivity}\n\n## Quantitative bias analyses\n\n\n\n\n::: {.cell}\n\n```{.r .cell-code}\nrnorm(5)\n```\n\n::: {.cell-output .cell-output-stdout}\n\n```\n[1]  1.3515 -1.8460  1.7721  2.5073 -0.1252\n```\n\n\n:::\n:::\n\n\n## Tipping point analyses\n",
+    "supporting": [],
     "filters": [
       "rmarkdown/pagebreak.lua"
     ],

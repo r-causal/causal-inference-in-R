@@ -1,10 +1,8 @@
 {
-  "hash": "0c4033870d4c2666b8e9a897aaa34986",
+  "hash": "d24262a4d5a1dbb0a621f98b43effcb4",
   "result": {
-    "markdown": "# Causal survival analysis\n\n\n\n\n\n## Preparing data for survival analysis\n\n\n::: {.cell}\n\n```{.r .cell-code}\nrnorm(5)\n```\n\n::: {.cell-output .cell-output-stdout}\n\n```\n[1] -0.1047 -0.7075 -0.4694  1.2174 -1.6054\n```\n\n\n:::\n:::\n\n\n## Pooled logistic regression\n\n## Confidence intervals for causal survival models\n",
-    "supporting": [
-      "chapter-16_files"
-    ],
+    "markdown": "# G-Computation {#sec-g-comp}\n\n\n\n\n\n## The Parametric G-Formula\n\n\n::: {.cell}\n\n```{.r .cell-code}\nrnorm(5)\n```\n\n::: {.cell-output .cell-output-stdout}\n\n```\n[1]  1.3798  0.1053  0.5988  0.1783 -0.5463\n```\n\n\n:::\n:::\n\n\n## Calculating estimates with G-Computation\n\n## The Natural Course\n",
+    "supporting": [],
     "filters": [
       "rmarkdown/pagebreak.lua"
     ],

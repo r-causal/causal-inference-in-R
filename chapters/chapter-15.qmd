@@ -1,13 +1,13 @@
-# G-Computation {#sec-g-comp}
+# Missingness
 
 {{< include 00-setup.qmd >}}
 
-## The Parametric G-Formula
+## Missingness as structural bias
 
 ```{r}
 rnorm(5)
 ```
 
-## Calculating estimates with G-Computation
+## Multiple Imputation
 
-## The Natural Course
+## Combining MICE and IPW
