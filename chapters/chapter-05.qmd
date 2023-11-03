@@ -1313,21 +1313,32 @@ ggdag(podcast_dag_pruned, text = FALSE, use_labels = "label")
 
 This seems a little more reasonable. So, was our original DAG wrong? That depends on a number of factors. Importantly, both DAGs produce the same adjustment set: controlling for `mood` and `prepared` will give us an unbiased effect if either DAG is correct. Even if the new DAG were to produce a different adjustment set, whether it the result is meaningfully different depends on the strength of the confounding. 
 
-### Include instruments and competing exposures
+### Include instruments and precision variables
+
+Technically, you do not need to include instrumental and precision variables in your DAG. The adjustment sets will be the same with and without them. However, adding them is important for two reasons. Firstly, they demonstrate your assumptions about the relationships between them and the variables under study. As we discussed above, *not* including an arrow is a bigger assumption than including one, so it's useful information about how you think the causal structure operates. Secondly, it impacts your modeling decision. You should always include precision variables in your model to reduce variability in your estimate, so it helps you identify those. Instruments are also useful to see because they may guide alternative or complementary modeling strategies, as we'll discuss in @sec-TODO-triangulation.  
 
 ### Focus on the causal structure, then consider measurement bias
+
+As we saw above, missingness and measurement error can be a source of bias. As we'll see in [Chapter -@sec-TODO-missingness], we have a number of strategies to approach such a situation. Yet, most everything we measure is inaccurate to some degree. The true DAG for the data at hand inherently conditions on the measured version of variables. In that since, your data are always subtly wrong, a sort of unreliable narrator. So, when should we include this information in the DAG? We recommend first focusing on the causal structure of the DAG as if you had perfectly measured each variable. Then, think through how mismeasurement and missingness might affect the realized data, particularly as they relate to the exposure, outcome, and key confounders. You may prefer to present this as an alternative DAG to consider strategies for addressing the bias arising from those sources, e.g. imputation or sensitivity analyses. After all, the DAG in @fig-dag-measurement-error-TODO would have you think the question is unanswerable because we have no method to close all backdoor paths. As with all open paths, that depends on the severity of the bias and our ability to reckon with it.
 
 <!-- TODO: I don't quite remember what I wanted to cover here, so revisit later to add or delete -->
 <!-- ### Be accurate, but focus on clarity -->
 
 ### Pick adjustment sets most likely to be succesful
 
--   measurement error, certainty
--   use the path with the most observed variables
+One area where measurement error is an important consideration is when picking an adjustment set. In theory, if a DAG is correct, any adjustment set will work to create an unbiased result. In practice, variables have different levels of quality. Pick an adjustment set that is most likely to succeed because contains accurate variables. Similarly, non-minimal adjustment sets are helpful to consider because together, several variables with measurement error along a backdoor path may together be enough to minimize the practical bias resulting from that path.
+
+What if you don't have certain key variables measured and thus do not have a valid adjustment set? In that case, you should pick the adjustment set with the best chance of minimizing the bias from other backdoor paths. All is not lost if you don't have every confounder measured: get the highest quality estimate you can, then conduct a sensitivity analysis about the unmeasured variables to understand the impact.
 
 ### Use robustness checks
 
--   Negative controls/Falsification end-points, dag-data consitency, alternate adjustment sets
+Finally, we recommend checking your DAG for robustness. You can never truly verify the correctness of your DAG under most conditions, but you can use the implications in your DAG to support it. There are three types of robustness checks that can be useful depending on the circumstances. 
+
+1. **Negative controls**. These come in two flavors: negative exposure controls and negative outcome controls. The idea is to find something associated with one but not the other, e.g. the outcome but not the exposure, such that there should be no effect. Since there should be no effect, you now have a measurement for how well you are controlling for *other* effects (e.g., the difference from null). Ideally, the set of confounders for negative controls are similar to the research question's.
+2. DAG-data consistency. Negative controls are an implication of your DAG. An extension of this idea is that there are *many* such implications. Because blocking a path removes statistical dependencies from that path, you can check those assumptions in several places in your DAG.
+3. Alternate adjustment sets. All things being equal, adjustment sets should give roughly the same answer because, outside of random and measurement error, they are all sets that block backdoor paths. If more than one adjustment set seems reasonable, you can use that as a sensitivity analysis by checking more than one model.
+
+We'll discuss each of these in detail in [Chapter -@sec-sensitivity]. The caveat here is that these should be complementary to your initial DAG not a way of *replacing* it. In fact, if you use more than one adjustment set during the course of your analysis, you should report the results from all of them to avoid overfitting your results to your data.
 
 ## Causal Inference is not (just) a statistical problem {#chapter-05-sec-quartets}
 
