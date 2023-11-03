@@ -1110,20 +1110,185 @@ As with any DAG, the right analysis approach depends on the question. The effect
 
 ### Consider the whole data collection process
 
+As @fig-TODO showed us, it's important to consider the *way* we collected data as much as the causal structure of the question at hand. This is particularly true if you're working with "found" data---a data set not intentionally collected to answer the research question. We are always inherently conditioning on the data we have vs. the data we don't have. If the data collection process was influenced by other variables in the causal structure, you need to consider what the effect is. Do you need to control for additional variables? Do you need to change the effect you are trying to estimate? Can you answer the question at all?
+
+Let's consider an example: workers at a factory are potentially exposed to something (e.g., a carcinogenic) that may increase their risk of dying. Some workers are exposed, and some are not. The problem is that exposure *prior* to the study resulted in only those healthy enough to work being present at the start of the study. If there is another factor, say some important aspect of the worker's health, that also contributes to whether or not they are at work, we have selection bias. We are inherently stratifying on whether or not someone is at work.
+
+```{r}
+dagify(
+    death ~ health,
+    exposed ~ exposed_prior + at_work,
+    at_work ~ exposed_prior + health,
+    exposure = "exposed",
+    outcome = "death",
+    latent = c("health", "exposed_prior"),
+    coords = time_ordered_coords(list(
+        c("health", "exposed_prior"),
+        "at_work",
+        "exposed",
+        "death"
+    )),
+    labels = c(
+        exposed_prior = "Exposed\n(prior)",
+        exposed = "Exposed\n(start)",
+        at_work = "Working",
+        health = "Health\nStatus",
+        death = "Death"
+    )
+) |> 
+  ggdag(text = FALSE, use_labels = "label")
+```
+`at_work` is a collider: both health status and prior exposure have arrows going into it. Controlling for it induces a ...
+
 -   race/shooting (show the `effect` argument of `adjustmentSets` to get direct effect)
 -   healthy worker bias
 
+::: .callout-fyi
+## What about case-control studies? 
+
+A common study design in epidemiology is the case-control study. Case-control studies are particularly useful when the outcome under study is rare or take a very long time to happen (like many types of cancer). Participants are selected into the study based on their outcome: once a person has an event, the are entered as a case and matched with a control who hasn't had the event. Often, they are matched on other factors as well.
+
+Case-control studies are selection biased by design. In @fig-TODO, when we condition on selection into the study, we lose the ability to close all backdoor paths, even if we control for `confounder`. From the DAG, it would appear that the entire design is invalid!
+
+```{r}
+dagify(
+  outcome ~ confounder + exposure,
+  selection ~ outcome + confounder,
+  exposure ~ confounder,
+  exposure = "exposure",
+  outcome = "outcome",
+  coords = time_ordered_coords()
+) |> 
+  ggdag(edge_type = "arc", text_size = 2.2)
+```
+
+Luckily, this isn't completely true. Case-control studies are limited in the type of causal effects they can estimate (causal odds ratios, which under some circumstances approximate causal risk ratios). With careful study design and sampling, the math works out such that these estimates are still valid. Exactly how and why case-control studies work are beyond the scope of this book, but they are a remarkably clever design. 
+:::
+
 ### Include variables you don't have
 
--   Examples where you can and can't adjust depending
+It's critical that you include *all* variables important to the causal structure, not just they variables you have measured in your data. ggdag can mark variables as unmeasured ("latent"); it will then return only useable adjustment sets, e.g., those without the unmeasured variables. Of course, the best thing to do is to use DAGs to help you understand what to measure in the first place, but there are many reasons why that might not be the case for your data. Even data that was intentionally collected for the research question might not have a variable that was discovered to be a confounder after data collection.
+
+For instance, if we have a DAG where `exposure` and `outcome` have a confounding pathway consisting of `confounder1` and `confounder2`, we can control for either to succesfully debias the estimate:
+
+```{r}
+dagify(
+  outcome ~ exposure + confounder1,
+  exposure ~ confounder2,
+  confounder2 ~ confounder1,
+  exposure = "exposure",
+  outcome = "outcome"
+) |> 
+  adjustmentSets()
+```
+
+Thus, if just one is missing (`latent`), then we are ok:
+
+```{r}
+dagify(
+  outcome ~ exposure + confounder1,
+  exposure ~ confounder2,
+  confounder2 ~ confounder1,
+  exposure = "exposure",
+  outcome = "outcome",
+  latent = "confounder1"
+) |> 
+  adjustmentSets()
+```
+
+But if both are missing, there are no valid adjustment sets.
+
+When you don't have a variable measured, you still have a few options. As mentioned above, you may be able to identify alternate adjustment sets. If the missing variable is required to completely close all backdoor paths, you can and should conduct a sensitivity analysis to understand the impact of not having it. This is the subject of [Chapter -@sec-sensitivity]. 
+
+Under some lucky circumstances, you can also use a *proxy* confounder. A proxy confounder is a variable that is closely related to the confounder such that controlling for it controls for some of the effect of the missing variable. Consider an expansion of the basic confounding relationship where `q` has a cause, `p`. Technically, if we don't have `q`, we can't close the backdoor path and our effect will be biased. Practically, though, if `p` is highly correlated with `q`, it can serve as a method to reduce the confounding from `q`. You can think of `p` as a mismeasured version of `q`; it will almost never completely control for the biased via `q`, but it can help minimize it.
+
+```{r}
+dagify(
+  y ~ x + q,
+  x ~ q,
+  q ~ p,
+  coords = time_ordered_coords()
+) |> 
+  ggdag(edge_type = "arc")
+```
 
 ### Saturate your DAG then prune
+
+In discussing @tbl-TODO, we mentioned *saturated* DAGs. These are DAGs where all possible arrows are included based on the time-ordering, e.g. every variable causes variables that come after it in time.
+
+*Not* including an arrow is a bigger assumption than including one. In other words, your default should be to include an arrow from one variable to a future variable. This is counter intuitive to many people. How can it be that we need to be so careful about assessing causal effects yet be so liberal in applying causal assumptions in the DAG? The answer to this lies in the strength and prevalence of the cause. Technically, an arrow present means that *for at least a single observation*, the prior node causes the following node. The arrow similarly says nothing about the strength of the relationship. So, a minuscule causal effect on a single individual justifies the presence of an arrow. Of course, in practice, such a case is probably not relevant. There is *effectively* no arrow. 
+
+The larger point, though, is that you should not feel hesitant to add an arrow. The bar for justification is much lower than you might think. Instead, it's helpful to 1) determine your time ordering 2) saturate the DAG then 3) prune out implausible arrows.
+
+Let's experiment by working through a saturated version of the podcast-exam DAG. 
+
+First, the time-ordering. Presumably, the student's sense of humor far predates the day of the exam. Mood in the morning, too, predates listening to the podcast or exam score, as does preparation. The saturated DAG given this ordering is:
+
+```{r}
+podcast_dag_sat <- dagify(
+  podcast ~ mood + humor + prepared,
+  exam ~ mood + prepared + humor,
+  prepared ~ humor,
+  mood ~ humor,
+  coords = time_ordered_coords(
+    list(
+      "humor",
+      c("prepared", "mood"), 
+      "podcast",  
+      "exam"
+    )
+  ),
+  exposure = "podcast",
+  outcome = "exam",
+  labels = c(
+    podcast = "podcast",
+    exam = "exam score",
+    mood = "mood",
+    humor = "humor",
+    prepared = "prepared"
+  )
+)
+
+# TODO echo: false this and customize the arc for humor to exam
+ggdag(podcast_dag_sat, text = FALSE, use_labels = "label")
+```
+There are a few new arrows here. Humor now causes the other two confounders, as well as exam score. Some of them make sense. Sense of humor probably affects mood for some people. What about preparedness? This seems a little less plausible. Similarly, we know sense of humor is not affecting exam score because the grading is blinded. Let's prune those two.
+
+```{r}
+podcast_dag_pruned <- dagify(
+  podcast ~ mood + humor + prepared,
+  exam ~ mood + prepared,
+  mood ~ humor,
+  coords = time_ordered_coords(
+    list(
+      "humor",
+      c("prepared", "mood"), 
+      "podcast",  
+      "exam"
+    )
+  ),
+  exposure = "podcast",
+  outcome = "exam",
+  labels = c(
+    podcast = "podcast",
+    exam = "exam score",
+    mood = "mood",
+    humor = "humor",
+    prepared = "prepared"
+  )
+)
+
+# TODO echo: false this and customize the arc for humor to exam
+ggdag(podcast_dag_pruned, text = FALSE, use_labels = "label")
+```
+
+This seems a little more reasonable. So, was our original DAG wrong? That depends on a number of factors. Importantly, both DAGs produce the same adjustment set: controlling for `mood` and `prepared` will give us an unbiased effect if either DAG is correct. Even if the new DAG were to produce a different adjustment set, whether it the result is meaningfully different depends on the strength of the confounding. 
 
 ### Include instruments and competing exposures
 
 ### Focus on the causal structure, then consider measurement bias
 
-### Be accurate, but focus on clarity
+<!-- ### Be accurate, but focus on clarity -->
 
 ### Pick adjustment sets most likely to be succesful
 
