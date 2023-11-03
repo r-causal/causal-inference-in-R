@@ -986,9 +986,32 @@ Like IVs, precision variables do not occur along paths from the exposure to the 
 
 So, even though we don't need to control for `grader_mood`, if we have it in the data set, we should. Similarly, `humor` is not a good addition to the model unless we think it really might be a confounder; if it is a true instrument, we might want to consider using IV methods to estimate the effect, instead.
 
-### Measurement Error
+### Measurement Error and Missingness
 
-TODO: forgot this!
+DAGs can also help us understand the bias that can arise from mismeasurements in the data, including the worse mismeasurement: not measuring it at all. We'll cover these topics in [Chapter -@sec-TODO-missingness], but the basic idea is that by separating the true value from the observed value, we can better understand how such biases may behave. Here's a basic example of a type of bias called *recall bias*. Recall bias is when the outcome influences a participant's memory of exposure, so it's a particular problem in retrospective studies where the earlier exposure is not recorded until after the outcome happens. An example of when this can occur is a case-control study of cancer. Someone *with* cancer may be more motivated to ruminate on their past exposures than someone *without* cancer. So, their memory about a given exposure may be more refined than someone without. By conditioning on the observed version of the exposure, we open up a many collider paths. Unfortunately, there is no way to close them all. If this is the case, then we need to ask how severe the bias would be in practice.
+
+```{r}
+error_dag <- dagify(
+  exposure_observed ~ exposure_real + exposure_error,
+  outcome_observed ~ outcome_real + outcome_error,
+  outcome_real ~ exposure_real,
+  exposure_error ~ outcome_real,
+  labels = c(
+    exposure_real = "Exposure\n(truth)",
+    exposure_error = "Measurement Error\n(exposure)",
+    exposure_observed = "Exposure\n(observed)",
+    outcome_real = "Outcome\n(truth)",
+    outcome_error = "Measurement Error\n(outcome)",
+    outcome_observed = "Outcome\n(observed)"
+  ),
+  exposure = "exposure_real",
+  outcome = "outcome_real",
+  coords = time_ordered_coords()
+)
+
+error_dag |> 
+  ggdag(text = FALSE, use_labels = "label")
+```
 
 ## Recommendations in building DAGs
 
