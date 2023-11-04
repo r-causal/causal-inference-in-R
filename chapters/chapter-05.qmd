@@ -60,7 +60,7 @@ dag_data |>
 The type of causal diagrams we use are also called directed acyclic graphs (DAGs).
 These graphs are directed because they include arrows going in a specific direction.
 They're acyclic because they don't go in circles; a variable can't cause itself, for instance.
-DAGs are used for a wide variety of problems, but we're specificaly concerned with *causal* DAGs.
+DAGs are used for a wide variety of problems, but we're specifically concerned with *causal* DAGs.
 This class of DAGs is also sometimes referred to as Structural Causal Models (SCMs) because they are a model of the causal structure of a question.
 
 ::: callout-tip
@@ -73,9 +73,9 @@ DAGs depict causal relationships between variables.
 Visually, the way they depict variables is as *edges* and *nodes*.
 Edges are the arrows going from one variable to another, also sometimes called arcs or just arrows.
 Nodes are the variables themselves, sometimes called vertices, points, or just variables.
-in @fig-dag-basic, there are two nodes: `x` and `y` and one edge going from `x` to `y`.
+In @fig-dag-basic, there are two nodes,`x` and `y`, and one edge going from `x` to `y`.
 Here, we are saying that `x` causes `y`.
-In some capacity, `y` "listens" to `x`.
+`y` "listens" to `x` @TODO-CITE.
 
 ```{r}
 #| echo: false
@@ -83,7 +83,7 @@ In some capacity, `y` "listens" to `x`.
 #| label: fig-dag-basic
 #| fig-width: 3
 #| fig-height: 2
-# TODO: add caption
+#| fig-cap: "A causal directed acyclic graph (DAG). DAGs depict causal relationships. In this DAG, the assumption is that `x` causes `y`."
 library(ggdag)
 dagify(y ~ x, coords = time_ordered_coords()) |> 
   ggdag() + 
@@ -99,7 +99,7 @@ There are three types of paths you'll see in DAGs: forks, chains, and colliders 
 ```{r}
 #| echo: false
 #| label: fig-dag-path-types
-# TODO: add caption
+#| fig-cap: "Three types of causal relationships: forks, chains, and colliders. The direction of the arrows and the relationships of interest dictate which type of path a series of variables is. Forks represent a mutual cause, chains represent direct causes, and colliders represent a mutual descendant."
 coords <- list(x = c(x = 0, y = 2, q = 1), y = c(x = 0, y = 0, q = 1))
 
 fork <- dagify(
