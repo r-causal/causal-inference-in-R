@@ -68,6 +68,8 @@ Below is a proposed DAG for this question.
 #|   Proposed DAG for the relationship between Extra Magic Hours
 #|   in the morning at a particular park and the average wait
 #|   time between 9 am and 10 am.
+#|   The decision to schedule Extra Magic Hours on the day of interest was made
+#|   3 months prior.
 #|   Here we are saying that we believe 1) Extra Magic Hours impacts average wait time and 2) both Extra Magic Hours and average wait time are determined by the time the park closes, historic high temperatures, and ticket season.
 
 library(tidyverse)
@@ -127,7 +129,7 @@ Here, our observations are *days*.
 Looking at the diagram above, we can map each element of the causal question to elements of our target trial protocol:
 
 -   **Eligibility criteria**: Days must be from 2018
--   **Exposure definition**: Magic kingdom had "Extra Magic Hours" in the morning
+-   **Exposure definition**: Magic Kingdom's decision to schedule "Extra Magic Hours" in the morning (a decision made 3 months prior to the morning of interest)
 -   **Assignment procedures**: Observed -- if the historic data suggests there were "Extra Magic Hours" in the morning on a particular day, that day is classified as "exposed" otherwise it is "unexposed"
 -   **Follow-up period**: From park open to 10am.
 -   **Outcome definition**: The average posted wait time between 9am and 10am
