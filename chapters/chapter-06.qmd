@@ -24,13 +24,13 @@ parks_metadata_raw
 
 Suppose the causal question of interest is:
 
-**Is there a relationship between whether there were "Extra Magic Hours" in the morning at Magic Kingdom and the average wait time for an attraction called the "Seven Dwarfs Mine Train" the same day between 9am and 10am in 2018?**
+**Did the decision to provide "Extra Magic Hours" in the morning at Magic Kingdom affect the average wait time for an attraction called the "Seven Dwarfs Mine Train" the same day between 9am and 10am in 2018?**
 
 Let's begin by diagramming this causal question (@fig-seven-diag).
 
 ```{r}
 #| echo: false
-#| fig-cap: "Diagram of the causal question \"Is there a relationship between whether there were \"Extra Magic Hours\" in the morning at Magic Kingdom and the average wait time for an attraction called the \"Seven Dwarfs Mine Train\" the same day between 9am and 10am in 2018?\""
+#| fig-cap: "Diagram of the causal question \"Did the decision to provide \"Extra Magic Hours\" in the morning at Magic Kingdom affect the average wait time for an attraction called the \"Seven Dwarfs Mine Train\" the same day between 9am and 10am in 2018?\""
 #| label: fig-seven-diag
 
 data <- data.frame(
