@@ -360,12 +360,13 @@ Let's start by discretizing the `park_temperature_high` variable a bit (we will 
 #| fig-width: 9
 seven_dwarfs_train_2018 |>
   ## cut park_temperature_high into tertiles
-  mutate(park_temperature_high_bin = cut(park_temperature_high, breaks = 3)) |>
+  mutate(park_temperature_high_bin = ntile(park_temperature_high, 3)) |>
   ## bin park close time
   mutate(park_close_bin = case_when(
-    hour(park_close) < 19 & hour(park_close) > 12 ~ "(1) early",
-    hour(park_close) >= 19 & hour(park_close) < 24 ~ "(2) standard",
-    hour(park_close) >= 24 | hour(park_close) < 12 ~ "(3) late"
+    hour(park_close) %in% 13:18 ~ "(1) early",
+    hour(park_close) %in% 19:23 ~ "(2) standard",
+    hour(park_close) %in% c(0:11, 24) ~ "(3) late",
+    .default = NA_character_
   )) |>
   group_by(park_close_bin, park_temperature_high_bin, park_ticket_season) |>
   ## calculate the proportion exposed in each bin
