@@ -267,9 +267,10 @@ vis_miss(seven_dwarfs_train_2018)
 It looks like we only have a few observations (2%) missing our outcome of interest.
 This is not too bad.
 For this first analysis we will ignore the missing values.
-We can explicitly drop them using the `drop_na()` function from `{dplyr}`.
+We can explicitly drop them using the `drop_na()` function from `{tidyr}`.
 
 ```{r}
+library(tidyr)
 seven_dwarfs_train_2018 <- seven_dwarfs_train_2018 |>
   drop_na()
 ```
