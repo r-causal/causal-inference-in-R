@@ -69,8 +69,8 @@ DAGs depict causal relationships between variables.
 Visually, the way they depict variables is as *edges* and *nodes*.
 Edges are the arrows going from one variable to another, sometimes called arcs or just arrows.
 Nodes are the variables themselves, sometimes called vertices, points, or just variables.
-In @fig-dag-basic, there are two nodes, `x` and `y', and one edge going from `x` to `y'.
-Here, we are saying that `x` causes `y'.
+In @fig-dag-basic, there are two nodes, `x` and `y`, and one edge going from `x` to `y`.
+Here, we are saying that `x` causes `y`.
 `y` "listens" to `x` @TODO-CITE.
 
 ```{r}
@@ -79,7 +79,7 @@ Here, we are saying that `x` causes `y'.
 #| label: fig-dag-basic
 #| fig-width: 3
 #| fig-height: 2
-#| fig-cap: "A causal directed acyclic graph (DAG). DAGs depict causal relationships. In this DAG, the assumption is that `x` causes `y'."
+#| fig-cap: "A causal directed acyclic graph (DAG). DAGs depict causal relationships. In this DAG, the assumption is that `x` causes `y`."
 library(ggdag)
 dagify(y ~ x, coords = time_ordered_coords()) |> 
   ggdag() + 
@@ -87,7 +87,7 @@ dagify(y ~ x, coords = time_ordered_coords()) |>
   expand_plot(expand_x = expansion(c(.2, .2)))
 ```
 
-If we're interested in the causal effect of `x` on `y', we're trying to estimate a numeric representation of that arrow.
+If we're interested in the causal effect of `x` on `y`, we're trying to estimate a numeric representation of that arrow.
 Usually, though, there are many other variables and arrows in the causal structure of a given question.
 A series of arrows is called a *path*.
 There are three types of paths you'll see in DAGs: forks, chains, and colliders (sometimes called inverse forks).
@@ -140,14 +140,14 @@ dag_flows |>
 ```
 
 Forks represent a common cause of two variables.
-Here, we're saying that `q` causes both `x` and `y', the traditional definition of a confounder.
-They're called forks because the arrows from `x` to `y' are in different directions.
+Here, we're saying that `q` causes both `x` and `y`, the traditional definition of a confounder.
+They're called forks because the arrows from `x` to `y` are in different directions.
 Chains, on the other hand, represent a series of arrows going in the same direction.
-Here, `q` is called a *mediator*: it is along the causal path from `x` to `y'.
-In this diagram, the only path from `x` to `y'' is mediated through `q`.
+Here, `q` is called a *mediator*: it is along the causal path from `x` to `y`.
+In this diagram, the only path from `x` to `y` is mediated through `q`.
 Finally, a collider is a path where two arrowheads meet at a variable.
 Because causality always goes forward in time, this naturally means that the collider variable is caused by two other variables.
-Here, we're saying that `x` and `y' both cause `q`.
+Here, we're saying that `x` and `y` both cause `q`.
 
 ::: callout-tip
 ## Are DAGs SEMs?
@@ -161,14 +161,14 @@ Causal DAGs, on the other hand, don't estimate anything; an arrow going from one
 One of the significant benefits of DAGs is that they help us identify sources of bias and, often, provide clues on how to address them.
 However, talking about an unbiased effect estimate only makes sense when we have a specific causal question in mind.
 Since each arrow represents a cause, it's causality all the way down; no individual arrow is inherently problematic.
-Here, we're interested in the effect of `x` on `y'.
+Here, we're interested in the effect of `x` on `y`.
 This question defines which paths we're interested in and which we're not.
 
-These three types of paths have different implications for the statistical relationship between `x` and `y'.
+These three types of paths have different implications for the statistical relationship between `x` and `y`.
 If we only look at the correlation between the two variables under these assumptions:
 
 1.  In the fork, `x` and `y` will be associated, despite there being no arrow from `x` to `y`.
-2. In the chain, `x` and `y' are related only through `q`.
+2. In the chain, `x` and `y` are related only through `q`.
 3.  In the collider, `x` and `y` will *not* be related.
 
 Paths that transmit association are called *open paths*.
@@ -178,9 +178,9 @@ Forks and chains are open, while colliders are closed.
 So, should we adjust for `q`?
 That depends on the nature of the path.
 Forks are confounding paths.
-Because `q` causes both `x` and `y', `x` and `y' will have a spurious association.
-They both contain information from `q`, their mutual cause. That mutual causal relationship makes `x` and `y' associated statistically.
-Adjusting for `q` will *block* the bias from confounding and give us the true relationship between `x` and `y'.
+Because `q` causes both `x` and `y`, `x` and `y` will have a spurious association.
+They both contain information from `q`, their mutual cause. That mutual causal relationship makes `x` and `y` associated statistically.
+Adjusting for `q` will *block* the bias from confounding and give us the true relationship between `x` and `y`.
 
 ::: callout-tip
 ## Adjustment
@@ -190,16 +190,16 @@ We use the term "adjustment" or "controlling for" to refer to any technique that
 :::
 
 @fig-confounder-scatter depicts this effect visually.
-Here, `x` and `y' are continuous, and by definition of the DAG, they are unrelated.
+Here, `x` and `y` are continuous, and by definition of the DAG, they are unrelated.
 `q`, however, causes both.
-The unadjusted effect is biased because it includes information about the open path from `x` to `y' via `q`.
-Within levels of `q`, however, `x` and `y' are unrelated.
+The unadjusted effect is biased because it includes information about the open path from `x` to `y` via `q`.
+Within levels of `q`, however, `x` and `y` are unrelated.
 
 ```{r}
 #| echo: false
 #| label: fig-confounder-scatter
 #| message: false
-#| fig-cap: "Two scatterplots of the relationship between `x` and `y'. With forks, the relationship is biased by `q`. When accounting for `q`, we see the true null relationship."
+#| fig-cap: "Two scatterplots of the relationship between `x` and `y`. With forks, the relationship is biased by `q`. When accounting for `q`, we see the true null relationship."
 set.seed(123)
 library(patchwork)
 n <- 1000
@@ -234,15 +234,15 @@ p1 + p2
 ```
 
 For chains, whether or not we adjust for mediators depends on the research question.
-Here, adjusting for `q` would result in a null estimate of the effect of `x` on `y'.
-Because the only effect of `x` on `y' is via `q`, no other effect remains.
-The effect of `x` on `y' mediated by `q` is called the *indirect* effect, while the effect of `x` on `y' directly is called the *direct* effect.
+Here, adjusting for `q` would result in a null estimate of the effect of `x` on `y`.
+Because the only effect of `x` on `y` is via `q`, no other effect remains.
+The effect of `x` on `y` mediated by `q` is called the *indirect* effect, while the effect of `x` on `y` directly is called the *direct* effect.
 If we're only interested in the direct effect, controlling for `q` might be what we want.
 If we want to know about both effects, we shouldn't try to adjust for `q`.
 We'll learn more about estimating these and other mediation effects in @sec-mediation.
 
 @fig-mediator-scatter shows this effect visually.
-The unadjusted effect of `x` on `y' represents the total effect.
+The unadjusted effect of `x` on `y` represents the total effect.
 Since the total effect is due entirely to the path mediated by `q`, when we adjust for `q`, no relationship remains.
 This null effect is the direct effect.
 Neither of these effects is due to bias, but each answers a different research question.
@@ -251,7 +251,7 @@ Neither of these effects is due to bias, but each answers a different research q
 #| echo: false
 #| label: fig-mediator-scatter
 #| message: false
-#| fig-cap: "Two scatterplots of the relationship between `x` and `y'. With chains, whether and how we should account for `q` depends on the research question. Without doing so, we see the impact of the total effect of `x` and `y', including the indirect effect via `q`. When accounting for `q`, we see the direct (null) effect of `x` on `y'."
+#| fig-cap: "Two scatterplots of the relationship between `x` and `y`. With chains, whether and how we should account for `q` depends on the research question. Without doing so, we see the impact of the total effect of `x` and `y`, including the indirect effect via `q`. When accounting for `q`, we see the direct (null) effect of `x` on `y`."
 ### x
 x <- rnorm(n)
 ###
@@ -284,23 +284,23 @@ p1 + p2
 ```
 
 Colliders are different.
-In the collider DAG of @fig-dag-path-types, `x` and `y' are *not* associated, but both cause `q`.
+In the collider DAG of @fig-dag-path-types, `x` and `y` are *not* associated, but both cause `q`.
 Adjusting for `q` has the opposite effect than with confounding: it *opens* a biasing pathway.
-Sometimes, people draw the path opened up by conditioning on a collider connecting `x` and `y'.
+Sometimes, people draw the path opened up by conditioning on a collider connecting `x` and `y`.
 
-Visually, we can see this happen when `x` and `y' are continuous and `q` is binary.
-In @fig-collider-scatter, when we don't include `q`, we find no relationship between `x` and `y'.
+Visually, we can see this happen when `x` and `y` are continuous and `q` is binary.
+In @fig-collider-scatter, when we don't include `q`, we find no relationship between `x` and `y`.
 That's the correct result.
-However, when we include `q`, we can detect information about both `x` and `y', and they appear correlated: across levels of `x`, those with `q = 0` have lower levels of `y'.
+However, when we include `q`, we can detect information about both `x` and `y`, and they appear correlated: across levels of `x`, those with `q = 0` have lower levels of `y`.
 Association seemingly flows back in time.
 Of course, that can't happen from a causal perspective, so controlling for `q` is the wrong thing to do.
-We end up with a biased effect of `x` on `y'.
+We end up with a biased effect of `x` on `y`.
 
 ```{r}
 #| echo: false
 #| label: fig-collider-scatter
 #| message: false
-#| fig-cap: "Two scatterplots of the relationship between `x` and `y'. The unadjusted relationship between the two is unbiased. When accounting for `q`, we open a colliding backdoor path and bias the relationship between `x` and `y'."
+#| fig-cap: "Two scatterplots of the relationship between `x` and `y`. The unadjusted relationship between the two is unbiased. When accounting for `q`, we open a colliding backdoor path and bias the relationship between `x` and `y`."
 #| 
 ### x
 x <- rnorm(n)
@@ -334,17 +334,17 @@ p1 + p2
 ```
 
 How can this be?
-Since `x` and `y' happen before `q`, `q` can't impact them.
+Since `x` and `y` happen before `q`, `q` can't impact them.
 Let's turn the DAG on its side and consider @fig-collider-time.
-If we break down the two time points, at time point 1, `q` hasn't happened yet, and `x` and `y' are unrelated.
-At time point 2, `q` happens due to `x` and `y'.
+If we break down the two time points, at time point 1, `q` hasn't happened yet, and `x` and `y` are unrelated.
+At time point 2, `q` happens due to `x` and `y`.
 But causality only goes forward in time.
-`q` happening later can't change the fact that `x` and `y' happened independently at time point 1.
+`q` happening later can't change the fact that `x` and `y` happened independently at time point 1.
 
 ```{r}
 #| echo: false
 #| label: fig-collider-time
-#| fig-cap: "A collider relationship over two points in time. At time point one, there is no relationship between `x` and `y'. Both cause `q` by time point two, but this does not change what already happened at time point one."
+#| fig-cap: "A collider relationship over two points in time. At time point one, there is no relationship between `x` and `y`. Both cause `q` by time point two, but this does not change what already happened at time point one."
 
 coords <- list(x = c(x = 0, y = 2, q = 1), y = c(x = 0, y = 0, q = -1))
 collider <- dagify(
@@ -383,11 +383,11 @@ Association, however, is time-agnostic.
 It's just an observation about the numerical relationships between variables.
 When we control for the future, we risk introducing bias.
 It takes time to develop an intuition for this.
-Consider a case where `x` and `y' are the only causes of `q`, and all three variables are binary.
-When *either* `x` or `y' equals 1, then `q` happens.
+Consider a case where `x` and `y` are the only causes of `q`, and all three variables are binary.
+When *either* `x` or `y` equals 1, then `q` happens.
 If we know `q = 1` and `x = 0` then logically it must be that `y = 1`.
-Thus, knowing about `q` gives us information about `y' via `x`.
-This example is extreme, but it shows how this type of bias, sometimes called *collider-stratification bias* or *selection bias*, occurs: conditioning on `q` provides statistical information about `x` and `y' and distorts their relationship.
+Thus, knowing about `q` gives us information about `y` via `x`.
+This example is extreme, but it shows how this type of bias, sometimes called *collider-stratification bias* or *selection bias*, occurs: conditioning on `q` provides statistical information about `x` and `y` and distorts their relationship.
 
 ::: callout-tip
 ## Exchangeability revisited
@@ -919,7 +919,7 @@ m_bias() |>
 ggdag has several quick-DAGs for demonstrating basic causal structures, including `confounder_triangle()`, `collider_triangle()`, `m_bias()`, and `butterfly_bias()`.
 :::
 
-What's theoretically interesting about M-bias is that `m' is a collider but occurs before `x` and `y'. Remember that association is blocked at a collider, so there is no open path between `x` and `y'.
+What's theoretically interesting about M-bias is that `m' is a collider but occurs before `x` and `y`. Remember that association is blocked at a collider, so there is no open path between `x` and `y`.
 
 ```{r}
 paths(m_bias())
