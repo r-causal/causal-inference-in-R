@@ -184,7 +184,7 @@ library(lubridate)
 seven_dwarfs_train_2018 <- seven_dwarfs_train |>
   filter(year(park_date) == 2018) |> # eligibility criteria
   mutate(hour = hour(wait_datetime)) |> # get hour from wait
-  group_by(park_date, hour) |> # group by date
+  group_by(park_date, hour) |> # group by day and hour
   summarise(
     wait_minutes_posted_avg = mean(wait_minutes_posted, na.rm = TRUE),
     .groups = "drop"
@@ -193,7 +193,7 @@ seven_dwarfs_train_2018 <- seven_dwarfs_train |>
     wait_minutes_posted_avg =
       case_when(
         is.nan(wait_minutes_posted_avg) ~ NA,
-        TRUE ~ wait_minutes_posted_avg
+        .default = wait_minutes_posted_avg
       )
   ) |> # if it is NAN make it NA
   filter(hour == 9) # only keep the average wait time between 9 and 10
