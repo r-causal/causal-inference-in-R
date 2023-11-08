@@ -58,13 +58,13 @@ dag_data |>
   )
 ```
 
-The type of causal diagrams we use are also called directed acyclic graphs (DAGs)[^chapter-05-1].
+The type of causal diagrams we use are also called directed acyclic graphs (DAGs)[^1].
 These graphs are directed because they include arrows going in a specific direction.
 They're acyclic because they don't go in circles; a variable can't cause itself, for instance.
 DAGs are used for various problems, but we're specifically concerned with *causal* DAGs.
 This class of DAGs is sometimes called Structural Causal Models (SCMs) because they are a model of the causal structure of a question.
 
-[^chapter-05-1]: An essential but rarely observed detail of DAGs is that dag is also an [affectionate Australian insult](https://en.wikipedia.org/wiki/Dag_(slang)) referring to the dung-caked fur of a sheep, a *daglock*.
+[^1]: An essential but rarely observed detail of DAGs is that dag is also an [affectionate Australian insult](https://en.wikipedia.org/wiki/Dag_(slang)) referring to the dung-caked fur of a sheep, a *daglock*.
 
 DAGs depict causal relationships between variables.
 Visually, the way they depict variables is as *edges* and *nodes*.
