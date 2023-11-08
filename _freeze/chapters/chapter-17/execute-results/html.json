@@ -1,7 +1,7 @@
 {
-  "hash": "0c4033870d4c2666b8e9a897aaa34986",
+  "hash": "ddc7311c8eb85246136331989d1ca532",
   "result": {
-    "markdown": "# Causal survival analysis\n\n\n\n\n\n## Preparing data for survival analysis\n\n\n::: {.cell}\n\n```{.r .cell-code}\nrnorm(5)\n```\n\n::: {.cell-output .cell-output-stdout}\n\n```\n[1]  0.16354  0.99692  1.07709 -0.62800  0.01222\n```\n\n\n:::\n:::\n\n\n## Pooled logistic regression\n\n## Confidence intervals for causal survival models\n",
+    "markdown": "# Missingness {#sec-missingness}\n\n\n\n\n\n## Missingness as structural bias\n\n\n::: {.cell}\n\n```{.r .cell-code}\nrnorm(5)\n```\n\n::: {.cell-output .cell-output-stdout}\n\n```\n[1]  2.6365  1.8457 -0.4574  0.1535  1.1835\n```\n\n\n:::\n:::\n\n\n## Multiple Imputation\n\n## Combining MICE and IPW\n",
     "supporting": [],
     "filters": [
       "rmarkdown/pagebreak.lua"

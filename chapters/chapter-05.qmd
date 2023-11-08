@@ -7,7 +7,8 @@
 > Draw your assumptions before your conclusions --@hernan2021
 
 Causal diagrams are a tool to visualize your assumptions about the causal structure of the questions you're trying to answer.
-In a randomized experiment, the causal structure is quite simple. While there may be many causes of an outcome, the only cause of the exposure is the randomization process itself (we hope!).
+In a randomized experiment, the causal structure is quite simple.
+While there may be many causes of an outcome, the only cause of the exposure is the randomization process itself (we hope!).
 In many non-randomized settings, however, the structure of your question can be a complex web of causality.
 Causal diagrams help communicate what we think this structure looks like.
 In addition to being open about what we think the causal structure is, causal diagrams have incredible mathematical properties that allow us to identify a way to estimate unbiased causal effects even with observational data.
@@ -57,13 +58,13 @@ dag_data |>
   )
 ```
 
-The type of causal diagrams we use are also called directed acyclic graphs (DAGs)[^1].
+The type of causal diagrams we use are also called directed acyclic graphs (DAGs)[^chapter-05-1].
 These graphs are directed because they include arrows going in a specific direction.
 They're acyclic because they don't go in circles; a variable can't cause itself, for instance.
 DAGs are used for various problems, but we're specifically concerned with *causal* DAGs.
 This class of DAGs is sometimes called Structural Causal Models (SCMs) because they are a model of the causal structure of a question.
 
-[^1]: An essential but rarely observed detail of DAGs is that dag is also an [affectionate Australian insult](https://en.wikipedia.org/wiki/Dag_(slang)) referring to the dung-caked fur of a sheep, a *daglock*. 
+[^chapter-05-1]: An essential but rarely observed detail of DAGs is that dag is also an [affectionate Australian insult](https://en.wikipedia.org/wiki/Dag_(slang)) referring to the dung-caked fur of a sheep, a *daglock*.
 
 DAGs depict causal relationships between variables.
 Visually, the way they depict variables is as *edges* and *nodes*.
@@ -71,7 +72,7 @@ Edges are the arrows going from one variable to another, sometimes called arcs o
 Nodes are the variables themselves, sometimes called vertices, points, or just variables.
 In @fig-dag-basic, there are two nodes, `x` and `y`, and one edge going from `x` to `y`.
 Here, we are saying that `x` causes `y`.
-`y` "listens" to `x` @TODO-CITE.
+`y` "listens" to `x` [@Pearl_Glymour_Jewell_2021].
 
 ```{r}
 #| echo: false
@@ -168,7 +169,7 @@ These three types of paths have different implications for the statistical relat
 If we only look at the correlation between the two variables under these assumptions:
 
 1.  In the fork, `x` and `y` will be associated, despite there being no arrow from `x` to `y`.
-2. In the chain, `x` and `y` are related only through `q`.
+2.  In the chain, `x` and `y` are related only through `q`.
 3.  In the collider, `x` and `y` will *not* be related.
 
 Paths that transmit association are called *open paths*.
@@ -179,7 +180,8 @@ So, should we adjust for `q`?
 That depends on the nature of the path.
 Forks are confounding paths.
 Because `q` causes both `x` and `y`, `x` and `y` will have a spurious association.
-They both contain information from `q`, their mutual cause. That mutual causal relationship makes `x` and `y` associated statistically.
+They both contain information from `q`, their mutual cause.
+That mutual causal relationship makes `x` and `y` associated statistically.
 Adjusting for `q` will *block* the bias from confounding and give us the true relationship between `x` and `y`.
 
 ::: callout-tip
@@ -421,9 +423,8 @@ There are several ways we use interactions in causal inference.
 In one extreme, they are simply a matter of functional form: interaction terms are included in models but marginalized to get an overall causal effect.
 Conversely, we're interested in *joint causal effects*, where the two variables interacting are both causal.
 In between, we can use interaction terms to identify *heterogeneous causal effects*, which vary by a second variable that is not assumed to be causal.
-As with many tools in causal inference, we use the same statistical technique in many ways to answer different questions.
-
-<!-- TODO: expand on this later in the book and link to the chapter where we'll discuss -->
+As with many tools in causal inference, we use the same statistical technique in many ways to answer different questions. 
+We'll revisit this topic in detail in [Chapter -@sec-interaction].
 
 Many people have tried expressing interaction in DAGs using different types of arcs, nodes, and other annotations, but no approach has taken off as the preferred way.
 :::
@@ -603,7 +604,6 @@ In @fig-paths-podcast, we see two open paths: `podcast <- mood -> exam"` and `po
 ```{r}
 #| label: fig-paths-podcast
 #| fig-cap: "`ggdag_paths()` visualizes open paths in a DAG. There are two open paths in `podcast_dag`: the fork from `mood` and the fork from `prepared`." 
-# TODO: Why aren't okabe-ito colors propagating here and in other spots in ggdag?
 podcast_dag |> 
   # show the whole dag as a light gray "shadow" 
   # rather than just the paths
@@ -666,7 +666,7 @@ In this DAG, that's just one set: `mood` and `prepared`.
 This set makes sense because there are two backdoor paths, and the only other variables on them besides the exposure and outcome are these two variables.
 So, at minimum, we must account for both to get a valid estimate.
 
-::: {.callout-tip}
+::: callout-tip
 `ggdag()` and friends usually use `tidy_dagitty()` and `dag_*()` or `node_*()` functions to change the underlying data frame.
 Similarly, the quick plotting functions use ggdag's geoms to visualize the resulting DAG(s).
 In other words, you can use the same data manipulation and visualization strategies that you use day-to-day directly with ggdag.
@@ -743,7 +743,8 @@ sim_data
 
 Since we have simulated this data, we know that this is a case where *standard methods will succeed* (see @sec-standard) and, therefore, can estimate the causal effect using a basic linear regression model.
 @fig-dag-sim shows a forest plot of the simulated data based on our DAG.
-Notice the model that only included the exposure resulted in a spurious effect (an estimate of -0.1 when we know the truth is 0). In contrast, the model that adjusted for the two variables as suggested by `ggdag_adjustment_set()` is not spurious (much closer to 0).
+Notice the model that only included the exposure resulted in a spurious effect (an estimate of -0.1 when we know the truth is 0).
+In contrast, the model that adjusted for the two variables as suggested by `ggdag_adjustment_set()` is not spurious (much closer to 0).
 
 ```{r}
 #| label: fig-dag-sim
@@ -778,7 +779,15 @@ bind_rows(
 
 ### Advanced Confounding
 
-In `podcast_dag`, `mood` and `prepared` were *direct* confounders: an arrow was going directly from them to `podcast` and `exam`. Often, backdoor paths are more complex. Let's consider such a case by adding two new variables: `alertness` and `skills_course`. `alertness` represents the feeling of alertness from a good mood, thus the arrow from `mood` to `alertness`. `skills_course` represents whether the student took a College Skills Course and learned time management techniques. Now, `skills_course` is what frees up the time to listen to a podcast as well as being prepared for the exam. `mood` and `prepared` are no longer direct confounders: they are two variables along a more complex backdoor path. Additionally, we've added an arrow going from `humor` to `mood`. Let's take a look at @fig-podcast_dag2.
+In `podcast_dag`, `mood` and `prepared` were *direct* confounders: an arrow was going directly from them to `podcast` and `exam`.
+Often, backdoor paths are more complex.
+Let's consider such a case by adding two new variables: `alertness` and `skills_course`.
+`alertness` represents the feeling of alertness from a good mood, thus the arrow from `mood` to `alertness`.
+`skills_course` represents whether the student took a College Skills Course and learned time management techniques.
+Now, `skills_course` is what frees up the time to listen to a podcast as well as being prepared for the exam.
+`mood` and `prepared` are no longer direct confounders: they are two variables along a more complex backdoor path.
+Additionally, we've added an arrow going from `humor` to `mood`.
+Let's take a look at @fig-podcast_dag2.
 
 ```{r}
 #| label: fig-podcast_dag2
@@ -816,7 +825,7 @@ adj_sets <- unclass(adjustmentSets(podcast_dag2)) |> map_chr(\(.x) glue::glue('{
 adj_sets <- glue::glue("`{adj_sets}`")
 ```
 
-Now there are *three* backdoor paths we need to close: `r open_paths`. 
+Now there are *three* backdoor paths we need to close: `r open_paths`.
 
 ```{r}
 #| label: fig-podcast_dag2-paths
@@ -826,7 +835,12 @@ Now there are *three* backdoor paths we need to close: `r open_paths`.
 ggdag_paths(podcast_dag2, use_labels = "label", text = FALSE, shadow = TRUE)
 ```
 
-There are four minimal adjustment sets to close all three paths (and eighteen full adjustment sets!). The minimal adjustment sets are `r adj_sets`. We can now block the open paths in several ways. `mood` and `prepared` still work, but we've got other options now. Notably, `prepared` and `alertness` could happen at the same time or even after `podcast`. `skills_course` and `mood` still happen before both `podcast` and `exam`, so the idea is still the same: the confounding pathway starts before the exposure and outcome. 
+There are four minimal adjustment sets to close all three paths (and eighteen full adjustment sets!).
+The minimal adjustment sets are `r adj_sets`.
+We can now block the open paths in several ways.
+`mood` and `prepared` still work, but we've got other options now.
+Notably, `prepared` and `alertness` could happen at the same time or even after `podcast`.
+`skills_course` and `mood` still happen before both `podcast` and `exam`, so the idea is still the same: the confounding pathway starts before the exposure and outcome.
 
 ```{r}
 #| label: fig-podcast_dag2-set
@@ -836,11 +850,23 @@ There are four minimal adjustment sets to close all three paths (and eighteen fu
 ggdag_adjustment_set(podcast_dag2, use_labels = "label", text = FALSE)
 ```
 
-Deciding between these adjustment sets is a matter of judgment: if all data are perfectly measured, the DAG is correct, and we've modeled them correctly, then it doesn't matter which we use. Each adjustment set will result in an unbiased estimate. All three of those assumptions are usually untrue to some degree. Let's consider the path via `skills_course` and `prepared`. It may be that we are better able to assess whether or not someone took the College Skills Course than how prepared for the exam they are. In that case, an adjustment set with `skills_course` is a better option. But perhaps we better understand the relationship between preparedness and exam results. If we have it measured, controlling for that might be better. We could get the best of both worlds by including both variables: between the better measurement of `skills_course` and the better modeling of `prepared`, we might have a better chance of minimizing confounding from this path. 
+Deciding between these adjustment sets is a matter of judgment: if all data are perfectly measured, the DAG is correct, and we've modeled them correctly, then it doesn't matter which we use.
+Each adjustment set will result in an unbiased estimate.
+All three of those assumptions are usually untrue to some degree.
+Let's consider the path via `skills_course` and `prepared`.
+It may be that we are better able to assess whether or not someone took the College Skills Course than how prepared for the exam they are.
+In that case, an adjustment set with `skills_course` is a better option.
+But perhaps we better understand the relationship between preparedness and exam results.
+If we have it measured, controlling for that might be better.
+We could get the best of both worlds by including both variables: between the better measurement of `skills_course` and the better modeling of `prepared`, we might have a better chance of minimizing confounding from this path.
 
 ### Selection Bias and Mediation
 
-Selection bias is another name for the type of bias that is induced by adjusting for a collider. It's called "selection bias" because a common form of collider-induced bias is a variable inherently stratified upon by the design of the study---selection *into* the study. Let's consider a case based on the original `podcast_dag` but with one additional variable: whether or not the student showed up to the exam. Now, there is an indirect effect of `podcast` on `exam`: listening to a podcast influences whether or not the students attend the exam. The true result of `exam` is missing for those who didn't show up; by studying the group of people who *did* show up, we are inherently stratifying on this variable.
+Selection bias is another name for the type of bias that is induced by adjusting for a collider.
+It's called "selection bias" because a common form of collider-induced bias is a variable inherently stratified upon by the design of the study---selection *into* the study.
+Let's consider a case based on the original `podcast_dag` but with one additional variable: whether or not the student showed up to the exam.
+Now, there is an indirect effect of `podcast` on `exam`: listening to a podcast influences whether or not the students attend the exam.
+The true result of `exam` is missing for those who didn't show up; by studying the group of people who *did* show up, we are inherently stratifying on this variable.
 
 ```{r}
 #| label: fig-podcast_dag3
@@ -876,7 +902,9 @@ podcast_dag3 <- dagify(
 ggdag(podcast_dag3, use_labels = "label", text = FALSE)
 ```
 
-The problem is that `showed_up` is both a collider and a mediator: stratifying on it induces a relationship between many of the variables in the DAG but blocks the indirect effect of `podcast` on `exam`. Luckily, the adjustment sets can handle the first problem; because `showed_up` happens *before* `exam`, we're less at risk of collider bias between the exposure and outcome. Unfortunately, we cannot calculate the total effect of `podcast` on `exam` because part of the effect is missing: the indirect effect is closed at `showed_up`.
+The problem is that `showed_up` is both a collider and a mediator: stratifying on it induces a relationship between many of the variables in the DAG but blocks the indirect effect of `podcast` on `exam`.
+Luckily, the adjustment sets can handle the first problem; because `showed_up` happens *before* `exam`, we're less at risk of collider bias between the exposure and outcome.
+Unfortunately, we cannot calculate the total effect of `podcast` on `exam` because part of the effect is missing: the indirect effect is closed at `showed_up`.
 
 ```{r}
 #| label: fig-podcast_dag3-as
@@ -889,7 +917,8 @@ podcast_dag3 |>
   ggdag_adjustment_set(text = FALSE, use_labels = "label")
 ```
 
-Sometimes, you can still estimate effects in this situation by changing the estimate you wish to calculate. We can't calculate the total effect because we are missing the indirect effect, but we can still calculate the direct effect of `podcast` on `exam`.
+Sometimes, you can still estimate effects in this situation by changing the estimate you wish to calculate.
+We can't calculate the total effect because we are missing the indirect effect, but we can still calculate the direct effect of `podcast` on `exam`.
 
 ```{r}
 #| label: fig-podcast_dag3-direct
@@ -904,7 +933,8 @@ podcast_dag3 |>
 
 #### M-Bias and Butterfly Bias
 
-A particular case of selection bias that you'll often see people talk about is *M-bias*. It's called M-bias because it looks like an M when arranged top to bottom.
+A particular case of selection bias that you'll often see people talk about is *M-bias*.
+It's called M-bias because it looks like an M when arranged top to bottom.
 
 ```{r}
 #| label: fig-m-bias
@@ -919,13 +949,17 @@ m_bias() |>
 ggdag has several quick-DAGs for demonstrating basic causal structures, including `confounder_triangle()`, `collider_triangle()`, `m_bias()`, and `butterfly_bias()`.
 :::
 
-What's theoretically interesting about M-bias is that `m' is a collider but occurs before `x` and `y`. Remember that association is blocked at a collider, so there is no open path between `x` and `y`.
+What's theoretically interesting about M-bias is that `m' is a collider but occurs before`x`and`y`. Remember that association is blocked at a collider, so there is no open path between`x`and`y\`.
 
 ```{r}
 paths(m_bias())
 ```
 
-Let's focus on the `mood` path of the podcast-exam DAG. What if we were wrong about mood, and the actual relationship was M-shaped? Let's say that, rather than causing `podcast` and `exam`, `mood` was itself caused by two mutual causes of `podcast` and `exam`, `u1` and `u2`, as in @fig-podcast_dag4. We don't know what `u1` and `u2` are, and we don't have them measured. As above, there are no open paths in this subset of the DAG.
+Let's focus on the `mood` path of the podcast-exam DAG.
+What if we were wrong about mood, and the actual relationship was M-shaped?
+Let's say that, rather than causing `podcast` and `exam`, `mood` was itself caused by two mutual causes of `podcast` and `exam`, `u1` and `u2`, as in @fig-podcast_dag4.
+We don't know what `u1` and `u2` are, and we don't have them measured.
+As above, there are no open paths in this subset of the DAG.
 
 ```{r}
 #| label: fig-podcast_dag4
@@ -958,7 +992,11 @@ podcast_dag4 <- dagify(
 ggdag(podcast_dag4, use_labels = "label", text = FALSE)
 ```
 
-The problem arises when we think our original DAG is the right DAG: `mood` is in the adjustment set, so we control for it. But this induces bias! It opens up a path between `u1` and `u2`, thus creating a path from `podcast` to `exam`. If we had either `u1` or `u2` measured, we could adjust for them to close this path, but we don't. There is no way to close this open path. 
+The problem arises when we think our original DAG is the right DAG: `mood` is in the adjustment set, so we control for it.
+But this induces bias!
+It opens up a path between `u1` and `u2`, thus creating a path from `podcast` to `exam`.
+If we had either `u1` or `u2` measured, we could adjust for them to close this path, but we don't.
+There is no way to close this open path.
 
 ```{r}
 #| label: fig-podcast_dag4-as
@@ -971,9 +1009,13 @@ podcast_dag4 |>
   ggdag_adjustment_set(use_labels = "label", text = FALSE)
 ```
 
-Of course, the best thing to do here is not control for `mood` at all. Sometimes, though, that is not an option. Imagine if, instead of `mood`, this turned out to be the real structure for `showed_up`: since we inherently control for `showed_up`, and we don't have the unmeasured variables, our study results will always be biased. It's essential to understand if we're in that situation so we can address it with sensitivity analysis to understand just how biased the effect would be.
+Of course, the best thing to do here is not control for `mood` at all.
+Sometimes, though, that is not an option.
+Imagine if, instead of `mood`, this turned out to be the real structure for `showed_up`: since we inherently control for `showed_up`, and we don't have the unmeasured variables, our study results will always be biased.
+It's essential to understand if we're in that situation so we can address it with sensitivity analysis to understand just how biased the effect would be.
 
-Let's consider a variation on M-bias where `mood` causes `podcast` and `exam` and `u1` and `u2` are mutual causes of `mood` and the exposure and outcome. This arrangement is sometimes called butterfly or bowtie bias, again because of its shape.
+Let's consider a variation on M-bias where `mood` causes `podcast` and `exam` and `u1` and `u2` are mutual causes of `mood` and the exposure and outcome.
+This arrangement is sometimes called butterfly or bowtie bias, again because of its shape.
 
 ```{r}
 #| label: fig-butterfly_bias
@@ -984,13 +1026,18 @@ butterfly_bias(x = "podcast", y = "exam", m = "mood", a = "u1", b = "u2") |>
   ggdag(text = FALSE, use_labels = "label")
 ```
 
-Now, we're in a challenging position: we need to control for `mood` because it's a confounder, but controlling for `mood` opens up the pathway from `u1` to `u2`. Because we don't have either variable measured, we can't then close the path opened from conditioning on `mood`. What should we do? It turns out that, when in doubt, controlling for `mood` is the better of the two options: confounding bias tends to be worse than collider bias, and M-shaped structures of colliders are sensitive to slight deviations (e.g., if this is not the exact structure, often the bias isn't as bad). 
+Now, we're in a challenging position: we need to control for `mood` because it's a confounder, but controlling for `mood` opens up the pathway from `u1` to `u2`.
+Because we don't have either variable measured, we can't then close the path opened from conditioning on `mood`.
+What should we do?
+It turns out that, when in doubt, controlling for `mood` is the better of the two options: confounding bias tends to be worse than collider bias, and M-shaped structures of colliders are sensitive to slight deviations (e.g., if this is not the exact structure, often the bias isn't as bad).
 
-Another common form of selection bias is from *loss to follow-up*: people drop out of a study in a way that is related to the exposure and outcome. We'll come back to this topic in @sec-TODO.
+Another common form of selection bias is from *loss to follow-up*: people drop out of a study in a way that is related to the exposure and outcome.
+We'll come back to this topic in [Chapter -@sec-longitudinal].
 
 ### Causes of the exposure, causes of the outcome
 
-Let's consider one other type of causal structure that's important: causes of the exposure and not the outcome, and their opposites, causes of the outcome and not the exposure. Let's add a variable, `grader_mood`, to the original DAG.
+Let's consider one other type of causal structure that's important: causes of the exposure and not the outcome, and their opposites, causes of the outcome and not the exposure.
+Let's add a variable, `grader_mood`, to the original DAG.
 
 ```{r}
 #| label: fig-podcast_dag5
@@ -1024,21 +1071,47 @@ podcast_dag5 <- dagify(
 ggdag(podcast_dag5, use_labels = "label", text = FALSE)
 ```
 
-There are now two variables that aren't related to *both* the exposure and the outcome: `humor`, which causes `podcast` but not `exam`, and `grader_mood`, which causes `exam` but not `podcast`. Let's start with `humor`.
+There are now two variables that aren't related to *both* the exposure and the outcome: `humor`, which causes `podcast` but not `exam`, and `grader_mood`, which causes `exam` but not `podcast`.
+Let's start with `humor`.
 
-Variables that cause the exposure but not the outcome are also called *instrumental variables* (IVs). IVs are an unusual circumstance where, under certain conditions, controlling for them can make other types of bias worse. What's unique about this is that IVs can *also* be used to conduct an entirely different approach to estimating an unbiased effect of the exposure on the outcome. IVs are commonly used this way in econometrics and are increasingly popular in other areas. In short, IV analysis allows us to estimate the causal effect using a different set of assumptions than the approaches we've talked about thus far. Sometimes, a problem intractable using propensity score methods can be addressed using IVs and vice versa. We'll talk more about IVs in @sec-TODO.
+Variables that cause the exposure but not the outcome are also called *instrumental variables* (IVs).
+IVs are an unusual circumstance where, under certain conditions, controlling for them can make other types of bias worse.
+What's unique about this is that IVs can *also* be used to conduct an entirely different approach to estimating an unbiased effect of the exposure on the outcome.
+IVs are commonly used this way in econometrics and are increasingly popular in other areas.
+In short, IV analysis allows us to estimate the causal effect using a different set of assumptions than the approaches we've talked about thus far.
+Sometimes, a problem intractable using propensity score methods can be addressed using IVs and vice versa.
+We'll talk more about IVs in @sec-iv-friends.
 
-So, if you're *not* using IV methods, should you include an IV in a model meant to address confounding? If you're unsure if the variable is an IV or not, you should probably add it to your model: it's more likely to be a confounder than an IV, and, it turns out, the bias from adding an IV is usually small in practice. So, like adjusting for a potential M-structure variable, the risk of bias is worse from confounding.
+So, if you're *not* using IV methods, should you include an IV in a model meant to address confounding?
+If you're unsure if the variable is an IV or not, you should probably add it to your model: it's more likely to be a confounder than an IV, and, it turns out, the bias from adding an IV is usually small in practice.
+So, like adjusting for a potential M-structure variable, the risk of bias is worse from confounding.
 
-Now, let's talk about the opposite of an IV: a cause of the outcome that is not the cause of the exposure. These variables are sometimes called *competing exposures* (because they also cause the outcome) or *precision variables* (because, as we'll see, they increase the precision of causal estimates). We'll call them precision variables because we're concerned about the relationship to the research question at hand, not to another research question where they are exposures.
+Now, let's talk about the opposite of an IV: a cause of the outcome that is not the cause of the exposure.
+These variables are sometimes called *competing exposures* (because they also cause the outcome) or *precision variables* (because, as we'll see, they increase the precision of causal estimates).
+We'll call them precision variables because we're concerned about the relationship to the research question at hand, not to another research question where they are exposures.
 
-Like IVs, precision variables do not occur along paths from the exposure to the outcome. Thus, including them is not necessary. Unlike IVs, including precision variables is beneficial. Including other causes of the outcomes helps a statistical model capture some of its variation. This doesn't impact the point estimate of the effect, but it does reduce the variance, resulting in smaller standard errors and narrower confidence intervals. Thus, we recommend including them when possible.
+Like IVs, precision variables do not occur along paths from the exposure to the outcome.
+Thus, including them is not necessary.
+Unlike IVs, including precision variables is beneficial.
+Including other causes of the outcomes helps a statistical model capture some of its variation.
+This doesn't impact the point estimate of the effect, but it does reduce the variance, resulting in smaller standard errors and narrower confidence intervals.
+Thus, we recommend including them when possible.
 
-So, even though we don't need to control for `grader_mood`, if we have it in the data set, we should. Similarly, `humor` is not a good addition to the model unless we think it really might be a confounder; if it is a valid instrument, we might want to consider using IV methods to estimate the effect instead.
+So, even though we don't need to control for `grader_mood`, if we have it in the data set, we should.
+Similarly, `humor` is not a good addition to the model unless we think it really might be a confounder; if it is a valid instrument, we might want to consider using IV methods to estimate the effect instead.
 
 ### Measurement Error and Missingness
 
-DAGs can also help us understand the bias arising from mismeasurements in the data, including the worst mismeasurement: not measuring it at all. We'll cover these topics in [Chapter -@sec-TODO-missingness], but the basic idea is that by separating the actual value from the observed value, we can better understand how such biases may behave. Here's a basic example of a bias called *recall bias*. Recall bias is when the outcome influences a participant's memory of exposure, so it's a particular problem in retrospective studies where the earlier exposure is not recorded until after the outcome happens. An example of when this can occur is a case-control study of cancer. Someone *with* cancer may be more motivated to ruminate on their past exposures than someone *without* cancer. So, their memory about a given exposure may be more refined than someone without. By conditioning on the observed version of the exposure, we open up many collider paths. Unfortunately, there is no way to close them all. If this is the case, we must investigate how severe the bias would be in practice.
+DAGs can also help us understand the bias arising from mismeasurements in the data, including the worst mismeasurement: not measuring it at all.
+We'll cover these topics in [Chapter -@sec-missingness], but the basic idea is that by separating the actual value from the observed value, we can better understand how such biases may behave.
+Here's a basic example of a bias called *recall bias*.
+Recall bias is when the outcome influences a participant's memory of exposure, so it's a particular problem in retrospective studies where the earlier exposure is not recorded until after the outcome happens.
+An example of when this can occur is a case-control study of cancer.
+Someone *with* cancer may be more motivated to ruminate on their past exposures than someone *without* cancer.
+So, their memory about a given exposure may be more refined than someone without.
+By conditioning on the observed version of the exposure, we open up many collider paths.
+Unfortunately, there is no way to close them all.
+If this is the case, we must investigate how severe the bias would be in practice.
 
 ```{r}
 #| label: fig-error_dag
@@ -1069,12 +1142,22 @@ error_dag |>
 
 ## Recommendations in building DAGs
 
-In principle, using DAGs is easy: specify the causal relationships you think exist and then query the DAG for information like valid adjustment sets. In practice, assembling DAGs takes considerable time and thought. Next to defining the research question itself, it's one of the most challenging steps in making causal inferences. Very little guidance exists on best practices in assembling DAGs. @Tennant2021 collected data on DAGs in applied health research to better understand how researchers used them. @tbl-dag-properties shows some information they collected: the median number of nodes and arcs in a DAG, their ratio, the saturation percent of the DAG, and how many were fully saturated. Saturating DAGs means adding all possible arrows going forward in time, e.g., in a fully saturated DAG, any given variable at time point 1 has arrows going to all variables in future time points, and so on. Most DAGs were only about half saturated, and very few were fully saturated. 
+In principle, using DAGs is easy: specify the causal relationships you think exist and then query the DAG for information like valid adjustment sets.
+In practice, assembling DAGs takes considerable time and thought.
+Next to defining the research question itself, it's one of the most challenging steps in making causal inferences.
+Very little guidance exists on best practices in assembling DAGs.
+@Tennant2021 collected data on DAGs in applied health research to better understand how researchers used them.
+@tbl-dag-properties shows some information they collected: the median number of nodes and arcs in a DAG, their ratio, the saturation percent of the DAG, and how many were fully saturated.
+Saturating DAGs means adding all possible arrows going forward in time, e.g., in a fully saturated DAG, any given variable at time point 1 has arrows going to all variables in future time points, and so on.
+Most DAGs were only about half saturated, and very few were fully saturated.
 
-Only about half of the papers using DAGs reported the adjustment set used. In other words, researchers presented their assumptions about the research question but not the implications about how they should handle the modeling stage or if they did use a valid adjustment set. Similarly, the majority of studies did not report the estimand of interest.
+Only about half of the papers using DAGs reported the adjustment set used.
+In other words, researchers presented their assumptions about the research question but not the implications about how they should handle the modeling stage or if they did use a valid adjustment set.
+Similarly, the majority of studies did not report the estimand of interest.
 
-::: {.callout-note} 
-The estimand is the target of interest in terms of what we're trying to estimate, as discussed briefly in [Chapter -@sec-whole-game]. We'll discuss estimands in detail in [Chapter -@sec-estimands].
+::: callout-note
+The estimand is the target of interest in terms of what we're trying to estimate, as discussed briefly in [Chapter -@sec-whole-game].
+We'll discuss estimands in detail in [Chapter -@sec-estimands].
 :::
 
 ```{r}
@@ -1128,27 +1211,52 @@ In this section, we'll offer some advice from @Tennant2021 and our own experienc
 
 ### Iterate early and often
 
-One of the best things you can do for the quality of your results is to make the DAG before you conduct the study, ideally before you even collect the data. If you're already working with your data, at minimum, build your DAG before doing data analysis. This advice is similar in spirit to pre-registered analysis plans: declaring your assumptions ahead of time can help clarify what you need to do, reduce the risk of overfitting (e.g., determining confounders incorrectly from the data), and give you time to get feedback on your DAG.
+One of the best things you can do for the quality of your results is to make the DAG before you conduct the study, ideally before you even collect the data.
+If you're already working with your data, at minimum, build your DAG before doing data analysis.
+This advice is similar in spirit to pre-registered analysis plans: declaring your assumptions ahead of time can help clarify what you need to do, reduce the risk of overfitting (e.g., determining confounders incorrectly from the data), and give you time to get feedback on your DAG.
 
-This last benefit is significant: you should ideally democratize your DAG. Share it early and often with others who are experts on the data, domain, and models. It's natural to create a DAG, present it to your colleagues, and realize you have missed something important. Sometimes, you will only agree on some details of the structure. That's a good thing: you know now where there is uncertainty in your DAG. You can then examine the results from multiple plausible DAGs or address the uncertainty with sensitivity analyses.
+This last benefit is significant: you should ideally democratize your DAG.
+Share it early and often with others who are experts on the data, domain, and models.
+It's natural to create a DAG, present it to your colleagues, and realize you have missed something important.
+Sometimes, you will only agree on some details of the structure.
+That's a good thing: you know now where there is uncertainty in your DAG.
+You can then examine the results from multiple plausible DAGs or address the uncertainty with sensitivity analyses.
 
-If you have more than one candidate DAG, check their adjustment sets. If two DAGs have overlapping adjustment sets, focus on those sets; then, you can move forward in a way that satisfies the plausible assumptions you have.  
+If you have more than one candidate DAG, check their adjustment sets.
+If two DAGs have overlapping adjustment sets, focus on those sets; then, you can move forward in a way that satisfies the plausible assumptions you have.
 
 ### Consider your question
 
-As we saw in @fig-podcast_dag3, some questions can be challenging to answer with certain data, while others are more approachable. You should consider precisely what it is you want to estimate. Defining your target estimate is an important topic and the subject of [Chapter -@sec-estimands].
+As we saw in @fig-podcast_dag3, some questions can be challenging to answer with certain data, while others are more approachable.
+You should consider precisely what it is you want to estimate.
+Defining your target estimate is an important topic and the subject of [Chapter -@sec-estimands].
 
-Another important detail about how your DAG relates to your question is the population and time. Many causal structures are not static over time and space. Consider lung cancer: the distribution of causes of lung cancer was considerably different before the spread of smoking. In medieval Japan, before the spread of tobacco from the Americas centuries later, the causal structure for lung cancer would have been practically different from what it is in Japan today, both in terms of tobacco use and other factors (age of the population, etc.).
+Another important detail about how your DAG relates to your question is the population and time.
+Many causal structures are not static over time and space.
+Consider lung cancer: the distribution of causes of lung cancer was considerably different before the spread of smoking.
+In medieval Japan, before the spread of tobacco from the Americas centuries later, the causal structure for lung cancer would have been practically different from what it is in Japan today, both in terms of tobacco use and other factors (age of the population, etc.).
 
-The same is true for confounders. Even if something *can* cause the exposure and outcome, if the prevalence of that thing is zero in the population you're analyzing, it's irrelevant to the causal question. It may also be that, in some populations, it doesn't affect one of the two. The reverse is also true: something might be unique to the target population. The use of tobacco in North America several centuries ago was unique among the world population, even though ceremonial tobacco use was quite different from modern recreational use. Many changes won't happen as dramatically as across centuries, but sometimes, they do, e.g., if regulation in one country effectively eliminates the population's exposure to something.
+The same is true for confounders.
+Even if something *can* cause the exposure and outcome, if the prevalence of that thing is zero in the population you're analyzing, it's irrelevant to the causal question.
+It may also be that, in some populations, it doesn't affect one of the two.
+The reverse is also true: something might be unique to the target population.
+The use of tobacco in North America several centuries ago was unique among the world population, even though ceremonial tobacco use was quite different from modern recreational use.
+Many changes won't happen as dramatically as across centuries, but sometimes, they do, e.g., if regulation in one country effectively eliminates the population's exposure to something.
 
 ### Order nodes by time {#sec-time-ordered}
 
-As discussed earlier, we recommend ordering your variables by time, either left-to-right or up-to-down. There are two reasons for this. First, time ordering is an integral part of your assumptions. After all, something happening before another thing is a requirement for it to be a cause. Thinking this through carefully will clarify your DAG and the variables you need to address. 
+As discussed earlier, we recommend ordering your variables by time, either left-to-right or up-to-down.
+There are two reasons for this.
+First, time ordering is an integral part of your assumptions.
+After all, something happening before another thing is a requirement for it to be a cause.
+Thinking this through carefully will clarify your DAG and the variables you need to address.
 
-Second, after a certain level of complexity, it's easier to read a DAG when arranged by time because you have to think less about that dimension; it's inherent to the layout. The time ordering algorithm in ggdag automates much of this for you, although, as we saw earlier, it's sometimes helpful to give it more information about the order.
+Second, after a certain level of complexity, it's easier to read a DAG when arranged by time because you have to think less about that dimension; it's inherent to the layout.
+The time ordering algorithm in ggdag automates much of this for you, although, as we saw earlier, it's sometimes helpful to give it more information about the order.
 
-A related topic is feedback loops. Often, we think about two things that mutually cause each other as happening in a circle, like global warming and A/C use (A/C use increases global warming, which makes it hotter, which increases A/C use, and so on). It's tempting to visualize that relationship like this:
+A related topic is feedback loops.
+Often, we think about two things that mutually cause each other as happening in a circle, like global warming and A/C use (A/C use increases global warming, which makes it hotter, which increases A/C use, and so on).
+It's tempting to visualize that relationship like this:
 
 ```{r}
 #| label: fig-feedback-loop
@@ -1163,7 +1271,10 @@ dagify(
   ggdag(layout = "circle", edge_type = "arc", text = FALSE, use_labels = "label")
 ```
 
-From a DAG perspective, this is a problem because of the *A* part of *DAG*: it's cyclic! Importantly, though, it's also not correct from a causal perspective. Feedback loops are a shorthand for what really happens, which is that the two variables mutually affect each other *over time*. Causality only goes forward in time, so it doesn't make sense to go back and forth like in @fig-feedback-loop.
+From a DAG perspective, this is a problem because of the *A* part of *DAG*: it's cyclic!
+Importantly, though, it's also not correct from a causal perspective.
+Feedback loops are a shorthand for what really happens, which is that the two variables mutually affect each other *over time*.
+Causality only goes forward in time, so it doesn't make sense to go back and forth like in @fig-feedback-loop.
 
 The real DAG looks something like this:
 
@@ -1193,52 +1304,94 @@ dagify(
 ) |> 
   ggdag(text = FALSE, use_labels = "label")
 ```
-The two variables, rather than being in a feed*back* loop, are actually in a feed*forward* loop: they co-evolve over time. Here, we only show four discrete moments in time (the decades from 1990 to 2020), but of course, we could get much finer depending on the question and data. 
 
-As with any DAG, the proper analysis approach depends on the question. The effect of A/C use in 2000 on the global temperature in 2020 produces a different adjustment set than the global temperature in 2000 on A/C use in 2020. Similarly, whether we also model this change over time or just those two time points depends on the question. Often, these feedforward relationships require you to address *time-varying* confounding, which we'll discuss in @sec-TODO.
+The two variables, rather than being in a feed*back* loop, are actually in a feed*forward* loop: they co-evolve over time.
+Here, we only show four discrete moments in time (the decades from 1990 to 2020), but of course, we could get much finer depending on the question and data.
+
+As with any DAG, the proper analysis approach depends on the question.
+The effect of A/C use in 2000 on the global temperature in 2020 produces a different adjustment set than the global temperature in 2000 on A/C use in 2020.
+Similarly, whether we also model this change over time or just those two time points depends on the question.
+Often, these feedforward relationships require you to address *time-varying* confounding, which we'll discuss in [Chapter -@sec-longitudinal].
 
 ### Consider the whole data collection process
 
-As @fig-podcast_dag3 showed us, it's essential to consider the *way* we collected data as much as the causal structure of the question. Considering the whole data collection process is particularly true if you're working with "found" data---a data set not intentionally collected to answer the research question. We are always inherently conditioning on the data we have vs. the data we don't have. If other variables influenced the data collection process in the causal structure, you need to consider the impact. Do you need to control for additional variables? Do you need to change the effect you are trying to estimate? Can you answer the question at all?
+As @fig-podcast_dag3 showed us, it's essential to consider the *way* we collected data as much as the causal structure of the question.
+Considering the whole data collection process is particularly true if you're working with "found" data---a data set not intentionally collected to answer the research question.
+We are always inherently conditioning on the data we have vs. the data we don't have.
+If other variables influenced the data collection process in the causal structure, you need to consider the impact.
+Do you need to control for additional variables?
+Do you need to change the effect you are trying to estimate?
+Can you answer the question at all?
 
 <!-- TODO: revisit this after I've thought it through a bit more -->
+
 <!-- Let's consider an example: workers at a factory are potentially exposed to something (e.g., a carcinogenic) that may increase their risk of dying. Some workers are exposed, and some are not. The problem is that exposure *prior* to the study resulted in only those healthy enough to work being present at the start of the study. If there is another factor, say some important aspect of the worker's health, that also contributes to whether or not they are at work, we have selection bias. We are inherently stratifying on whether or not someone is at work. -->
 
 <!-- ```{r} -->
+
 <!-- dagify( -->
+
 <!--     death ~ health, -->
+
 <!--     exposed ~ exposed_prior + at_work, -->
+
 <!--     at_work ~ exposed_prior + health, -->
+
 <!--     exposure = "exposed", -->
+
 <!--     outcome = "death", -->
+
 <!--     latent = c("health", "exposed_prior"), -->
+
 <!--     coords = time_ordered_coords(list( -->
+
 <!--         c("health", "exposed_prior"), -->
+
 <!--         "at_work", -->
+
 <!-- "exposed", -->
+
 <!--         "death" -->
+
 <!--     )), -->
+
 <!--     labels = c( -->
+
 <!--         exposed_prior = "Exposed\n(prior)", -->
+
 <!--         exposed = "Exposed\n(start)", -->
+
 <!--         at_work = "Working", -->
+
 <!--         health = "Health\nStatus", -->
+
 <!--         death = "Death" -->
+
 <!--     ) -->
+
 <!-- ) |>  -->
+
 <!--   ggdag(text = FALSE, use_labels = "label") -->
+
 <!-- ``` -->
+
 <!-- `at_work` is a collider: both health status and prior exposure have arrows going into it. Controlling for it induces a ... -->
 
 <!-- -   race/shooting (show the `effect` argument of `adjustmentSets` to get direct effect) -->
+
 <!-- -   healthy worker bias -->
 
-::: {.callout-tip}
-## What about case-control studies? 
+::: callout-tip
+## What about case-control studies?
 
-A standard study design in epidemiology is the case-control study. Case-control studies are beneficial when the outcome under study is rare or takes a very long time to happen (like many types of cancer). Participants are selected into the study based on their outcome: once a person has an event, they are entered as a case and matched with a control who hasn't had the event. Often, they are matched on other factors as well.
+A standard study design in epidemiology is the case-control study.
+Case-control studies are beneficial when the outcome under study is rare or takes a very long time to happen (like many types of cancer).
+Participants are selected into the study based on their outcome: once a person has an event, they are entered as a case and matched with a control who hasn't had the event.
+Often, they are matched on other factors as well.
 
-Matched case-control studies are selection biased by design. In @fig-case-control, when we condition on selection into the study, we lose the ability to close all backdoor paths, even if we control for `confounder`. From the DAG, it would appear that the entire design is invalid!
+Matched case-control studies are selection biased by design.
+In @fig-case-control, when we condition on selection into the study, we lose the ability to close all backdoor paths, even if we control for `confounder`.
+From the DAG, it would appear that the entire design is invalid!
 
 ```{r}
 #| label: fig-case-control
@@ -1256,12 +1409,18 @@ dagify(
   ggdag(edge_type = "arc", text_size = 2.2)
 ```
 
-Luckily, this isn't wholly true. Case-control studies are limited in the type of causal effects they can estimate (causal odds ratios, which under some circumstances approximate causal risk ratios). With careful study design and sampling, the math works out such that these estimates are still valid. Exactly how and why case-control studies work is beyond the scope of this book, but they are a remarkably clever design. 
+Luckily, this isn't wholly true.
+Case-control studies are limited in the type of causal effects they can estimate (causal odds ratios, which under some circumstances approximate causal risk ratios).
+With careful study design and sampling, the math works out such that these estimates are still valid.
+Exactly how and why case-control studies work is beyond the scope of this book, but they are a remarkably clever design.
 :::
 
 ### Include variables you don't have
 
-It's critical that you include *all* variables important to the causal structure, not just the variables you have measured in your data. ggdag can mark variables as unmeasured ("latent"); it will then return only usable adjustment sets, e.g., those without the unmeasured variables. Of course, the best thing to do is to use DAGs to help you understand what to measure in the first place, but there are many reasons why your data might be different. Even data intentionally collected for the research question might not have a variable discovered to be a confounder after data collection.
+It's critical that you include *all* variables important to the causal structure, not just the variables you have measured in your data.
+ggdag can mark variables as unmeasured ("latent"); it will then return only usable adjustment sets, e.g., those without the unmeasured variables.
+Of course, the best thing to do is to use DAGs to help you understand what to measure in the first place, but there are many reasons why your data might be different.
+Even data intentionally collected for the research question might not have a variable discovered to be a confounder after data collection.
 
 For instance, if we have a DAG where `exposure` and `outcome` have a confounding pathway consisting of `confounder1` and `confounder2`, we can control for either to successfully debias the estimate:
 
@@ -1292,9 +1451,17 @@ dagify(
 
 But if both are missing, there are no valid adjustment sets.
 
-When you don't have a variable measured, you still have a few options. As mentioned above, you may be able to identify alternate adjustment sets. If the missing variable is required to close all backdoor paths completely, you can and should conduct a sensitivity analysis to understand the impact of not having it. This is the subject of [Chapter -@sec-sensitivity]. 
+When you don't have a variable measured, you still have a few options.
+As mentioned above, you may be able to identify alternate adjustment sets.
+If the missing variable is required to close all backdoor paths completely, you can and should conduct a sensitivity analysis to understand the impact of not having it.
+This is the subject of [Chapter -@sec-sensitivity].
 
-Under some lucky circumstances, you can also use a *proxy* confounder. A proxy confounder is a variable closely related to the confounder such that controlling for it controls for some of the effects of the missing variable. Consider an expansion of the fundamental confounding relationship where `q` has a cause, `p`, as in @fig-proxy-confounder. Technically, if we don't have `q`, we can't close the backdoor path, and our effect will be biased. Practically, though, if `p` is highly correlated with `q`, it can serve as a method to reduce the confounding from `q`. You can think of `p` as a mismeasured version of `q`; it will seldom wholly control for the bias via `q`, but it can help minimize it.
+Under some lucky circumstances, you can also use a *proxy* confounder.
+A proxy confounder is a variable closely related to the confounder such that controlling for it controls for some of the effects of the missing variable.
+Consider an expansion of the fundamental confounding relationship where `q` has a cause, `p`, as in @fig-proxy-confounder.
+Technically, if we don't have `q`, we can't close the backdoor path, and our effect will be biased.
+Practically, though, if `p` is highly correlated with `q`, it can serve as a method to reduce the confounding from `q`.
+You can think of `p` as a mismeasured version of `q`; it will seldom wholly control for the bias via `q`, but it can help minimize it.
 
 ```{r}
 #| label: fig-proxy-confounder
@@ -1312,15 +1479,30 @@ dagify(
 
 ### Saturate your DAG, then prune
 
-In discussing @tbl-dag-properties, we mentioned *saturated* DAGs. These are DAGs where all possible arrows are included based on the time ordering, e.g., every variable causes variables that come after it in time.
+In discussing @tbl-dag-properties, we mentioned *saturated* DAGs.
+These are DAGs where all possible arrows are included based on the time ordering, e.g., every variable causes variables that come after it in time.
 
-*Not* including an arrow is a bigger assumption than including one. In other words, your default should be to have an arrow from one variable to a future variable. This default is counterintuitive to many people. How can it be that we need to be so careful about assessing causal effects yet be so liberal in applying causal assumptions in the DAG? The answer to this lies in the strength and prevalence of the cause. Technically, an arrow present means that *for at least a single observation*, the prior node causes the following node. The arrow similarly says nothing about the strength of the relationship. So, a minuscule causal effect on a single individual justifies the presence of an arrow. In practice, such a case is probably not relevant. There is *effectively* no arrow. 
+*Not* including an arrow is a bigger assumption than including one.
+In other words, your default should be to have an arrow from one variable to a future variable.
+This default is counterintuitive to many people.
+How can it be that we need to be so careful about assessing causal effects yet be so liberal in applying causal assumptions in the DAG?
+The answer to this lies in the strength and prevalence of the cause.
+Technically, an arrow present means that *for at least a single observation*, the prior node causes the following node.
+The arrow similarly says nothing about the strength of the relationship.
+So, a minuscule causal effect on a single individual justifies the presence of an arrow.
+In practice, such a case is probably not relevant.
+There is *effectively* no arrow.
 
-The more significant point, though, is that you should feel confident to add an arrow. The bar for justification is much lower than you think. Instead, it's helpful to 1) determine your time ordering, 2) saturate the DAG, and 3) prune out implausible arrows.
+The more significant point, though, is that you should feel confident to add an arrow.
+The bar for justification is much lower than you think.
+Instead, it's helpful to 1) determine your time ordering, 2) saturate the DAG, and 3) prune out implausible arrows.
 
-Let's experiment by working through a saturated version of the podcast-exam DAG. 
+Let's experiment by working through a saturated version of the podcast-exam DAG.
 
-First, the time-ordering. Presumably, the student's sense of humor far predates the day of the exam. Mood in the morning, too, predates listening to the podcast or exam score, as does preparation. The saturated DAG given this ordering is:
+First, the time-ordering.
+Presumably, the student's sense of humor far predates the day of the exam.
+Mood in the morning, too, predates listening to the podcast or exam score, as does preparation.
+The saturated DAG given this ordering is:
 
 ```{r}
 #| label: fig-podcast_dag_sat
@@ -1362,7 +1544,15 @@ podcast_dag_sat |>
   geom_dag_edges_arc(curvature = curvatures) +
   geom_dag_label_repel()
 ```
-There are a few new arrows here. Humor now causes the other two confounders, as well as exam score. Some of them make sense. Sense of humor probably affects mood for some people. What about preparedness? This relationship seems a little less plausible. Similarly, we know that a sense of humor does not affect exam scores in this case because the grading is blinded. Let's prune those two.
+
+There are a few new arrows here.
+Humor now causes the other two confounders, as well as exam score.
+Some of them make sense.
+Sense of humor probably affects mood for some people.
+What about preparedness?
+This relationship seems a little less plausible.
+Similarly, we know that a sense of humor does not affect exam scores in this case because the grading is blinded.
+Let's prune those two.
 
 ```{r}
 #| label: fig-podcast_dag_pruned
@@ -1396,31 +1586,63 @@ podcast_dag_pruned <- dagify(
 ggdag(podcast_dag_pruned, text = FALSE, use_labels = "label")
 ```
 
-This DAG seems more reasonable. So, was our original DAG wrong? That depends on several factors. Notably, both DAGs produce the same adjustment set: controlling for `mood` and `prepared` will give us an unbiased effect if either DAG is correct. Even if the new DAG were to produce a different adjustment set, whether the result is meaningfully different depends on the strength of the confounding. 
+This DAG seems more reasonable.
+So, was our original DAG wrong?
+That depends on several factors.
+Notably, both DAGs produce the same adjustment set: controlling for `mood` and `prepared` will give us an unbiased effect if either DAG is correct.
+Even if the new DAG were to produce a different adjustment set, whether the result is meaningfully different depends on the strength of the confounding.
 
 ### Include instruments and precision variables
 
-Technically, you do not need to include instrumental and precision variables in your DAG. The adjustment sets will be the same with and without them. However, adding them is helpful for two reasons. Firstly, they demonstrate your assumptions about their relationships and the variables under study. As discussed above, *not* including an arrow is a more significant assumption than including one, so it's valuable information about how you think the causal structure operates. Secondly, it impacts your modeling decision. You should always include precision variables in your model to reduce variability in your estimate so it helps you identify those. Instruments are also helpful to see because they may guide alternative or complementary modeling strategies, as we'll discuss in @sec-TODO-triangulation.  
+Technically, you do not need to include instrumental and precision variables in your DAG.
+The adjustment sets will be the same with and without them.
+However, adding them is helpful for two reasons.
+Firstly, they demonstrate your assumptions about their relationships and the variables under study.
+As discussed above, *not* including an arrow is a more significant assumption than including one, so it's valuable information about how you think the causal structure operates.
+Secondly, it impacts your modeling decision.
+You should always include precision variables in your model to reduce variability in your estimate so it helps you identify those.
+Instruments are also helpful to see because they may guide alternative or complementary modeling strategies, as we'll discuss in @sec-evidence.
 
 ### Focus on the causal structure, then consider measurement bias
 
-As we saw above, missingness and measurement error can be a source of bias. As we'll see in [Chapter -@sec-TODO-missingness], we have several strategies to approach such a situation. Yet, almost everything we measure is inaccurate to some degree. The true DAG for the data at hand inherently conditions on the measured version of variables. In that sense, your data are always subtly-wrong, a sort of unreliable narrator. When should we include this information in the DAG? We recommend first focusing on the causal structure of the DAG as if you had perfectly measured each variable. Then, consider how mismeasurement and missingness might affect the realized data, particularly related to the exposure, outcome, and critical confounders. You may prefer to present this as an alternative DAG to consider strategies for addressing the bias arising from those sources, e.g., imputation or sensitivity analyses. After all, the DAG in @ fig-error_dag makes you think the question is unanswerable because we have no method to close all backdoor paths. As with all open paths, that depends on the severity of the bias and our ability to reckon with it.
+As we saw above, missingness and measurement error can be a source of bias.
+As we'll see in [Chapter -@sec-missingness], we have several strategies to approach such a situation.
+Yet, almost everything we measure is inaccurate to some degree.
+The true DAG for the data at hand inherently conditions on the measured version of variables.
+In that sense, your data are always subtly-wrong, a sort of unreliable narrator.
+When should we include this information in the DAG?
+We recommend first focusing on the causal structure of the DAG as if you had perfectly measured each variable.
+Then, consider how mismeasurement and missingness might affect the realized data, particularly related to the exposure, outcome, and critical confounders.
+You may prefer to present this as an alternative DAG to consider strategies for addressing the bias arising from those sources, e.g., imputation or sensitivity analyses.
+After all, the DAG in \@ fig-error_dag makes you think the question is unanswerable because we have no method to close all backdoor paths.
+As with all open paths, that depends on the severity of the bias and our ability to reckon with it.
 
 <!-- TODO: I don't quite remember what I wanted to cover here, so revisit later to add or delete -->
+
 <!-- ### Be accurate, but focus on clarity -->
 
 ### Pick adjustment sets most likely to be successful
 
-One area where measurement error is an important consideration is when picking an adjustment set. In theory, if a DAG is correct, any adjustment set will work to create an unbiased result. In practice, variables have different levels of quality. Pick an adjustment set most likely to succeed because it contains accurate variables. Similarly, non-minimal adjustment sets are helpful to consider because, together, several variables with measurement error along a backdoor path may be enough to minimize the practical bias resulting from that path.
+One area where measurement error is an important consideration is when picking an adjustment set.
+In theory, if a DAG is correct, any adjustment set will work to create an unbiased result.
+In practice, variables have different levels of quality.
+Pick an adjustment set most likely to succeed because it contains accurate variables.
+Similarly, non-minimal adjustment sets are helpful to consider because, together, several variables with measurement error along a backdoor path may be enough to minimize the practical bias resulting from that path.
 
-What if you don't have certain critical variables measured and thus do not have a valid adjustment set? In that case, you should pick the adjustment set with the best chance of minimizing the bias from other backdoor paths. All is not lost if you don't have every confounder measured: get the highest quality estimate you can, then conduct a sensitivity analysis about the unmeasured variables to understand the impact.
+What if you don't have certain critical variables measured and thus do not have a valid adjustment set?
+In that case, you should pick the adjustment set with the best chance of minimizing the bias from other backdoor paths.
+All is not lost if you don't have every confounder measured: get the highest quality estimate you can, then conduct a sensitivity analysis about the unmeasured variables to understand the impact.
 
 ### Use robustness checks
 
-Finally, we recommend checking your DAG for robustness. You can never verify the correctness of your DAG under most conditions, but you can use the implications in your DAG to support it. Three types of robustness checks can be helpful depending on the circumstances. 
+Finally, we recommend checking your DAG for robustness.
+You can never verify the correctness of your DAG under most conditions, but you can use the implications in your DAG to support it.
+Three types of robustness checks can be helpful depending on the circumstances.
 
-1. **Negative controls**. These come in two flavors: negative exposure controls and negative outcome controls. The idea is to find something associated with one but not the other, e.g., the outcome but not the exposure, so there should be no effect. Since there should be no effect, you now have a measurement for how well you control for *other* effects (e.g., the difference from null). Ideally, the confounders for negative controls are similar to the research question.
-2. **DAG-data consistency**. Negative controls are an implication of your DAG. An extension of this idea is that there are *many* such implications. Because blocking a path removes statistical dependencies from that path, you can check those assumptions in several places in your DAG.
-3. **Alternate adjustment sets**. Adjustment sets should give roughly the same answer because, outside of random and measurement errors, they are all sets that block backdoor paths. If more than one adjustment set seems reasonable, you can use that as a sensitivity analysis by checking multiple models.
+1.  **Negative controls**. These come in two flavors: negative exposure controls and negative outcome controls. The idea is to find something associated with one but not the other, e.g., the outcome but not the exposure, so there should be no effect. Since there should be no effect, you now have a measurement for how well you control for *other* effects (e.g., the difference from null). Ideally, the confounders for negative controls are similar to the research question.
+2.  **DAG-data consistency**. Negative controls are an implication of your DAG. An extension of this idea is that there are *many* such implications. Because blocking a path removes statistical dependencies from that path, you can check those assumptions in several places in your DAG.
+3.  **Alternate adjustment sets**. Adjustment sets should give roughly the same answer because, outside of random and measurement errors, they are all sets that block backdoor paths. If more than one adjustment set seems reasonable, you can use that as a sensitivity analysis by checking multiple models.
 
-We'll discuss these in detail in [Chapter -@sec-sensitivity]. The caveat here is that these should be complementary to your initial DAG, not a way of *replacing* it. In fact, if you use more than one adjustment set during your analysis, you should report the results from all of them to avoid overfitting your results to your data.
+We'll discuss these in detail in [Chapter -@sec-sensitivity].
+The caveat here is that these should be complementary to your initial DAG, not a way of *replacing* it.
+In fact, if you use more than one adjustment set during your analysis, you should report the results from all of them to avoid overfitting your results to your data.

@@ -1,13 +1,12 @@
-# Causal mediation analysis {#sec-mediation}
+# Causal inference across time {#sec-longitudinal}
 
 {{< include 00-setup.qmd >}}
 
-## Estimating direct effects
+## Loss to follow-up
 
 ```{r}
 rnorm(5)
 ```
 
-## Estimating indirect effects
+## Time-varying confounding and exposures
 
-## Allowing for interactions

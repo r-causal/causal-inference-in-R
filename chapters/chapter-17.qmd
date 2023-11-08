@@ -1,13 +1,13 @@
-# Causal survival analysis
+# Missingness {#sec-missingness}
 
 {{< include 00-setup.qmd >}}
 
-## Preparing data for survival analysis
+## Missingness as structural bias
 
 ```{r}
 rnorm(5)
 ```
 
-## Pooled logistic regression
+## Multiple Imputation
 
-## Confidence intervals for causal survival models
+## Combining MICE and IPW

@@ -1,11 +1,13 @@
-# Sensitivity analysis  {#sec-sensitivity}
-
-## Quantitative bias analyses
+# Causal survival analysis {#sec-survival}
 
 {{< include 00-setup.qmd >}}
+
+## Preparing data for survival analysis
 
 ```{r}
 rnorm(5)
 ```
 
-## Tipping point analyses
+## Pooled logistic regression
+
+## Confidence intervals for causal survival models

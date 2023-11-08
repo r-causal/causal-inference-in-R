@@ -1,13 +1,7 @@
-# G-Computation {#sec-g-comp}
+# Interaction {#sec-interaction}
 
 {{< include 00-setup.qmd >}}
 
-## The Parametric G-Formula
+## Functional form, hetereogenous effects, and joint causes
 
-```{r}
-rnorm(5)
-```
-
-## Calculating estimates with G-Computation
-
-## The Natural Course
+## Fitting interaction terms in causal models

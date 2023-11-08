@@ -1,7 +1,7 @@
 {
-  "hash": "35e28ba55bdcd7229ce521d2f04664ff",
+  "hash": "b9dc2626f7c608a76f7c7caba0addd09",
   "result": {
-    "markdown": "# Causal mediation analysis {#sec-mediation}\n\n\n\n\n\n## Estimating direct effects\n\n\n::: {.cell}\n\n```{.r .cell-code}\nrnorm(5)\n```\n\n::: {.cell-output .cell-output-stdout}\n\n```\n[1]  0.2656  1.1516 -0.8554  0.7506 -0.5169\n```\n\n\n:::\n:::\n\n\n## Estimating indirect effects\n\n## Allowing for interactions\n",
+    "markdown": "# Causal inference across time {#sec-longitudinal}\n\n\n\n\n\n## Loss to follow-up\n\n\n::: {.cell}\n\n```{.r .cell-code}\nrnorm(5)\n```\n\n::: {.cell-output .cell-output-stdout}\n\n```\n[1] -0.3767 -0.6036 -0.6856  0.2084 -0.2844\n```\n\n\n:::\n:::\n\n\n## Time-varying confounding and exposures\n\n",
     "supporting": [],
     "filters": [
       "rmarkdown/pagebreak.lua"

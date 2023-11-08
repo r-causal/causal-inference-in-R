@@ -1,15 +1,13 @@
-# Other approaches to causal inference
+# Causal mediation analysis {#sec-mediation}
 
 {{< include 00-setup.qmd >}}
 
-## Targeted Learning
+## Estimating direct effects
 
 ```{r}
 rnorm(5)
 ```
 
-## Instrumental variable analysis
+## Estimating indirect effects
 
-## Regression discontinuity
-
-## Difference-in-Difference
+## Allowing for interactions

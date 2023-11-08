@@ -36,7 +36,7 @@ glimpse(matched_data)
 
 ## Weighting
 
-One way to think about matching is as a crude "weight" where everyone who was matched gets a weight of 1 and everyone who was not matched gets a weight of 0 in the final sample. Another option is to allow this weight to be smooth, applying a weight to allow, on average, the covariates of interest to be balanced in the weighted population. To do this, we will construct a weight using the propensity score. There are many different weights that can be applied, depending on your target estimand of interest (see @sec-estimand for details). For this section, we will focus on the "Average Treatment Effect" weights, commonly referred to as an "inverse probability weight". The weight is constructed as follows, where each observation is weighted by the *inverse* of the probability of receiving the exposure they received. 
+One way to think about matching is as a crude "weight" where everyone who was matched gets a weight of 1 and everyone who was not matched gets a weight of 0 in the final sample. Another option is to allow this weight to be smooth, applying a weight to allow, on average, the covariates of interest to be balanced in the weighted population. To do this, we will construct a weight using the propensity score. There are many different weights that can be applied, depending on your target estimand of interest (see @sec-estimands for details). For this section, we will focus on the "Average Treatment Effect" weights, commonly referred to as an "inverse probability weight". The weight is constructed as follows, where each observation is weighted by the *inverse* of the probability of receiving the exposure they received. 
 
 $$w_{ATE} = \frac{X}{p} + \frac{(1 - X)}{1 - p}$$
 

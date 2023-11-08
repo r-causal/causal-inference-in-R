@@ -57,6 +57,10 @@ book:
       - chapters/chapter-18.qmd
       - chapters/chapter-19.qmd
       - chapters/chapter-20.qmd
+      - chapters/chapter-21.qmd
+      - chapters/chapter-22.qmd
+      - chapters/chapter-23.qmd
+      - chapters/chapter-24.qmd
       
     - chapters/references-99.qmd
       
