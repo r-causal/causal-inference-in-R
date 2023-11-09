@@ -62,7 +62,7 @@ The type of causal diagrams we use are also called directed acyclic graphs (DAGs
 These graphs are directed because they include arrows going in a specific direction.
 They're acyclic because they don't go in circles; a variable can't cause itself, for instance.
 DAGs are used for various problems, but we're specifically concerned with *causal* DAGs.
-This class of DAGs is sometimes called Structural Causal Models (SCMs) because they are a model of the causal structure of a question.
+This class of DAGs is sometimes called Structural Causal Models (SCMs) because they are a model of the causal structure of a question [@hernan2021; @Pearl_Glymour_Jewell_2021].
 
 [^1]: An essential but rarely observed detail of DAGs is that dag is also an [affectionate Australian insult](https://en.wikipedia.org/wiki/Dag_(slang)) referring to the dung-caked fur of a sheep, a *daglock*.
 
@@ -340,8 +340,8 @@ Since `x` and `y` happen before `q`, `q` can't impact them.
 Let's turn the DAG on its side and consider @fig-collider-time.
 If we break down the two time points, at time point 1, `q` hasn't happened yet, and `x` and `y` are unrelated.
 At time point 2, `q` happens due to `x` and `y`.
-But causality only goes forward in time.
-`q` happening later can't change the fact that `x` and `y` happened independently at time point 1.
+*But causality only goes forward in time*.
+`q` happening later can't change the fact that `x` and `y` happened independently in the past.
 
 ```{r}
 #| echo: false
@@ -389,14 +389,14 @@ Consider a case where `x` and `y` are the only causes of `q`, and all three vari
 When *either* `x` or `y` equals 1, then `q` happens.
 If we know `q = 1` and `x = 0` then logically it must be that `y = 1`.
 Thus, knowing about `q` gives us information about `y` via `x`.
-This example is extreme, but it shows how this type of bias, sometimes called *collider-stratification bias* or *selection bias*, occurs: conditioning on `q` provides statistical information about `x` and `y` and distorts their relationship.
+This example is extreme, but it shows how this type of bias, sometimes called *collider-stratification bias* or *selection bias*, occurs: conditioning on `q` provides statistical information about `x` and `y` and distorts their relationship [@Banack2023].
 
 ::: callout-tip
 ## Exchangeability revisited
 
 We commonly refer to exchangability as the assumption of no confounding.
 Actually, this isn't quite right.
-It's the assumption of no *open, non-causal* paths.
+It's the assumption of no *open, non-causal* paths [@hernan2021].
 Many times, these are confounding pathways.
 However, conditioning on a collider can also open paths.
 Even though these aren't confounders, doing so creates non-exchangeability between the two groups: they are different in a way that matters to the exposure and outcome.
@@ -409,7 +409,7 @@ Correctly identifying the causal structure between the exposure and outcome thus
 Importantly, in doing 2), we are also often able to identify ways to prevent bias based on the assumptions in 1).
 In the simple case of the three DAGs in @fig-dag-path-types, we know whether or not to control for `q` depending on the nature of the causal structure.
 The set or sets of variables we need to adjust for is called the *adjustment set*.
-DAGs can help us identify adjustment sets even in complex settings.
+DAGs can help us identify adjustment sets even in complex settings [@vanderzander2019].
 
 ::: callout-tip
 ## What about interaction?
@@ -423,10 +423,10 @@ There are several ways we use interactions in causal inference.
 In one extreme, they are simply a matter of functional form: interaction terms are included in models but marginalized to get an overall causal effect.
 Conversely, we're interested in *joint causal effects*, where the two variables interacting are both causal.
 In between, we can use interaction terms to identify *heterogeneous causal effects*, which vary by a second variable that is not assumed to be causal.
-As with many tools in causal inference, we use the same statistical technique in many ways to answer different questions. 
+As with many tools in causal inference, we use the same statistical technique in many ways to answer different questions.
 We'll revisit this topic in detail in [Chapter -@sec-interaction].
 
-Many people have tried expressing interaction in DAGs using different types of arcs, nodes, and other annotations, but no approach has taken off as the preferred way.
+Many people have tried expressing interaction in DAGs using different types of arcs, nodes, and other annotations, but no approach has taken off as the preferred way [@weinberg2007; @Nilsson2021].
 :::
 
 Let's take a look at an example in R.
@@ -561,7 +561,7 @@ pod_dag |>
   ggdag(text_size = 2.8)
 ```
 
-We can also ask for a specific layout, e.g., the popular Sugiyama algorithm for DAGs.
+We can also ask for a specific layout, e.g., the popular Sugiyama algorithm for DAGs [@sugiyama1981].
 
 ```{r}
 #| fig-width: 4
@@ -695,7 +695,7 @@ podcast_dag_tidy |>
 ```
 :::
 
-Minimal adjustment sets are only one type of valid adjustment set.
+Minimal adjustment sets are only one type of valid adjustment set [@vanderzander2019].
 Sometimes, other combinations of variables can get us an unbiased effect estimate.
 Two other options available in ggdag are full adjustment sets and canonical adjustment sets.
 Full adjustment sets are every combination of variables that result in a valid set.
@@ -862,7 +862,7 @@ We could get the best of both worlds by including both variables: between the be
 
 ### Selection Bias and Mediation
 
-Selection bias is another name for the type of bias that is induced by adjusting for a collider.
+Selection bias is another name for the type of bias that is induced by adjusting for a collider [@lu2022].
 It's called "selection bias" because a common form of collider-induced bias is a variable inherently stratified upon by the design of the study---selection *into* the study.
 Let's consider a case based on the original `podcast_dag` but with one additional variable: whether or not the student showed up to the exam.
 Now, there is an indirect effect of `podcast` on `exam`: listening to a podcast influences whether or not the students attend the exam.
@@ -949,7 +949,8 @@ m_bias() |>
 ggdag has several quick-DAGs for demonstrating basic causal structures, including `confounder_triangle()`, `collider_triangle()`, `m_bias()`, and `butterfly_bias()`.
 :::
 
-What's theoretically interesting about M-bias is that `m' is a collider but occurs before`x`and`y`. Remember that association is blocked at a collider, so there is no open path between`x`and`y\`.
+What's theoretically interesting about M-bias is that `m` is a collider but occurs before `x` and `y`.
+Remember that association is blocked at a collider, so there is no open path between `x` and `y`.
 
 ```{r}
 paths(m_bias())
@@ -1029,7 +1030,7 @@ butterfly_bias(x = "podcast", y = "exam", m = "mood", a = "u1", b = "u2") |>
 Now, we're in a challenging position: we need to control for `mood` because it's a confounder, but controlling for `mood` opens up the pathway from `u1` to `u2`.
 Because we don't have either variable measured, we can't then close the path opened from conditioning on `mood`.
 What should we do?
-It turns out that, when in doubt, controlling for `mood` is the better of the two options: confounding bias tends to be worse than collider bias, and M-shaped structures of colliders are sensitive to slight deviations (e.g., if this is not the exact structure, often the bias isn't as bad).
+It turns out that, when in doubt, controlling for `mood` is the better of the two options: confounding bias tends to be worse than collider bias, and M-shaped structures of colliders are sensitive to slight deviations (e.g., if this is not the exact structure, often the bias isn't as bad) [@DingMiratrix2015].
 
 Another common form of selection bias is from *loss to follow-up*: people drop out of a study in a way that is related to the exposure and outcome.
 We'll come back to this topic in [Chapter -@sec-longitudinal].
@@ -1084,11 +1085,11 @@ We'll talk more about IVs in @sec-iv-friends.
 
 So, if you're *not* using IV methods, should you include an IV in a model meant to address confounding?
 If you're unsure if the variable is an IV or not, you should probably add it to your model: it's more likely to be a confounder than an IV, and, it turns out, the bias from adding an IV is usually small in practice.
-So, like adjusting for a potential M-structure variable, the risk of bias is worse from confounding.
+So, like adjusting for a potential M-structure variable, the risk of bias is worse from confounding [@Myers2011].
 
 Now, let's talk about the opposite of an IV: a cause of the outcome that is not the cause of the exposure.
 These variables are sometimes called *competing exposures* (because they also cause the outcome) or *precision variables* (because, as we'll see, they increase the precision of causal estimates).
-We'll call them precision variables because we're concerned about the relationship to the research question at hand, not to another research question where they are exposures.
+We'll call them precision variables because we're concerned about the relationship to the research question at hand, not to another research question where they are exposures [@Brookhart2006].
 
 Like IVs, precision variables do not occur along paths from the exposure to the outcome.
 Thus, including them is not necessary.
@@ -1103,7 +1104,7 @@ Similarly, `humor` is not a good addition to the model unless we think it really
 ### Measurement Error and Missingness
 
 DAGs can also help us understand the bias arising from mismeasurements in the data, including the worst mismeasurement: not measuring it at all.
-We'll cover these topics in [Chapter -@sec-missingness], but the basic idea is that by separating the actual value from the observed value, we can better understand how such biases may behave.
+We'll cover these topics in [Chapter -@sec-missingness], but the basic idea is that by separating the actual value from the observed value, we can better understand how such biases may behave [@Hernán2009].
 Here's a basic example of a bias called *recall bias*.
 Recall bias is when the outcome influences a participant's memory of exposure, so it's a particular problem in retrospective studies where the earlier exposure is not recorded until after the outcome happens.
 An example of when this can occur is a case-control study of cancer.
@@ -1254,7 +1255,7 @@ Thinking this through carefully will clarify your DAG and the variables you need
 Second, after a certain level of complexity, it's easier to read a DAG when arranged by time because you have to think less about that dimension; it's inherent to the layout.
 The time ordering algorithm in ggdag automates much of this for you, although, as we saw earlier, it's sometimes helpful to give it more information about the order.
 
-A related topic is feedback loops.
+A related topic is feedback loops [@murray2022].
 Often, we think about two things that mutually cause each other as happening in a circle, like global warming and A/C use (A/C use increases global warming, which makes it hotter, which increases A/C use, and so on).
 It's tempting to visualize that relationship like this:
 
@@ -1389,7 +1390,7 @@ Case-control studies are beneficial when the outcome under study is rare or take
 Participants are selected into the study based on their outcome: once a person has an event, they are entered as a case and matched with a control who hasn't had the event.
 Often, they are matched on other factors as well.
 
-Matched case-control studies are selection biased by design.
+Matched case-control studies are selection biased by design [@mansournia2013].
 In @fig-case-control, when we condition on selection into the study, we lose the ability to close all backdoor paths, even if we control for `confounder`.
 From the DAG, it would appear that the entire design is invalid!
 
@@ -1456,7 +1457,7 @@ As mentioned above, you may be able to identify alternate adjustment sets.
 If the missing variable is required to close all backdoor paths completely, you can and should conduct a sensitivity analysis to understand the impact of not having it.
 This is the subject of [Chapter -@sec-sensitivity].
 
-Under some lucky circumstances, you can also use a *proxy* confounder.
+Under some lucky circumstances, you can also use a *proxy* confounder [@miao2018].
 A proxy confounder is a variable closely related to the confounder such that controlling for it controls for some of the effects of the missing variable.
 Consider an expansion of the fundamental confounding relationship where `q` has a cause, `p`, as in @fig-proxy-confounder.
 Technically, if we don't have `q`, we can't close the backdoor path, and our effect will be biased.
@@ -1611,7 +1612,7 @@ Yet, almost everything we measure is inaccurate to some degree.
 The true DAG for the data at hand inherently conditions on the measured version of variables.
 In that sense, your data are always subtly-wrong, a sort of unreliable narrator.
 When should we include this information in the DAG?
-We recommend first focusing on the causal structure of the DAG as if you had perfectly measured each variable.
+We recommend first focusing on the causal structure of the DAG as if you had perfectly measured each variable [@hernan2021].
 Then, consider how mismeasurement and missingness might affect the realized data, particularly related to the exposure, outcome, and critical confounders.
 You may prefer to present this as an alternative DAG to consider strategies for addressing the bias arising from those sources, e.g., imputation or sensitivity analyses.
 After all, the DAG in \@ fig-error_dag makes you think the question is unanswerable because we have no method to close all backdoor paths.
@@ -1639,8 +1640,8 @@ Finally, we recommend checking your DAG for robustness.
 You can never verify the correctness of your DAG under most conditions, but you can use the implications in your DAG to support it.
 Three types of robustness checks can be helpful depending on the circumstances.
 
-1.  **Negative controls**. These come in two flavors: negative exposure controls and negative outcome controls. The idea is to find something associated with one but not the other, e.g., the outcome but not the exposure, so there should be no effect. Since there should be no effect, you now have a measurement for how well you control for *other* effects (e.g., the difference from null). Ideally, the confounders for negative controls are similar to the research question.
-2.  **DAG-data consistency**. Negative controls are an implication of your DAG. An extension of this idea is that there are *many* such implications. Because blocking a path removes statistical dependencies from that path, you can check those assumptions in several places in your DAG.
+1.  **Negative controls** [@Lipsitch2010]. These come in two flavors: negative exposure controls and negative outcome controls. The idea is to find something associated with one but not the other, e.g., the outcome but not the exposure, so there should be no effect. Since there should be no effect, you now have a measurement for how well you control for *other* effects (e.g., the difference from null). Ideally, the confounders for negative controls are similar to the research question.
+2.  **DAG-data consistency** [@Textor2016]. Negative controls are an implication of your DAG. An extension of this idea is that there are *many* such implications. Because blocking a path removes statistical dependencies from that path, you can check those assumptions in several places in your DAG.
 3.  **Alternate adjustment sets**. Adjustment sets should give roughly the same answer because, outside of random and measurement errors, they are all sets that block backdoor paths. If more than one adjustment set seems reasonable, you can use that as a sensitivity analysis by checking multiple models.
 
 We'll discuss these in detail in [Chapter -@sec-sensitivity].
