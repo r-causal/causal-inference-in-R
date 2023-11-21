@@ -4,7 +4,12 @@
 
 ## Visualizing Causal Assumptions
 
-> Draw your assumptions before your conclusions --@hernan2021
+So you think correlation isn't causation?
+You better be ready to name some proposed confounders!
+In @sec-assump we discuss several assumptions that allow us to estimate unbiased causal effects with our current statistical tools; one of the main assumptions is *exchangeability*, also known as "no unmeasured confounders".
+There is no statistical test that can confirm whether this assumption is met.
+Instead, we often use domain knowledge to construct an assumed world view of how different measured (or unmeasured) factors interact, and then *assuming that world view is correct* determine whether the proposed analysis included any unmeasured confounders.
+One way to communicate one's world view with respect to how different factors interact is via a directed acyclic graph (DAG).
 
 Causal diagrams are a tool to visualize your assumptions about the causal structure of the questions you're trying to answer.
 In a randomized experiment, the causal structure is quite simple.
@@ -66,37 +71,63 @@ This class of DAGs is sometimes called Structural Causal Models (SCMs) because t
 
 [^1]: An essential but rarely observed detail of DAGs is that dag is also an [affectionate Australian insult](https://en.wikipedia.org/wiki/Dag_(slang)) referring to the dung-caked fur of a sheep, a *daglock*.
 
-DAGs depict causal relationships between variables.
-Visually, the way they depict variables is as *edges* and *nodes*.
-Edges are the arrows going from one variable to another, sometimes called arcs or just arrows.
-Nodes are the variables themselves, sometimes called vertices, points, or just variables.
-In @fig-dag-basic, there are two nodes, `x` and `y`, and one edge going from `x` to `y`.
-Here, we are saying that `x` causes `y`.
-`y` "listens" to `x` [@Pearl_Glymour_Jewell_2021].
+For example, @fig-dag-ex, adapted from @mcgowan2023causal shows a sample DAG that suggests that `cause` causes `effect` and `other cause` causes both cause and effect.
 
 ```{r}
 #| echo: false
+#| label: fig-dag-ex
 #| message: false
-#| label: fig-dag-basic
-#| fig-width: 3
-#| fig-height: 2
-#| fig-cap: "A causal directed acyclic graph (DAG). DAGs depict causal relationships. In this DAG, the assumption is that `x` causes `y`."
+#| warning: false
+#| fig-cap: "Example DAG adapted from @mcgowan2023causal. Here, there are three nodes representing three factors: `cause`, `other cause`, and `effect`. The arrows demonstrate the causal relationships between these factors such that `cause` causes `effect` and `other cause` causes both `cause` and `effect`."
 library(ggdag)
-dagify(y ~ x, coords = time_ordered_coords()) |> 
-  ggdag() + 
-  theme_dag() + 
-  expand_plot(expand_x = expansion(c(.2, .2)))
+library(ggokabeito)
+
+coords <- list(
+  x = c(cause = 2, Z = 1, effect = 3),
+  y = c(cause = 1, Z = 1.1, effect = 1)
+)
+d_conf <- dagify(
+  cause ~ Z,
+  effect ~ cause + Z,
+  exposure = "cause",
+  outcome = "effect",
+  labels = c(cause = "cause", effect = "effect", Z = "Z"),
+  coords = coords
+)
+
+d_conf |>
+  tidy_dagitty() |>
+  mutate(name = ifelse(name == "Z", "other\ncause", name)) |>
+  ggplot(
+    aes(x = x, y = y, xend = xend, yend = yend)
+  ) +
+  geom_dag_point(aes(color = label)) +
+  geom_dag_edges() +
+  geom_dag_text(size = 3) +
+  theme_dag() +
+  coord_cartesian(clip = "off") +
+  theme(legend.position = "none")
 ```
 
-If we're interested in the causal effect of `x` on `y`, we're trying to estimate a numeric representation of that arrow.
-Usually, though, there are many other variables and arrows in the causal structure of a given question.
-A series of arrows is called a *path*.
-There are three types of paths you'll see in DAGs: forks, chains, and colliders (sometimes called inverse forks).
+Thinking about any three nodes in a DAG, there are three ways they can be connected, via a *fork*, a *chain*, or a *collider*.
+Examining @fig-dag-3, the fork describes the scenario where the `q` node has two arrows extending from it, one pointing to `x` and one pointing to `y`.
+This implies that `q` causes both `x` and `y`.
+If `x` were an exposure and `y` and outcome, `q` would be a classic *confounder*.
+If we were trying to quantify the causal relationship between `x` and `y`, the forking caused by `q` provides a potential *backdoor path* from `x` to `y` that could lead to a spurious estimate of the relationship between `x` and `y` if not accounted for (sometimes we refer to this "accounting" as closing the backdoor path).
+Associations can flow through forks.
+The second panel of @fig-dag-3 in @fig-dag-3 displays a chain.
+Here, the `x` node has an arrow to the `q` node which in turn has an arrow to the `y` node.
+If `x` were an exposure and `y` and outcome, `q` would be a classic *mediator*.
+In the final panel of @fig-dag-3, we see the collider.
+Here `y` has an arrow to `q` and `x` has an arrow to `q`.
+Colliders *block* backdoor paths.
+Opposite from confounders, adjusting for a collider can actually *open* a backdoor path.
 
 ```{r}
 #| echo: false
-#| label: fig-dag-path-types
-#| fig-cap: "Three types of causal relationships: forks, chains, and colliders. The direction of the arrows and the relationships of interest dictate which type of path a series of variables is. Forks represent a mutual cause, chains represent direct causes, and colliders represent a mutual descendant."
+#| fig-width: 10
+#| label: fig-dag-3
+#| fig-cap: "Three types of paths connecting three nodes, `x`, `y`, and `q`: a fork, a chain, and a collider."
 coords <- list(x = c(x = 0, y = 2, q = 1), y = c(x = 0, y = 0, q = 1))
 
 fork <- dagify(
@@ -122,19 +153,17 @@ collider <- dagify(
   coords = coords
 )
 
-dag_flows <- map(list(fork = fork, chain = chain, collider = collider), tidy_dagitty) |> 
-  map("data") |> 
-  list_rbind(names_to = "dag") |> 
-  mutate(dag = factor(dag, levels = c("fork", "chain", "collider")))
-
-dag_flows |> 
+map(list(fork = fork, chain = chain, collider = collider), tidy_dagitty, layout = "time_ordered") |>
+  map("data") |>
+  list_rbind(names_to = "dag") |>
+  mutate(dag = factor(dag, levels = c("fork", "chain", "collider"))) |>
   ggplot(aes(x = x, y = y, xend = xend, yend = yend)) +
-  geom_dag_edges(edge_width = 1) + 
-  geom_dag_point() + 
-  geom_dag_text() + 
-  facet_wrap(~ dag) +
+  geom_dag_edges(edge_width = 1) +
+  geom_dag_point() +
+  geom_dag_text() +
+  facet_wrap(~dag) +
   expand_plot(
-    expand_x = expansion(c(0.2, 0.2)),
+    expand_x = expansion(c(.1, .1)),
     expand_y = expansion(c(0.2, 0.2))
   ) +
   theme_dag()
@@ -343,28 +372,14 @@ At time point 2, `q` happens due to `x` and `y`.
 *But causality only goes forward in time*.
 `q` happening later can't change the fact that `x` and `y` happened independently in the past.
 
-```{r}
-#| echo: false
-#| label: fig-collider-time
-#| fig-cap: "A collider relationship over two points in time. At time point one, there is no relationship between `x` and `y`. Both cause `q` by time point two, but this does not change what already happened at time point one."
+While not strictly necessary, we recommend that DAGs are *time-ordered* from left to right.
+This helps the analyst ensure that they are not erroneously making assumptions that violate the space-time continuum (for example it is impossible for something in the future to cause something from the past).
 
-coords <- list(x = c(x = 0, y = 2, q = 1), y = c(x = 0, y = 0, q = -1))
-collider <- dagify(
-    q ~ x + y,
-    exposure = "x",
-    outcome = "y",
-    coords = time_ordered_coords()
-)
+How do we use these in practice?
+The basic idea is:
 
-collider_t <- collider |> 
-  tidy_dagitty() |> 
-  mutate(time = "time point 1", direction = NA, to = NA) |> 
-  filter(name != "q")
-
-t2 <- collider |> 
- tidy_dagitty() |> 
- mutate(time = "time point 2") |> 
-  pull_dag_data()
+1.  Specify your causal question
+2.  Using domain knowledge:
 
 collider_t$data <- bind_rows(collider_t$data, t2)
 
@@ -434,35 +449,40 @@ We'll learn to build DAGs, visualize them, and identify important information li
 
 ## DAGs in R
 
-First, consider a research question: Does listening to a comedy podcast the morning before an exam improve graduate students' test scores?
-We can diagram this using the method described in @sec-diag (@fig-diagram-podcast).
+Let's begin by specifying our causal question: Does listening to a comedy podcast the morning before an exam improve graduate students test scores?
+We can diagram this using the method describe in @sec-diag (@fig-podcast).
 
 ```{r}
 #| echo: false
-#| fig-cap: "A sentence diagram for the question: Does listening to a comedy podcast the morning before an exam improve graduate student test scores? The population is graduate students. The start time is morning, and the outcome time is after the exam."
+#| fig-cap: "Does listening to a comedy podcast the morning before an exam improve graduate students test scores?"
 #| fig-height: 2
-#| label: fig-diagram-podcast
-knitr::include_graphics("../images/podcast-diagram.png")
-```
+#| label: fig-podcast
 
-The tool we'll use for making DAGs is ggdag.
-ggdag is a package that connects ggplot2, the most powerful visualization tool in R, to dagitty, an R package with sophisticated algorithms for querying DAGs.
-
-To create a DAG object, we'll use the `dagify()` function.`dagify()` returns a `dagitty` object that works with both the dagitty and ggdag packages.
-The `dagify()` function takes formulas, separated by commas, that specify causes and effects, with the left element of the formula defining the effect and the right all of the factors that cause it.
-This is just like the type of formula we specify for most regression models in R.
-
-```{r}
-#| eval: false
-dagify(
-  effect1 ~ cause1 + cause2 + cause3,
-  effect2 ~ cause1 + cause4,
-  ...
+data <- data.frame(
+  labels = c("comedy podcast", "test scores", "graduate students", "morning", "graduate students", "after exam"),
+  x = c(1.25, 1.75, 1.25, 1.55, 1.8, 2.05),
+  y = c(1, 1, 0.8, 0.7, 0.8, 0.7),
+  angle = c(0, 0, -30, 0, -30, 0)
 )
+
+ggplot(data, aes(x = x, y = y)) +
+  geom_text(aes(label = labels, angle = angle, vjust = 0),
+    size = 5
+  ) +
+  geom_segment(aes(x = 1, xend = 2, y = 0.95, yend = 0.95)) +
+  geom_segment(aes(x = 1.5, xend = 1.5, y = 0.95, yend = 1.1)) +
+  geom_segment(aes(x = 1, xend = 1.35, y = 0.95, yend = 0.65)) +
+  geom_segment(aes(x = 1.35, xend = 1.65, y = 0.65, yend = 0.65)) +
+  geom_segment(aes(x = 1.55, xend = 1.9, y = 0.95, yend = 0.65)) +
+  geom_segment(aes(x = 1.9, xend = 2.15, y = 0.65, yend = 0.65)) +
+  theme_void()
 ```
 
-What are all of the factors that cause graduate students to listen to a podcast the morning before an exam?
-What are all of the factors that could cause a graduate student to do well on a test?
+The first step is to specify your DAG.
+In R, we can use the {ggdag} package for this along with the `dagify()` function.
+The `dagify()` function takes formulas, separated by commas, that specify cause and effect, with the left element of of the formula specifying the effect and the right all of the factors that cause it.
+What are all of the factors that "cause" graduate students to listen to a podcast the morning before an exam?
+What are all of the factors that could "cause" a graduate student to do well on a test?
 Let's posit some here.
 
 ```{r}
@@ -473,41 +493,21 @@ dagify(
 )
 ```
 
-In the code above, we assume that:
-
--   a graduate student's mood, sense of humor, and how prepared they feel for the exam could influence whether they listened to a podcast the morning of the test
--   their mood and how prepared they are also influence their exam score
-
-Notice we *do not* see podcast in the exam equation; this means that we assume that there is **no** causal relationship between podcast and the exam score.
-
-There are some other useful arguments you'll often find yourself supplying to `dagify()`:
-
--   `exposure` and `outcome`: Telling ggdag the variables that are the exposure and outcome of your research question is required for many of the most valuable queries we can make of DAGs.
--   `latent`: This argument lets us tell ggdag that some variables in the DAG are unmeasured. `latent` helps identify valid adjustment sets with the data we actually have.
--   `coords`: Coordinates for the variables. You can choose between algorithmic or manual layouts, as discussed below. We'll use `time_ordered_coords()` here.
--   `labels`: A character vector of labels for the variables.
-
-Let's create a DAG object, `podcast_dag`, with some of these attributes, then visualize the DAG with `ggdag()`.
-`ggdag()` returns a ggplot object, so we can add additional layers to the plot, like themes.
+In the code chunk above, we have posited that a graduate students mood, sense of humor, and how prepared they feel for the exam could influence whether they listened to a podcast the morning of the text.
+Likewise, we posit that their mood and how prepared they are also influences their exam score.
+Notice we *do not* see `podcast` in the `exam` equation -- this means that we assume that there is no causal relationship between podcast and the exam score.
+We can add additional arguments to `dagify()`, for example, we can time order the coordinates, tag the exposure and outcome, and add labels.
+We can save this `dagify` object and use the `ggdag()` function to visualize this DAG.
+This function is a wrapper for a `ggplot2` call, meaning we can add layers like we would to a ggplot object.
+For example, we can update the theme by adding `+ theme_dag()`.
 
 ```{r}
 #| label: fig-dag-podcast
-#| fig-cap: "Proposed DAG to answer the question: Does listening to a comedy podcast the morning before an exam improve graduate students' test scores?"
-#| fig-width: 4
-#| fig-height: 4
+#| fig-cap: "Proposed DAG to answer the question: Does listening to a comedy podcast the morning before an exam improve graduate students test scores?"
 podcast_dag <- dagify(
   podcast ~ mood + humor + prepared,
   exam ~ mood + prepared,
-  coords = time_ordered_coords(
-    list(
-      # time point 1
-      c("prepared", "humor", "mood"), 
-      # time point 2
-      "podcast",  
-      # time point 3
-      "exam"
-    )
-  ),
+  coords = time_ordered_coords(),
   exposure = "podcast",
   outcome = "exam",
   labels = c(
@@ -580,79 +580,28 @@ We know that's not the case: listening to the podcast happened before taking the
 <!-- TODO: if implementing a better way to use this algorithm while specifying one or more time points, then update this -->
 
 ```{r}
-#| fig-width: 4
-#| fig-height: 4
-#| fig-align: center
-pod_dag |> 
-  ggdag(layout = "time_ordered", text_size = 2.8)
+#| label: fig-paths
+ggdag_paths(podcast_dag)
 ```
 
-You can manually specify coordinates using a list or data frame and provide them to the `coords` argument of `dagify()`.
-Additionally, because ggdag is based on dagitty, you can use `dagitty.net` to create and organize a DAG using a graphical interface, then export the result as dagitty code for ggdag to consume.
+In @fig-paths we see two open paths, one through `mood` and one through `prepared`.
+This tells us we need to find a way to account for these open, non-causal paths.
+Some ways to do this include:
 
-Algorithmic layouts are lovely for fast visualization of DAGs or particularly complex graphs.
-Once you want to share your DAG, it's usually best to be more intentional about the layout, perhaps by specifying the coordinates manually.
-`time_ordered_coords()` is often the best of both worlds, and we'll use it for most DAGs in this book.
-:::
+-   Randomization
+-   Stratification, adjustment, weighting, matching, etc.
 
-We've specified the DAG for this question and told ggdag what the exposure and outcome of interest are.
-According to the DAG, there is no direct causal relationship between listening to a podcast and exam scores.
-Are there any other open paths?
-`ggdag_paths()` takes a DAG and visualizes the open paths.
-In @fig-paths-podcast, we see two open paths: `podcast <- mood -> exam"` and `podcast <- prepared -> exam`. These are both forks---*confounding pathways*. Since there is no causal relationship between listening to a podcast and exam scores, the only open paths are *backdoor* paths, these two confounding pathways.
+In this particular scenario, randomization is likely not possible.
+It would be challenging to justify randomizing students to listening to a full podcast prior to taking an exam (and it would likely have lots of issues with adherence!).
+Stratification is similar to what we demonstrated in @sec-group-sum.
+We could stratify the students into all possible mood and prepared categories and analyze the causal effect within each stratum -- again, this might pose challenges depending on the sample size and the number of categories we believe exists in each of these factors.
+The next section will dive into some of these other tools we could use to account for these potential backdoor paths.
 
-```{r}
-#| label: fig-paths-podcast
-#| fig-cap: "`ggdag_paths()` visualizes open paths in a DAG. There are two open paths in `podcast_dag`: the fork from `mood` and the fork from `prepared`." 
-podcast_dag |> 
-  # show the whole dag as a light gray "shadow" 
-  # rather than just the paths
-  ggdag_paths(shadow = TRUE, text = FALSE, use_labels = "label")
-```
-
-::: callout-tip
-`dagify()` returns a `dagitty()` object, but underneath the hood, ggdag converts `dagitty` objects to tidy DAGs, a structure that holds both the `dagitty` object and a `dataframe` about the DAG.
-This is handy if you want to manipulate the DAG programmatically.
+The {ggdag} package can also help us identify adjustment sets.
+In this particular example, this yields the same result as above, since we need to adjust for both `mood` and `prepared` in order to close the backdoor paths.
+It is possible, however, to have different ways to close backdoor paths depending on the number of factors and complexity causal relationships assumed.
 
 ```{r}
-podcast_dag_tidy <- podcast_dag |> 
-  tidy_dagitty()
-
-podcast_dag_tidy
-```
-
-Most of the quick plotting functions transform the `dagitty` object to a tidy DAG if it's not already, then manipulate the data in some capacity.
-For instance, `dag_paths()` underlies `ggdag_paths()`; it returns a tidy DAG with data about the paths.
-You can use several dplyr functions on these objects directly.
-
-```{r}
-podcast_dag_tidy |> 
-  dag_paths() |> 
-  filter(set == 2, path == "open path")
-```
-
-Tidy DAGs are not pure data frames, but you can retrieve either the `dataframe` or `dagitty` object to work with them directly using `pull_dag_data()` or `pull_dag()`.
-`pull_dag()` can be useful when you want to work with dagitty functions:
-
-```{r}
-library(dagitty)
-podcast_dag_tidy |> 
-  pull_dag() |> 
-  paths()
-```
-:::
-
-Backdoor paths pollute the statistical association between `podcast` and `exam`, so we must account for them.
-`ggdag_adjustment_set()` visualizes any valid adjustment sets implied by the DAG.
-@fig-podcast-adustment-set shows adjusted variables as squares.
-Any arrows coming out of adjusted variables are removed from the DAG because the path is longer open at that variable.
-
-```{r}
-#| label: fig-podcast-adustment-set
-#| fig-width: 4
-#| fig-height: 4
-#| fig-align: center
-#| fig-cap: "A visualization of the minimal adjustment set for the podcast-exam DAG. If this DAG is correct, two variables are required to block the backdoor paths: `mood` and `prepared`."
 ggdag_adjustment_set(
   podcast_dag, 
   text = FALSE, 
@@ -710,26 +659,11 @@ ggdag_adjustment_set(
   podcast_dag, 
   text = FALSE, 
   use_labels = "label",
-  # get full adjustment sets
-  type = "all"
+  text = FALSE
 )
 ```
 
-It turns out that we can also control for `humor`.
-
-Canonical adjustment sets are a bit more complex: they are all possible ancestors of the exposure and outcome minus any likely descendants.
-In fully saturated DAGs (DAGs where every node causes anything that comes after it in time), the canonical adjustment set is the minimal adjustment set.
-
-::: callout-tip
-Most of the functions in ggdag use dagitty underneath the hood.
-It's often helpful to call dagitty functions directly.
-
-```{r}
-adjustmentSets(podcast_dag, type = "canonical")
-```
-:::
-
-Using our proposed DAG, let's simulate some data to see how accounting for the minimal adjustment set might occur in practice.
+Using our proposed DAG, let's simulate some data to see how this might occur in practice!
 
 ```{r}
 set.seed(10)
@@ -741,14 +675,13 @@ sim_data <- podcast_dag |>
 sim_data
 ```
 
-Since we have simulated this data, we know that this is a case where *standard methods will succeed* (see @sec-standard) and, therefore, can estimate the causal effect using a basic linear regression model.
+Since we have simulated this data, we know that this is a case where *standard methods will succeed* (see @sec-standard), and therefore can estimate the causal effect using a basic linear regression model.
 @fig-dag-sim shows a forest plot of the simulated data based on our DAG.
-Notice the model that only included the exposure resulted in a spurious effect (an estimate of -0.1 when we know the truth is 0).
-In contrast, the model that adjusted for the two variables as suggested by `ggdag_adjustment_set()` is not spurious (much closer to 0).
+Notice the model that only included the exposure resulted in a spurious effect (an estimate of -0.1 when we know the truth is 0), whereas the model that adjusted for the two variables as suggested by `ggdag_adjustment_set()` is not spurious (0.0).
 
 ```{r}
 #| label: fig-dag-sim
-#| fig-cap: "Forest plot of simulated data based on the DAG described in @fig-dag-podcast."
+#| fig-cap: "Forest plot of simulated data based on the DAG described in @fig-dag-podcast"
 ## Model that does not close backdoor paths
 unadjusted_model <- lm(exam ~ podcast, sim_data) |>
   broom::tidy(conf.int = TRUE) |>
@@ -1644,6 +1577,4 @@ Three types of robustness checks can be helpful depending on the circumstances.
 2.  **DAG-data consistency** [@Textor2016]. Negative controls are an implication of your DAG. An extension of this idea is that there are *many* such implications. Because blocking a path removes statistical dependencies from that path, you can check those assumptions in several places in your DAG.
 3.  **Alternate adjustment sets**. Adjustment sets should give roughly the same answer because, outside of random and measurement errors, they are all sets that block backdoor paths. If more than one adjustment set seems reasonable, you can use that as a sensitivity analysis by checking multiple models.
 
-We'll discuss these in detail in [Chapter -@sec-sensitivity].
-The caveat here is that these should be complementary to your initial DAG, not a way of *replacing* it.
-In fact, if you use more than one adjustment set during your analysis, you should report the results from all of them to avoid overfitting your results to your data.
+<!-- ## Causal and Predictive Models, Revisited {#sec-causal-pred-revisit} -->

@@ -1,13 +1,13 @@
-# Categorical exposures
+# Missingness
 
 {{< include 00-setup.qmd >}}
 
-## Calculating propensity scores for categorical exposures
+## Missingness as structural bias
 
 ```{r}
 rnorm(5)
 ```
 
-## Diagnostics with many categories
+## Multiple Imputation
 
-## Fitting the outcome model again
+## Combining MICE and IPW

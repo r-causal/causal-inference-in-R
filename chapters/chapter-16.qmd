@@ -1,8 +1,8 @@
-# Interaction {#sec-interaction}
+# Causal survival analysis
 
 {{< include 00-setup.qmd >}}
 
-## Functional form, hetereogenous effects, and joint causes
+## Preparing data for survival analysis
 
 ## Fitting interaction terms in causal models
 

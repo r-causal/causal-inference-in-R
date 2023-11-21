@@ -1,8 +1,10 @@
 {
-  "hash": "b054d57b42451b94833be81a7144a2c7",
+  "hash": "e048fceeeb7a0c5e7ada95e14bb9e9e4",
   "result": {
-    "markdown": "# Causal survival analysis {#sec-survival}\n\n\n\n\n\n## Preparing data for survival analysis\n\n\n::: {.cell}\n\n```{.r .cell-code}\nrnorm(5)\n```\n\n::: {.cell-output .cell-output-stdout}\n\n```\n[1]  0.5082 -0.3546 -0.2759  0.2368  0.1820\n```\n\n\n:::\n:::\n\n\n## Pooled logistic regression\n\n## Confidence intervals for causal survival models\n",
-    "supporting": [],
+    "markdown": "# Other approaches to causal inference\n\n\n\n\n\n## Targeted Learning\n\n\n::: {.cell}\n\n```{.r .cell-code}\nrnorm(5)\n```\n\n::: {.cell-output .cell-output-stdout}\n\n```\n[1]  1.0362  2.1558 -0.2929  0.8677  0.2885\n```\n\n\n:::\n:::\n\n\n## Instrumental variable analysis\n\n## Regression discontinuity\n\n## Difference-in-Difference\n",
+    "supporting": [
+      "chapter-19_files"
+    ],
     "filters": [
       "rmarkdown/pagebreak.lua"
     ],
