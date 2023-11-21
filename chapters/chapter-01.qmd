@@ -4,7 +4,7 @@
 
 {{< include 00-setup.qmd >}}
 
-## Schrödinger's Causality
+## Casual inference
 
 The heart of causal analysis is the causal question; it dictates what data we analyze, how we analyze it, and to which populations our inferences apply.
 This book, being applied in nature, deals primarily with the analysis stage of causal inference.
@@ -61,14 +61,16 @@ Instead of clear questions with obvious assumptions and goals, we end up with "S
 >
 > --- @haber_causal_language
 
+This approach is one instance to *casual* inference: making inferences without doing the necessary work to understand causal questions and deal with the assumptions arround answering them.
+
 ## Description, prediction, and explanation
 
 An excellent first step to address this problem is recognizing that questions about description, prediction, and explanation are fundamentally different.
-Data science in industry isn't quite as burdened by Schrödinger's causal inference as the academic sciences, but being explicit in the differences in analytic intent is still helpful.
+Data science in industry isn't quite as burdened by Schrödinger's causal inference as the academic sciences, but *casual* inference happens in a lot of other ways.
 For instance, when a stakeholder asks for "drivers" of a particular event, what are they asking?
 For a model to predict the event?
 For a deeper understanding of what causes the event?
-It's a vague request, but it smacks of causal interest to us.
+It's a vague request, but it smacks of causal interest to us; yet, many data scientists will be tempted to answer this question with a predictive model.
 When we're clear about our goals, we can use all three approaches more effectively (and, as we'll see, both descriptive analysis and prediction models are still helpful when the goal is to make causal inferences).
 Moreover, all three approaches are useful decision-making tools.
 
