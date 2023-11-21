@@ -1,8 +1,10 @@
 {
-  "hash": "05f0f21481f04bb0be23917f8f78e338",
+  "hash": "0c4033870d4c2666b8e9a897aaa34986",
   "result": {
-    "markdown": "# Interaction {#sec-interaction}\n\n\n\n\n\n## Functional form, hetereogenous effects, and joint causes\n\n## Fitting interaction terms in causal models\n\n<!-- Maybe also: -->\n<!-- ## type ii selection bias, induced by EM [@lu2022] -->",
-    "supporting": [],
+    "markdown": "# Causal survival analysis\n\n\n\n\n\n## Preparing data for survival analysis\n\n\n::: {.cell}\n\n```{.r .cell-code}\nrnorm(5)\n```\n\n::: {.cell-output .cell-output-stdout}\n\n```\n[1] -0.1047 -0.7075 -0.4694  1.2174 -1.6054\n```\n\n\n:::\n:::\n\n\n## Pooled logistic regression\n\n## Confidence intervals for causal survival models\n",
+    "supporting": [
+      "chapter-16_files"
+    ],
     "filters": [
       "rmarkdown/pagebreak.lua"
     ],

@@ -31,7 +31,7 @@ theme_dag <- function() {
 }
 
 geom_dag_label_repel <- function(..., seed = 10) {
-  ggdag_geom_dag_label_repel(
+  ggdag::geom_dag_label_repel(
     aes(x, y, label = label),
     box.padding = 3.5,
     inherit.aes = FALSE,

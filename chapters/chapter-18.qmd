@@ -1,12 +1,11 @@
-# Causal inference across time {#sec-longitudinal}
+# Sensitivity analysis  {#sec-sensitivity}
+
+## Quantitative bias analyses
 
 {{< include 00-setup.qmd >}}
-
-## Loss to follow-up
 
 ```{r}
 rnorm(5)
 ```
 
-## Time-varying confounding and exposures
-
+## Tipping point analyses

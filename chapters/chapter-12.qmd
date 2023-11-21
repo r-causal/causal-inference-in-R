@@ -1,224 +1,284 @@
-# Fitting the outcome model {#sec-outcome-model}
+# Continuous exposures
 
 {{< include 00-setup.qmd >}}
 
-## Using matched data sets
+## Calculating propensity scores for continuous exposures
 
-When fitting an outcome model on matched data sets, we can simply subset the original data to only those who were matched and then fit a model on these data as we would otherwise. For example, re-performing the matching as we did in @sec-using-ps, we can extract the matched observations in a dataset called `matched_data` as follows.
+Propensity scores generalize to many other types of exposures, including continuous exposures.
+At its heart, the workflow is the same: we fit a model where the exposure is the outcome and then use that model to weight a second outcome model.
+For continuous exposures, linear regression is the simplest way to create propensities.
+Instead of probabilities, we use the cumulative density function.
+Then, we use this density to weight the outcome model.
+
+Let's take a look at an example.
+In the `touringplans` data set, we have information about the posted waiting times for rides.
+We also have a limited amount of data on the observed actual times.
+The question we will consider is this: Do posted wait times for the Seven Dwarfs Mine Train at 8 am affect actual wait times at 9 am?
+Here's our DAG:
 
 ```{r}
+#| label: fig-dag-avg-wait
+#| echo: false
 #| message: false
 #| warning: false
-library(broom)
-library(touringplans)
-library(MatchIt)
+#| fig.cap: >
+#|    Proposed DAG for the relationship between posted wait
+#|    in the morning at a particular park and the average
+#|    wait time between 5 pm and 6 pm.
 
-seven_dwarfs_9 <- seven_dwarfs_train_2018 |> 
-  filter(wait_hour == 9) 
+library(tidyverse)
+library(ggdag)
+library(ggokabeito)
 
-m <- matchit(
-  park_extra_magic_morning ~ park_ticket_season + park_close + park_temperature_high,
-  data = seven_dwarfs_9
-)
-matched_data <- get_matches(m)
-```
-
-We can then fit the outcome model on this data. For this analysis, we are interested in the impact of extra magic morning hours on the average posted wait time between 9 and 10am. The linear model below will estimate this in the matched cohort.
-
-```{r}
-lm(wait_minutes_posted_avg ~ park_extra_magic_morning, data = matched_data) |>
-  tidy(conf.int = TRUE)
-```
-
-Recall that by default `{MatchIt}` estimates an average treatment effect among the treated. This means among days that have extra magic hours, the expected impact of having extra magic hours on the average posted wait time between 9 and 10am is 7.9 minutes (95% CI: 1.2-14.5). 
-
-## Using weights in outcome models
-
-Now let's use propensity score weights to estimate this same estimand. We will use the ATT weights so the analysis matches that for matching above.
-
-```{r}
-#| message: false
-#| warning: false
-library(propensity)
-
-seven_dwarfs_9_with_ps <-
-  glm(
-    park_extra_magic_morning ~ park_ticket_season + park_close + park_temperature_high,
-    data = seven_dwarfs_9,
-    family = binomial()
-  ) |>
-  augment(type.predict = "response", data = seven_dwarfs_9)
-seven_dwarfs_9_with_wt <- seven_dwarfs_9_with_ps |>
-  mutate(w_att = wt_att(.fitted, park_extra_magic_morning))
-```
-
-We can fit a *weighted* outcome model by using the `weights` argument. 
-
-```{r}
-lm(wait_minutes_posted_avg ~ park_extra_magic_morning, 
-   data = seven_dwarfs_9_with_wt,
-   weights = w_att) |>
-  tidy()
-```
-
-Using weighting, we estimate that among days that have extra magic hours, the expected impact of having extra magic hours on the average posted wait time between 9 and 10am is 6.2 minutes. 
-While this approach will get us the desired estimate for the point estimate, the default output using the `lm` function for the uncertainty (the standard errors and confidence intervals) are not correct.
-
-
-## Estimating uncertainty
-
-There are three ways to estimate the uncertainty:
-
-1. A bootstrap
-2. A sandwich estimator that only takes into account the outcome model
-3. A sandwich estimator that takes into account the propensity score model
-
-The first option can be computationally intensive, but should get you the correct estimates.
-The second option is computationally the easiest, but tends to overestimate the variability. There are not many current solutions in R (aside from coding it up yourself) for the third; however, the `{PSW}` package will do this. 
-
-### The bootstrap
-
-1. Create a function to run your analysis once on a sample of your data
-
-```{r}
-fit_ipw <- function(split, ...) {
-  .df <- analysis(split)
-  
-  # fit propensity score model
-  propensity_model <- glm(
-    park_extra_magic_morning ~ park_ticket_season + park_close + park_temperature_high,
-    data = seven_dwarfs_9,
-    family = binomial()
-  ) 
-  
-  # calculate inverse probability weights
-  .df <- propensity_model |>
-    augment(type.predict = "response", data = .df) |>
-    mutate(wts = wt_att(.fitted, 
-                        park_extra_magic_morning,
-                        exposure_type = "binary"))
-  
-  # fit correctly bootstrapped ipw model
-  lm(wait_minutes_posted_avg ~ park_extra_magic_morning, 
-     data = .df, weights = wts) |>
-    tidy()
-}
-```
-
-
-2. Use {rsample} to bootstrap our causal effect
-
-```{r}
-#| message: false
-#| warning: false
-library(rsample)
-
-# fit ipw model to bootstrapped samples
-bootstrapped_seven_dwarfs <- bootstraps(
-  seven_dwarfs_9, 
-  times = 1000, 
-  apparent = TRUE
+coord_dag <- list(
+  x = c(Season = -1, close = -1, weather = -2, extra = 0, x = 1, y = 2),
+  y = c(Season = -1, close = 1, weather = 0, extra = 0, x = 0, y = 0)
 )
 
-ipw_results <- bootstrapped_seven_dwarfs |> 
-  mutate(boot_fits = map(splits, fit_ipw)) 
+labels <- c(
+  extra = "Extra Magic Morning",
+  x = "Average posted wait ",
+  y = "Average acutal wait",
+  Season = "Ticket Season",
+  weather = "Historic high temperature",
+  close = "Time park closed"
+)
 
-ipw_results
-```
-
-
-Let's look at the results.
-
-```{r}
-ipw_results |>
-  mutate(
-    estimate = map_dbl(
-      boot_fits,
-      \(.fit) .fit |>
-        filter(term == "park_extra_magic_morning") |>
-        pull(estimate)
+dagify(
+  y ~ x + close + Season + weather + extra,
+  x ~ weather + close + Season + extra,
+  extra ~ weather + close + Season,
+  coords = coord_dag,
+  labels = labels,
+  exposure = "x",
+  outcome = "y"
+) |>
+  tidy_dagitty() |>
+  node_status() |>
+  ggplot(
+    aes(x, y, xend = xend, yend = yend, color = status)
+  ) +
+  geom_dag_edges_arc(curvature = c(rep(0, 7), .2, 0, .2, .2, 0), edge_colour = "grey70") +
+  geom_dag_point() +
+  geom_dag_label_repel(seed = 1602) +
+  scale_color_okabe_ito(na.value = "grey90") +
+  theme_dag() +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text()
+  ) +
+  coord_cartesian(clip = "off") +
+  scale_x_continuous(
+    limits = c(-2.25, 2.25),
+    breaks = c(-2, -1, 0, 1, 2),
+    labels = c(
+      "\n(one year ago)",
+      "\n(6 months ago)",
+      "\n(3 months ago)",
+      "8am-9am\n(Today)",
+      "9am-10am\n(Today)"
     )
-  ) |>
-  ggplot(aes(estimate)) +
-  geom_histogram(bins = 30, fill = "#D55E00FF", color = "white", alpha = 0.8) + 
-  theme_minimal()
+  )
 ```
 
+In @fig-dag-avg-wait, we're assuming that our primary confounders are when the park closes, historic high temperatures, whether or not the ride has extra magic morning hours, and the ticket season.
+This is the only minimal adjustment set in the DAG, as well.
+The confounders precede the exposure and outcome, and (by definition) the exposure precedes the outcome.
+The average posted wait time is, in theory, a manipulable exposure because the park could post a time different from what they expect.
+The adjustment set
 
-3. Pull out the causal effect
-
-```{r}
-# get t-based CIs
-boot_estimate <- int_t(ipw_results, boot_fits) |> 
-  filter(term == "park_extra_magic_morning")
-boot_estimate
-```
-
-We estimate that among days that have extra magic hours, the expected impact of having extra magic hours on the average posted wait time between 9 and 10am is `r round(boot_estimate$.estimate, 1)` minutes, 95% CI (`r round(boot_estimate$.lower, 1)`, `r round(boot_estimate$.upper, 1)`). 
-
-### The outcome model sandwich
-
-There are two ways to get the sandwich estimator. The first is to use the same weighted outcome model as above along with the `{sandwich}` package. Using the `sandwich` function, we can get the robust estimate for the variance for the parameter of interest, as shown below.
-
-```{r}
-#| message: false
-#| warning: false
-library(sandwich)
-weighted_mod <- lm(wait_minutes_posted_avg ~ park_extra_magic_morning, 
-   data = seven_dwarfs_9_with_wt,
-   weights = w_att) 
-
-sandwich(weighted_mod)
-```
-
-Here, our robust variance estimate is `r round(sandwich(weighted_mod)[2,2], 3)`. We can then use this to construct a robust confidence interval.
-
-```{r}
-robust_var <- sandwich(weighted_mod)[2, 2]
-point_est <- coef(weighted_mod)[2]
-lb <- point_est - 1.96 * sqrt(robust_var)
-ub <- point_est + 1.96 * sqrt(robust_var)
-lb
-ub
-```
-We estimate that among days that have extra magic hours, the expected impact of having extra magic hours on the average posted wait time between 9 and 10am is `r round(point_est, 1)` minutes, 95% CI (`r round(lb, 1)`, `r round(ub, 1)`). 
-
-Alternatively, we could fit the model using the `{survey}` package. To do this, we need to create a design object, like we did when fitting weighted tables.
-
-```{r}
-#| message: false
-#| warning: false
-library(survey)
-
-des <- svydesign(
-  ids = ~1,
-  weights = ~w_att,
-  data = seven_dwarfs_9_with_wt
-)
-```
-
-Then we can use `svyglm` to fit the outcome model.
-
-```{r}
-svyglm(wait_minutes_posted_avg ~ park_extra_magic_morning, des) |>
-  tidy(conf.int = TRUE)
-```
-### Sandwich estimator that takes into account the propensity score model
-
-The correct sandwich estimator will also take into account the propensity score model. The `{PSW}` will allow us to do this. This package has some quirks, for example it doesn't work well with categorical variables, so we need to create dummy variables for `park_ticket_season` to pass into the model. *Actually, the code below isn't working because it seems there is a bug in the package. Stay tuned!*
+The model is similar to the binary exposure case, but we need to use linear regression, as the posted time is a continuous variable.
+Since we're not using probabilities, we'll calculate denominators for our weights from a normal density.
+We then calculate the denominator using the `dnorm()` function, which calculates the normal density for the `exposure`, using `.fitted` as the mean and `mean(.sigma)` as the SD.
 
 ```{r}
 #| eval: false
-library(PSW)
-
-seven_dwarfs_9 <- seven_dwarfs_9 |>
-  mutate(park_ticket_season_regular = ifelse(park_ticket_season == "regular", 1, 0),
-         park_ticket_season_value = ifelse(park_ticket_season == "value", 1, 0)
+lm(
+  exposure ~ confounder_1 + confounder_2,
+  data = df
+) |>
+  augment(data = df) |>
+  mutate(
+    denominator = dnorm(exposure, .fitted, mean(.sigma, na.rm = TRUE))
   )
-psw(data = seven_dwarfs_9, 
-    form.ps = "park_extra_magic_morning ~ park_ticket_season_regular + park_ticket_season_value + park_close + park_temperature_high",
-    weight = "ATT",
-    wt = TRUE,
-    out.var = "wait_minutes_posted_avg")
 ```
 
+## Diagnostics and stabilization
+
+Continuous exposure weights, however, are very sensitive to modeling choices.
+One problem, in particular, is the existence of extreme weights, an issue that can also affect other types of exposures.
+When some observations have extreme weights, the propensities are *destabilized,* which results in wider confidence intervals.
+We can stabilize them using the marginal distribution of the exposure.
+A common way to calculate the marginal distribution for propensity scores is to use a regression model with no predictors.
+
+::: callout-caution
+Extreme weights destabilize estimates, resulting in wider confidence intervals.
+Extreme weights can be an issue for any time of weight (including those for binary and other types of exposures) that is not bounded.
+Bounded weights like the ATO (which are bounded to 0 and 1) do not have this problem, however---one of their many benefits.
+:::
+
+```{r}
+#| eval: false
+# for continuous exposures
+lm(
+  exposure ~ 1,
+  data = df
+) |>
+  augment(data = df) |>
+  transmute(
+    numerator = dnorm(exposure, .fitted, mean(.sigma, na.rm = TRUE))
+  )
+
+# for binary exposures
+glm(
+  exposure ~ 1,
+  data = df,
+  family = binomial()
+) |>
+  augment(type.predict = "response", data = df) |>
+  select(numerator = .fitted)
+```
+
+Then, rather than inverting them, we calculate the weights as `numerator / denominator`.
+Let's try it out on our posted wait times example.
+First, let's wrangle our data to address our question: do posted wait times at 8 affect actual weight times at 9?
+We'll join the baseline data (all covariates and posted wait time at 8) with the outcome (average actual time).
+We also have a lot of missingness for `wait_minutes_actual_avg`, so we'll drop unobserved values for now.
+
+```{r}
+library(tidyverse)
+library(touringplans)
+eight <- seven_dwarfs_train_2018 |>
+  filter(wait_hour == 8) |>
+  select(-wait_minutes_actual_avg)
+
+nine <- seven_dwarfs_train_2018 |>
+  filter(wait_hour == 9) |>
+  select(park_date, wait_minutes_actual_avg)
+
+wait_times <- eight |>
+  left_join(nine, by = "park_date") |>
+  drop_na(wait_minutes_actual_avg)
+```
+
+First, let's calculate our denominator model.
+We'll fit a model using `lm()` for `wait_minutes_posted_avg` with our covariates, then use the fitted predictions of `wait_minutes_posted_avg` (`.fitted`) to calculate the density using `dnorm()`.
+
+```{r}
+library(broom)
+denominator_model <- lm(
+  wait_minutes_posted_avg ~
+    park_close + park_extra_magic_morning + park_temperature_high + park_ticket_season,
+  data = wait_times
+)
+
+denominators <- denominator_model |>
+  augment(data = wait_times) |>
+  mutate(
+    denominator = dnorm(
+      wait_minutes_posted_avg,
+      .fitted,
+      mean(.sigma, na.rm = TRUE)
+    )
+  ) |>
+  select(park_date, denominator, .fitted)
+```
+
+When we only use the inverted values of `denominator`, we end up with several extreme weights:
+
+```{r}
+#| label: fig-hist-sd-unstable
+#| fig.cap: >
+#|   A histogram of the inverse probability weights for posted waiting time. Weights for continuous exposures are prone to extreme values, which can unstabilize estimates and variance.
+denominators |>
+  mutate(wts = 1 / denominator) |>
+  ggplot(aes(wts)) +
+  geom_histogram(fill = "#E69F00", color = "white", bins = 50) +
+  scale_x_log10(name = "weights")
+```
+
+In @fig-hist-sd-unstable, we see several weights over 100 and one over 10,000; these extreme weights will put undue stress on specific points, complicating the results we will estimate.
+
+Let's now fit the marginal density to use for stabilized weights:
+
+```{r}
+numerator_model <- lm(
+  wait_minutes_posted_avg ~ 1,
+  data = wait_times
+)
+
+numerators <- numerator_model |>
+  augment(data = wait_times) |>
+  mutate(
+    numerator = dnorm(
+      wait_minutes_posted_avg,
+      .fitted,
+      mean(.sigma, na.rm = TRUE)
+    )
+  ) |>
+  select(park_date, numerator)
+```
+
+We also need to join the fitted values back to our original data set by date, then calculate the stabilized weights (`swts`) using `numerator / denominator`.
+
+```{r}
+wait_times_wts <- wait_times |>
+  left_join(numerators, by = "park_date") |>
+  left_join(denominators, by = "park_date") |>
+  mutate(swts = numerator / denominator)
+```
+
+The stabilized weights are much less extreme.
+Stabilized weights should have a mean close to 1 (in this example, it is `round(mean(wait_times_wts$swts), digits = 2)`); when that is the case, then the pseudo-population (that is, the equivalent number of observations after weighting) is equal to the original sample size.
+If the mean is far from 1, we may have issues with model misspecification or positivity violations [@hernan2021].
+
+```{r}
+#| label: fig-hist-sd-stable
+#| fig.cap: >
+#|   A histogram of the stabilized inverse probability weights for posted waiting time. These weights are much more reasonable and will allow the outcome model to behave better.
+ggplot(wait_times_wts, aes(swts)) +
+  geom_histogram(fill = "#E69F00", color = "white", bins = 50) +
+  scale_x_log10(name = "weights")
+```
+
+When we compare the exposure---average posted wait times---to the standardized weights, we still have one exceptionally high weight.
+Is this a problem, or is this a valid data point?
+
+```{r}
+#| label: fig-stabilized-wts-scatter
+#| fig.cap: >
+#|   A scatter of the stabilized inverse probability weights for posted waiting time vs. posted waiting times. Days with more values of `wait_minutes_posted_avg` farther from the mean appear to be downweighted, with a few exceptions. The most unusual weight is for June 23, 2018.
+ggplot(wait_times_wts, aes(wait_minutes_posted_avg, swts)) +
+  geom_point(size = 3, color = "grey80", alpha = 0.7) +
+  geom_point(
+    data = function(x) filter(x, swts > 10),
+    color = "firebrick",
+    size = 3
+  ) +
+  geom_text(
+    data = function(x) filter(x, swts > 10),
+    aes(label = park_date),
+    size = 5,
+    hjust = 0,
+    nudge_x = -15.5,
+    color = "firebrick"
+  ) +
+  scale_y_log10() +
+  labs(x = "Average Posted Wait", y = "Stabilized Weights")
+```
+
+```{r}
+wait_times_wts |>
+  filter(swts > 10) |>
+  select(
+    park_date, wait_minutes_posted_avg, .fitted,
+    park_close, park_extra_magic_morning,
+    park_temperature_high, park_ticket_season
+  ) |>
+  knitr::kable()
+```
+
+Our model predicted a much lower posted wait time than observed, so this date was upweighted.
+We don't know why the posted time was so high (the actual time was much lower), but we did find an artist rendering from that date of [Pluto digging for Seven Dwarfs Mine Train treasure](https://disneyparks.disney.go.com/blog/2018/06/disney-doodle-pluto-sniffs-out-fun-at-seven-dwarfs-mine-train/).
+
+## Fitting the outcome model for continuous exposures

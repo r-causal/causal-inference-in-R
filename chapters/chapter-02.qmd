@@ -1,4 +1,4 @@
-# The whole game: mosquito nets and malaria {#sec-whole-game}
+# The whole game: mosquito nets and malaria
 
 {{< include 00-setup.qmd >}}
 
