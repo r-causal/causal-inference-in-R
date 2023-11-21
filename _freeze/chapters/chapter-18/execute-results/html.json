@@ -1,10 +1,8 @@
 {
-  "hash": "f1d3d81eeb5540167668bf71aebc6749",
+  "hash": "b9dc2626f7c608a76f7c7caba0addd09",
   "result": {
-    "markdown": "# Sensitivity analysis\n\n## Quantitative bias analyses\n\n\n\n\n::: {.cell}\n\n```{.r .cell-code}\nrnorm(5)\n```\n\n::: {.cell-output .cell-output-stdout}\n\n```\n[1] -0.6136 -0.3190  0.7672  0.3058  0.4258\n```\n\n\n:::\n:::\n\n\n## Tipping point analyses\n",
-    "supporting": [
-      "chapter-18_files"
-    ],
+    "markdown": "# Causal inference across time {#sec-longitudinal}\n\n\n\n\n\n## Loss to follow-up\n\n\n::: {.cell}\n\n```{.r .cell-code}\nrnorm(5)\n```\n\n::: {.cell-output .cell-output-stdout}\n\n```\n[1] -0.3767 -0.6036 -0.6856  0.2084 -0.2844\n```\n\n\n:::\n:::\n\n\n## Time-varying confounding and exposures\n\n",
+    "supporting": [],
     "filters": [
       "rmarkdown/pagebreak.lua"
     ],

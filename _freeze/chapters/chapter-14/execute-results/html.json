@@ -1,10 +1,8 @@
 {
-  "hash": "22032a0e6e14411b69033ee514dc2692",
+  "hash": "1d5c11e4eb1e56d478902dc918373b89",
   "result": {
-    "markdown": "# Missingness\n\n\n\n\n\n## Missingness as structural bias\n\n\n::: {.cell}\n\n```{.r .cell-code}\nrnorm(5)\n```\n\n::: {.cell-output .cell-output-stdout}\n\n```\n[1] -0.5199 -1.1160  1.4866  1.0149 -1.4796\n```\n\n\n:::\n:::\n\n\n## Multiple Imputation\n\n## Combining MICE and IPW\n",
-    "supporting": [
-      "chapter-14_files"
-    ],
+    "markdown": "# Categorical exposures\n\n\n\n\n\n## Calculating propensity scores for categorical exposures\n\n\n::: {.cell}\n\n```{.r .cell-code}\nrnorm(5)\n```\n\n::: {.cell-output .cell-output-stdout}\n\n```\n[1]  0.55045 -0.09999  1.27700 -0.90324 -0.65693\n```\n\n\n:::\n:::\n\n\n## Diagnostics with many categories\n\n## Fitting the outcome model again\n",
+    "supporting": [],
     "filters": [
       "rmarkdown/pagebreak.lua"
     ],

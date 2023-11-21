@@ -1,15 +1,13 @@
-# Other approaches to causal inference
+# Causal survival analysis {#sec-survival}
 
 {{< include 00-setup.qmd >}}
 
-## Targeted Learning
+## Preparing data for survival analysis
 
 ```{r}
 rnorm(5)
 ```
 
-## Instrumental variable analysis
+## Pooled logistic regression
 
-## Regression discontinuity
-
-## Difference-in-Difference
+## Confidence intervals for causal survival models

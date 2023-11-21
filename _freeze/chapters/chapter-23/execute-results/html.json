@@ -1,0 +1,14 @@
+{
+  "hash": "0c7ac0b35b32d9ca07d6e09c8886a3c1",
+  "result": {
+    "markdown": "# Instrumental variables and friends {#sec-iv-friends}\n\n\n\n\n\n## Instrumental variable analysis\n\n\n::: {.cell}\n\n```{.r .cell-code}\nrnorm(5)\n```\n\n::: {.cell-output .cell-output-stdout}\n\n```\n[1] -1.9767 -0.1417  1.6082  2.1477  1.0221\n```\n\n\n:::\n:::\n\n\n## Regression discontinuity\n\n## Difference-in-Difference\n",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}
