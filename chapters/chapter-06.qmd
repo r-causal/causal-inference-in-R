@@ -24,13 +24,13 @@ parks_metadata_raw
 
 Suppose the causal question of interest is:
 
-**Is there a relationship between whether there were "Extra Magic Hours" in the morning at Magic Kingdom and the average wait time for an attraction called the "Seven Dwarfs Mine Train" the same day between 9am and 10am in 2018?**
+**Did the decision to provide "Extra Magic Hours" in the morning at Magic Kingdom affect the average wait time for an attraction called the "Seven Dwarfs Mine Train" the same day between 9am and 10am in 2018?**
 
 Let's begin by diagramming this causal question (@fig-seven-diag).
 
 ```{r}
 #| echo: false
-#| fig-cap: "Diagram of the causal question \"Is there a relationship between whether there were \"Extra Magic Hours\" in the morning at Magic Kingdom and the average wait time for an attraction called the \"Seven Dwarfs Mine Train\" the same day between 9am and 10am in 2018?\""
+#| fig-cap: "Diagram of the causal question \"Did the decision to provide \"Extra Magic Hours\" in the morning at Magic Kingdom affect the average wait time for an attraction called the \"Seven Dwarfs Mine Train\" the same day between 9am and 10am in 2018?\""
 #| label: fig-seven-diag
 
 data <- data.frame(
@@ -68,6 +68,8 @@ Below is a proposed DAG for this question.
 #|   Proposed DAG for the relationship between Extra Magic Hours
 #|   in the morning at a particular park and the average wait
 #|   time between 9 am and 10 am.
+#|   The decision to schedule Extra Magic Hours on the day of interest was made
+#|   3 months prior.
 #|   Here we are saying that we believe 1) Extra Magic Hours impacts average wait time and 2) both Extra Magic Hours and average wait time are determined by the time the park closes, historic high temperatures, and ticket season.
 
 library(tidyverse)
@@ -127,7 +129,7 @@ Here, our observations are *days*.
 Looking at the diagram above, we can map each element of the causal question to elements of our target trial protocol:
 
 -   **Eligibility criteria**: Days must be from 2018
--   **Exposure definition**: Magic kingdom had "Extra Magic Hours" in the morning
+-   **Exposure definition**: Magic Kingdom's decision to schedule "Extra Magic Hours" in the morning (a decision made 3 months prior to the morning of interest)
 -   **Assignment procedures**: Observed -- if the historic data suggests there were "Extra Magic Hours" in the morning on a particular day, that day is classified as "exposed" otherwise it is "unexposed"
 -   **Follow-up period**: From park open to 10am.
 -   **Outcome definition**: The average posted wait time between 9am and 10am
@@ -182,7 +184,7 @@ library(lubridate)
 seven_dwarfs_train_2018 <- seven_dwarfs_train |>
   filter(year(park_date) == 2018) |> # eligibility criteria
   mutate(hour = hour(wait_datetime)) |> # get hour from wait
-  group_by(park_date, hour) |> # group by date
+  group_by(park_date, hour) |> # group by day and hour
   summarise(
     wait_minutes_posted_avg = mean(wait_minutes_posted, na.rm = TRUE),
     .groups = "drop"
@@ -191,7 +193,7 @@ seven_dwarfs_train_2018 <- seven_dwarfs_train |>
     wait_minutes_posted_avg =
       case_when(
         is.nan(wait_minutes_posted_avg) ~ NA,
-        TRUE ~ wait_minutes_posted_avg
+        .default = wait_minutes_posted_avg
       )
   ) |> # if it is NAN make it NA
   filter(hour == 9) # only keep the average wait time between 9 and 10
@@ -214,7 +216,7 @@ For example, in these data, variables that are specific to a particular wait tim
 
 Let's first decide what variables we will need.
 In practice, this decision may involve an iterative process.
-For example, after drawing our DAG or after conducting diagnostic, we may determine that we need more variables than what we originally cleaned.
+For example, after drawing our DAG or conducting diagnostics, we may determine that we need more variables than what we originally cleaned.
 Let's start by skimming this dataframe.
 
 ```{r}
@@ -222,16 +224,14 @@ skim(parks_metadata_raw)
 ```
 
 This dataset contains many more variables than the one we worked with previously.
-For this analysis, we are going to select `date` (the observation date), `wdw_ticket_season` (the ticket season for the observation), `wdwmaxtemp` (the maximum temperature), `mkclose` (the time Magic Kingdom closed), `mkemhmorn` (whether Magic Kingdom had an "Extra Magic Hour" in the morning).
+For this analysis, we are going to select and rename `date` (the observation date), `wdw_ticket_season` (the ticket season for the observation), `wdwmaxtemp` (the maximum temperature), `mkclose` (the time Magic Kingdom closed), `mkemhmorn` (whether Magic Kingdom had an "Extra Magic Hour" in the morning).
 
 ```{r}
 parks_metadata_clean <- parks_metadata_raw |>
-  ##  based on our analysis plan, we will select the following variables
-  select(date, wdw_ticket_season, wdwmaxtemp, mkclose, mkemhmorn) |>
   ## based on eligibility criteria, limit to 2018
   filter(year(date) == 2018) |>
-  ## rename variables
-  rename(
+  ## based on our analysis plan, we will select (and rename) the following variables
+  select(
     park_date = date,
     park_ticket_season = wdw_ticket_season,
     park_temperature_high = wdwmaxtemp,
@@ -246,7 +246,8 @@ Frequently we find ourselves merging data from multiple sources when attempting 
 The way we can combine datasets is via *joins* -- joining two or more datasets based on a set or sets of common variables.
 We can think of three main types of *joins*: left, right, and inner.
 A *left* join combines data from two datasets based on a common variable and includes all records from the *left* dataset along with matching records from the *right* dataset (in `{dplyr}`, `left_join()`), while a *right* join includes all records from the *right* dataset and their corresponding matches from the *left* dataset (in `{dplyr}` `right_join()`); an inner join, on the other hand, includes only the records with matching values in *both* datasets, excluding non-matching records (in `{dplyr}` `inner_join()`.
-For this analysis, we need to use a left join to pull in the cleaned parks metadata.
+The variable(s) used as the key for matching across datasets is specified in the `by =` argument.
+For this analysis, we will use a left join to pull in the cleaned parks metadata.
 
 ```{r}
 seven_dwarfs_train_2018 <- seven_dwarfs_train_2018 |>
@@ -266,9 +267,10 @@ vis_miss(seven_dwarfs_train_2018)
 It looks like we only have a few observations (2%) missing our outcome of interest.
 This is not too bad.
 For this first analysis we will ignore the missing values.
-We can explicitly drop them using the `drop_na()` function from `{dplyr}`.
+We can explicitly drop them using the `drop_na()` function from `{tidyr}`.
 
 ```{r}
+library(tidyr)
 seven_dwarfs_train_2018 <- seven_dwarfs_train_2018 |>
   drop_na()
 ```
@@ -286,11 +288,14 @@ There is not clear evidence of a lack of positivity here as both exposure levels
 ```{r}
 #| label: fig-close
 #| fig-cap: "Distribution of Magic Kingdom park closing time by whether the date had extra magic hours in the morning"
-ggplot(seven_dwarfs_train_2018, aes(
-  x = factor(park_close),
-  group = factor(park_extra_magic_morning),
-  fill = factor(park_extra_magic_morning)
-)) +
+ggplot(
+  seven_dwarfs_train_2018,
+  aes(
+    x = factor(park_close),
+    group = factor(park_extra_magic_morning),
+    fill = factor(park_extra_magic_morning)
+  )
+) +
   geom_bar(position = position_dodge2(width = 0.9, preserve = "single")) +
   labs(
     fill = "Extra Magic Morning",
@@ -308,11 +313,14 @@ This of course would also restrict which days we could draw conclusions about fo
 #| label: fig-temp
 #| fig-cap: "Distribution of historic temperature high at Magic Kingdom by whether the date had extra magic hours in the morning"
 library(halfmoon)
-ggplot(seven_dwarfs_train_2018, aes(
-  x = park_temperature_high,
-  group = factor(park_extra_magic_morning),
-  fill = factor(park_extra_magic_morning)
-)) +
+ggplot(
+  seven_dwarfs_train_2018, 
+  aes(
+    x = park_temperature_high,
+    group = factor(park_extra_magic_morning),
+    fill = factor(park_extra_magic_morning)
+  )
+) +
   geom_mirror_histogram(bins = 20) +
   labs(
     fill = "Extra Magic Morning",
@@ -326,11 +334,14 @@ Examining @fig-ticket, we do not see any positivity violations.
 ```{r}
 #| label: fig-ticket
 #| fig-cap: "Distribution of historic temperature high at Magic Kingdom by whether the date had extra magic hours in the morning"
-ggplot(seven_dwarfs_train_2018, aes(
-  x = park_ticket_season,
-  group = factor(park_extra_magic_morning),
-  fill = factor(park_extra_magic_morning)
-)) +
+ggplot(
+  seven_dwarfs_train_2018,
+  aes(
+    x = park_ticket_season,
+    group = factor(park_extra_magic_morning),
+    fill = factor(park_extra_magic_morning)
+  )
+) +
   geom_bar(position = "dodge") +
   labs(
     fill = "Extra Magic Morning",
@@ -350,12 +361,13 @@ Let's start by discretizing the `park_temperature_high` variable a bit (we will 
 #| fig-width: 9
 seven_dwarfs_train_2018 |>
   ## cut park_temperature_high into tertiles
-  mutate(park_temperature_high_bin = cut(park_temperature_high, breaks = 3)) |>
+  mutate(park_temperature_high_bin = ntile(park_temperature_high, 3)) |>
   ## bin park close time
   mutate(park_close_bin = case_when(
-    hour(park_close) < 19 & hour(park_close) > 12 ~ "(1) early",
-    hour(park_close) >= 19 & hour(park_close) < 24 ~ "(2) standard",
-    hour(park_close) >= 24 | hour(park_close) < 12 ~ "(3) late"
+    hour(park_close) %in% 13:18 ~ "(1) early",
+    hour(park_close) %in% 19:23 ~ "(2) standard",
+    hour(park_close) %in% c(0:11, 24) ~ "(3) late",
+    .default = NA_character_
   )) |>
   group_by(park_close_bin, park_temperature_high_bin, park_ticket_season) |>
   ## calculate the proportion exposed in each bin
