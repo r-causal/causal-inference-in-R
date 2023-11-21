@@ -1,13 +1,13 @@
-# Causal mediation analysis
+# Missingness {#sec-missingness}
 
 {{< include 00-setup.qmd >}}
 
-## Estimating direct effects
+## Missingness as structural bias
 
 ```{r}
 rnorm(5)
 ```
 
-## Estimating indirect effects
+## Multiple Imputation
 
-## Allowing for interactions
+## Combining MICE and IPW

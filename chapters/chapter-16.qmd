@@ -1,13 +1,10 @@
-# Causal survival analysis
+# Interaction {#sec-interaction}
 
 {{< include 00-setup.qmd >}}
 
-## Preparing data for survival analysis
+## Functional form, hetereogenous effects, and joint causes
 
-```{r}
-rnorm(5)
-```
+## Fitting interaction terms in causal models
 
-## Pooled logistic regression
-
-## Confidence intervals for causal survival models
+<!-- Maybe also: -->
+<!-- ## type ii selection bias, induced by EM [@lu2022] -->

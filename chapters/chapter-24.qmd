@@ -1,0 +1,13 @@
+# Evidence {#sec-evidence}
+
+{{< include 00-setup.qmd >}}
+
+## Triangulation
+
+```{r}
+rnorm(5)
+```
+
+## Generalization and transportability
+
+## Ragged evidence

@@ -1,0 +1,14 @@
+{
+  "hash": "715b7b713ca756bc9a8fd6f63b3a03e1",
+  "result": {
+    "markdown": "# Evidence {#sec-evidence}\n\n\n\n\n\n## Triangulation\n\n\n::: {.cell}\n\n```{.r .cell-code}\nrnorm(5)\n```\n\n::: {.cell-output .cell-output-stdout}\n\n```\n[1] -0.7151 -0.8504  0.7125 -0.6134 -0.3643\n```\n\n\n:::\n:::\n\n\n## Generalization and transportability\n\n## Ragged evidence\n",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}

@@ -1,0 +1,11 @@
+# Sensitivity analysis  {#sec-sensitivity}
+
+## Quantitative bias analyses
+
+{{< include 00-setup.qmd >}}
+
+```{r}
+rnorm(5)
+```
+
+## Tipping point analyses
