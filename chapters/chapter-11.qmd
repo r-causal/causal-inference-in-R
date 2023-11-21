@@ -503,330 +503,221 @@ The ATU weight is estimated by:
 
 $$w_{ATU} = \frac{X(1-p)}{p}+ (1-X)$$ Let's add the ATU weights to the `seven_dwarfs_wts` data frame and look at their distribution.
 
-```{r}
-#| label: fig-sd-atu-hist
-#| fig.cap : >
-#|   A histogram of the average treatment effect among the unexposed (ATU) weights. The range of the ATU weights in this example is very similar to the ATE weights.
-seven_dwarfs_wts <- seven_dwarfs_wts |>
-  mutate(w_atu = wt_atu(.fitted, park_extra_magic_morning))
-
-ggplot(seven_dwarfs_wts, aes(w_atu)) +
-  geom_histogram(bins = 50)
-```
-
-The distribution of the weights in @fig-sd-atu-hist weights looks very similar to what we saw with the ATE weights---several around 1, with a long tail.
-These weights will be 1 for all observations in the unexposed group; they can range from 0 to infinity for the exposed group.
-Because we have more observations in our unexposed group, our exposed observations are upweighted to match their distribution.
-
-Now let's take a look at the weighted table.
+When fitting an outcome model on matched data sets, we can simply subset the original data to only those who were matched and then fit a model on these data as we would otherwise. For example, re-performing the matching as we did in @sec-using-ps, we can extract the matched observations in a dataset called `matched_data` as follows.
 
 ```{r}
-#| label: tbl-weighted-atu
-#| tbl-cap: A descriptive table of Extra Magic Morning hours weighted by the Average Treatment Effect among the Unexposed Weights. This table shows the distributions of these variables in the psuedopopulation created by these weights.
-
-seven_dwarfs_svy <- svydesign(
-  ids = ~1,
-  data = seven_dwarfs_wts,
-  weights = ~w_atu
-)
-tbl_svysummary(
-  seven_dwarfs_svy,
-  by = park_extra_magic_morning,
-  include = c(park_ticket_season, park_close, park_temperature_high)
-) |>
-  add_overall(last = TRUE)
-```
-
-Now the exposed column of @tbl-weighted-atu is weighted to match the unexposed column of the unweighted table.
-
-We can again create a mirrored histogram to observe the weighted psuedopopulation.
-
-```{r}
-#| label: fig-sd-mirror-hist-atu
-#| fig.cap: >
-#|   A mirrored histogram of the distribution of propensity scores between exposure groups. The dark bars represent the unweighted distribution, and the colored bars represent the distribution weighted by the average treatment effect among the unexposed (ATU) weight.
-ggplot(seven_dwarfs_wts, aes(.fitted, group = park_extra_magic_morning)) +
-  geom_mirror_histogram(bins = 50) +
-  geom_mirror_histogram(
-    aes(fill = park_extra_magic_morning, weight = w_atu),
-    bins = 50,
-    alpha = 0.5
-  ) +
-  scale_y_continuous(labels = abs) +
-  labs(
-    x = "propensity score",
-    fill = "Extra Magic Morning"
-  )
-```
-
-The weights for the unexposed days are all 1, so the distribution of the propensity scores for this group exactly overlaps the weighted pseudopopulation in orange.
-The blue bars indicate that the exposed population is largely upweighted to match the unexposed distribution.
-
-### Average treatment effect among the evenly matchable
-
-The target population to estimate the average treatment effect among the evenly matchable (ATM) is the evenly matchable.
-This causal estimand conditions on those deemed "evenly matchable" by some distance metric.
-
-$$E[Y(1) - Y(0) | M_d = 1]$$
-
-Here $d$ denotes a distance measure, and $M_d=1$ indicates that a unit is evenly matchable under that distance measure.[@samuels2017aspects; @d2018improving] Example research questions where the ATM is of interest could include "Should those at clinical equipoise receive the exposure?" [@greifer2021choosing]
-
-The ATM is a common target estimand when using matching.
-Here, some exposed observations are "matched" to control observations, however some observations in both groups may be discarded.
-This is often done via a "caliper", where observations are only matched if they fall within a pre-specified caliper distance of each other.
-Alternatively, the ATM can be estimated via weighting.
-The ATM weight is estimated by:
-
-$$w_{ATM} = \frac{\min \{p, 1-p\}}{Xp + (1-X)(1-p)}$$
-
-Let's add the ATM weights to the `seven_dwarfs_wts` data frame and look at their distribution.
-
-```{r}
-#| label: fig-sd-atm-hist
-#| fig.cap: >
-#|   A histogram of the average treatment effect among the evenly matchable (ATM) weights for whether or not a day had extra magic hours. ATM weights can range from 0 to 1, so they are always stable.
-seven_dwarfs_wts <- seven_dwarfs_wts |>
-  mutate(w_atm = wt_atm(.fitted, park_extra_magic_morning))
-
-ggplot(seven_dwarfs_wts, aes(w_atm)) +
-  geom_histogram(bins = 50)
-```
-
-The distribution of the weights in @fig-sd-atm-hist looks very similar to what we saw with the ATT weights.
-That is because, in this particular sample, there are many more unexposed observations compared to exposed ones.
-These weights have the nice property that they range from 0 to 1, making them *always* stable, regardless of the imbalance between exposure groups.
-
-Now let's take a look at the weighted table.
-
-```{r}
-#| label: tbl-weighted-atm
-#| tbl-cap: A descriptive table of Extra Magic Morning hours weighted by the Average Treatment Effect among the Evenly Matchable Weights. This table shows the distributions of these variables in the psuedopopulation created by these weights.
-
-seven_dwarfs_svy <- svydesign(
-  ids = ~1,
-  data = seven_dwarfs_wts,
-  weights = ~w_atm
-)
-tbl_svysummary(
-  seven_dwarfs_svy,
-  by = park_extra_magic_morning,
-  include = c(park_ticket_season, park_close, park_temperature_high)
-) |>
-  add_overall(last = TRUE)
-```
-
-In this particular sample, the ATM weights resemble the ATT weights, so this table looks similar to the ATT weighted table.
-This similarity is not guaranteed, and the ATM pseudopopulation can look different from the overall, exposed, and unexposed unweighted populations.
-It's thus essential to examine the weighted table when using ATM weights to understand what population inference will ultimately be drawn on.
-
-We can again create a mirrored histogram to observe the ATM weighted psuedopopulation.
-
-```{r}
-#| label: fig-sd-mirror-hist-atm
-#| fig.cap: >
-#|   A mirrored histogram of the distribution of propensity scores between exposure groups. The dark bars represent the unweighted distribution, and the colored bars represent the distribution weighted by the average treatment effect among the evenly matchable (ATM) weight.
-ggplot(seven_dwarfs_wts, aes(.fitted, group = park_extra_magic_morning)) +
-  geom_mirror_histogram(bins = 50) +
-  geom_mirror_histogram(
-    aes(fill = park_extra_magic_morning, weight = w_atm),
-    bins = 50,
-    alpha = 0.5
-  ) +
-  scale_y_continuous(labels = abs) +
-  labs(
-    x = "propensity score",
-    fill = "Extra Magic Morning"
-  )
-```
-
-Again, the ATM weights are bounded by 0 and 1, meaning that all observations will be *down weighted*.
-This removes the potential for finite sample bias due to large weights in small samples and has improved variance properties.
-
-### Average treatment effect among the overlap population
-
-The target population to estimate the average treatment effect among the overlap population (ATO) is the overlap -- this is very similar to the "even matchable" from above.
-Example research questions where the ATO is of interest are the same as those for the ATM, such as "Should those at clinical equipoise receive the exposure?" [@greifer2021choosing]
-
-These weights, again, are pretty similar to the ATM weights but are slightly attenuated, yielding improved variance properties.
-
-The ATO weight is estimated by:
-
-$$w_{ATO} = X(1-p) + (1-X)p$$
-
-Let's add the ATO weights to the `seven_dwarfs_wts` data frame and look at their distribution.
-
-```{r}
-#| label: fig-sd-ato-hist
-#| fig.cap: >
-#|   A histogram of the average treatment effect among the overlap population (ATO) weights for whether or not a day had extra magic hours. Like ATM weights, ATO weights can range from 0 to 1, so they are always stable. ATO weights also have improved variance properties compared to the ATM weights.
-seven_dwarfs_wts <- seven_dwarfs_wts |>
-  mutate(w_ato = wt_ato(.fitted, park_extra_magic_morning))
-
-ggplot(seven_dwarfs_wts, aes(w_ato)) +
-  geom_histogram(bins = 50)
-```
-
-Like the ATM weights, the ATO weights are bounded by 0 and 1, making them more stable than the ATE, ATT, and ATU, regardless of the exposed and unexposed imbalance.
-
-::: {.callout-warning}
-## Finite sample bias - revisited
-
-Let's revisit our finite sample bias simulation, adding in the ATO weights to examine whether they are impacted by this potential for bias.
-
-```{r}
-#| label: sim-finite-sample-bias-2
-#| warning: false
 #| message: false
-#| cache: true
-sim <- function(n) {
-  ## create a simulated dataset
-  finite_sample <- tibble(
-    z = rnorm(n),
-    x = case_when(
-      0.5 + z + rnorm(n) > 0 ~ 1,
-      TRUE ~ 0
-    ),
-    y = z + rnorm(n)
-  )
-  finite_sample_wts <- glm(
-    x ~ z,
-    data = finite_sample, family = binomial("probit")
-  ) |>
-    augment(newdata = finite_sample, type.predict = "response") |>
-    mutate(
-      wts_ate = wt_ate(.fitted, x),
-      wts_ato = wt_ato(.fitted, x)
-    )
-  bias <- finite_sample_wts |>
-    summarize(
-      effect_ate = sum(y * x * wts_ate) / sum(x * wts_ate) -
-        sum(y * (1 - x) * wts_ate) / sum((1 - x) * wts_ate),
-      effect_ato = sum(y * x * wts_ato) / sum(x * wts_ato) -
-        sum(y * (1 - x) * wts_ato) / sum((1 - x) * wts_ato)
-    )
-  tibble(
-    n = n,
-    bias = c(bias$effect_ate, bias$effect_ato),
-    weight = c("ATE", "ATO")
-  )
-}
+#| warning: false
+library(broom)
+library(touringplans)
+library(MatchIt)
 
-## Examine 5 different sample sizes, simulate each 1000 times
-set.seed(1)
-finite_sample_sims <- map_df(rep(c(50, 100, 500, 1000, 5000, 10000),
-  each = 1000
-), sim)
+seven_dwarfs_9 <- seven_dwarfs_train_2018 |> 
+  filter(wait_hour == 9) 
 
-bias <- finite_sample_sims %>%
-  group_by(n, weight) %>%
-  summarise(bias = mean(bias))
-```
-
-Let's plot our results:
-
-```{r}
-#| label: fig-finite-sample-bias-2
-#| fig-cap: "Finite sample bias with ATE weights (orange) and ATO weights (blue) created using correctly specified propensity score model, varying the sample size from n = 50 to n = 10,000"
-ggplot(bias, aes(x = n, y = bias, color = weight)) +
-  geom_point() +
-  geom_line() +
-  geom_hline(yintercept = 0, lty = 2)
-```
-
-Notice here the estimate using the ATO weights is almost immediately unbiased, even in fairly small samples.
-:::
-
-Now let's take a look at the weighted table.
-
-```{r}
-#| label: tbl-weighted-ato
-#| tbl-cap: A descriptive table of Extra Magic Morning hours weighted by the Average Treatment Effect among the Overlap Population Weights. This table shows the distributions of these variables in the psuedopopulation created by these weights.
-
-seven_dwarfs_svy <- svydesign(
-  ids = ~1,
-  data = seven_dwarfs_wts,
-  weights = ~w_ato
+m <- matchit(
+  park_extra_magic_morning ~ park_ticket_season + park_close + park_temperature_high,
+  data = seven_dwarfs_9
 )
-tbl_svysummary(
-  seven_dwarfs_svy,
-  by = park_extra_magic_morning,
-  include = c(park_ticket_season, park_close, park_temperature_high)
-) |>
-  add_overall(last = TRUE)
+matched_data <- get_matches(m)
 ```
 
-Like the ATM weights, the ATO pseudopopulation may not resemble the overall, exposed, or unexposed unweighted populations, so it is essential to examine these weighted tables to understand the population on whom we will draw inferences.
-
-We can again create a mirrored histogram to observe the ATO weighted psuedopopulation.
+We can then fit the outcome model on this data. For this analysis, we are interested in the impact of extra magic morning hours on the average posted wait time between 9 and 10am. The linear model below will estimate this in the matched cohort.
 
 ```{r}
-#| label: fig-sd-mirror-hist-ato
-#| fig.cap: >
-#|   A mirrored histogram of the distribution of propensity scores between exposure groups. The dark bars represent the unweighted distribution, and the colored bars represent the distribution weighted by the average treatment effect among the overlap population (ATO) weight.
-ggplot(seven_dwarfs_wts, aes(.fitted, group = park_extra_magic_morning)) +
-  geom_mirror_histogram(bins = 50) +
-  geom_mirror_histogram(
-    aes(fill = park_extra_magic_morning, weight = w_ato),
-    bins = 50,
-    alpha = 0.5
-  ) +
-  scale_y_continuous(labels = abs) +
-  labs(
-    x = "propensity score",
-    fill = "Extra Magic Morning"
-  )
+lm(wait_minutes_posted_avg ~ park_extra_magic_morning, data = matched_data) |>
+  tidy(conf.int = TRUE)
 ```
 
-@fig-sd-mirror-hist-ato looks similar to the ATM pseudopopulation, with slight attenuation, as evidenced by the increased down weighting in the exposed population.
-We prefer using the ATO weights when the overlap (or evenly matchable) population is the target, as they have improved variance properties.
-Another benefit is that any variables included in the propensity score model (if fit via logistic regression) will be perfectly balanced on the mean.
-We will discuss this further in @sec-eval-ps-model.
+Recall that by default `{MatchIt}` estimates an average treatment effect among the treated. This means among days that have extra magic hours, the expected impact of having extra magic hours on the average posted wait time between 9 and 10am is 7.9 minutes (95% CI: 1.2-14.5). 
 
-## Choosing estimands
+## Using weights in outcome models
 
-Several factors need to be considered when choosing an estimand for a given analysis.
-First an foremost, the research question at hand will drive this decision.
-For example, returing to the Touring Plans data, suppose Disney was interested in assessing whether they should add additional extra magic hours on days that don't currently have them---here, the ATU will be the estimand of interest.
-Other considerations include the available sample size and the distribution of the exposed and unexposed observations (i.e. might finite sample bias be an issue?).
-Below is a table summarizing the estimands and methods for estimating them (including R functions and example code), along with sample questions extended from Table 2 in @greifer2021choosing.
+Now let's use propensity score weights to estimate this same estimand. We will use the ATT weights so the analysis matches that for matching above.
 
-+----------+----------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------+-----------------------------------------------+------------------------+
-| Estimand | Target population                | Example Research Question                                                                                                                                  | Matching Method                               | Weighting Method       |
-+==========+==================================+============================================================================================================================================================+===============================================+========================+
-| ATE      | Full population                  | Should we decide whether to have extra magic hours *all* mornings to change the wait time for Seven Dwarfs Mine Train between 5-6pm?                       | Full matching                                 | ATE Weights            |
-|          |                                  |                                                                                                                                                            |                                               |                        |
-|          |                                  | Should a specific policy be applied to all eligible observations?                                                                                          | Fine stratification                           | `propensity::wt_ate()` |
-|          |                                  |                                                                                                                                                            |                                               |                        |
-|          |                                  |                                                                                                                                                            | `MatchIt::matchit(…, estimand = "ATE")`       | |                      |
-+----------+----------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------+-----------------------------------------------+------------------------+
-| ATT      | Exposed (treated) observations   | Should we stop extra magic hours to change the wait time for Seven Dwarfs Mine Train between 5-6pm?                                                        | Pair matching without a caliper               | ATT weights            |
-|          |                                  |                                                                                                                                                            |                                               |                        |
-|          |                                  | Should we stop our marketing campaign to those currently receiving it?                                                                                     | Full matching                                 | `propensity::wt_att()` |
-|          |                                  |                                                                                                                                                            |                                               |                        |
-|          |                                  | Should medical providers stop recommending treatment for those currently receiving it?                                                                     | Fine stratification                           |                        |
-|          |                                  |                                                                                                                                                            |                                               |                        |
-|          |                                  |                                                                                                                                                            | `MatchIt::matchit(…, estimand = "ATT")`       |                        |
-+----------+----------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------+-----------------------------------------------+------------------------+
-| ATU      | Unexposed (control) observations | Should we add extra magic hours for all days to change the wait time for Seven Dwarfs Mine Train between 5-6pm?                                            | Pair matching without a caliper               | ATU weights            |
-|          |                                  |                                                                                                                                                            |                                               |                        |
-|          |                                  | Should we extend our marketing campaign to those not receiving it?                                                                                         | Full matching                                 | `propensity::wt_atu()` |
-|          |                                  |                                                                                                                                                            |                                               |                        |
-|          |                                  | Should medical providers extend treatment to those not currently receiving it?                                                                             | Fine stratification                           |                        |
-|          |                                  |                                                                                                                                                            |                                               |                        |
-|          |                                  |                                                                                                                                                            | `MatchIt::matchit(…, estimand = "ATC")`       |                        |
-+----------+----------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------+-----------------------------------------------+------------------------+
-| ATM      | Evenly matchable                 | Are there some days we should change whether we are offering extra magic hours in order to change the wait time for Seven Dwarfs Mine Train between 5-6pm? | Caliper matching                              | ATM weights            |
-|          |                                  |                                                                                                                                                            |                                               |                        |
-|          |                                  | Is there an effect of the exposure for some observations?                                                                                                  | `MatchIt::matchit(…, caliper = 0.1)`          | `propensity::wt_atm()` |
-|          |                                  |                                                                                                                                                            |                                               |                        |
-|          |                                  | Should those at clinical equipoise receive treatment?                                                                                                      | Coarsened exact matching                      |                        |
-|          |                                  |                                                                                                                                                            |                                               |                        |
-|          |                                  |                                                                                                                                                            | Cardinality matching                          |                        |
-|          |                                  |                                                                                                                                                            |                                               |                        |
-|          |                                  |                                                                                                                                                            | `MatchIt::matchit(…, method = "cardinality")` |                        |
-+----------+----------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------+-----------------------------------------------+------------------------+
-| ATO      | Overlap population               | Same as ATM                                                                                                                                                |                                               | ATO weights            |
-|          |                                  |                                                                                                                                                            |                                               |                        |
-|          |                                  |                                                                                                                                                            |                                               | `propensity::wt_ato()` |
-+----------+----------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------+-----------------------------------------------+------------------------+
+```{r}
+#| message: false
+#| warning: false
+library(propensity)
+
+seven_dwarfs_9_with_ps <-
+  glm(
+    park_extra_magic_morning ~ park_ticket_season + park_close + park_temperature_high,
+    data = seven_dwarfs_9,
+    family = binomial()
+  ) |>
+  augment(type.predict = "response", data = seven_dwarfs_9)
+seven_dwarfs_9_with_wt <- seven_dwarfs_9_with_ps |>
+  mutate(w_att = wt_att(.fitted, park_extra_magic_morning))
+```
+
+We can fit a *weighted* outcome model by using the `weights` argument. 
+
+```{r}
+lm(wait_minutes_posted_avg ~ park_extra_magic_morning, 
+   data = seven_dwarfs_9_with_wt,
+   weights = w_att) |>
+  tidy()
+```
+
+Using weighting, we estimate that among days that have extra magic hours, the expected impact of having extra magic hours on the average posted wait time between 9 and 10am is 6.2 minutes. 
+While this approach will get us the desired estimate for the point estimate, the default output using the `lm` function for the uncertainty (the standard errors and confidence intervals) are not correct.
+
+
+## Estimating uncertainty
+
+There are three ways to estimate the uncertainty:
+
+1. A bootstrap
+2. A sandwich estimator that only takes into account the outcome model
+3. A sandwich estimator that takes into account the propensity score model
+
+The first option can be computationally intensive, but should get you the correct estimates.
+The second option is computationally the easiest, but tends to overestimate the variability. There are not many current solutions in R (aside from coding it up yourself) for the third; however, the `{PSW}` package will do this. 
+
+### The bootstrap
+
+1. Create a function to run your analysis once on a sample of your data
+
+```{r}
+fit_ipw <- function(split, ...) {
+  .df <- analysis(split)
+  
+  # fit propensity score model
+  propensity_model <- glm(
+    park_extra_magic_morning ~ park_ticket_season + park_close + park_temperature_high,
+    data = seven_dwarfs_9,
+    family = binomial()
+  ) 
+  
+  # calculate inverse probability weights
+  .df <- propensity_model |>
+    augment(type.predict = "response", data = .df) |>
+    mutate(wts = wt_att(.fitted, 
+                        park_extra_magic_morning,
+                        exposure_type = "binary"))
+  
+  # fit correctly bootstrapped ipw model
+  lm(wait_minutes_posted_avg ~ park_extra_magic_morning, 
+     data = .df, weights = wts) |>
+    tidy()
+}
+```
+
+
+2. Use {rsample} to bootstrap our causal effect
+
+```{r}
+#| message: false
+#| warning: false
+library(rsample)
+
+# fit ipw model to bootstrapped samples
+bootstrapped_seven_dwarfs <- bootstraps(
+  seven_dwarfs_9, 
+  times = 1000, 
+  apparent = TRUE
+)
+
+ipw_results <- bootstrapped_seven_dwarfs |> 
+  mutate(boot_fits = map(splits, fit_ipw)) 
+
+ipw_results
+```
+
+
+Let's look at the results.
+
+```{r}
+ipw_results |>
+  mutate(
+    estimate = map_dbl(
+      boot_fits,
+      \(.fit) .fit |>
+        filter(term == "park_extra_magic_morning") |>
+        pull(estimate)
+    )
+  ) |>
+  ggplot(aes(estimate)) +
+  geom_histogram(bins = 30, fill = "#D55E00FF", color = "white", alpha = 0.8) + 
+  theme_minimal()
+```
+
+
+3. Pull out the causal effect
+
+```{r}
+# get t-based CIs
+boot_estimate <- int_t(ipw_results, boot_fits) |> 
+  filter(term == "park_extra_magic_morning")
+boot_estimate
+```
+
+We estimate that among days that have extra magic hours, the expected impact of having extra magic hours on the average posted wait time between 9 and 10am is `r round(boot_estimate$.estimate, 1)` minutes, 95% CI (`r round(boot_estimate$.lower, 1)`, `r round(boot_estimate$.upper, 1)`). 
+
+### The outcome model sandwich
+
+There are two ways to get the sandwich estimator. The first is to use the same weighted outcome model as above along with the `{sandwich}` package. Using the `sandwich` function, we can get the robust estimate for the variance for the parameter of interest, as shown below.
+
+```{r}
+#| message: false
+#| warning: false
+library(sandwich)
+weighted_mod <- lm(wait_minutes_posted_avg ~ park_extra_magic_morning, 
+   data = seven_dwarfs_9_with_wt,
+   weights = w_att) 
+
+sandwich(weighted_mod)
+```
+
+Here, our robust variance estimate is `r round(sandwich(weighted_mod)[2,2], 3)`. We can then use this to construct a robust confidence interval.
+
+```{r}
+robust_var <- sandwich(weighted_mod)[2, 2]
+point_est <- coef(weighted_mod)[2]
+lb <- point_est - 1.96 * sqrt(robust_var)
+ub <- point_est + 1.96 * sqrt(robust_var)
+lb
+ub
+```
+We estimate that among days that have extra magic hours, the expected impact of having extra magic hours on the average posted wait time between 9 and 10am is `r round(point_est, 1)` minutes, 95% CI (`r round(lb, 1)`, `r round(ub, 1)`). 
+
+Alternatively, we could fit the model using the `{survey}` package. To do this, we need to create a design object, like we did when fitting weighted tables.
+
+```{r}
+#| message: false
+#| warning: false
+library(survey)
+
+des <- svydesign(
+  ids = ~1,
+  weights = ~w_att,
+  data = seven_dwarfs_9_with_wt
+)
+```
+
+Then we can use `svyglm` to fit the outcome model.
+
+```{r}
+svyglm(wait_minutes_posted_avg ~ park_extra_magic_morning, des) |>
+  tidy(conf.int = TRUE)
+```
+### Sandwich estimator that takes into account the propensity score model
+
+The correct sandwich estimator will also take into account the propensity score model. The `{PSW}` will allow us to do this. This package has some quirks, for example it doesn't work well with categorical variables, so we need to create dummy variables for `park_ticket_season` to pass into the model. *Actually, the code below isn't working because it seems there is a bug in the package. Stay tuned!*
+
+```{r}
+#| eval: false
+library(PSW)
+
+seven_dwarfs_9 <- seven_dwarfs_9 |>
+  mutate(park_ticket_season_regular = ifelse(park_ticket_season == "regular", 1, 0),
+         park_ticket_season_value = ifelse(park_ticket_season == "value", 1, 0)
+  )
+psw(data = seven_dwarfs_9, 
+    form.ps = "park_extra_magic_morning ~ park_ticket_season_regular + park_ticket_season_value + park_close + park_temperature_high",
+    weight = "ATT",
+    wt = TRUE,
+    out.var = "wait_minutes_posted_avg")
+```
 
