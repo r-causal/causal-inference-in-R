@@ -1,4 +1,4 @@
-# Evaluating your propensity score model {#sec-eval-ps-model}
+# Using the propensity score {#sec-using-ps}
 
 {{< include 00-setup.qmd >}}
 

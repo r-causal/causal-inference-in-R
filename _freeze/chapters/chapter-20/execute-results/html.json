@@ -1,7 +1,7 @@
 {
-  "hash": "e048fceeeb7a0c5e7ada95e14bb9e9e4",
+  "hash": "35e28ba55bdcd7229ce521d2f04664ff",
   "result": {
-    "markdown": "# Other approaches to causal inference\n\n\n\n\n\n## Targeted Learning\n\n\n::: {.cell}\n\n```{.r .cell-code}\nrnorm(5)\n```\n\n::: {.cell-output .cell-output-stdout}\n```\n[1] 0.9632 1.2420 0.6826 1.3024 0.6905\n```\n:::\n:::\n\n\n## Instrumental variable analysis\n\n## Regression discontinuity\n\n## Difference-in-Difference\n",
+    "markdown": "# Causal mediation analysis {#sec-mediation}\n\n\n\n\n\n## Estimating direct effects\n\n\n::: {.cell}\n\n```{.r .cell-code}\nrnorm(5)\n```\n\n::: {.cell-output .cell-output-stdout}\n\n```\n[1] -1.2786 -0.4016  1.0561 -1.6587 -0.8155\n```\n\n\n:::\n:::\n\n\n## Estimating indirect effects\n\n## Allowing for interactions\n",
     "supporting": [],
     "filters": [
       "rmarkdown/pagebreak.lua"

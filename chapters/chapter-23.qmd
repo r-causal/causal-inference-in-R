@@ -1,0 +1,13 @@
+# Instrumental variables and friends {#sec-iv-friends}
+
+{{< include 00-setup.qmd >}}
+
+## Instrumental variable analysis
+
+```{r}
+rnorm(5)
+```
+
+## Regression discontinuity
+
+## Difference-in-Difference
