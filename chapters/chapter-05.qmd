@@ -572,7 +572,7 @@ pod_dag |>
 ```
 
 For causal DAGs, the time-ordered layout algorithm is often best, which we can specify with `time_ordered_coords()` or `layout = "time_ordered"`.
-We'll discuss time ordering in greater detail in @sec-time-ordered.
+We'll discuss time ordering in greater detail below.
 Earlier, we explicitly told ggdag which variables were at which time points, but we don't need to.
 Notice, though, that the time ordering algorithm puts `podcast` and `exam` at the same time point since one doesn't cause another (and thus predate it).
 We know that's not the case: listening to the podcast happened before taking the exam.
@@ -1244,7 +1244,7 @@ The reverse is also true: something might be unique to the target population.
 The use of tobacco in North America several centuries ago was unique among the world population, even though ceremonial tobacco use was quite different from modern recreational use.
 Many changes won't happen as dramatically as across centuries, but sometimes, they do, e.g., if regulation in one country effectively eliminates the population's exposure to something.
 
-### Order nodes by time {#sec-time-ordered}
+### Order nodes by time
 
 As discussed earlier, we recommend ordering your variables by time, either left-to-right or up-to-down.
 There are two reasons for this.
