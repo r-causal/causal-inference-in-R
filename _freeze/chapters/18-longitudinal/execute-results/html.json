@@ -1,0 +1,14 @@
+{
+  "hash": "b9dc2626f7c608a76f7c7caba0addd09",
+  "result": {
+    "markdown": "# Causal inference across time {#sec-longitudinal}\n\n\n\n\n\n## Loss to follow-up\n\n\n::: {.cell}\n\n```{.r .cell-code}\nrnorm(5)\n```\n\n::: {.cell-output .cell-output-stdout}\n\n```\n[1] -0.001399  0.308378 -1.366570 -2.147339 -0.179935\n```\n\n\n:::\n:::\n\n\n## Time-varying confounding and exposures\n\n",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}

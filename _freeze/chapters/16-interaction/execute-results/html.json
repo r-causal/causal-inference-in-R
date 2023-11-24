@@ -1,0 +1,14 @@
+{
+  "hash": "82c9d5ea84ac2034adae88cdf29a30c5",
+  "result": {
+    "markdown": "# Interaction {#sec-interaction}\n\n\n\n\n\n## Functional form, hetereogenous effects, and joint causes\n\n## Fitting interaction terms in causal models\n\n<!-- Maybe also: -->\n<!-- ## type ii selection bias, induced by EM [@lu2022] -->\n",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}

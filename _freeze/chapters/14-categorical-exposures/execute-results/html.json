@@ -1,0 +1,14 @@
+{
+  "hash": "1d5c11e4eb1e56d478902dc918373b89",
+  "result": {
+    "markdown": "# Categorical exposures\n\n\n\n\n\n## Calculating propensity scores for categorical exposures\n\n\n::: {.cell}\n\n```{.r .cell-code}\nrnorm(5)\n```\n\n::: {.cell-output .cell-output-stdout}\n\n```\n[1]  0.1319 -0.2740 -0.9414 -0.1424  0.8710\n```\n\n\n:::\n:::\n\n\n## Diagnostics with many categories\n\n## Fitting the outcome model again\n",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}

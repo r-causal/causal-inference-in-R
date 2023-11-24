@@ -1,0 +1,14 @@
+{
+  "hash": "598568e77bf613e84a9b4fc54d8c853e",
+  "result": {
+    "markdown": "# G-computation {#sec-g-comp}\n\n\n\n\n\n## The Parametric G-Formula\n\n\n::: {.cell}\n\n```{.r .cell-code}\nrnorm(5)\n```\n\n::: {.cell-output .cell-output-stdout}\n\n```\n[1]  1.1111789  0.2518857  0.0004088 -0.5343476\n[5] -1.0941076\n```\n\n\n:::\n:::\n\n\n## Calculating estimates with G-Computation\n\n## The Natural Course\n",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}
