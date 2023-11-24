@@ -1,4 +1,4 @@
-# Causal Inference is not (just) a statistical problem {#sec-quartets}
+# Causal inference is not (just) a statistical problem {#sec-quartets}
 
 {{< include 00-setup.qmd >}}
 
