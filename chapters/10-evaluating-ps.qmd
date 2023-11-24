@@ -57,7 +57,7 @@ Now, using the `tidy_smd` function, we can examine the standardized mean differe
 
 ```{r}
 library(halfmoon)
-smds <- 
+smds <-
   seven_dwarfs_9_with_wt |>
   mutate(park_close = as.numeric(park_close)) |>
   tidy_smd(
@@ -82,12 +82,12 @@ Let's start by visualizing these standardized mean differences. To do so, we lik
 ggplot(
   data = smds,
   aes(
-    x = abs(smd), 
-    y = variable, 
-    group = method, 
+    x = abs(smd),
+    y = variable,
+    group = method,
     color = method
   )
-) +  
+) +
   geom_love()
 ```
 
@@ -100,35 +100,39 @@ As mentioned above, one issue with the standardized mean differences is they onl
 #| label: fig-boxplot
 #| fig.cap: "Unweighted boxplot showing the difference in historical high temperature between days that had extra magic hours and those that did not."
 ggplot(
-  seven_dwarfs_9_with_wt, 
+  seven_dwarfs_9_with_wt,
   aes(
-    x = factor(park_extra_magic_morning), 
+    x = factor(park_extra_magic_morning),
     y = park_temperature_high,
     group = park_extra_magic_morning
-    )
-) + 
-  geom_boxplot(outlier.color = NA) + 
-  geom_jitter() + 
-  labs(x = "Extra magic morning",
-       y = "Temperature high")
+  )
+) +
+  geom_boxplot(outlier.color = NA) +
+  geom_jitter() +
+  labs(
+    x = "Extra magic morning",
+    y = "Temperature high"
+  )
 ```
 
 ```{r}
 #| label: fig-weighted-boxplot
 #| fig.cap: "Weighted boxplot showing the difference in historical high temperature between days that had extra magic hours and those that did not after incorporating the propensity score weight (ATE weight)."
 ggplot(
-  seven_dwarfs_9_with_wt, 
+  seven_dwarfs_9_with_wt,
   aes(
-    x = factor(park_extra_magic_morning), 
+    x = factor(park_extra_magic_morning),
     y = park_temperature_high,
     group = park_extra_magic_morning,
     weight = w_ate
-    )
-) + 
-  geom_boxplot(outlier.color = NA) + 
-  geom_jitter() + 
-  labs(x = "Extra magic morning",
-       y = "Historic temperature high")
+  )
+) +
+  geom_boxplot(outlier.color = NA) +
+  geom_jitter() +
+  labs(
+    x = "Extra magic morning",
+    y = "Historic temperature high"
+  )
 ```
 
 Similarly, we can also examine the empirical cumulative distribution function (eCDF) for the confounder stratified by each exposure group. The unweighted eCDF can be visualized using `geom_ecdf`
@@ -137,17 +141,23 @@ Similarly, we can also examine the empirical cumulative distribution function (e
 #| label: fig-ecdf
 #| fig.cap: "Unweighted eCDF examining the difference in distribution for historic high temperature among days that had extra magic morning hours (purple) compared to those that did not (green)."
 
-ggplot(seven_dwarfs_9_with_wt, 
-       aes(x = park_temperature_high,
-           color = factor(park_extra_magic_morning))) + 
-  geom_ecdf() + 
+ggplot(
+  seven_dwarfs_9_with_wt,
+  aes(
+    x = park_temperature_high,
+    color = factor(park_extra_magic_morning)
+  )
+) +
+  geom_ecdf() +
   scale_color_manual(
     "Extra Magic Morning",
     values = c("#5154B8", "#5DB854"),
     labels = c("Yes", "No")
-  ) + 
-  labs(x = "Historic temperature high",
-       y = "Proportion <= x")
+  ) +
+  labs(
+    x = "Historic temperature high",
+    y = "Proportion <= x"
+  )
 ```
 
 The `{halfmoon}` package allows for the additional `weight` argument to be passed to `geom_ecdf` to display a weighted eCDF plot.
@@ -156,17 +166,23 @@ The `{halfmoon}` package allows for the additional `weight` argument to be passe
 #| label: fig-weighted-ecdf
 #| fig.cap: "Weighted eCDF examining the difference in distribution for historic high temperature among days that had extra magic morning hours (purple) compared to those that did not (green) after incorporating the propensity score weight (ATE)."
 
-ggplot(seven_dwarfs_9_with_wt, 
-       aes(x = park_temperature_high,
-           color = factor(park_extra_magic_morning))) + 
-  geom_ecdf(aes(weights = w_ate)) + 
+ggplot(
+  seven_dwarfs_9_with_wt,
+  aes(
+    x = park_temperature_high,
+    color = factor(park_extra_magic_morning)
+  )
+) +
+  geom_ecdf(aes(weights = w_ate)) +
   scale_color_manual(
     "Extra Magic Morning",
     values = c("#5154B8", "#5DB854"),
     labels = c("Yes", "No")
-  ) + 
-  labs(x = "Historic temperature high",
-       y = "Proportion <= x")
+  ) +
+  labs(
+    x = "Historic temperature high",
+    y = "Proportion <= x"
+  )
 ```
 
 Examining @fig-weighted-ecdf, we can notice a few things. First, compared to @fig-ecdf there is improvement in the overlap between the two distributions. In @fig-ecdf, the green line is almost always noticeably above the purple, whereas in @fig-weighted-ecdf the two lines appear to mostly overlap until we reach slightly above 80 degrees. After 80 degrees, the lines appear to diverge in the weighted plot. This is why it can be useful to examine the full distribution rather than a single summary measure. If we had just used the standardized mean difference, for example, we would have likely said these two groups are balanced and moved on. Looking at @fig-weighted-ecdf suggests that perhaps there is a non-linear relationship between the probability of having an extra magic morning and the historic high temperature. Let's try refitting our propensity score model using a natural spline. We can use the function `splines::ns` for this.
@@ -192,17 +208,23 @@ Now let's see how that impacts the weighted eCDF plot
 #| label: fig-weighted-ecdf-2
 #| fig.cap: "Weighted eCDF examining the difference in distribution for historic high temperature among days that had extra magic morning hours (purple) compared to those that did not (green) after incorporating the propensity score weight where historic high temperature was modeled flexibly with a spline."
 
-ggplot(seven_dwarfs_9_with_wt, 
-       aes(x = park_temperature_high,
-           color = factor(park_extra_magic_morning))) + 
-  geom_ecdf(aes(weights = w_ate)) + 
+ggplot(
+  seven_dwarfs_9_with_wt,
+  aes(
+    x = park_temperature_high,
+    color = factor(park_extra_magic_morning)
+  )
+) +
+  geom_ecdf(aes(weights = w_ate)) +
   scale_color_manual(
     "Extra Magic Morning",
     values = c("#5154B8", "#5DB854"),
     labels = c("Yes", "No")
-  ) + 
-  labs(x = "Historic temperature high",
-       y = "Proportion <= x")
+  ) +
+  labs(
+    x = "Historic temperature high",
+    y = "Proportion <= x"
+  )
 ```
 
 Now in @fig-weighted-ecdf-2 the lines appear to overlap across the whole space.
