@@ -1,0 +1,16 @@
+# Evidence {#sec-evidence}
+
+{{< include 00-setup.qmd >}}
+
+> "Circumstantial evidence is a very tricky thing. It may seem to point very straight to one thing, but if you shift your own point of view a little, you may find it pointing in an equally uncompromising manner to something entirely different”
+> --- Sherlock Holmes
+
+## Triangulation
+
+```{r}
+rnorm(5)
+```
+
+## Generalization and transportability
+
+## Ragged evidence

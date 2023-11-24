@@ -31,38 +31,38 @@ book:
     
     - part: Asking Causal Questions
       chapters: 
-      - chapters/chapter-01.qmd
-      - chapters/chapter-02.qmd
-      - chapters/chapter-03.qmd
-      - chapters/chapter-04.qmd
-      - chapters/chapter-05.qmd
-      - chapters/chapter-06.qmd
+      - chapters/01-causal-question.qmd
+      - chapters/02-whole-game.qmd
+      - chapters/03-counterfactuals.qmd
+      - chapters/04-target-trials-std-methods.qmd
+      - chapters/05-dags.qmd
+      - chapters/06-not-just-a-stats-problem.qmd
       
     - part: The Design Phase 
       chapters: 
-      - chapters/chapter-07.qmd
-      - chapters/chapter-08.qmd
-      - chapters/chapter-09.qmd
-      - chapters/chapter-10.qmd
+      - chapters/07-prep-data.qmd
+      - chapters/08-building-ps-models.qmd
+      - chapters/09-using-ps.qmd
+      - chapters/10-evaluating-ps.qmd
       
     - part: Estimating Causal Effects 
       chapters: 
-      - chapters/chapter-11.qmd
-      - chapters/chapter-12.qmd
-      - chapters/chapter-13.qmd
-      - chapters/chapter-14.qmd
-      - chapters/chapter-15.qmd
-      - chapters/chapter-16.qmd
-      - chapters/chapter-17.qmd
-      - chapters/chapter-18.qmd
-      - chapters/chapter-19.qmd
-      - chapters/chapter-20.qmd
-      - chapters/chapter-21.qmd
-      - chapters/chapter-22.qmd
-      - chapters/chapter-23.qmd
-      - chapters/chapter-24.qmd
+      - chapters/11-estimands.qmd
+      - chapters/12-outcome-model.qmd
+      - chapters/13-continuous-exposures.qmd
+      - chapters/14-categorical-exposures.qmd
+      - chapters/15-g-comp.qmd
+      - chapters/16-interaction.qmd
+      - chapters/17-missingness.qmd
+      - chapters/18-longitudinal.qmd
+      - chapters/19-survival.qmd
+      - chapters/20-mediation.qmd
+      - chapters/21-sensitivity.qmd
+      - chapters/22-machine-learning.qmd
+      - chapters/23-iv-and-friends.qmd
+      - chapters/24-evidence.qmd
       
-    - chapters/references-99.qmd
+    - chapters/99-references.qmd
       
 bibliography: citations.bib
 
