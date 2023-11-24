@@ -266,7 +266,8 @@ If we fit a propensity score model using the one confounder $Z$ and calculate th
 ## fit the propensity score model
 finite_sample_wts <- glm(
   x ~ z,
-  data = finite_sample, family = binomial("probit")
+  data = finite_sample,
+  family = binomial("probit")
 ) |>
   augment(newdata = finite_sample, type.predict = "response") |>
   mutate(wts = wt_ate(.fitted, x))
@@ -299,7 +300,8 @@ sim <- function(n) {
   )
   finite_sample_wts <- glm(
     x ~ z,
-    data = finite_sample, family = binomial("probit")
+    data = finite_sample,
+    family = binomial("probit")
   ) |>
     augment(newdata = finite_sample, type.predict = "response") |>
     mutate(wts = wt_ate(.fitted, x))
@@ -317,9 +319,13 @@ sim <- function(n) {
 
 ## Examine 5 different sample sizes, simulate each 1000 times
 set.seed(1)
-finite_sample_sims <- map_df(rep(c(50, 100, 500, 1000, 5000, 10000),
-  each = 1000
-), sim)
+finite_sample_sims <- map_df(
+  rep(
+    c(50, 100, 500, 1000, 5000, 10000),
+    each = 1000
+  ),
+  sim
+)
 
 bias <- finite_sample_sims %>%
   group_by(n) %>%
@@ -512,8 +518,8 @@ library(broom)
 library(touringplans)
 library(MatchIt)
 
-seven_dwarfs_9 <- seven_dwarfs_train_2018 |> 
-  filter(wait_hour == 9) 
+seven_dwarfs_9 <- seven_dwarfs_train_2018 |>
+  filter(wait_hour == 9)
 
 m <- matchit(
   park_extra_magic_morning ~ park_ticket_season + park_close + park_temperature_high,
@@ -554,9 +560,11 @@ seven_dwarfs_9_with_wt <- seven_dwarfs_9_with_ps |>
 We can fit a *weighted* outcome model by using the `weights` argument. 
 
 ```{r}
-lm(wait_minutes_posted_avg ~ park_extra_magic_morning, 
-   data = seven_dwarfs_9_with_wt,
-   weights = w_att) |>
+lm(
+  wait_minutes_posted_avg ~ park_extra_magic_morning,
+  data = seven_dwarfs_9_with_wt,
+  weights = w_att
+) |>
   tidy()
 ```
 
@@ -582,24 +590,29 @@ The second option is computationally the easiest, but tends to overestimate the 
 ```{r}
 fit_ipw <- function(split, ...) {
   .df <- analysis(split)
-  
+
   # fit propensity score model
   propensity_model <- glm(
     park_extra_magic_morning ~ park_ticket_season + park_close + park_temperature_high,
     data = seven_dwarfs_9,
     family = binomial()
-  ) 
-  
+  )
+
   # calculate inverse probability weights
   .df <- propensity_model |>
     augment(type.predict = "response", data = .df) |>
-    mutate(wts = wt_att(.fitted, 
-                        park_extra_magic_morning,
-                        exposure_type = "binary"))
-  
+    mutate(wts = wt_att(
+      .fitted,
+      park_extra_magic_morning,
+      exposure_type = "binary"
+    ))
+
   # fit correctly bootstrapped ipw model
-  lm(wait_minutes_posted_avg ~ park_extra_magic_morning, 
-     data = .df, weights = wts) |>
+  lm(
+    wait_minutes_posted_avg ~ park_extra_magic_morning,
+    data = .df,
+    weights = wts
+  ) |>
     tidy()
 }
 ```
@@ -614,13 +627,13 @@ library(rsample)
 
 # fit ipw model to bootstrapped samples
 bootstrapped_seven_dwarfs <- bootstraps(
-  seven_dwarfs_9, 
-  times = 1000, 
+  seven_dwarfs_9,
+  times = 1000,
   apparent = TRUE
 )
 
-ipw_results <- bootstrapped_seven_dwarfs |> 
-  mutate(boot_fits = map(splits, fit_ipw)) 
+ipw_results <- bootstrapped_seven_dwarfs |>
+  mutate(boot_fits = map(splits, fit_ipw))
 
 ipw_results
 ```
@@ -639,7 +652,7 @@ ipw_results |>
     )
   ) |>
   ggplot(aes(estimate)) +
-  geom_histogram(bins = 30, fill = "#D55E00FF", color = "white", alpha = 0.8) + 
+  geom_histogram(bins = 30, fill = "#D55E00FF", color = "white", alpha = 0.8) +
   theme_minimal()
 ```
 
@@ -648,7 +661,7 @@ ipw_results |>
 
 ```{r}
 # get t-based CIs
-boot_estimate <- int_t(ipw_results, boot_fits) |> 
+boot_estimate <- int_t(ipw_results, boot_fits) |>
   filter(term == "park_extra_magic_morning")
 boot_estimate
 ```
@@ -663,9 +676,11 @@ There are two ways to get the sandwich estimator. The first is to use the same w
 #| message: false
 #| warning: false
 library(sandwich)
-weighted_mod <- lm(wait_minutes_posted_avg ~ park_extra_magic_morning, 
-   data = seven_dwarfs_9_with_wt,
-   weights = w_att) 
+weighted_mod <- lm(
+  wait_minutes_posted_avg ~ park_extra_magic_morning,
+  data = seven_dwarfs_9_with_wt,
+  weights = w_att
+)
 
 sandwich(weighted_mod)
 ```
@@ -711,13 +726,16 @@ The correct sandwich estimator will also take into account the propensity score 
 library(PSW)
 
 seven_dwarfs_9 <- seven_dwarfs_9 |>
-  mutate(park_ticket_season_regular = ifelse(park_ticket_season == "regular", 1, 0),
-         park_ticket_season_value = ifelse(park_ticket_season == "value", 1, 0)
+  mutate(
+    park_ticket_season_regular = ifelse(park_ticket_season == "regular", 1, 0),
+    park_ticket_season_value = ifelse(park_ticket_season == "value", 1, 0)
   )
-psw(data = seven_dwarfs_9, 
-    form.ps = "park_extra_magic_morning ~ park_ticket_season_regular + park_ticket_season_value + park_close + park_temperature_high",
-    weight = "ATT",
-    wt = TRUE,
-    out.var = "wait_minutes_posted_avg")
+psw(
+  data = seven_dwarfs_9,
+  form.ps = "park_extra_magic_morning ~ park_ticket_season_regular + park_ticket_season_value + park_close + park_temperature_high",
+  weight = "ATT",
+  wt = TRUE,
+  out.var = "wait_minutes_posted_avg"
+)
 ```
 

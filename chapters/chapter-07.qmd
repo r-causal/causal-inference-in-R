@@ -286,11 +286,14 @@ There is not clear evidence of a lack of positivity here as both exposure levels
 ```{r}
 #| label: fig-close
 #| fig-cap: "Distribution of Magic Kingdom park closing time by whether the date had extra magic hours in the morning"
-ggplot(seven_dwarfs_train_2018, aes(
-  x = factor(park_close),
-  group = factor(park_extra_magic_morning),
-  fill = factor(park_extra_magic_morning)
-)) +
+ggplot(
+  seven_dwarfs_train_2018,
+  aes(
+    x = factor(park_close),
+    group = factor(park_extra_magic_morning),
+    fill = factor(park_extra_magic_morning)
+  )
+) +
   geom_bar(position = position_dodge2(width = 0.9, preserve = "single")) +
   labs(
     fill = "Extra Magic Morning",
@@ -308,11 +311,14 @@ This of course would also restrict which days we could draw conclusions about fo
 #| label: fig-temp
 #| fig-cap: "Distribution of historic temperature high at Magic Kingdom by whether the date had extra magic hours in the morning"
 library(halfmoon)
-ggplot(seven_dwarfs_train_2018, aes(
-  x = park_temperature_high,
-  group = factor(park_extra_magic_morning),
-  fill = factor(park_extra_magic_morning)
-)) +
+ggplot(
+  seven_dwarfs_train_2018,
+  aes(
+    x = park_temperature_high,
+    group = factor(park_extra_magic_morning),
+    fill = factor(park_extra_magic_morning)
+  )
+) +
   geom_mirror_histogram(bins = 20) +
   labs(
     fill = "Extra Magic Morning",
@@ -326,11 +332,14 @@ Examining @fig-ticket, we do not see any positivity violations.
 ```{r}
 #| label: fig-ticket
 #| fig-cap: "Distribution of historic temperature high at Magic Kingdom by whether the date had extra magic hours in the morning"
-ggplot(seven_dwarfs_train_2018, aes(
-  x = park_ticket_season,
-  group = factor(park_extra_magic_morning),
-  fill = factor(park_extra_magic_morning)
-)) +
+ggplot(
+  seven_dwarfs_train_2018,
+  aes(
+    x = park_ticket_season,
+    group = factor(park_extra_magic_morning),
+    fill = factor(park_extra_magic_morning)
+  )
+) +
   geom_bar(position = "dodge") +
   labs(
     fill = "Extra Magic Morning",

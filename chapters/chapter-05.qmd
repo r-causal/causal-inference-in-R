@@ -23,37 +23,37 @@ Data collected as a review of causal diagrams in applied health research papers 
 #| fig-cap: "Percentage of health research papers using causal diagrams over time."
 dag_data <- readxl::read_xlsx(here::here("data", "dag_data.xlsx"))
 
-dag_data <- dag_data |> 
+dag_data <- dag_data |>
   separate(
-    dag_number, 
-    into = c("dag_number", "dag_location"), 
-    convert = TRUE, 
+    dag_number,
+    into = c("dag_number", "dag_location"),
+    convert = TRUE,
     extra = "merge"
-  ) |> 
+  ) |>
   separate(
-    consistent_direction, 
+    consistent_direction,
     into = c("consistent_direction", "dag_ordering"),
     extra = "merge"
-  ) |> 
+  ) |>
   separate(
-    report_adjset, 
+    report_adjset,
     into = c("report_adjset", "report_adjset_loc"),
     extra = "merge"
-  ) |> 
+  ) |>
   mutate(
     year = str_extract(citation, "\\d{4}") |> as.integer(),
     used_dag = !is.na(nodes),
     reported_estimand = !str_detect(report_estimand, "Not reported")
   )
 
-dag_data |> 
-  count(year, used_dag) |> 
-  mutate(pct = n / sum(n)) |> 
-  filter(used_dag, year < max(year)) |> 
+dag_data |>
+  count(year, used_dag) |>
+  mutate(pct = n / sum(n)) |>
+  filter(used_dag, year < max(year)) |>
   ggplot(aes(year, pct)) +
-  geom_line(color = "#0072B2", linewidth = .9) + 
+  geom_line(color = "#0072B2", linewidth = .9) +
   scale_y_continuous(
-    name = "percent of papers", 
+    name = "percent of papers",
     labels = scales::label_percent()
   )
 ```
@@ -82,9 +82,9 @@ Here, we are saying that `x` causes `y`.
 #| fig-height: 2
 #| fig-cap: "A causal directed acyclic graph (DAG). DAGs depict causal relationships. In this DAG, the assumption is that `x` causes `y`."
 library(ggdag)
-dagify(y ~ x, coords = time_ordered_coords()) |> 
-  ggdag() + 
-  theme_dag() + 
+dagify(y ~ x, coords = time_ordered_coords()) |>
+  ggdag() +
+  theme_dag() +
   expand_plot(expand_x = expansion(c(.2, .2)))
 ```
 
@@ -122,17 +122,17 @@ collider <- dagify(
   coords = coords
 )
 
-dag_flows <- map(list(fork = fork, chain = chain, collider = collider), tidy_dagitty) |> 
-  map("data") |> 
-  list_rbind(names_to = "dag") |> 
+dag_flows <- map(list(fork = fork, chain = chain, collider = collider), tidy_dagitty) |>
+  map("data") |>
+  list_rbind(names_to = "dag") |>
   mutate(dag = factor(dag, levels = c("fork", "chain", "collider")))
 
-dag_flows |> 
+dag_flows |>
   ggplot(aes(x = x, y = y, xend = xend, yend = yend)) +
-  geom_dag_edges(edge_width = 1) + 
-  geom_dag_point() + 
-  geom_dag_text() + 
-  facet_wrap(~ dag) +
+  geom_dag_edges(edge_width = 1) +
+  geom_dag_point() +
+  geom_dag_text() +
+  facet_wrap(~dag) +
   expand_plot(
     expand_x = expansion(c(0.2, 0.2)),
     expand_y = expansion(c(0.2, 0.2))
@@ -220,17 +220,17 @@ y <- -3 * q + rnorm(n)
 
 confounder_data <- tibble(x, y, q = as.factor(q))
 
-p1 <- confounder_data |> 
-  ggplot(aes(x, y)) + 
-  geom_point(alpha = .2) + 
-  geom_smooth(method = "lm", se = FALSE, color = "black") + 
-  facet_wrap(~ "not adjusting for `q`\n(biased)")
+p1 <- confounder_data |>
+  ggplot(aes(x, y)) +
+  geom_point(alpha = .2) +
+  geom_smooth(method = "lm", se = FALSE, color = "black") +
+  facet_wrap(~"not adjusting for `q`\n(biased)")
 
-p2 <- confounder_data |> 
-  ggplot(aes(x, y, color = q)) + 
-  geom_point(alpha = .2) + 
+p2 <- confounder_data |>
+  ggplot(aes(x, y, color = q)) +
+  geom_point(alpha = .2) +
   geom_smooth(method = "lm", se = FALSE) +
-  facet_wrap(~ "adjusting for `q`\n(unbiased)")
+  facet_wrap(~"adjusting for `q`\n(unbiased)")
 
 p1 + p2
 ```
@@ -259,7 +259,7 @@ x <- rnorm(n)
 ###
 
 ### q
-linear_pred <- 2*x + rnorm(n)
+linear_pred <- 2 * x + rnorm(n)
 prob <- 1 / (1 + exp(-linear_pred))
 q <- rbinom(n, size = 1, prob = prob)
 ###
@@ -270,17 +270,17 @@ y <- 2 * q + rnorm(n)
 
 mediator_data <- tibble(x, y, q = as.factor(q))
 
-p1 <- mediator_data |> 
-  ggplot(aes(x, y)) + 
-  geom_point(alpha = .2) + 
-  geom_smooth(method = "lm", se = FALSE, color = "black") + 
-  facet_wrap(~ "not adjusting for `q`\n(total effect)")
+p1 <- mediator_data |>
+  ggplot(aes(x, y)) +
+  geom_point(alpha = .2) +
+  geom_smooth(method = "lm", se = FALSE, color = "black") +
+  facet_wrap(~"not adjusting for `q`\n(total effect)")
 
-p2 <- mediator_data |> 
-  ggplot(aes(x, y, color = q)) + 
-  geom_point(alpha = .2) + 
+p2 <- mediator_data |>
+  ggplot(aes(x, y, color = q)) +
+  geom_point(alpha = .2) +
   geom_smooth(method = "lm", se = FALSE) +
-  facet_wrap(~ "adjusting for `q`\n(direct effect)")
+  facet_wrap(~"adjusting for `q`\n(direct effect)")
 
 p1 + p2
 ```
@@ -303,7 +303,7 @@ We end up with a biased effect of `x` on `y`.
 #| label: fig-collider-scatter
 #| message: false
 #| fig-cap: "Two scatterplots of the relationship between `x` and `y`. The unadjusted relationship between the two is unbiased. When accounting for `q`, we open a colliding backdoor path and bias the relationship between `x` and `y`."
-#| 
+#|
 ### x
 x <- rnorm(n)
 ###
@@ -313,23 +313,23 @@ y <- rnorm(n)
 ###
 
 ### q
-linear_pred <- 2*x + 3*y + rnorm(n)
+linear_pred <- 2 * x + 3 * y + rnorm(n)
 prob <- 1 / (1 + exp(-linear_pred))
 q <- rbinom(n, size = 1, prob = prob)
 ###
 
 collider_data <- tibble(x, y, q = as.factor(q))
 
-p1 <- collider_data |> 
-  ggplot(aes(x, y)) + 
-  geom_point(alpha = .2) + 
-  geom_smooth(method = "lm", se = FALSE, color = "black") + 
+p1 <- collider_data |>
+  ggplot(aes(x, y)) +
+  geom_point(alpha = .2) +
+  geom_smooth(method = "lm", se = FALSE, color = "black") +
   facet_wrap(~"not adjusting for `q`\n(unbiased)")
 
-p2 <- collider_data |> 
-  ggplot(aes(x, y, color = q)) + 
-  geom_point(alpha = .2) + 
-  geom_smooth(method = "lm", se = FALSE) + 
+p2 <- collider_data |>
+  ggplot(aes(x, y, color = q)) +
+  geom_point(alpha = .2) +
+  geom_smooth(method = "lm", se = FALSE) +
   facet_wrap(~"adjusting for `q`\n(biased)")
 
 p1 + p2
@@ -350,33 +350,33 @@ At time point 2, `q` happens due to `x` and `y`.
 
 coords <- list(x = c(x = 0, y = 2, q = 1), y = c(x = 0, y = 0, q = -1))
 collider <- dagify(
-    q ~ x + y,
-    exposure = "x",
-    outcome = "y",
-    coords = time_ordered_coords()
+  q ~ x + y,
+  exposure = "x",
+  outcome = "y",
+  coords = time_ordered_coords()
 )
 
-collider_t <- collider |> 
-  tidy_dagitty() |> 
-  mutate(time = "time point 1", direction = NA, to = NA) |> 
+collider_t <- collider |>
+  tidy_dagitty() |>
+  mutate(time = "time point 1", direction = NA, to = NA) |>
   filter(name != "q")
 
-t2 <- collider |> 
- tidy_dagitty() |> 
- mutate(time = "time point 2") |> 
+t2 <- collider |>
+  tidy_dagitty() |>
+  mutate(time = "time point 2") |>
   pull_dag_data()
 
 collider_t$data <- bind_rows(collider_t$data, t2)
 
-collider_t |> 
-  mutate(deemphasize = (name %in% c("x", "y") & time == 
-           "time point 2")) |> 
+collider_t |>
+  mutate(deemphasize = (name %in% c("x", "y") & time ==
+    "time point 2")) |>
   ggplot(aes(x = x, y = y, xend = xend, yend = yend)) +
-  geom_dag_edges(edge_width = 1, edge_color = "grey85") + 
-  geom_dag_point(aes(color = deemphasize), show.legend = FALSE) + 
-  geom_dag_text() + 
-  facet_wrap(~ time) + 
-  theme_dag() + 
+  geom_dag_edges(edge_width = 1, edge_color = "grey85") +
+  geom_dag_point(aes(color = deemphasize), show.legend = FALSE) +
+  geom_dag_text() +
+  facet_wrap(~time) +
+  theme_dag() +
   scale_color_manual(values = c("TRUE" = "grey85", "FALSE" = "black"))
 ```
 
@@ -501,9 +501,9 @@ podcast_dag <- dagify(
   coords = time_ordered_coords(
     list(
       # time point 1
-      c("prepared", "humor", "mood"), 
+      c("prepared", "humor", "mood"),
       # time point 2
-      "podcast",  
+      "podcast",
       # time point 3
       "exam"
     )
@@ -557,7 +557,7 @@ pod_dag <- dagify(
 )
 
 # automatically determine layouts
-pod_dag |> 
+pod_dag |>
   ggdag(text_size = 2.8)
 ```
 
@@ -567,7 +567,7 @@ We can also ask for a specific layout, e.g., the popular Sugiyama algorithm for 
 #| fig-width: 4
 #| fig-height: 4
 #| fig-align: center
-pod_dag |> 
+pod_dag |>
   ggdag(layout = "sugiyama", text_size = 2.8)
 ```
 
@@ -583,7 +583,7 @@ We know that's not the case: listening to the podcast happened before taking the
 #| fig-width: 4
 #| fig-height: 4
 #| fig-align: center
-pod_dag |> 
+pod_dag |>
   ggdag(layout = "time_ordered", text_size = 2.8)
 ```
 
@@ -603,9 +603,9 @@ In @fig-paths-podcast, we see two open paths: `podcast <- mood -> exam"` and `po
 
 ```{r}
 #| label: fig-paths-podcast
-#| fig-cap: "`ggdag_paths()` visualizes open paths in a DAG. There are two open paths in `podcast_dag`: the fork from `mood` and the fork from `prepared`." 
-podcast_dag |> 
-  # show the whole dag as a light gray "shadow" 
+#| fig-cap: "`ggdag_paths()` visualizes open paths in a DAG. There are two open paths in `podcast_dag`: the fork from `mood` and the fork from `prepared`."
+podcast_dag |>
+  # show the whole dag as a light gray "shadow"
   # rather than just the paths
   ggdag_paths(shadow = TRUE, text = FALSE, use_labels = "label")
 ```
@@ -615,7 +615,7 @@ podcast_dag |>
 This is handy if you want to manipulate the DAG programmatically.
 
 ```{r}
-podcast_dag_tidy <- podcast_dag |> 
+podcast_dag_tidy <- podcast_dag |>
   tidy_dagitty()
 
 podcast_dag_tidy
@@ -626,8 +626,8 @@ For instance, `dag_paths()` underlies `ggdag_paths()`; it returns a tidy DAG wit
 You can use several dplyr functions on these objects directly.
 
 ```{r}
-podcast_dag_tidy |> 
-  dag_paths() |> 
+podcast_dag_tidy |>
+  dag_paths() |>
   filter(set == 2, path == "open path")
 ```
 
@@ -636,8 +636,8 @@ Tidy DAGs are not pure data frames, but you can retrieve either the `dataframe` 
 
 ```{r}
 library(dagitty)
-podcast_dag_tidy |> 
-  pull_dag() |> 
+podcast_dag_tidy |>
+  pull_dag() |>
   paths()
 ```
 :::
@@ -654,8 +654,8 @@ Any arrows coming out of adjusted variables are removed from the DAG because the
 #| fig-align: center
 #| fig-cap: "A visualization of the minimal adjustment set for the podcast-exam DAG. If this DAG is correct, two variables are required to block the backdoor paths: `mood` and `prepared`."
 ggdag_adjustment_set(
-  podcast_dag, 
-  text = FALSE, 
+  podcast_dag,
+  text = FALSE,
   use_labels = "label"
 )
 ```
@@ -677,20 +677,24 @@ Here's a condensed version of what `ggdag_adjustment_set()` is doing:
 #| fig-width: 4.5
 #| fig-height: 4.5
 #| fig-align: center
-podcast_dag_tidy |> 
+podcast_dag_tidy |>
   # add adjustment sets to data
   dag_adjustment_sets() |>
   ggplot(aes(
-    x = x, y = y, xend = xend, yend = yend,
-    color = adjusted, shape = adjusted
-  )) + 
+    x = x,
+    y = y,
+    xend = xend,
+    yend = yend,
+    color = adjusted,
+    shape = adjusted
+  )) +
   # ggdag's custom geoms: add nodes, edges, and labels
-  geom_dag_point() + 
+  geom_dag_point() +
   # remove adjusted paths
-  geom_dag_edges_link(data = \(.df) filter(.df, adjusted != "adjusted")) + 
-  geom_dag_label_repel() + 
+  geom_dag_edges_link(data = \(.df) filter(.df, adjusted != "adjusted")) +
+  geom_dag_label_repel() +
   # you can use any ggplot function, too
-  facet_wrap(~ set) +
+  facet_wrap(~set) +
   scale_shape_manual(values = c(adjusted = 15, unadjusted = 19))
 ```
 :::
@@ -707,8 +711,8 @@ Full adjustment sets are every combination of variables that result in a valid s
 #| fig-align: center
 #| fig-cap: "All valid adjustment sets for `podcast_dag`."
 ggdag_adjustment_set(
-  podcast_dag, 
-  text = FALSE, 
+  podcast_dag,
+  text = FALSE,
   use_labels = "label",
   # get full adjustment sets
   type = "all"
@@ -796,23 +800,23 @@ Let's take a look at @fig-podcast_dag2.
 #| fig-height: 4
 #| fig-cap: "An expanded version of `podcast_dag` that includes two additional variables: `skills_course`, representing a College Skills Course, and `alertness`."
 podcast_dag2 <- dagify(
-    podcast ~ mood + humor + skills_course,
-    alertness ~ mood,
-    mood ~ humor,
-    prepared ~ skills_course,
-    exam ~ alertness + prepared,
-    coords = time_ordered_coords(),
-    exposure = "podcast",
-    outcome = "exam",
-    labels = c(
-        podcast = "podcast",
-        exam = "exam score",
-        mood = "mood",
-        alertness = "alertness",
-        skills_course = "college\nskills course",
-        humor = "humor",
-        prepared = "prepared"
-    )
+  podcast ~ mood + humor + skills_course,
+  alertness ~ mood,
+  mood ~ humor,
+  prepared ~ skills_course,
+  exam ~ alertness + prepared,
+  coords = time_ordered_coords(),
+  exposure = "podcast",
+  outcome = "exam",
+  labels = c(
+    podcast = "podcast",
+    exam = "exam score",
+    mood = "mood",
+    alertness = "alertness",
+    skills_course = "college\nskills course",
+    humor = "humor",
+    prepared = "prepared"
+  )
 )
 
 ggdag(podcast_dag2, use_labels = "label", text = FALSE)
@@ -821,7 +825,7 @@ ggdag(podcast_dag2, use_labels = "label", text = FALSE)
 ```{r}
 #| echo: false
 paths <- paths(podcast_dag2)
-open_paths <- glue::glue_collapse(glue::glue('`{paths$paths[paths$open]}`'), sep = ", ", last = ", and")
+open_paths <- glue::glue_collapse(glue::glue("`{paths$paths[paths$open]}`"), sep = ", ", last = ", and")
 adj_sets <- unclass(adjustmentSets(podcast_dag2)) |> map_chr(\(.x) glue::glue('{unlist(glue::glue_collapse(.x, sep = " + "))}'))
 adj_sets <- glue::glue("`{adj_sets}`")
 ```
@@ -881,10 +885,10 @@ podcast_dag3 <- dagify(
   coords = time_ordered_coords(
     list(
       # time point 1
-      c("prepared", "humor", "mood"), 
+      c("prepared", "humor", "mood"),
       # time point 2
-      "podcast",  
-      "showed_up",  
+      "podcast",
+      "showed_up",
       # time point 3
       "exam"
     )
@@ -910,11 +914,11 @@ Unfortunately, we cannot calculate the total effect of `podcast` on `exam` becau
 ```{r}
 #| label: fig-podcast_dag3-as
 #| fig-width: 4.5
-#| fig-height: 4 
+#| fig-height: 4
 #| warning: false
 #| fig-cap: "The adjustment set for `podcast_dag3` given that the data are inherently conditioned on showing up to the exam. In this case, there is no way to recover an unbiased estimate of the total effect of `podcast` on `exam`."
-podcast_dag3 |> 
-  adjust_for("showed_up") |> 
+podcast_dag3 |>
+  adjust_for("showed_up") |>
   ggdag_adjustment_set(text = FALSE, use_labels = "label")
 ```
 
@@ -924,11 +928,11 @@ We can't calculate the total effect because we are missing the indirect effect, 
 ```{r}
 #| label: fig-podcast_dag3-direct
 #| fig-width: 4.5
-#| fig-height: 4 
+#| fig-height: 4
 #| warning: false
 #| fig-cap: "The adjustment set for `podcast_dag3` when targeting a different effect. There is one minimal adjustment set that we can use to estimate the direct effect of `podcast` on `exam`."
-podcast_dag3 |> 
-  adjust_for("showed_up") |> 
+podcast_dag3 |>
+  adjust_for("showed_up") |>
   ggdag_adjustment_set(effect = "direct", text = FALSE, use_labels = "label")
 ```
 
@@ -942,7 +946,7 @@ It's called M-bias because it looks like an M when arranged top to bottom.
 #| fig-width: 4
 #| fig-height: 4
 #| fig-cap: "A DAG representing M-Bias, a situation where a collider predates the exposure and outcome."
-m_bias() |> 
+m_bias() |>
   ggdag()
 ```
 
@@ -975,7 +979,7 @@ podcast_dag4 <- dagify(
   coords = time_ordered_coords(list(
     c("u1", "u2"),
     "mood",
-    "podcast", 
+    "podcast",
     "exam"
   )),
   exposure = "podcast",
@@ -1006,8 +1010,8 @@ There is no way to close this open path.
 #| fig-width: 5.5
 #| fig-height: 4.5
 #| fig-cap: "The adjustment set where `mood` is a collider. If we control for `mood` and don't know about or have the unmeasured causes of `mood`, we have no means of closing the backdoor path opened by adjusting for a collider."
-podcast_dag4 |> 
-  adjust_for("mood") |> 
+podcast_dag4 |>
+  adjust_for("mood") |>
   ggdag_adjustment_set(use_labels = "label", text = FALSE)
 ```
 
@@ -1024,7 +1028,7 @@ This arrangement is sometimes called butterfly or bowtie bias, again because of 
 #| fig-width: 5
 #| fig-height: 4
 #| fig-cap: "In butterfly bias, `mood` is both a collider and a confounder. Controlling for the bias induced by `mood` opens a new pathway because we've also conditioned on a collider. We can't properly close all backdoor paths without either `u1` or `u2`."
-butterfly_bias(x = "podcast", y = "exam", m = "mood", a = "u1", b = "u2") |> 
+butterfly_bias(x = "podcast", y = "exam", m = "mood", a = "u1", b = "u2") |>
   ggdag(text = FALSE, use_labels = "label")
 ```
 
@@ -1052,9 +1056,9 @@ podcast_dag5 <- dagify(
   coords = time_ordered_coords(
     list(
       # time point 1
-      c("prepared", "humor", "mood"), 
+      c("prepared", "humor", "mood"),
       # time point 2
-      c("podcast", "grader_mood"),  
+      c("podcast", "grader_mood"),
       # time point 3
       "exam"
     )
@@ -1138,7 +1142,7 @@ error_dag <- dagify(
   coords = time_ordered_coords()
 )
 
-error_dag |> 
+error_dag |>
   ggdag(text = FALSE, use_labels = "label")
 ```
 
@@ -1169,43 +1173,44 @@ We'll discuss estimands in detail in [Chapter -@sec-estimands].
 #| tbl-cap: "A table of DAG properties in applied health research. Number of nodes and arcs are the median number of variables and arrows in the analyzed DAGs, while the Node to Arc ratio is their ratio. Saturation proportion is the proportion of all possible arrows going forward in time to other included variables. Fully saturated DAGs are those that include all such arrows. The researchers also analyzed whether studies reported their estimands and adjustment sets."
 library(gtsummary)
 library(gt)
-dag_data_used <- dag_data |> 
+dag_data_used <- dag_data |>
   filter(used_dag)
 
 as_yes_no <- function(x) {
   factor(x, c(TRUE, FALSE), labels = c("Yes", "No"))
 }
 
-dag_data_used |> 
+dag_data_used |>
   mutate(
     saturated = near(saturation, 1),
     report_adjset = report_adjset == "Yes",
     across(c(saturated, reported_estimand, report_adjset), as_yes_no)
-  ) |> 
-  select(nodes, arcs, ratio, saturation, saturated, reported_estimand, report_adjset) |> 
-  tbl_summary(label = list(
-    nodes ~ "Number of Nodes",
-    arcs ~ "Number of Arcs",
-    ratio ~ "Node to Arc Ratio",
-    saturation ~ "Saturation Proportion",
-    saturated ~ "Fully Saturated",
-    reported_estimand ~ "Reported Estimand",
-    report_adjset ~ "Reported Adjustment Set"
-  ),
-  digits = list(everything() ~ 0, c(ratio, saturation) ~ 2),
-  type = list(where(is.factor) ~ "categorical")
-) |> 
-  as_gt() |> 
+  ) |>
+  select(nodes, arcs, ratio, saturation, saturated, reported_estimand, report_adjset) |>
+  tbl_summary(
+    label = list(
+      nodes ~ "Number of Nodes",
+      arcs ~ "Number of Arcs",
+      ratio ~ "Node to Arc Ratio",
+      saturation ~ "Saturation Proportion",
+      saturated ~ "Fully Saturated",
+      reported_estimand ~ "Reported Estimand",
+      report_adjset ~ "Reported Adjustment Set"
+    ),
+    digits = list(everything() ~ 0, c(ratio, saturation) ~ 2),
+    type = list(where(is.factor) ~ "categorical")
+  ) |>
+  as_gt() |>
   tab_row_group(
     label = md("**DAG properties**"),
     rows = 1:7,
     id = "dag_prop"
-  ) |> 
+  ) |>
   tab_row_group(
     label = md("**Reporting**"),
     rows = 8:13,
     id = "reporting"
-  ) |> 
+  ) |>
   row_group_order(c("dag_prop", "reporting"))
 ```
 
@@ -1269,7 +1274,7 @@ dagify(
   ac_use ~ global_temp,
   global_temp ~ ac_use,
   labels = c(ac_use = "A/C use", global_temp = "Global\ntemperature")
-) |> 
+) |>
   ggdag(layout = "circle", edge_type = "arc", text = FALSE, use_labels = "label")
 ```
 
@@ -1294,16 +1299,16 @@ dagify(
   ac_use_2020 ~ ac_use_2010 + global_temp_2010,
   coords = time_ordered_coords(),
   labels = c(
-    ac_use_1990 = "A/C use\n(1990)", 
+    ac_use_1990 = "A/C use\n(1990)",
     global_temp_1990 = "Global\ntemperature\n(1990)",
-    ac_use_2000 = "A/C use\n(2000)", 
+    ac_use_2000 = "A/C use\n(2000)",
     global_temp_2000 = "Global\ntemperature\n(2000)",
-    ac_use_2010 = "A/C use\n(2010)", 
+    ac_use_2010 = "A/C use\n(2010)",
     global_temp_2010 = "Global\ntemperature\n(2010)",
-    ac_use_2020 = "A/C use\n(2020)", 
+    ac_use_2020 = "A/C use\n(2020)",
     global_temp_2020 = "Global\ntemperature\n(2020)"
   )
-) |> 
+) |>
   ggdag(text = FALSE, use_labels = "label")
 ```
 
@@ -1399,7 +1404,7 @@ From the DAG, it would appear that the entire design is invalid!
 #| label: fig-case-control
 #| fig-width: 4.5
 #| fig-height: 3.2
-#| fig-cap: "A DAG representing a matched case-control study. In such a study, selection is determined by outcome status and any matched confounders. Selection into the study is thus a collider. Since it is inherently stratified on who is actually in the study, such data are limited in the types of causal effects they can estimate." 
+#| fig-cap: "A DAG representing a matched case-control study. In such a study, selection is determined by outcome status and any matched confounders. Selection into the study is thus a collider. Since it is inherently stratified on who is actually in the study, such data are limited in the types of causal effects they can estimate."
 dagify(
   outcome ~ confounder + exposure,
   selection ~ outcome + confounder,
@@ -1407,7 +1412,7 @@ dagify(
   exposure = "exposure",
   outcome = "outcome",
   coords = time_ordered_coords()
-) |> 
+) |>
   ggdag(edge_type = "arc", text_size = 2.2)
 ```
 
@@ -1433,7 +1438,7 @@ dagify(
   confounder2 ~ confounder1,
   exposure = "exposure",
   outcome = "outcome"
-) |> 
+) |>
   adjustmentSets()
 ```
 
@@ -1447,7 +1452,7 @@ dagify(
   exposure = "exposure",
   outcome = "outcome",
   latent = "confounder1"
-) |> 
+) |>
   adjustmentSets()
 ```
 
@@ -1475,7 +1480,7 @@ dagify(
   x ~ q,
   q ~ p,
   coords = time_ordered_coords()
-) |> 
+) |>
   ggdag(edge_type = "arc")
 ```
 
@@ -1520,8 +1525,8 @@ podcast_dag_sat <- dagify(
   coords = time_ordered_coords(
     list(
       "humor",
-      c("prepared", "mood"), 
-      "podcast",  
+      c("prepared", "mood"),
+      "podcast",
       "exam"
     )
   ),
@@ -1539,8 +1544,8 @@ podcast_dag_sat <- dagify(
 curvatures <- rep(0, 8)
 curvatures[1] <- .25
 
-podcast_dag_sat |> 
-  tidy_dagitty() |> 
+podcast_dag_sat |>
+  tidy_dagitty() |>
   ggplot(aes(x, y, xend = xend, yend = yend)) +
   geom_dag_point() +
   geom_dag_edges_arc(curvature = curvatures) +
@@ -1569,8 +1574,8 @@ podcast_dag_pruned <- dagify(
   coords = time_ordered_coords(
     list(
       "humor",
-      c("prepared", "mood"), 
-      "podcast",  
+      c("prepared", "mood"),
+      "podcast",
       "exam"
     )
   ),

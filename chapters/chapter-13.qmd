@@ -271,9 +271,13 @@ ggplot(wait_times_wts, aes(wait_minutes_posted_avg, swts)) +
 wait_times_wts |>
   filter(swts > 10) |>
   select(
-    park_date, wait_minutes_posted_avg, .fitted,
-    park_close, park_extra_magic_morning,
-    park_temperature_high, park_ticket_season
+    park_date,
+    wait_minutes_posted_avg,
+    .fitted,
+    park_close,
+    park_extra_magic_morning,
+    park_temperature_high,
+    park_ticket_season
   ) |>
   knitr::kable()
 ```
