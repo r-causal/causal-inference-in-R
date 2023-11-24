@@ -1,0 +1,14 @@
+{
+  "hash": "b054d57b42451b94833be81a7144a2c7",
+  "result": {
+    "markdown": "# Causal survival analysis {#sec-survival}\n\n\n\n\n\n## Preparing data for survival analysis\n\n\n::: {.cell}\n\n```{.r .cell-code}\nrnorm(5)\n```\n\n::: {.cell-output .cell-output-stdout}\n\n```\n[1]  1.1878  0.3648 -1.1239  0.4291 -0.3179\n```\n\n\n:::\n:::\n\n\n## Pooled logistic regression\n\n## Confidence intervals for causal survival models\n",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}

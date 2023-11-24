@@ -1,0 +1,14 @@
+{
+  "hash": "8ea93179a5853fbda5f85b2ec561d850",
+  "result": {
+    "markdown": "# Causal inference is not (just) a statistical problem {#sec-quartets}\n\n\n\n\n\n## Causal and Predictive Models, Revisited {#sec-causal-pred-revisit}\n\n<!-- TODO:  -->\n<!-- -   Probably too long, but if possible, condense to a popout -->\n<!-- -   DAGs showing examples where prediction can lean on measured confounders, colliders. It's the amount of information a variable brings, not whether the coeffecient is unbiased affect of variable on outcome. -->\n<!-- -   Not practical to fit a prediction model with future variable -->\n<!-- -   Table 2 Bias examples. Unmeasure confounding of Z-Y relationship. Mediation example. -->\n\n",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}

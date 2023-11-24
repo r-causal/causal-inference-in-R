@@ -1,0 +1,14 @@
+{
+  "hash": "35e28ba55bdcd7229ce521d2f04664ff",
+  "result": {
+    "markdown": "# Causal mediation analysis {#sec-mediation}\n\n\n\n\n\n## Estimating direct effects\n\n\n::: {.cell}\n\n```{.r .cell-code}\nrnorm(5)\n```\n\n::: {.cell-output .cell-output-stdout}\n\n```\n[1] -0.1844  0.2373 -1.4093  0.0875 -0.6315\n```\n\n\n:::\n:::\n\n\n## Estimating indirect effects\n\n## Allowing for interactions\n",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}

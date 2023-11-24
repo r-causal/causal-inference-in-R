@@ -1,0 +1,14 @@
+{
+  "hash": "13ee6c6e7fb0b91cea55f7c042557eed",
+  "result": {
+    "markdown": "# References {.unnumbered}\n\n\n\n\n\n::: {#refs}\n:::\n",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}
