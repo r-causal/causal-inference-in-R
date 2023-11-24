@@ -67,7 +67,8 @@ data <- data.frame(
 )
 
 ggplot(data, aes(x = x, y = y)) +
-  geom_text(aes(label = labels, angle = angle, vjust = 0),
+  geom_text(
+    aes(label = labels, angle = angle, vjust = 0),
     size = 7
   ) +
   geom_segment(aes(x = 1, xend = 2, y = 0.95, yend = 0.95)) +
@@ -463,9 +464,11 @@ d |>
   as.data.frame() -> d
 library(PSW)
 df <- as.data.frame(d)
-x <- psw(df,
+x <- psw(
+  df,
   "treatment ~ weight + age",
-  weight = "ATE", wt = TRUE,
+  weight = "ATE",
+  wt = TRUE,
   out.var = "y"
 )
 tibble(
@@ -568,9 +571,11 @@ d |>
   as.data.frame() -> d
 library(PSW)
 df <- as.data.frame(d)
-x <- psw(df,
+x <- psw(
+  df,
   "treatment ~ weight + age",
-  weight = "ATE", wt = TRUE,
+  weight = "ATE",
+  wt = TRUE,
   out.var = "y"
 )
 tibble(
