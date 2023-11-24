@@ -750,15 +750,16 @@ In contrast, the model that adjusted for the two variables as suggested by `ggda
 #| label: fig-dag-sim
 #| fig-cap: "Forest plot of simulated data based on the DAG described in @fig-dag-podcast."
 ## Model that does not close backdoor paths
+library(broom)
 unadjusted_model <- lm(exam ~ podcast, sim_data) |>
-  broom::tidy(conf.int = TRUE) |>
-  dplyr::filter(term == "podcast") |>
+  tidy(conf.int = TRUE) |>
+  filter(term == "podcast") |>
   mutate(formula = "podcast")
 
 ## Model that closes backdoor paths
 adjusted_model <- lm(exam ~ podcast + mood + prepared, sim_data) |>
-  broom::tidy(conf.int = TRUE) |>
-  dplyr::filter(term == "podcast") |>
+  tidy(conf.int = TRUE) |>
+  filter(term == "podcast") |>
   mutate(formula = "podcast + mood + prepared")
 
 bind_rows(
@@ -1165,7 +1166,7 @@ We'll discuss estimands in detail in [Chapter -@sec-estimands].
 #| label: tbl-dag-properties
 #| echo: false
 #| message: false
-#| tbl-cap: "A table of DAG properties measured by @Tennant2021. Number of nodes and arcs are the median number of variables and arrows in the analyzed DAGs, while the Node to Arc ratio is their ratio. Saturation proportion is the proportion of all possible arrows going forward in time to other included variables. Fully saturated DAGs are those that include all such arrows. @Tennant2021 also analyzed whether studies reported their estimands and adjustment sets."
+#| tbl-cap: "A table of DAG properties in applied health research. Number of nodes and arcs are the median number of variables and arrows in the analyzed DAGs, while the Node to Arc ratio is their ratio. Saturation proportion is the proportion of all possible arrows going forward in time to other included variables. Fully saturated DAGs are those that include all such arrows. The researchers also analyzed whether studies reported their estimands and adjustment sets."
 library(gtsummary)
 library(gt)
 dag_data_used <- dag_data |> 
@@ -1615,7 +1616,7 @@ When should we include this information in the DAG?
 We recommend first focusing on the causal structure of the DAG as if you had perfectly measured each variable [@hernan2021].
 Then, consider how mismeasurement and missingness might affect the realized data, particularly related to the exposure, outcome, and critical confounders.
 You may prefer to present this as an alternative DAG to consider strategies for addressing the bias arising from those sources, e.g., imputation or sensitivity analyses.
-After all, the DAG in \@ fig-error_dag makes you think the question is unanswerable because we have no method to close all backdoor paths.
+After all, the DAG in @fig-error_dag makes you think the question is unanswerable because we have no method to close all backdoor paths.
 As with all open paths, that depends on the severity of the bias and our ability to reckon with it.
 
 <!-- TODO: I don't quite remember what I wanted to cover here, so revisit later to add or delete -->
