@@ -31,7 +31,7 @@ book:
     
     - part: Asking Causal Questions
       chapters: 
-      - chapters/01-causal-question.qmd
+      - chapters/01-casual-to-causal.qmd
       - chapters/02-whole-game.qmd
       - chapters/03-counterfactuals.qmd
       - chapters/04-target-trials-std-methods.qmd
