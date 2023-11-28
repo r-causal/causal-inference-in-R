@@ -1,6 +1,6 @@
 \mainmatter
 
-# What is a causal question? {#sec-causal-question}
+# From casual to causal {#sec-causal-question}
 
 {{< include 00-setup.qmd >}}
 
