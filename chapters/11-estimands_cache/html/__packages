@@ -1,10 +1,3 @@
-base
-methods
-datasets
-utils
-grDevices
-graphics
-stats
 ggplot2
 tidyverse
 tibble
@@ -20,3 +13,7 @@ touringplans
 gtsummary
 labelled
 propensity
+Matrix
+survival
+survey
+halfmoon
