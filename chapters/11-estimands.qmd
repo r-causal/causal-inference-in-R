@@ -360,10 +360,13 @@ The `{survey}` package supports calculating statistics and models using weights.
 Historically, many researchers applied techniques incorporating weights to survey analyses.
 Even though we are not doing a survey analysis, the same techniques are helpful for our propensity score weights.
 
+<!-- TODO: For weights like the ATT that have a psuedopopulation smaller than the actual population, survey is emitting a warning. We are suppressing it but hopefully can have a way to do so directly in survey or gtsummary -->
+
 ```{r}
 #| label: tbl-weighted-gtsummary
 #| tbl-cap: A descriptive table of Extra Magic Morning hours weighted by the Average Treatment Effect Weights. This table shows the distributions of these variables in the psuedopopulation created by these weights.
 #| message: false
+#| warning: false
 library(survey)
 seven_dwarfs_svy <- svydesign(
   ids = ~1,
@@ -451,6 +454,7 @@ Let's take a look at the weighted table to see this a bit more clearly.
 #| label: tbl-weighted-att
 #| tbl-cap: A descriptive table of Extra Magic Morning hours weighted by the Average Treatment Effect among the Treated Weights. This table shows the distributions of these variables in the psuedopopulation created by these weights.
 #| message: false
+#| warning: false
 seven_dwarfs_svy <- svydesign(
   ids = ~1,
   data = seven_dwarfs_wts,
@@ -529,6 +533,7 @@ Now let's take a look at the weighted table.
 ```{r}
 #| label: tbl-weighted-atu
 #| tbl-cap: A descriptive table of Extra Magic Morning hours weighted by the Average Treatment Effect among the Unexposed Weights. This table shows the distributions of these variables in the psuedopopulation created by these weights.
+#| warning: false
 
 seven_dwarfs_svy <- svydesign(
   ids = ~1,
@@ -607,6 +612,7 @@ Now let's take a look at the weighted table.
 ```{r}
 #| label: tbl-weighted-atm
 #| tbl-cap: A descriptive table of Extra Magic Morning hours weighted by the Average Treatment Effect among the Evenly Matchable Weights. This table shows the distributions of these variables in the psuedopopulation created by these weights.
+#| warning: false
 
 seven_dwarfs_svy <- svydesign(
   ids = ~1,
@@ -752,6 +758,7 @@ Now let's take a look at the weighted table.
 ```{r}
 #| label: tbl-weighted-ato
 #| tbl-cap: A descriptive table of Extra Magic Morning hours weighted by the Average Treatment Effect among the Overlap Population Weights. This table shows the distributions of these variables in the psuedopopulation created by these weights.
+#| warning: false
 
 seven_dwarfs_svy <- svydesign(
   ids = ~1,
