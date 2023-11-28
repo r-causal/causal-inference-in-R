@@ -2,6 +2,10 @@
 
 {{< include 00-setup.qmd >}}
 
+## The Causal Quartet
+
+We now have the tools to look at a detail of causal inference alluded to thus far in the book: causal inference is not (just) a statistical problem. Of course, we use statistics to answer causal questions. It's necessary to answer most questions, even if the statistics are basic (as they often are in randomized designs). But statistics alone do not get us ov
+
 ## Causal and Predictive Models, Revisited {#sec-causal-pred-revisit}
 
 <!-- TODO:  -->
