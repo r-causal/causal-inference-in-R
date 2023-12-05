@@ -4,9 +4,27 @@
 
 ## The Parametric G-Formula
 
-```{r}
-rnorm(5)
-```
+Let's pause to recap a typical goal of causal analyses we've seen in this book so far: to estimate what would happen if *everyone* in the study were exposed versus what would happen if *no one* was exposed.
+To do this, we've used weighting techniques that create confounder-balanced pseudopopulations which, in turn, give rise to unbiased causal effect estimates in marginal outcome models.
+One alternative approach to weighting is called the parametric G-formula, which is generally executed through the following 4 steps:
+
+1. Draw the appropriate time ordered DAG (as described in @sec-dags)
+
+2. For each point in time after baseline, decide on a parametric model that predicts each variable's value based on previously measured variables in the DAG
+
+3. Starting with the actual data values at baseline, generate values for all subsequent variables according to the models in step 2 (i.e. conduct a *Monte Carlo simulation*). Do this with one key modification: for each exposure regime you are interested in comparing (e.g. everyone exposed versus everyone unexposed), assign the exposure variables accordingly (that is, don't let the simulation assign values for exposure variables).
+
+4. Compute the causal contrast of interest based on the simulated outcome in each exposure group.
+
+::: callout-tip
+## Monte Carlo simulation
+
+Monte Carlo simulations are...
+:::
+
+## Revisiting the magic morning hours example
+
+
 
 ## Calculating estimates with G-Computation
 
