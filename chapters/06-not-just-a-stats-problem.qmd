@@ -4,7 +4,44 @@
 
 ## The Causal Quartet
 
-We now have the tools to look at a detail of causal inference alluded to thus far in the book: causal inference is not (just) a statistical problem. Of course, we use statistics to answer causal questions. It's necessary to answer most questions, even if the statistics are basic (as they often are in randomized designs). But statistics alone do not get us ov
+We now have the tools to look at a detail of causal inference alluded to thus far in the book: causal inference is not (just) a statistical problem. Of course, we use statistics to answer causal questions. It's necessary to answer most questions, even if the statistics are basic (as they often are in randomized designs). But statistics alone do not allow us to address all of the assumptions of causal inference. 
+
+In 1973, Francis Anscombe introduced a set of four datasets known as *Anscombe's Quartet*. These data illustrated an important lesson: summary statistics alone cannot help you understand data; you also need to visualize your data. In the plots in @fig-anscombe, each data set has remarkably similar summary statistics, including means and correlations that are nearly identical. 
+
+```{r}
+#| label: fig-anscombe
+library(quartets)
+anscombe_quartet |> 
+  ggplot(aes(x, y)) + 
+  geom_point() + 
+  geom_smooth(method = "lm", se = FALSE) + 
+  facet_wrap(~ dataset)
+```
+
+A modern version, the Datasaurus Dozen, takes this a step further.
+
+```{r}
+library(datasauRus)
+
+# roughly the same correlation in each dataset
+datasaurus_dozen |> 
+  group_by(dataset) |> 
+  summarize(cor = round(cor(x, y), 3))
+```
+
+```{r}
+#| label: fig-datasaurus
+datasaurus_dozen |> 
+  ggplot(aes(x, y)) + 
+  geom_point() + 
+  facet_wrap(~ dataset)
+```
+
+In causal inference, though, even visualization is not enough to untangle causal effects. Background knowledge, as we visualized in DAGs in @sec-dags, is required to meet the assumptions of causal inference. 
+
+In 2023, we introduced the *causal quartet* [@TODO-CITE-OUR-PAPER]. The causal quartet has many of the same properties of Anscombe's quartet and the Datasaurus Dozen: 
+
+<!-- TODO: data generating mechanism table, or write in blog -->
 
 ## Causal and Predictive Models, Revisited {#sec-causal-pred-revisit}
 
