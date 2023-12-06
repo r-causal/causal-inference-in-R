@@ -4,22 +4,36 @@
 
 ## The Parametric G-Formula
 
-Let's pause to recap a typical goal of causal analyses we've seen in this book so far: to estimate what would happen if *everyone* in the study were exposed versus what would happen if *no one* was exposed.
+Let's pause to recap a typical goal of the causal analyses we've seen in this book so far: to estimate what would happen if *everyone* in the study were exposed versus what would happen if *no one* was exposed.
 To do this, we've used weighting techniques that create confounder-balanced pseudopopulations which, in turn, give rise to unbiased causal effect estimates in marginal outcome models.
 One alternative approach to weighting is called the parametric G-formula, which is generally executed through the following 4 steps:
 
-1. Draw the appropriate time ordered DAG (as described in @sec-dags)
+1. Draw the appropriate time ordered DAG (as described in @sec-dags).
 
-2. For each point in time after baseline, decide on a parametric model that predicts each variable's value based on previously measured variables in the DAG
+2. For each point in time after baseline, decide on a parametric model that predicts each variable's value based on previously measured variables in the DAG. 
+These are often linear models for continuous variables or logistic regressions for binary variables.
 
-3. Starting with the actual data values at baseline, generate values for all subsequent variables according to the models in step 2 (i.e. conduct a *Monte Carlo simulation*). Do this with one key modification: for each exposure regime you are interested in comparing (e.g. everyone exposed versus everyone unexposed), assign the exposure variables accordingly (that is, don't let the simulation assign values for exposure variables).
+3. Starting with the observed distribution of data at baseline, generate values for all subsequent variables according to the models in step 2 (i.e. conduct a *Monte Carlo simulation*). Do this with one key modification: for each exposure regime you are interested in comparing (e.g. everyone exposed versus everyone unexposed), assign the exposure variables accordingly (that is, don't let the simulation assign values for exposure variables).
 
 4. Compute the causal contrast of interest based on the simulated outcome in each exposure group.
 
 ::: callout-tip
-## Monte Carlo simulation
+## Monte Carlo simulations
 
-Monte Carlo simulations are...
+Monte Carlo simulations are computational approaches that generate a sample of outcomes for random processes.
+One example would be to calculate the probability of rolling "snake eyes" (two ones) on a single roll of two six-sided dice. 
+We could certainly calculate this probability mathematically ($\frac{1}{6}*\frac{1}{6}=\frac{1}{36}\approx 2.8$%), though it can be just as quick to write a Monte Carlo simulation of the process (1,000,000 rolls shown below)
+```{r}
+n <- 1000000
+tibble(
+  roll_1 = sample(1:6, n, replace = TRUE),
+  roll_2 = sample(1:6, n, replace = TRUE),
+) |> 
+  reframe(roll_1 + roll_2 == 2) |> 
+  sum()/n
+```
+Monte Carlo simulations are extremely useful for estimating outcomes of complex processes for which closed mathematical solutions are not easy to determine. 
+Indeed, that's why Monte Carlo simulations are so useful for the real-world causal mechanisms described in this book!
 :::
 
 ## Revisiting the magic morning hours example
