@@ -132,7 +132,7 @@ Looking at the diagram above, we can map each element of the causal question to 
 -   **Follow-up period**: From park open to 10am.
 -   **Outcome definition**: The average posted wait time between 9am and 10am
 -   **Causal contrast of interest**: Average treatment effect (we will discuss this in @sec-estimands)
--   **Analysis plan**: We use inverse probability waiting after fitting a propensity score model to estimate the average treatment effect of the exposure on the outcome of interest. We will adjust for variables as determined by our DAG (@fig-dag-magic)
+-   **Analysis plan**: We use inverse probability weighting after fitting a propensity score model to estimate the average treatment effect of the exposure on the outcome of interest. We will adjust for variables as determined by our DAG (@fig-dag-magic)
 
 ## Data wrangling and recipes
 
