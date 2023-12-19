@@ -10,7 +10,9 @@ In 1973, Francis Anscombe introduced a set of four datasets known as *Anscombe's
 
 ```{r}
 #| label: fig-anscombe
+#| message: false
 library(quartets)
+
 anscombe_quartet |> 
   ggplot(aes(x, y)) + 
   geom_point() + 
@@ -31,6 +33,7 @@ datasaurus_dozen |>
 
 ```{r}
 #| label: fig-datasaurus
+#| message: false
 datasaurus_dozen |> 
   ggplot(aes(x, y)) + 
   geom_point() + 
@@ -39,7 +42,217 @@ datasaurus_dozen |>
 
 In causal inference, though, even visualization is not enough to untangle causal effects. Background knowledge, as we visualized in DAGs in @sec-dags, is required to meet the assumptions of causal inference. 
 
-In 2023, we introduced the *causal quartet* [@TODO-CITE-OUR-PAPER]. The causal quartet has many of the same properties of Anscombe's quartet and the Datasaurus Dozen: 
+In 2023, we introduced the *causal quartet* [@TODO-CITE-OUR-PAPER]. The causal quartet has many of the same properties of Anscombe's quartet and the Datasaurus Dozen: the numerical summaries of the variables in the dataset are basically the same. Unlike these data, the causal quartet also *look* the same. The difference is the causal structure that generated each dataset. @fig-causal_quartet_hidden shows four datasets where the relationship between `exposure` and `outcome` is virtually identical. 
+
+```{r}
+#| label: fig-causal_quartet_hidden
+#| message: false
+causal_quartet |> 
+  # hide the dataset names
+  mutate(dataset = as.integer(factor(dataset))) |> 
+  ggplot(aes(exposure, outcome)) + 
+  geom_point() + 
+  geom_smooth(method = "lm", se = FALSE) + 
+  facet_wrap(~ dataset)
+```
+
+The question for each dataset is whether to adjust for a third variable, `covariate`. Is `covariate` a confounder? A mediator? A collider? We can't use data to figure this problem out. In @tbl-quartet_lm, it's not clear which effect is right. Likewise, the correlation between `exposure` and `covariate` is no help: it's the same!
+
+```{r}
+#| label: tbl-quartet_lm
+#| echo: false
+effects <- causal_quartet |>
+  nest_by(dataset = as.integer(factor(dataset))) |>
+  mutate(
+    ate_x = coef(lm(outcome ~ exposure, data = data))[2],
+    ate_xz = coef(lm(outcome ~ exposure + covariate, data = data))[2],
+    cor = cor(data$exposure, data$covariate)
+  ) |>
+  select(-data, dataset) |> 
+  ungroup()
+
+names(effects) <- c(
+  "Dataset", 
+  "Not adjusting for `covariate`", 
+  "Adjusting for `covariate`", 
+  "Correlation of `exposure` and `covariate`"
+)
+
+gt::gt(effects)
+```
+
+While the visual relationship between `covariate` and `exposure` is not identical between datasets, all have the same correlation. in @fig-causal_quartet_covariate, dataset 4 seems to have more variance in `covariate`, but that's not actionable information.
+
+```{r}
+#| label: fig-causal_quartet_covariate
+#| message: false
+causal_quartet |> 
+  # hide the dataset names
+  mutate(dataset = as.integer(factor(dataset))) |> 
+  ggplot(aes(covariate, exposure)) + 
+  geom_point() + 
+  geom_smooth(method = "lm", se = FALSE) + 
+  facet_wrap(~ dataset)
+```
+
+Revealing the labels in @fig-causal_quartet, `covariate` plays a different role in each dataset. In 1 and 4, it's a collider (we *shouldn't* adjust for it). In 2, it's a confounder (we *should* adjust for it). In 3, it's a mediator (it depends on the research question). If the data can't tell us the answer, what can we do?
+
+```{r}
+#| label: fig-causal_quartet
+causal_quartet |> 
+  ggplot(aes(exposure, outcome)) + 
+  geom_point() + 
+  geom_smooth(method = "lm", se = FALSE) + 
+  facet_wrap(~ dataset)
+```
+
+The best answer is to have a good sense of the data generating mechanism. If we compile a DAG for each dataset, we only need to query the DAG for the correct adjustment set. 
+
+```{r}
+#| label: fig-quartet-dag
+#| fig-width: 3
+#| fig-height: 3.5
+#| echo: false
+#| message: false
+#| layout-ncol: 2
+#| fig-cap: 
+#|   - "(1) Collider"
+#|   - "(2) Confounder"
+#|   - "(3) Mediator"
+#|   - "(4) M-bias"
+library(ggdag)
+
+coords <- list(
+  x = c(X = 1, Z = 3, Y = 2),
+  y = c(X = 1, Z = 1.1, Y = 1)
+)
+
+d_coll <- dagify(
+  Z ~ X + Y,
+  Y ~ X,
+  exposure = "X",
+  outcome = "Y",
+  labels = c(X = "X", Y = "Y", Z = "Z"),
+  coords = coords
+)
+coords <- list(
+  x = c(X = 2, Z = 1, Y = 3),
+  y = c(X = 1, Z = 1.1, Y = 1)
+)
+
+d_conf <- dagify(
+  X ~ Z,
+  Y ~ X + Z,
+  exposure = "X",
+  outcome = "Y",
+  labels = c(X = "X", Y = "Y", Z = "Z"),
+  coords = coords
+)
+
+coords <- list(
+  x = c(X = 1, Z = 2, Y = 3),
+  y = c(X = 1, Z = 1.1, Y = 1)
+)
+
+d_med <- dagify(
+  Z ~ X,
+  Y ~ Z,
+  exposure = "X",
+  outcome = "Y",
+  labels = c(X = "X", Y = "Y", Z = "Z"),
+  coords = coords
+)
+
+coords <- list(
+  x = c(U1 = 1, U2 = 2, X = 3, Z = 3, Y = 5),
+  y = c(U1 = 2, U2 = 4, X = 1, Z = 2, Y = 2)
+)
+
+d_mbias <- dagify(
+  Z ~ U1 + U2,
+  X ~ U1,
+  Y ~ X + U2,
+  exposure = "X",
+  outcome = "Y",
+  labels = c(X = "X", Y = "Y", Z = "Z"),
+  coords = coords
+)
+
+p_coll <- d_coll |>
+  tidy_dagitty() |>
+  ggplot(
+    aes(x = x, y = y, xend = xend, yend = yend)
+  ) +
+  geom_dag_point(aes(color = label)) +
+  geom_dag_edges() +
+  geom_dag_text() +
+  theme_dag() +
+  coord_cartesian(clip = "off") +
+  theme(legend.position = "none") +
+  ggtitle("(1) Collider")
+
+
+p_conf <- d_conf |>
+  tidy_dagitty() |>
+  ggplot(
+    aes(x = x, y = y, xend = xend, yend = yend)
+  ) +
+  geom_dag_point(aes(color = label)) +
+  geom_dag_edges() +
+  geom_dag_text() +
+  theme_dag() +
+  coord_cartesian(clip = "off") +
+  theme(legend.position = "none") +
+  ggtitle("(2) Confounder")
+
+p_med <- d_med |>
+  tidy_dagitty() |>
+  ggplot(
+    aes(x = x, y = y, xend = xend, yend = yend)
+  ) +
+  geom_dag_point(aes(color = label)) +
+  geom_dag_edges() +
+  geom_dag_text() +
+  theme_dag() +
+  coord_cartesian(clip = "off") +
+  theme(legend.position = "none") +
+  ggtitle("(3) Mediator") 
+
+
+p_m_bias <- d_mbias |>
+  tidy_dagitty() |>
+  ggplot(
+    aes(x = x, y = y, xend = xend, yend = yend)
+  ) +
+  geom_dag_point(aes(color = label)) +
+  geom_dag_edges() +
+  geom_dag_text() +
+  theme_dag() +
+  coord_cartesian(clip = "off") +
+  ggtitle("(4) M-bias") +
+  theme(legend.position = "none")
+
+p_coll
+p_conf
+p_med
+p_m_bias
+```
+
+```{r}
+#| label: tbl-quartets_true_effects
+#| echo: false
+tibble::tribble(
+  ~`Data generating mechanism`, ~`Correct causal model`, ~`Correct causal effect`,
+  "(1) Collider", "Y ~ X", "1",
+  "(2) Confounder", "Y ~ X ; Z",  "0.5",
+  "(3) Mediator", "Direct effect: Y ~ X ; Z, Total Effect: Y ~ X",  "Direct effect: 0, Total effect: 1",
+  "(4) M-Bias", "Y ~ X", "1"
+) |> 
+  gt::gt()
+
+```
+
+
 
 <!-- TODO: data generating mechanism table, or write in blog -->
 
