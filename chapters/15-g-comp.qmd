@@ -22,8 +22,10 @@ These are often linear models for continuous variables or logistic regressions f
 
 Monte Carlo simulations are computational approaches that generate a sample of outcomes for random processes.
 One example would be to calculate the probability of rolling "snake eyes" (two ones) on a single roll of two six-sided dice. 
-We could certainly calculate this probability mathematically ($\frac{1}{6}*\frac{1}{6}=\frac{1}{36}\approx 2.8$%), though it can be just as quick to write a Monte Carlo simulation of the process (1,000,000 rolls shown below)
+We could certainly calculate this probability mathematically ($\frac{1}{6}*\frac{1}{6}=\frac{1}{36}\approx 2.8$%), though it can be just as quick to write a Monte Carlo simulation of the process (1,000,000 rolls shown below).
 ```{r}
+library(tidyverse)
+
 n <- 1000000
 tibble(
   roll_1 = sample(1:6, n, replace = TRUE),
@@ -38,6 +40,152 @@ Indeed, that's why Monte Carlo simulations are so useful for the real-world caus
 
 ## Revisiting the magic morning hours example
 
+Recall in @sec-outcome-model that we estimated the impact of extra magic morning hours on the average posted wait time for the Seven Dwarfs ride between 9 and 10am.
+To do so, we fit a propensity score model for the exposure (`park_extra_magic_morning`) with the confounders `park_ticket_season`, `park_close`, and `park_temperature_high`.
+In turn, these propensity scores were converted to regression weights for the outcome model, which concluded that the expected impact of having extra magic hours on the average posted wait time between 9 and 10am is 6.2 minutes.
+
+We will now reproduce this analysis, instead adopting the g-formula approach. Proceeding through the 4 steps outlined above, we begin by revisiting the time ordered DAG relevant to this question.
+
+```{r}
+#| label: fig-dag-magic-hours-wait-take-2
+#| echo: false
+#| message: false
+#| warning: false
+#| fig.cap: >
+#|   Proposed DAG for the relationship between Extra Magic Hours
+#|   in the morning at a particular park and the average wait
+#|   time between 9 am and 10 am.
+#|   Here we are saying that we believe 1) Extra Magic Hours impacts average wait time and 2) both Extra Magic Hours and average wait time are determined by the time the park closes, historic high temperatures, and ticket season.
+
+library(ggdag)
+library(ggokabeito)
+
+coord_dag <- list(
+  x = c(Season = 0, close = 0, weather = -1, x = 1, y = 2),
+  y = c(Season = -1, close = 1, weather = 0, x = 0, y = 0)
+)
+
+labels <- c(
+  x = "Extra Magic Morning",
+  y = "Average wait",
+  Season = "Ticket Season",
+  weather = "Historic high temperature",
+  close = "Time park closed"
+)
+
+dagify(
+  y ~ x + close + Season + weather,
+  x ~ weather + close + Season,
+  coords = coord_dag,
+  labels = labels,
+  exposure = "x",
+  outcome = "y"
+) |>
+  tidy_dagitty() |>
+  node_status() |>
+  ggplot(
+    aes(x, y, xend = xend, yend = yend, color = status)
+  ) +
+  geom_dag_edges_arc(curvature = c(rep(0, 5), .3)) +
+  geom_dag_point() +
+  geom_dag_label_repel(seed = 1630) +
+  scale_color_okabe_ito(na.value = "grey90") +
+  theme_dag() +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text()
+  ) +
+  coord_cartesian(clip = "off") +
+  scale_x_continuous(
+    limits = c(-1.25, 2.25),
+    breaks = c(-1, 0, 1, 2),
+    labels = c(
+      "\n(one year ago)",
+      "\n(6 months ago)",
+      "\n(3 months ago)",
+      "9am - 10am\n(Today)"
+    )
+  )
+```
+
+```{r}
+library(broom)
+library(touringplans)
+
+seven_dwarfs_9 <- seven_dwarfs_train_2018 |>
+  filter(wait_hour == 9)
+
+fit <- lm(
+  park_extra_magic_morning ~ park_ticket_season + park_close + park_temperature_high,
+  data = seven_dwarfs_9
+)
+```
+
+The second step is to specify a parametric model for each non-baseline variable that is based upon previously measured variables in the DAG. 
+This particular example is simple, since we only have two variables that are affected by previous features (`park_extra_magic_morning` and `wait_minutes_posted_avg`). 
+Let's suppose that adequate models for these two variables are:
+
+```{r}
+# A logistic regression for park_extra_magic_morning
+fit_extra_magic <- glm(
+  park_extra_magic_morning ~ 
+    park_ticket_season + park_close + park_temperature_high,
+  data = seven_dwarfs_9,
+  family = "binomial"
+)
+
+# A linear model for wait_minutes_posted_avg
+fit_wait_minutes <- lm(
+  wait_minutes_posted_avg ~ 
+    park_extra_magic_morning + park_ticket_season + park_close +
+    park_temperature_high,
+  data = seven_dwarfs_9)
+```
+
+Next, we need to draw a large sample from the distribution of baseline characteristics. To do so, we'll use sampling with replacement to generate a data frame of size 10,000.
+
+```{r}
+# It's important to set seeds for reproducibility in Monte Carlo runs
+set.seed(8675309)
+
+df_sim_baseline <- seven_dwarfs_9 |> 
+  select(park_ticket_season, park_close, park_temperature_high) |> 
+  sample_n(10000, replace = TRUE)
+```
+
+With this population in hand, we can now simulate what would happen at each subsequent time point according to the parametric models we just defined. 
+Remember that, in step 3, an important caveat is that for the variable upon which we wish to intervene (in this case, `park_extra_magic_morning`) we don't need to let the model determine the values; rather, we set them. 
+Specifically, we'll set the first 5000 to `park_extra_magic_morning = 1` and the second 5000 to `park_extra_magic_morning = 0`. 
+Other simulations (in this case, the only remaining variable, `wait_minutes_posted_avg`) proceed as expected.
+
+```{r}
+# Set the exposure groups for the causal contrast we wish to estimate
+df_sim_time_1 <- df_sim_baseline |> 
+  mutate(park_extra_magic_morning = c(rep(1, 5000), rep(0, 5000)))
+
+# Simulate the outcome according to the parametric model in step 2
+df_outcome <- fit_wait_minutes |> 
+  augment(newdata = df_sim_time_1) |> 
+  rename(wait_minutes_posted_avg = .fitted)
+```
+
+All that is left to do is compute the causal contrast we wish to estimate.
+Here, that contrast is the difference between expected wait minutes on extra magic mornings versus mornings without the extra magic program. 
+
+```{r}
+df_outcome |> 
+  group_by(park_extra_magic_morning) |> 
+  summarize(wait_minutes = mean(wait_minutes_posted_avg))
+```
+
+We see that the difference, $74.3-68.1=6.2$ is the same as our estimate of 6.2 when we used IP weighting.
+
+## The g-formula for continuous exposures
+
+As previously mentioned, a key strength of the g-formula is its capacity to handle continuous exposures, a situation in which IP weighting can give rise to unstable estimates. 
+Here, we briefly repeat the example from the previous chapter to show how this is done.
+
+## Dynamic treatment regimes with the g-formula
 
 
 ## Calculating estimates with G-Computation
