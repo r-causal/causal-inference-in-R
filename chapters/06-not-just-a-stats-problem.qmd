@@ -448,12 +448,50 @@ d_mbias |>
 
 ## Causal and Predictive Models, Revisited {#sec-causal-pred-revisit}
 
-Predictive measurements also fail to distinguish between the four datasets. 
+Predictive measurements also fail to distinguish between the four datasets. In @tbl-quartet_time_predictive, we show the difference in a couple of common predictive metrics when we add `covariate` to the model. In each dataset, `covariate` adds information to the model because it contains associational information about the outcome. The RMSE goes down, indicating a better fit, and the R^2^ goes up, indicating more variance explained. The coefficients for `covariate` represent the information about `outcome` it contains, not from where that information comes. In the case of the collider data set, it's not even a useful prediction tool, because you wouldn't have `covariate` at the time of prediction, given that it happens after the exposure and outcome.
 
 ```{r}
 #| label: tbl-quartet_time_predictive
+#| echo: false
+#| tbl-cap: "The difference in predictive metrics on `outcome` in each dataset with and without `covariate`. In each dataset, `covariate` adds information to the model, but this offers little guidances as to the proper causal model."
 
+get_rmse <- function(data, model) {
+  sqrt(mean((data$outcome - predict(model, data)) ^ 2))
+}
+
+get_r_squared <- function(model) {
+  summary(model)$r.squared
+}
+
+causal_quartet |>
+  nest_by(dataset) |>
+  mutate(
+    rmse1 = get_rmse(
+      data, 
+      lm(outcome ~ exposure, data = data)
+    ),
+    rmse2 = 
+      get_rmse(
+        data, 
+        lm(outcome ~ exposure + covariate, data = data)
+      ),
+    rmse_diff = rmse2 - rmse1,
+    r_squared1 = get_r_squared(lm(outcome ~ exposure, data = data)),
+    r_squared2 = get_r_squared(lm(outcome ~ exposure + covariate, data = data)),
+    r_squared_diff = r_squared2 - r_squared1
+  ) |> 
+  select(dataset, rmse = rmse_diff, r_squared = r_squared_diff) |>
+  ungroup() |>
+  gt() |>
+  fmt_number() |> 
+  cols_label(
+    dataset = "Dataset", 
+    rmse = "RMSE", 
+    r_squared = md("R^2^")
+  )
 ```
+
+Relatedly, coefficients besides those for causal effects of interest are difficult to interpret. 
 
 <!-- TODO:  -->
 
