@@ -400,24 +400,60 @@ d_coll |>
 The time-ordering heuristic relies on a simple rule: don't adjust for the future. 
 :::
 
-The quartet package's `causal_quartet_time` has time-ordered measurements of each variable for the four datasets. 
+The quartet package's `causal_quartet_time` has time-ordered measurements of each variable for the four datasets. Each has a `*_baseline` and `*_followup` measurement.
 
 ```{r}
-#| label: create-tbl-3
-## Table 3
-
-tbl_3 <- causal_quartet_time |>
-  nest_by(dataset) |>
-  mutate(adjusted_effect = 
-             coef(
-               lm(outcome_followup ~ exposure_baseline + covariate_baseline, 
-                  data = data)
-             )[2]) |>
-  bind_cols(tibble(truth = c(1, 0.5, 1, 1))) |>
-  select(-data, dataset)
+causal_quartet_time
 ```
 
+Using the formula `outcome_followup ~ exposure_baseline + covariate_baseline` works for three out of four datasets. Even though `covariate_baseline` is only in the adjustment set for the second dataset, it's not a collider in the two of the other datasets, so it's not a problem. 
+
+```{r}
+#| label: tbl-quartet_time_adjusted
+#| echo: false
+#| tbl-cap: "The adjusted effect of `exposure_baseline` on `outcome_followup` in each dataset. The effect adjusted for `covariate_baseline` is correct for three out of four datasets."
+causal_quartet_time |>
+  nest_by(dataset) |>
+  mutate(
+    adjusted_effect = 
+      coef(
+        lm(outcome_followup ~ exposure_baseline + covariate_baseline, 
+           data = data)
+      )[2]
+  ) |>
+  bind_cols(tibble(truth = c(1, 0.5, 1, 1))) |>
+  select(-data, dataset) |> 
+  ungroup() |> 
+  set_names(c("Dataset", "Adjusted effect", "Truth")) |>
+  gt() |> 
+  fmt_number(columns = -Dataset)
+```
+
+Where it fails is in dataset 4, the M-bias example. In this case, `covariate_baseline` is still a collider, because the collision occurs prior to both the exposure and outcome. As we discussed in @sec-m-bias, however, if you are in doubt whether something is truly M-bias, it is better to adjust for it than not. Confounding bias tends to be worse, and meaningful M-bias is probably rare in real life. As the true causal structure deviates from perfect M-bias, the severity of the bias tends to decrease. So, if it is clearly M-bias, don't adjust for the variable. If it's not clear, adjust for it. 
+
+::: {.callout-tip}
+Remember as well that it is possible to block bias induced by adjusting for a collider in certain circumstances because collider bias is just another open path. If we had `u1` and `u2`, we could both control for `covariate` and block any potential collider bias. In other words, sometimes when we open a path, we can close it again.
+
+```{r}
+#| label: fig-m_bias_adjust
+#| echo: false
+#| fig-cap: "The DAG for dataset 4, where the covariate is a collider via M-Bias. If we know the structure, we shouldn't control for the covariate, but if we do, we can theoretically close the opened pathway via `u1` and `u2`, assuming we have them measured. In other words, thorough measurement and control of pre-exposure variables will still save the day."
+d_mbias |> 
+  adjust_for("Z") |> 
+  ggdag_adjustment_set(shadow = TRUE) +
+  theme_dag() +
+  theme(legend.position = "bottom")
+```
+:::
+
 ## Causal and Predictive Models, Revisited {#sec-causal-pred-revisit}
+
+Predictive measurements also fail to distinguish between the four datasets. 
+
+```{r}
+#| label: tbl-quartet_time_predictive
+
+```
 
 <!-- TODO:  -->
 
