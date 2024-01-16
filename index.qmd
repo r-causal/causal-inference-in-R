@@ -2,7 +2,7 @@
 
 Welcome to *Causal Inference in R*.
 Answering causal questions is critical for scientific and business purposes, but techniques like randomized clinical trials and A/B testing are not always practical or successful.
-The tools in this book will allow readers better make causal inferences with  observational data with the R programming language.
+The tools in this book will allow readers to better make causal inferences with observational data with the R programming language.
 By its end, we hope to help you:
 
 1.  Ask better causal questions.
