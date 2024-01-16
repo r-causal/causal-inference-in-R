@@ -1,4 +1,4 @@
-# Continuous exposures
+# Continuous exposures {#sec-continuous-exposures}
 
 {{< include 00-setup.qmd >}}
 

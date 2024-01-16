@@ -180,7 +180,7 @@ We see that the difference, $74.3-68.1=6.2$ is the same as our estimate of 6.2 w
 ## The g-formula for continuous exposures
 
 As previously mentioned, a key strength of the g-formula is its capacity to handle continuous exposures, a situation in which IP weighting can give rise to unstable estimates. 
-Here, we briefly repeat the example from the previous chapter to show how this is done.
+Here, we briefly repeat the example from @sec-continuous-exposures to show how this is done.
 To extend the pattern, we will wrap this execution of the technique in a bootstrap to show how confidence intervals are computed.
 
 ## Dynamic treatment regimes with the g-formula
