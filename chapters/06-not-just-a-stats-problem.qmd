@@ -184,7 +184,7 @@ d_coll <- dagify(
   Y ~ X,
   exposure = "X",
   outcome = "Y",
-  labels = c(X = "X", Y = "Y", Z = "Z"),
+  labels = c(X = "exposure", Y = "outcome", Z = "covariate"),
   coords = coords
 )
 coords <- list(
@@ -237,7 +237,7 @@ p_coll <- d_coll |>
   ) +
   geom_dag_point(aes(color = label)) +
   geom_dag_edges() +
-  geom_dag_text() +
+  geom_dag_label_repel() +
   theme_dag() +
   coord_cartesian(clip = "off") +
   theme(legend.position = "none") +
@@ -448,7 +448,11 @@ d_mbias |>
 
 ## Causal and Predictive Models, Revisited {#sec-causal-pred-revisit}
 
-Predictive measurements also fail to distinguish between the four datasets. In @tbl-quartet_time_predictive, we show the difference in a couple of common predictive metrics when we add `covariate` to the model. In each dataset, `covariate` adds information to the model because it contains associational information about the outcome. The RMSE goes down, indicating a better fit, and the R^2^ goes up, indicating more variance explained. The coefficients for `covariate` represent the information about `outcome` it contains, not from where that information comes. In the case of the collider data set, it's not even a useful prediction tool, because you wouldn't have `covariate` at the time of prediction, given that it happens after the exposure and outcome.
+### Prediction metrics
+
+Predictive measurements also fail to distinguish between the four datasets. In @tbl-quartet_time_predictive, we show the difference in a couple of common predictive metrics when we add `covariate` to the model. In each dataset, `covariate` adds information to the model because it contains associational information about the outcome [^2]. The RMSE goes down, indicating a better fit, and the R^2^ goes up, indicating more variance explained. The coefficients for `covariate` represent the information about `outcome` it contains, not from where that information comes. In the case of the collider data set, it's not even a useful prediction tool, because you wouldn't have `covariate` at the time of prediction, given that it happens after the exposure and outcome.
+
+[^2]: For M-bias, including `covariate` in the model is helpful to the extent that it has information about `u2`, one of the causes about the outcome. In this cause, the data generating mechanism was such that `covariate` contains more information from `u1` than `u2`, so it doesn't add as much predictive value. Random noise represents most of what `u2` doesn't account for. 
 
 ```{r}
 #| label: tbl-quartet_time_predictive
@@ -491,14 +495,62 @@ causal_quartet |>
   )
 ```
 
-Relatedly, coefficients besides those for causal effects of interest are difficult to interpret. 
+### The Table Two Fallacy[^3]
 
-<!-- TODO:  -->
+[^3]: If you recall, the Table Two Fallacy is named after the tendency in journals of health research to have a complete set of model coefficients in the second table of an article. See @Westreich2013 for a detailed discussion of the Table Two Fallacy.
 
-<!-- -   Probably too long, but if possible, condense to a popout -->
+Relatedly, coefficients *other* than those of the causal effects we're interested in can be difficult to interpret. It's tempting, in a model with `y ~ x + z`, to present the coefficient of `z` as well as `x`. The problem, as discussed @sec-pred-or-explain, is that the causal structure for the effect of `z` on `y` may be different than that of the effect of `x` on `y`. Let's consider a variation of the quartet DAGs that has some other variables. 
 
-<!-- -   DAGs showing examples where prediction can lean on measured confounders, colliders. It's the amount of information a variable brings, not whether the coeffecient is unbiased affect of variable on outcome. -->
+First, let's start with the confounder DAG. In @fig-quartet_confounder, we see that `covariate` is a confounder. If this DAG represents the complete causal structure for `y`, the model `y ~ x + z` will give an unbiased estimate of the effect on `y` for `x`, assuming we've met other assumptions of the modeling process.  The adjustment set for `z`'s effect on `y` is empty, and `x` is not a collider, so controlling for it does not induce bias[^4]. But look again. `x` is a mediator for `z`'s effect on `y`; some of the total effect is mediated through `x`, while there is also a direct effect of `z` on `y`. **Both estimates are unbiased, but they are different *types* of estimates**. The effect of `x` on `y` is the *total effect* of that relationship, while the effect of `z` on `y` is the *direct effect*. 
 
-<!-- -   Not practical to fit a prediction model with future variable -->
+[^4]: Additionally, OLS produces a *collapsable* effect. Other types of effects, like the odds and hazards ratios, are *non-collapsable*, meaning including unrelated variables in the model *can* change the effect estimate. 
 
-<!-- -   Table 2 Bias examples. Unmeasure confounding of Z-Y relationship. Mediation example. -->
+```{r}
+#| label: fig-quartet_confounder
+#| echo: false
+#| fig-cap: "The DAG for dataset 2, where `covariate` is a confounder. If you look closely, you'll realize that, from the perspective of the effect of `covariate` on the `outcome`, `exposure` is a *mediator*."
+#| fig-width: 3
+#| fig-height: 2.5
+p_conf +
+  ggtitle(NULL)
+```
+
+What if we add `q`, a mutual cause of `z` and `y`? In @fig-quartet_confounder_q, the adjustment sets are still different. The adjustment set for `x` is still the same: `z`. The adjusment set for `z` is `q`. In other words, `q` is a confounder for `z`'s effect on `y`. The model `y ~ x + z` will produce the correct effect for `x` but not for the direct effect of `z`. Now, we have a situation where `z` not only answers a different type of question than `x`, but it also is biased by the absence of `q`.
+
+```{r}
+#| label: fig-quartet_confounder_q
+#| echo: false
+#| fig-cap: "A modification of the DAG for dataset 2, where `covariate` is a confounder. Now, the relationship between `covariate` and `outcome` is confounded by `q`, a variable not neccessary to calculate the unbiased effect of `exposure` on `outcome`."
+#| fig-width: 3.5
+#| fig-height: 3
+coords <- list(
+  x = c(X = 1.75, Z = 1, Y = 3, Q = 0),
+  y = c(X = 1.1, Z = 1.5, Y = 1, Q = 1)
+)
+
+d_conf2 <- dagify(
+  X ~ Z,
+  Y ~ X + Z + Q,
+  Z ~ Q,
+  exposure = "X",
+  outcome = "Y",
+  labels = c(X = "X", Y = "Y", Z = "Z"),
+  coords = coords
+)
+
+p_conf2 <- d_conf2 |>
+  tidy_dagitty() |>
+  ggplot(
+    aes(x = x, y = y, xend = xend, yend = yend)
+  ) +
+  geom_dag_point(aes(color = label)) +
+  geom_dag_edges() +
+  geom_dag_text() +
+  theme_dag() +
+  coord_cartesian(clip = "off") +
+  theme(legend.position = "none") 
+
+p_conf2
+```
+
+
