@@ -108,24 +108,18 @@ dagify(
   )
 ```
 
+The second step is to specify a parametric model for each non-baseline variable that is based upon previously measured variables in the DAG. 
+This particular example is simple, since we only have two variables that are affected by previous features (`park_extra_magic_morning` and `wait_minutes_posted_avg`). 
+Let's suppose that adequate models for these two variables are the simple logistic and linear models that follow.
+
 ```{r}
+# Load packages and data
 library(broom)
 library(touringplans)
 
 seven_dwarfs_9 <- seven_dwarfs_train_2018 |>
   filter(wait_hour == 9)
 
-fit <- lm(
-  park_extra_magic_morning ~ park_ticket_season + park_close + park_temperature_high,
-  data = seven_dwarfs_9
-)
-```
-
-The second step is to specify a parametric model for each non-baseline variable that is based upon previously measured variables in the DAG. 
-This particular example is simple, since we only have two variables that are affected by previous features (`park_extra_magic_morning` and `wait_minutes_posted_avg`). 
-Let's suppose that adequate models for these two variables are:
-
-```{r}
 # A logistic regression for park_extra_magic_morning
 fit_extra_magic <- glm(
   park_extra_magic_morning ~ 
@@ -139,10 +133,13 @@ fit_wait_minutes <- lm(
   wait_minutes_posted_avg ~ 
     park_extra_magic_morning + park_ticket_season + park_close +
     park_temperature_high,
-  data = seven_dwarfs_9)
+  data = seven_dwarfs_9
+)
 ```
 
-Next, we need to draw a large sample from the distribution of baseline characteristics. To do so, we'll use sampling with replacement to generate a data frame of size 10,000.
+Next, we need to draw a large sample from the distribution of baseline characteristics.
+Deciding how large this sample should be is typically based on computational availability; larger sample sizes can minimize the risk of precision loss via simulation error [@keil2014].
+In the present case, we'll use sampling with replacement to generate a data frame of size 10,000.
 
 ```{r}
 # It's important to set seeds for reproducibility in Monte Carlo runs
