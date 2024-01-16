@@ -38,7 +38,7 @@ coord_dag <- list(
 labels <- c(
   extra = "Extra Magic Morning",
   x = "Average posted wait ",
-  y = "Average acutal wait",
+  y = "Average actual wait",
   Season = "Ticket Season",
   weather = "Historic high temperature",
   close = "Time park closed"
