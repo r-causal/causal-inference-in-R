@@ -183,6 +183,189 @@ As previously mentioned, a key strength of the g-formula is its capacity to hand
 Here, we briefly repeat the example from @sec-continuous-exposures to show how this is done.
 To extend the pattern, we will wrap this execution of the technique in a bootstrap to show how confidence intervals are computed.
 
+Recall, our causal question of interest is "Do posted wait times for the Seven Dwarfs Mine Train at 8 am affect actual wait times at 9 am?"
+The time-ordered DAG for this question (step 1) is:
+
+```{r}
+#| label: fig-dag-avg-wait-2
+#| echo: false
+#| message: false
+#| warning: false
+#| fig.cap: >
+#|    Proposed DAG for the relationship between posted wait
+#|    in the morning at a particular park and the average
+#|    wait time between 5 pm and 6 pm.
+
+library(tidyverse)
+library(ggdag)
+library(ggokabeito)
+
+coord_dag <- list(
+  x = c(Season = -1, close = -1, weather = -2, extra = 0, x = 1, y = 2),
+  y = c(Season = -1, close = 1, weather = 0, extra = 0, x = 0, y = 0)
+)
+
+labels <- c(
+  extra = "Extra Magic Morning",
+  x = "Average posted wait ",
+  y = "Average actual wait",
+  Season = "Ticket Season",
+  weather = "Historic high temperature",
+  close = "Time park closed"
+)
+
+dagify(
+  y ~ x + close + Season + weather + extra,
+  x ~ weather + close + Season + extra,
+  extra ~ weather + close + Season,
+  coords = coord_dag,
+  labels = labels,
+  exposure = "x",
+  outcome = "y"
+) |>
+  tidy_dagitty() |>
+  node_status() |>
+  ggplot(
+    aes(x, y, xend = xend, yend = yend, color = status)
+  ) +
+  geom_dag_edges_arc(curvature = c(rep(0, 7), .2, 0, .2, .2, 0), edge_colour = "grey70") +
+  geom_dag_point() +
+  geom_dag_label_repel(seed = 1602) +
+  scale_color_okabe_ito(na.value = "grey90") +
+  theme_dag() +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text()
+  ) +
+  coord_cartesian(clip = "off") +
+  scale_x_continuous(
+    limits = c(-2.25, 2.25),
+    breaks = c(-2, -1, 0, 1, 2),
+    labels = c(
+      "\n(one year ago)",
+      "\n(6 months ago)",
+      "\n(3 months ago)",
+      "8am-9am\n(Today)",
+      "9am-10am\n(Today)"
+    )
+  )
+```
+
+For step 2, we need to specify parametric models for the non-baseline variables in our DAG (i.e. any variables which have arrows into them).
+In this case, we need such models for `park_extra_magic_morning`, `wait_minutes_posted_avg`, and `wait_minutes_actual_avg`; we'll assume that the below logistic and linear models are appropriate.
+One extension to our previous implementation is that we're going to embed the each step of the process into a function, since this will allow us to bootstrap the entire pipeline and obtain confidence intervals.
+
+```{r}
+fit_models <- function(.data) {
+  
+  # A logistic regression for park_extra_magic_morning
+  fit_extra_magic <- glm(
+    park_extra_magic_morning ~ 
+      park_ticket_season + park_close + park_temperature_high,
+    data = .data,
+    family = "binomial"
+  )
+  
+  # A linear model for wait_minutes_posted_avg
+  fit_wait_minutes_posted <- lm(
+    wait_minutes_posted_avg ~ 
+      park_extra_magic_morning + park_ticket_season + park_close +
+      park_temperature_high,
+    data = .data
+  )
+  
+  # A linear model for wait_minutes_actual_avg
+  fit_wait_minutes_actual <- lm(
+    wait_minutes_actual_avg ~ 
+      wait_minutes_posted_avg + park_extra_magic_morning +
+      park_ticket_season + park_close +
+      park_temperature_high,
+    data = .data
+  )
+  
+  return(
+    list(
+      fit_extra_magic = fit_extra_magic,
+      fit_wait_minutes_posted = fit_wait_minutes_posted,
+      fit_wait_minutes_actual = fit_wait_minutes_actual
+    )
+  )
+  
+}
+```
+
+Next, we write a function which will complete step 3: from a random sample from the distribution of baseline variables, generate values for all subsequent variables (except the intervention variable) according to the models we defined. 
+
+```{r}
+# The arguments to simulate_process are as follows:
+# .data is the source data
+# n_sample is the size of the baseline resample of .data
+# fits is a list which is returned from our fit_models function
+simulate_process <- function(.data, n_sample = 10000, fits) {
+  
+  # Draw a random sample of baseline variables
+  df_baseline <- .data |> 
+    select(park_ticket_season, park_close, park_temperature_high) |> 
+    sample_n(n_sample, replace = TRUE)
+  
+  # Simulate park_extra_magic_morning
+  df_sim_time_1 <- fits$fit_extra_magic |> 
+    augment(newdata = df_baseline, type.predict = "response") |> 
+    # .fitted is the probability that park_extra_magic_morning is 1,
+    # so let's use that to generate a 0/1 outcome
+    rowwise() |> 
+    mutate(
+      park_extra_magic_morning = sample(
+        x = 1:0,
+        size = 1,
+        replace = TRUE,
+        prob = c(.fitted, 1 - .fitted)
+      )
+    ) |> 
+    ungroup()
+  
+  # Assign wait_minutes_posted_avg, since it's the intervention
+  df_sim_time_2 <- df_sim_time_1 |> 
+    mutate(
+      wait_minutes_posted_avg = 
+        c(rep(1, n_sample/2), rep(0, n_sample/2))
+    )
+  
+  # Simulate the outcome 
+  df_outcome <- fits$fit_wait_minutes_actual |> 
+    augment(newdata = df_sim_time_2) |> 
+    rename(wait_minutes_actual_avg = .fitted)
+  
+  return(df_outcome)
+}
+```
+
+Finally, in step 4, we compute the causal contrast of interest using our simulated data. 
+
+```{r}
+compute_contrast <- function(.data) {
+  
+}
+```
+
+```{r}
+# Wrangle the data to reflect the causal question we are asking
+eight <- seven_dwarfs_train_2018 |>
+  filter(wait_hour == 8) |>
+  select(-wait_minutes_actual_avg)
+
+nine <- seven_dwarfs_train_2018 |>
+  filter(wait_hour == 9) |>
+  select(park_date, wait_minutes_actual_avg)
+
+wait_times <- eight |>
+  left_join(nine, by = "park_date") |>
+  drop_na(wait_minutes_actual_avg)
+
+test_fits <- fit_models(wait_times)
+simulate_process(wait_times, n_sample = 10000, test_fits)
+```
+
 ## Dynamic treatment regimes with the g-formula
 
 
