@@ -4,13 +4,13 @@
 
 ## The Causal Quartet
 
-We now have the tools to look at a detail of causal inference alluded to thus far in the book: causal inference is not (just) a statistical problem.
+We now have the tools to look at a something we've alluded to thus far in the book: causal inference is not (just) a statistical problem.
 Of course, we use statistics to answer causal questions.
 It's necessary to answer most questions, even if the statistics are basic (as they often are in randomized designs).
 But statistics alone do not allow us to address all of the assumptions of causal inference.
 
 In 1973, Francis Anscombe introduced a set of four datasets known as *Anscombe's Quartet*.
-These data illustrated an important lesson: summary statistics alone cannot help you understand data; you also need to visualize your data.
+These data illustrated an important lesson: summary statistics by themselves cannot help you understand data; you also need to visualize your data.
 In the plots in @fig-anscombe, each data set has remarkably similar summary statistics, including means and correlations that are nearly identical.
 
 ```{r}
@@ -26,7 +26,8 @@ anscombe_quartet |>
   facet_wrap(~ dataset)
 ```
 
-The Datasaurus Dozen is a modern take on Anscombe's Quartet. The mean, standard deviation, and correlation are nearly identical in each dataset, but the visualizations are very different.
+The Datasaurus Dozen is a modern take on Anscombe's Quartet.
+The mean, standard deviation, and correlation are nearly identical in each dataset, but the visualizations are very different.
 
 ```{r}
 library(datasauRus)
@@ -34,7 +35,7 @@ library(datasauRus)
 # roughly the same correlation in each dataset
 datasaurus_dozen |> 
   group_by(dataset) |> 
-  summarize(cor = round(cor(x, y), 3))
+  summarize(cor = round(cor(x, y), 2))
 ```
 
 ```{r}
@@ -49,10 +50,9 @@ datasaurus_dozen |>
 ```
 
 In causal inference, though, even visualization is not enough to untangle causal effects.
-Background knowledge, as we visualized in DAGs in @sec-dags, is required to meet the assumptions of causal inference.
+Background knowledge, as we visualized in DAGs in @sec-dags, is required to infer causation from correlation [@onthei1999].
 
-In 2023, we introduced the *causal quartet* [@dagostinomcgowan2023].
-The causal quartet has many of the same properties of Anscombe's quartet and the Datasaurus Dozen: the numerical summaries of the variables in the dataset are basically the same.
+Inspired by Anscombe's quartet, the *causal quartet* has many of the same properties of Anscombe's quartet and the Datasaurus Dozen: the numerical summaries of the variables in the dataset are basically the same [@dagostinomcgowan2023].
 Unlike these data, the causal quartet also *look* the same as each other.
 The difference is the causal structure that generated each dataset.
 @fig-causal_quartet_hidden shows four datasets where the observational relationship between `exposure` and `outcome` is virtually identical.
@@ -93,39 +93,52 @@ effects <- causal_quartet |>
   select(-data, dataset) |> 
   ungroup()
 
-names(effects) <- c(
-  "Dataset", 
-  "Not adjusting for `covariate`", 
-  "Adjusting for `covariate`", 
-  "Correlation of `exposure` and `covariate`"
-)
-
 gt(effects) |> 
-  fmt_number(columns = -Dataset)
+  fmt_number(columns = -dataset) |> 
+  cols_label(
+    dataset = "Dataset", 
+    ate_x = md("Not adjusting for `covariate`"), 
+    ate_xz = md("Adjusting for `covariate`"), 
+    cor = md("Correlation of `exposure` and `covariate`")
+  )
 ```
 
-::: {.callout-warning}
-
+::: callout-warning
 ## The ten percent rule
 
-The ten percent rule is a common technique in epidemiology and other fields to determine whether a variable is a confounder. The problem is, it doesn't work. The ten percent rule says that you should include a variable in your model if including it changes the effect estimate by more than ten percent. However, *every* example in the causal quartet causes a change of more than ten percent. As we know, this leads to the wrong answer in some of the datasets. Even the reverse technique, *disincluding* a variable when it's *less* than ten percent, can cause trouble because many small confounding effects can add up to larger bias. 
+The ten percent rule is a common technique in epidemiology and other fields to determine whether a variable is a confounder.
+The ten percent rule says that you should include a variable in your model if including it changes the effect estimate by more than ten percent.
+The problem is, it doesn't work.
+*Every* example in the causal quartet causes a change of more than ten percent.
+As we know, this leads to the wrong answer in some of the datasets.
+Even the reverse technique, *disincluding* a variable when it's *less* than ten percent, can cause trouble because many small confounding effects can add up to larger bias.
 
 ```{r}
 #| label: tbl-quartet_ten_percent
 #| echo: false
 #| tbl-cap: "The percent change in the coefficient for `exposure` when including `covariate` in the model."
 effects |> 
-  mutate(
-    percent_change = scales::percent((.data[["Not adjusting for `covariate`"]] - .data[["Adjusting for `covariate`"]]) / .data[["Not adjusting for `covariate`"]])
-  ) |> 
-  select(Dataset, `Percent Change` = percent_change) |>
-  gt()
+  mutate(percent_change = scales::percent((ate_x - ate_xz) / ate_x)) |> 
+  select(dataset, percent_change) |>
+  gt() |> 
+  cols_label(
+    dataset = "Dataset",
+    percent_change = "Percent change"
+  )
 ```
-
 :::
 
 While the visual relationship between `covariate` and `exposure` is not identical between datasets, all have the same correlation.
 in @fig-causal_quartet_covariate, dataset 4 seems to have more variance in `covariate`, but that's not actionable information.
+
+```{r}
+causal_quartet |> 
+  # hide the dataset names
+  mutate(dataset = as.integer(factor(dataset))) |> 
+  group_by(dataset) |> 
+  summarize(cor = round(cor(covariate, exposure), 2))
+```
+
 
 ```{r}
 #| label: fig-causal_quartet_covariate
@@ -140,7 +153,7 @@ causal_quartet |>
   facet_wrap(~ dataset)
 ```
 
-Revealing the labels in @fig-causal_quartet, `covariate` plays a different role in each dataset.
+Let's reveal the labels of the datasets, representing the causal structure of the dataset.  @fig-causal_quartet, `covariate` plays a different role in each dataset.
 In 1 and 4, it's a collider (we *shouldn't* adjust for it).
 In 2, it's a confounder (we *should* adjust for it).
 In 3, it's a mediator (it depends on the research question).
@@ -158,7 +171,8 @@ causal_quartet |>
 ```
 
 The best answer is to have a good sense of the data generating mechanism.
-In @fig-quartet-dag, we show the DAG for each dataset. Once we compile a DAG for each dataset, we only need to query the DAG for the correct adjustment set, assuming the DAG is right.
+In @fig-quartet-dag, we show the DAG for each dataset.
+Once we compile a DAG for each dataset, we only need to query the DAG for the correct adjustment set, assuming the DAG is right.
 
 ```{r}
 #| label: fig-quartet-dag
@@ -166,12 +180,13 @@ In @fig-quartet-dag, we show the DAG for each dataset. Once we compile a DAG for
 #| fig-height: 3.5
 #| echo: false
 #| message: false
+#| warning: false
 #| layout-ncol: 2
 #| fig-cap: 
-#|   - "The DAG for dataset 1, where `covariate` is a collider. We should *not* adjust for `covariate`, which is a descendant of `exposure` and `outcome`."
-#|   - "The DAG for dataset 2, where `covariate` is a confounder. `covariate` is a mutual cause of `exposure` and `outcome`, representing a backdoor path, so we *must* adjust for it to get the right answer."
-#|   - "The DAG for dataset 3, where `covariate` is a mediator. `covariate` is a descendant of `exposure` and a cause of `outcome`. The path through `covariate` is the indirect path, and the path through `exposure` is the direct path. We should adjust for `covariate` if we want the direct effect, but not if we want the total effect."
-#|   - "The DAG for dataset 4, where `covariate` is a collider via M-Bias. Although `covariate` happens before both `outcome` and `exposure`, it's still a collider. We should *not* adjust for `covariate`, particularly since we can't control for the bias via `u1` and `u2`, which are unmeasured."
+#|   - "The DAG for dataset 1, where `covariate` is a collider. We should *not* adjust for `covariate` (c), which is a descendant of `exposure` (e) and `outcome` (o)."
+#|   - "The DAG for dataset 2, where `covariate` (c) is a confounder. `covariate` is a mutual cause of `exposure` (e) and `outcome` (o), representing a backdoor path, so we *must* adjust for it to get the right answer."
+#|   - "The DAG for dataset 3, where `covariate` (c) is a mediator. `covariate` is a descendant of `exposure` (e) and a cause of `outcome` (o). The path through `covariate` is the indirect path, and the path through `exposure` is the direct path. We should adjust for `covariate` if we want the direct effect, but not if we want the total effect."
+#|   - "The DAG for dataset 4, where `covariate` (c) is a collider via M-Bias. Although `covariate` happens before both `outcome` (o) and `exposure` (e), it's still a collider. We should *not* adjust for `covariate`, particularly since we can't control for the bias via `u1` and `u2`, which are unmeasured."
 library(ggdag)
 
 coords <- list(
@@ -184,7 +199,7 @@ d_coll <- dagify(
   Y ~ X,
   exposure = "X",
   outcome = "Y",
-  labels = c(X = "exposure", Y = "outcome", Z = "covariate"),
+  labels = c(X = "e", Y = "o", Z = "c"),
   coords = coords
 )
 coords <- list(
@@ -197,7 +212,7 @@ d_conf <- dagify(
   Y ~ X + Z,
   exposure = "X",
   outcome = "Y",
-  labels = c(X = "X", Y = "Y", Z = "Z"),
+  labels = c(X = "e", Y = "o", Z = "c"),
   coords = coords
 )
 
@@ -211,78 +226,111 @@ d_med <- dagify(
   Y ~ Z,
   exposure = "X",
   outcome = "Y",
-  labels = c(X = "X", Y = "Y", Z = "Z"),
+  labels = c(X = "e", Y = "o", Z = "c"),
   coords = coords
 )
 
 coords <- list(
-  x = c(U1 = 1, U2 = 2, X = 3, Z = 3, Y = 5),
-  y = c(U1 = 2, U2 = 4, X = 1, Z = 2, Y = 2)
+  x = c(u1 = 1, u2 = 2, X = 3, Z = 3, Y = 5),
+  y = c(u1 = 2, u2 = 4, X = 1, Z = 2, Y = 2)
 )
 
 d_mbias <- dagify(
-  Z ~ U1 + U2,
-  X ~ U1,
-  Y ~ X + U2,
+  Z ~ u1 + u2,
+  X ~ u1,
+  Y ~ X + u2,
   exposure = "X",
   outcome = "Y",
-  labels = c(X = "X", Y = "Y", Z = "Z"),
+  labels = c(X = "e", Y = "o", Z = "c"),
   coords = coords
 )
 
 p_coll <- d_coll |>
   tidy_dagitty() |>
+  mutate(covariate = ifelse(label == "c", "covariate", NA_character_)) |> 
   ggplot(
     aes(x = x, y = y, xend = xend, yend = yend)
   ) +
-  geom_dag_point(aes(color = label)) +
-  geom_dag_edges() +
-  geom_dag_label_repel() +
+  geom_dag_point(aes(color = covariate)) +
+  geom_dag_edges(edge_color = "grey70") +
+  geom_dag_text(aes(label = label)) +
   theme_dag() +
   coord_cartesian(clip = "off") +
-  theme(legend.position = "none") +
-  ggtitle("(1) Collider")
+  theme(legend.position = "bottom") +
+  ggtitle("(1) Collider") + 
+  guides(color = guide_legend(
+    title = NULL, 
+    keywidth = unit(1.4, "mm"), 
+    override.aes = list(size = 3.4, shape = 15)
+  )) +
+  scale_color_discrete(breaks = "covariate", na.value = "grey70")
 
 
 p_conf <- d_conf |>
   tidy_dagitty() |>
+  mutate(covariate = ifelse(label == "c", "covariate", NA_character_)) |> 
   ggplot(
     aes(x = x, y = y, xend = xend, yend = yend)
   ) +
-  geom_dag_point(aes(color = label)) +
-  geom_dag_edges() +
-  geom_dag_text() +
+  geom_dag_point(aes(color = covariate)) +
+  geom_dag_edges(edge_color = "grey70") +
+  geom_dag_text(aes(label = label)) +
   theme_dag() +
   coord_cartesian(clip = "off") +
-  theme(legend.position = "none") +
-  ggtitle("(2) Confounder")
+  theme(legend.position = "bottom") +
+  ggtitle("(2) Confounder") + 
+  guides(color = guide_legend(
+    title = NULL, 
+    keywidth = unit(1.4, "mm"), 
+    override.aes = list(size = 3.4, shape = 15)
+  )) +
+  scale_color_discrete(breaks = "covariate", na.value = "grey70")
 
 p_med <- d_med |>
   tidy_dagitty() |>
+  mutate(covariate = ifelse(label == "c", "covariate", NA_character_)) |> 
   ggplot(
     aes(x = x, y = y, xend = xend, yend = yend)
   ) +
-  geom_dag_point(aes(color = label)) +
-  geom_dag_edges() +
-  geom_dag_text() +
+  geom_dag_point(aes(color = covariate)) +
+  geom_dag_edges(edge_color = "grey70") +
+  geom_dag_text(aes(label = label)) +
   theme_dag() +
   coord_cartesian(clip = "off") +
-  theme(legend.position = "none") +
-  ggtitle("(3) Mediator") 
+  theme(legend.position = "bottom") +
+  ggtitle("(3) Mediator")  + 
+  guides(color = guide_legend(
+    title = NULL, 
+    keywidth = unit(1.4, "mm"), 
+    override.aes = list(size = 3.4, shape = 15)
+  )) +
+  scale_color_discrete(breaks = "covariate", na.value = "grey70")
 
 
 p_m_bias <- d_mbias |>
   tidy_dagitty() |>
+  mutate(covariate = ifelse(label == "c", "covariate", NA_character_)) |> 
   ggplot(
     aes(x = x, y = y, xend = xend, yend = yend)
   ) +
-  geom_dag_point(aes(color = label)) +
-  geom_dag_edges() +
-  geom_dag_text() +
+  geom_dag_point(aes(color = covariate)) +
+  geom_dag_edges(edge_color = "grey70") +
+  geom_dag_text(aes(label = label)) +
+  geom_dag_text(
+    aes(label = name),
+    data = \(.df) filter(.df, name %in% c("u1", "u2"))
+  ) +
   theme_dag() +
   coord_cartesian(clip = "off") +
   ggtitle("(4) M-bias") +
-  theme(legend.position = "none")
+  theme(legend.position = "bottom") + 
+  guides(color = guide_legend(
+    title = NULL, 
+    keywidth = unit(1.4, "mm"), 
+    override.aes = list(size = 3.4, shape = 15)
+  )) +
+  scale_color_discrete(breaks = "covariate", na.value = "grey70")
+
 
 p_coll
 p_conf
@@ -290,9 +338,10 @@ p_med
 p_m_bias
 ```
 
-The data generating mechanism[^1] in the DAGs matches what was actually used to generate the datasets, so we can use the DAGs to determine the correct effect: `unadjusted` in datasets 1 and 4 and `adjusted` in dataset 2. For dataset 3, it depends on which mediation effect we want: `adjusted` for the direct effect and `unadjusted` for the total effect.
+The data generating mechanism[^06-not-just-a-stats-problem-1] in the DAGs matches what was actually used to generate the datasets, so we can use the DAGs to determine the correct effect: unadjusted in datasets 1 and 4 and adjusted in dataset 2.
+For dataset 3, it depends on which mediation effect we want: adjusted for the direct effect and unadjusted for the total effect.
 
-[^1]: See @dagostinomcgowan2023 for the models that generated the datasets.
+[^06-not-just-a-stats-problem-1]: See @dagostinomcgowan2023 for the models that generated the datasets.
 
 ```{r}
 #| label: tbl-quartets_true_effects
@@ -310,11 +359,23 @@ tibble::tribble(
 
 ## Time as a hueristic for causal structure
 
-Hopefully, we have convinced of the usefulness of DAGs. But how do we know what the DAG is? In the causal quartet, we knew the DAGs because we generated the data. In real life, we need to use background knowledge to assemble a candidate causal structure. For some questions, such background knowledge is not available. For others, we may worry about the complexity of the causal structure, particularly when variables mutually evolve with each other, as in @fig-feedback-loop.
+Hopefully, we have convinced you of the usefulness of DAGs.
+But constructing correct DAGs is not an easy endeavor. 
+In the causal quartet, we knew the DAGs because we generated the data.
+In real life, we need to use background knowledge to assemble a candidate causal structure.
+For some questions, such background knowledge is not available.
+For others, we may worry about the complexity of the causal structure, particularly when variables mutually evolve with each other, as in @fig-feedback-loop.
 
-There is one hueristic that is particularly useful when a DAG is incomplete or uncertain: time. Because causality is temporal in nature, a causal variable must precede an effect. Many, but not all, problems in deciding if we should adjust for a confounder are solved by simply putting the variables in order by time. Time ordering is also one of the most critical assumptions you visualize in a DAG, so it's a good place to start regardless of the completeness of the DAG.
+There is one hueristic that is particularly useful when a DAG is incomplete or uncertain: time.
+Because causality is temporal in nature, a cause must precede an effect.
+Many, but not all, problems in deciding if we should adjust for a confounder are solved by simply putting the variables in order by time.
+Time ordering is also one of the most critical assumptions you visualize in a DAG, so it's a good place to start regardless of the completeness of the DAG.
 
-Consider @fig-quartets_time_ordered, a time-ordered version of the collider DAG where the covariate is measured at baseline and follow-up. The original DAG actually represents the *second* measurement, where the covariate is a descendant of both the outcome and exposure. If, however, we control for the same covariate as measured at the start of the study, it cannot be a descendant of the outcome at follow-up because it hasn't happened yet. Thus, when you are missing background knowledge as to the causal structure of the covariate, you can use time-ordering as a defensive measure to avoid bias. Only control for variables that precede the outcome.
+Consider @fig-quartets_time_ordered, a time-ordered version of the collider DAG where the covariate is measured at both baseline and follow-up.
+The original DAG actually represents the *second* measurement, where the covariate is a descendant of both the outcome and exposure.
+If, however, we control for the same covariate as measured at the start of the study, it cannot be a descendant of the outcome at follow-up because it hasn't happened yet.
+Thus, when you are missing background knowledge as to the causal structure of the covariate, you can use time-ordering as a defensive measure to avoid bias.
+Only control for variables that precede the outcome.
 
 ```{r}
 #| label: fig-quartets_time_ordered
@@ -324,7 +385,7 @@ Consider @fig-quartets_time_ordered, a time-ordered version of the collider DAG 
 #| layout-ncol: 2
 #| echo: false
 #| fig-width: 4
-#| fig-height: 3.5
+#| fig-height: 3.75
 coords <- list(
   x = c(X_0 = 1, X_1 = 2, Z_1 = 2, Y_1 = 1.9, X_2 = 3, Y_2 = 2.9, Z_2 = 3,
         X_3 = 4, Y_3 = 3.9, Z_3 = 4),
@@ -341,72 +402,78 @@ d_coll <- dagify(
   Z_3 ~ X_2 + Y_3 + Z_2,
   exposure = "X_2",
   outcome = "Y_3",
-  labels = c(X_0 = "X",
-             X_1 = "X",
-             X_2 = "X",
-             X_3 = "X",
-             Y_0 = "Y",
-             Y_1 = "Y",
-             Y_2 = "Y",
-             Y_3 = "Y",
-             Z_1 = "Z",
-             Z_2 = "Z",
-             Z_3 = "Z"),
+  labels = c(
+    X_0 = "e0",
+    X_1 = "e1",
+    X_2 = "e2",
+    Y_2 = "o1",
+    Y_3 = "o2",
+    Z_2 = "c1",
+    Z_3 = "c2"
+  ),
   coords = coords
 )
 
 d_coll |>
   tidy_dagitty() |>
-  mutate(color = case_when(
-    !(name %in% c("X_2", "Y_3", "Z_3")) ~ "grey",
-    TRUE ~ label)) |>
+  mutate(covariate = ifelse(name == "Z_3", "covariate\n(follow-up)", NA_character_)) |>
   ggplot(
     aes(x = x, y = y, xend = xend, yend = yend)
   ) +
-  geom_dag_point(aes(color = color)) +
-  geom_dag_edges() +
+  geom_dag_point(aes(color = covariate)) +
+  geom_dag_edges(edge_color = "grey70") +
   geom_dag_text(aes(label = label)) +
   theme_dag() +
   coord_cartesian(clip = "off")  +
-  scale_color_manual(values = c("lightgrey", "#E69F00", "#56B4E9", "#009E73")) +
-  theme(legend.position = "none") + 
+  theme(legend.position = "bottom") + 
   geom_vline(xintercept = c(2.6, 3.25, 3.6, 4.25), lty = 2, color = "grey60") + 
   annotate("label", x = 2.925, y = 0.97, label = "baseline", color = "grey50") + 
-  annotate("label", x = 3.925, y = 0.97, label = "follow-up", color = "grey50")
+  annotate("label", x = 3.925, y = 0.97, label = "follow-up", color = "grey50") + 
+  guides(color = guide_legend(
+    title = NULL, 
+    keywidth = unit(1.4, "mm"), 
+    override.aes = list(size = 3.4, shape = 15)
+  )) +
+  scale_color_discrete(breaks = "covariate\n(follow-up)", na.value = "grey70")
 
 d_coll |>
   tidy_dagitty() |>
-  mutate(color = case_when(
-    !(name %in% c("X_2", "Y_3", "Z_2")) ~ "grey",
-    TRUE ~ label)) |>
+  mutate(covariate = ifelse(name == "Z_2", "covariate\n(baseline)", NA_character_)) |>
   ggplot(
     aes(x = x, y = y, xend = xend, yend = yend)
   ) +
-  geom_dag_point(aes(color = color)) +
-  geom_dag_edges() +
+  geom_dag_point(aes(color = covariate)) +
+  geom_dag_edges(edge_color = "grey70") +
   geom_dag_text(aes(label = label)) +
   theme_dag() +
   coord_cartesian(clip = "off")  +
-  scale_color_manual(values = c("lightgrey", "#E69F00", "#56B4E9", "#009E73")) +
-  theme(legend.position = "none") + 
+  theme(legend.position = "bottom") + 
   geom_vline(xintercept = c(2.6, 3.25, 3.6, 4.25), lty = 2, color = "grey60") + 
   annotate("label", x = 2.925, y = 0.97, label = "baseline", color = "grey50") + 
-  annotate("label", x = 3.925, y = 0.97, label = "follow-up", color = "grey50")
+  annotate("label", x = 3.925, y = 0.97, label = "follow-up", color = "grey50") + 
+  guides(color = guide_legend(
+    title = NULL, 
+    keywidth = unit(1.4, "mm"), 
+    override.aes = list(size = 3.4, shape = 15)
+  )) +
+  scale_color_discrete(breaks = "covariate\n(baseline)", na.value = "grey70")
 ```
 
-::: {.callout-warning}
+::: callout-warning
 ## Don't adjust for the future
 
-The time-ordering heuristic relies on a simple rule: don't adjust for the future. 
+The time-ordering heuristic relies on a simple rule: don't adjust for the future.
 :::
 
-The quartet package's `causal_quartet_time` has time-ordered measurements of each variable for the four datasets. Each has a `*_baseline` and `*_followup` measurement.
+The quartet package's `causal_quartet_time` has time-ordered measurements of each variable for the four datasets.
+Each has a `*_baseline` and `*_followup` measurement.
 
 ```{r}
 causal_quartet_time
 ```
 
-Using the formula `outcome_followup ~ exposure_baseline + covariate_baseline` works for three out of four datasets. Even though `covariate_baseline` is only in the adjustment set for the second dataset, it's not a collider in the two of the other datasets, so it's not a problem. 
+Using the formula `outcome_followup ~ exposure_baseline + covariate_baseline` works for three out of four datasets.
+Even though `covariate_baseline` is only in the adjustment set for the second dataset, it's not a collider in the two of the other datasets, so it's not a problem.
 
 ```{r}
 #| label: tbl-quartet_time_adjusted
@@ -429,20 +496,23 @@ causal_quartet_time |>
   fmt_number(columns = -Dataset)
 ```
 
-Where it fails is in dataset 4, the M-bias example. In this case, `covariate_baseline` is still a collider, because the collision occurs prior to both the exposure and outcome. As we discussed in @sec-m-bias, however, if you are in doubt whether something is truly M-bias, it is better to adjust for it than not. Confounding bias tends to be worse, and meaningful M-bias is probably rare in real life. As the true causal structure deviates from perfect M-bias, the severity of the bias tends to decrease. So, if it is clearly M-bias, don't adjust for the variable. If it's not clear, adjust for it. 
+Where it fails is in dataset 4, the M-bias example.
+In this case, `covariate_baseline` is still a collider, because the collision occurs prior to both the exposure and outcome.
+As we discussed in @sec-m-bias, however, if you are in doubt whether something is truly M-bias, it is better to adjust for it than not.
+Confounding bias tends to be worse, and meaningful M-bias is probably rare in real life.
+As the true causal structure deviates from perfect M-bias, the severity of the bias tends to decrease.
+So, if it is clearly M-bias, don't adjust for the variable.
+If it's not clear, adjust for it.
 
-::: {.callout-tip}
-Remember as well that it is possible to block bias induced by adjusting for a collider in certain circumstances because collider bias is just another open path. If we had `u1` and `u2`, we could both control for `covariate` and block any potential collider bias. In other words, sometimes when we open a path, we can close it again.
+::: callout-tip
+Remember as well that it is possible to block bias induced by adjusting for a collider in certain circumstances because collider bias is just another open path.
+If we had `u1` and `u2`, we could both control for `covariate` and block any potential collider bias.
+In other words, sometimes when we open a path, we can close it again.
 
 ```{r}
 #| label: fig-m_bias_adjust
 #| echo: false
 #| fig-cap: "The DAG for dataset 4, where the covariate is a collider via M-Bias. If we know the structure, we shouldn't control for the covariate, but if we do, we can theoretically close the opened pathway via `u1` and `u2`, assuming we have them measured. In other words, thorough measurement and control of pre-exposure variables will still save the day."
-d_mbias |> 
-  adjust_for("Z") |> 
-  ggdag_adjustment_set(shadow = TRUE) +
-  theme_dag() +
-  theme(legend.position = "bottom")
 ```
 :::
 
@@ -450,9 +520,17 @@ d_mbias |>
 
 ### Prediction metrics
 
-Predictive measurements also fail to distinguish between the four datasets. In @tbl-quartet_time_predictive, we show the difference in a couple of common predictive metrics when we add `covariate` to the model. In each dataset, `covariate` adds information to the model because it contains associational information about the outcome [^2]. The RMSE goes down, indicating a better fit, and the R^2^ goes up, indicating more variance explained. The coefficients for `covariate` represent the information about `outcome` it contains, not from where that information comes. In the case of the collider data set, it's not even a useful prediction tool, because you wouldn't have `covariate` at the time of prediction, given that it happens after the exposure and outcome.
+Predictive measurements also fail to distinguish between the four datasets.
+In @tbl-quartet_time_predictive, we show the difference in a couple of common predictive metrics when we add `covariate` to the model.
+In each dataset, `covariate` adds information to the model because it contains associational information about the outcome [^06-not-just-a-stats-problem-2].
+The RMSE goes down, indicating a better fit, and the R^2^ goes up, indicating more variance explained.
+The coefficients for `covariate` represent the information about `outcome` it contains; it doesn't tell us from where in the causal structure that information originates. 
+Correlation isn't causation, and neither is prediction.
+In the case of the collider data set, it's not even a useful prediction tool, because you wouldn't have `covariate` at the time of prediction, given that it happens after the exposure and outcome.
 
-[^2]: For M-bias, including `covariate` in the model is helpful to the extent that it has information about `u2`, one of the causes about the outcome. In this cause, the data generating mechanism was such that `covariate` contains more information from `u1` than `u2`, so it doesn't add as much predictive value. Random noise represents most of what `u2` doesn't account for. 
+[^06-not-just-a-stats-problem-2]: For M-bias, including `covariate` in the model is helpful to the extent that it has information about `u2`, one of the causes about the outcome.
+In this cause, the data generating mechanism was such that `covariate` contains more information from `u1` than `u2`, so it doesn't add as much predictive value.
+Random noise represents most of what `u2` doesn't account for.
 
 ```{r}
 #| label: tbl-quartet_time_predictive
@@ -495,27 +573,43 @@ causal_quartet |>
   )
 ```
 
-### The Table Two Fallacy[^3]
+### The Table Two Fallacy[^06-not-just-a-stats-problem-3]
 
-[^3]: If you recall, the Table Two Fallacy is named after the tendency in journals of health research to have a complete set of model coefficients in the second table of an article. See @Westreich2013 for a detailed discussion of the Table Two Fallacy.
+[^06-not-just-a-stats-problem-3]: If you recall, the Table Two Fallacy is named after the tendency in journals of health research to have a complete set of model coefficients in the second table of an article.
+See @Westreich2013 for a detailed discussion of the Table Two Fallacy.
 
-Relatedly, coefficients *other* than those of the causal effects we're interested in can be difficult to interpret. It's tempting, in a model with `y ~ x + z`, to present the coefficient of `z` as well as `x`. The problem, as discussed @sec-pred-or-explain, is that the causal structure for the effect of `z` on `y` may be different than that of the effect of `x` on `y`. Let's consider a variation of the quartet DAGs that has some other variables. 
+Relatedly, model coefficients for variables *other* than those of the causes we're interested in can be difficult to interpret.
+It's tempting, in a model with `outcome ~ exposure + covariate`, to present the coefficient of `covariate` as well as `exposure`.
+The problem, as discussed @sec-pred-or-explain, is that the causal structure for the effect of `covariate` on `outcome` may be different than that of the effect of `exposure` on `outcome`.
+Let's consider a variation of the quartet DAGs that has some other variables.
 
-First, let's start with the confounder DAG. In @fig-quartet_confounder, we see that `covariate` is a confounder. If this DAG represents the complete causal structure for `y`, the model `y ~ x + z` will give an unbiased estimate of the effect on `y` for `x`, assuming we've met other assumptions of the modeling process.  The adjustment set for `z`'s effect on `y` is empty, and `x` is not a collider, so controlling for it does not induce bias[^4]. But look again. `x` is a mediator for `z`'s effect on `y`; some of the total effect is mediated through `x`, while there is also a direct effect of `z` on `y`. **Both estimates are unbiased, but they are different *types* of estimates**. The effect of `x` on `y` is the *total effect* of that relationship, while the effect of `z` on `y` is the *direct effect*. 
+First, let's start with the confounder DAG.
+In @fig-quartet_confounder, we see that `covariate` is a confounder.
+If this DAG represents the complete causal structure for `outcome`, the model `outcome ~ exposure + covariate` will give an unbiased estimate of the effect on `outcome` for `exposure`, assuming we've met other assumptions of the modeling process.
+The adjustment set for `covariate`'s effect on `outcome` is empty, and `exposure` is not a collider, so controlling for it does not induce bias[^06-not-just-a-stats-problem-4].
+But look again.
+`exposure` is a mediator for `covariate`'s effect on `outcome`; some of the total effect is mediated through `outcome`, while there is also a direct effect of `covariate` on `outcome`. **Both estimates are unbiased, but they are different *types* of estimates**. The effect of `exposure` on `outcome` is the *total effect* of that relationship, while the effect of `covariate` on `outcome` is the *direct effect*.
 
-[^4]: Additionally, OLS produces a *collapsable* effect. Other types of effects, like the odds and hazards ratios, are *non-collapsable*, meaning including unrelated variables in the model *can* change the effect estimate. 
+[^06-not-just-a-stats-problem-4]: Additionally, OLS produces a *collapsable* effect.
+Other types of effects, like the odds and hazards ratios, are *non-collapsable*, meaning including unrelated variables in the model *can* change the effect estimate.
 
 ```{r}
 #| label: fig-quartet_confounder
 #| echo: false
 #| fig-cap: "The DAG for dataset 2, where `covariate` is a confounder. If you look closely, you'll realize that, from the perspective of the effect of `covariate` on the `outcome`, `exposure` is a *mediator*."
 #| fig-width: 3
-#| fig-height: 2.5
+#| fig-height: 2.75
 p_conf +
   ggtitle(NULL)
 ```
 
-What if we add `q`, a mutual cause of `z` and `y`? In @fig-quartet_confounder_q, the adjustment sets are still different. The adjustment set for `x` is still the same: `z`. The adjusment set for `z` is `q`. In other words, `q` is a confounder for `z`'s effect on `y`. The model `y ~ x + z` will produce the correct effect for `x` but not for the direct effect of `z`. Now, we have a situation where `z` not only answers a different type of question than `x`, but it also is biased by the absence of `q`.
+What if we add `q`, a mutual cause of `covariate` and `outcome`?
+In @fig-quartet_confounder_q, the adjustment sets are still different.
+The adjustment set for `outcome ~ exposure` is still the same: `{covariate}`.
+The adjusment set for `outcome ~ covariate` is `{q}`.
+In other words, `q` is a confounder for `covariate`'s effect on `outcome`.
+The model `outcome ~ exposure + covariate` will produce the correct effect for `exposure` but not for the direct effect of `covariate`.
+Now, we have a situation where `covariate` not only answers a different type of question than `exposure`, but it also is biased by the absence of `q`.
 
 ```{r}
 #| label: fig-quartet_confounder_q
@@ -534,23 +628,32 @@ d_conf2 <- dagify(
   Z ~ Q,
   exposure = "X",
   outcome = "Y",
-  labels = c(X = "X", Y = "Y", Z = "Z"),
+  labels = c(X = "e", Y = "o", Z = "c", Q = "q"),
   coords = coords
 )
 
 p_conf2 <- d_conf2 |>
   tidy_dagitty() |>
+  mutate(covariate = ifelse(name == "Q", "covariate", NA_character_)) |>
   ggplot(
     aes(x = x, y = y, xend = xend, yend = yend)
   ) +
-  geom_dag_point(aes(color = label)) +
-  geom_dag_edges() +
-  geom_dag_text() +
+  geom_dag_point(aes(color = covariate)) +
+  geom_dag_edges(edge_color = "grey70") +
+  geom_dag_text(aes(label = label)) +
   theme_dag() +
   coord_cartesian(clip = "off") +
-  theme(legend.position = "none") 
+  theme(legend.position = "none")  + 
+  guides(color = guide_legend(
+    title = NULL, 
+    keywidth = unit(1.4, "mm"), 
+    override.aes = list(size = 3.4, shape = 15)
+  )) +
+  scale_color_discrete(breaks = "confounder", na.value = "grey70")
 
 p_conf2
 ```
 
+Specifying a single causal model is deeply challenging. Trying to have a single model answer multiple causal questions is exponentially more difficult. If you are attempting to do so, make sure you apply the same scrutiny to both questions. Is it possible to have a single adjustment set that answers both questions? If not, you may need to specify two models or forego one of the questions. If so, you need to make sure that the the estimates answer the correct question. 
 
+Unfortunately, algorithms for detecting adjustment sets for multiple exposures and effect types are not well-developed, so you may need to rely on your own knowledge of the causal structure in determining the intersection of the adjustment sets. 
