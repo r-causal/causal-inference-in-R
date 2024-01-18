@@ -4,13 +4,13 @@
 
 ## The Causal Quartet
 
-We now have the tools to look at a something we've alluded to thus far in the book: causal inference is not (just) a statistical problem.
+We now have the tools to look at something we've alluded to thus far in the book: causal inference is not (just) a statistical problem.
 Of course, we use statistics to answer causal questions.
 It's necessary to answer most questions, even if the statistics are basic (as they often are in randomized designs).
-But statistics alone do not allow us to address all of the assumptions of causal inference.
+However, statistics alone do not allow us to address all of the assumptions of causal inference.
 
-In 1973, Francis Anscombe introduced a set of four datasets known as *Anscombe's Quartet*.
-These data illustrated an important lesson: summary statistics by themselves cannot help you understand data; you also need to visualize your data.
+In 1973, Francis Anscombe introduced a set of four datasets called *Anscombe's Quartet*.
+These data illustrated an important lesson: summary statistics alone cannot help you understand data; you must also visualize your data.
 In the plots in @fig-anscombe, each data set has remarkably similar summary statistics, including means and correlations that are nearly identical.
 
 ```{r}
@@ -49,10 +49,10 @@ datasaurus_dozen |>
   facet_wrap(~ dataset)
 ```
 
-In causal inference, though, even visualization is not enough to untangle causal effects.
-Background knowledge, as we visualized in DAGs in @sec-dags, is required to infer causation from correlation [@onthei1999].
+In causal inference, however, even visualization is insufficient to untangle causal effects.
+As we visualized in DAGs in @sec-dags, background knowledge is required to infer causation from correlation [@onthei1999].
 
-Inspired by Anscombe's quartet, the *causal quartet* has many of the same properties of Anscombe's quartet and the Datasaurus Dozen: the numerical summaries of the variables in the dataset are basically the same [@dagostinomcgowan2023].
+Inspired by Anscombe's quartet, the *causal quartet* has many of the same properties of Anscombe's quartet and the Datasaurus Dozen: the numerical summaries of the variables in the dataset are the same [@dagostinomcgowan2023].
 Unlike these data, the causal quartet also *look* the same as each other.
 The difference is the causal structure that generated each dataset.
 @fig-causal_quartet_hidden shows four datasets where the observational relationship between `exposure` and `outcome` is virtually identical.
@@ -75,7 +75,7 @@ Is `covariate` a confounder?
 A mediator?
 A collider?
 We can't use data to figure this problem out.
-In @tbl-quartet_lm, it's not clear which effect is right.
+In @tbl-quartet_lm, it's not clear which effect is correct.
 Likewise, the correlation between `exposure` and `covariate` is no help: it's the same!
 
 ```{r}
@@ -109,9 +109,9 @@ gt(effects) |>
 The ten percent rule is a common technique in epidemiology and other fields to determine whether a variable is a confounder.
 The ten percent rule says that you should include a variable in your model if including it changes the effect estimate by more than ten percent.
 The problem is, it doesn't work.
-*Every* example in the causal quartet causes a change of more than ten percent.
+*Every* example in the causal quartet causes a more than ten percent change.
 As we know, this leads to the wrong answer in some of the datasets.
-Even the reverse technique, *disincluding* a variable when it's *less* than ten percent, can cause trouble because many small confounding effects can add up to larger bias.
+Even the reverse technique, *excluding* a variable when it's *less* than ten percent, can cause trouble because many minor confounding effects can add up to more considerable bias.
 
 ```{r}
 #| label: tbl-quartet_ten_percent
@@ -129,7 +129,7 @@ effects |>
 :::
 
 While the visual relationship between `covariate` and `exposure` is not identical between datasets, all have the same correlation.
-in @fig-causal_quartet_covariate, dataset 4 seems to have more variance in `covariate`, but that's not actionable information.
+In @fig-causal_quartet_covariate, dataset 4 seems to have more variance in `covariate`, but that's not actionable information.
 
 ```{r}
 causal_quartet |> 
@@ -143,7 +143,7 @@ causal_quartet |>
 ```{r}
 #| label: fig-causal_quartet_covariate
 #| message: false
-#| fig-cap: "The correlation is the same in each dataset, but the visual relationship is not. This is not enough information to determine whether `covariate` is a confounder, mediator, or collider, however."
+#| fig-cap: "The correlation is the same in each dataset, but the visual relationship is not. However, the differences in the plots are not enough information to determine whether `covariate` is a confounder, mediator, or collider."
 causal_quartet |> 
   # hide the dataset names
   mutate(dataset = as.integer(factor(dataset))) |> 
@@ -157,12 +157,12 @@ Let's reveal the labels of the datasets, representing the causal structure of th
 In 1 and 4, it's a collider (we *shouldn't* adjust for it).
 In 2, it's a confounder (we *should* adjust for it).
 In 3, it's a mediator (it depends on the research question).
-If the data can't tell us the answer, what can we do?
+What can we do if the data can't tell us the answer?
 
 ```{r}
 #| label: fig-causal_quartet
 #| message: false
-#| fig-cap: "The Causal Quartet, revealed. The first and last datasets are types of collider-bias; we should *not* control for `covariate`. In the second dataset, `covariate` is a confounder, and we *should* control for it. In the third dataset, `covariate` is a mediator, and we should control for it if we want the total effect, but not if we want the direct effect."
+#| fig-cap: "The Causal Quartet, revealed. The first and last datasets are types of collider bias; we should *not* control for `covariate.` In the second dataset, `covariate` is a confounder, and we *should* control for it. In the third dataset, `covariate` is a mediator, and we should control for it if we want the total effect, but not if we want the direct effect."
 causal_quartet |> 
   ggplot(aes(exposure, outcome)) + 
   geom_point() + 
@@ -170,7 +170,7 @@ causal_quartet |>
   facet_wrap(~ dataset)
 ```
 
-The best answer is to have a good sense of the data generating mechanism.
+The best answer is to have a good sense of the data-generating mechanism.
 In @fig-quartet-dag, we show the DAG for each dataset.
 Once we compile a DAG for each dataset, we only need to query the DAG for the correct adjustment set, assuming the DAG is right.
 
@@ -338,7 +338,7 @@ p_med
 p_m_bias
 ```
 
-The data generating mechanism[^06-not-just-a-stats-problem-1] in the DAGs matches what was actually used to generate the datasets, so we can use the DAGs to determine the correct effect: unadjusted in datasets 1 and 4 and adjusted in dataset 2.
+The data generating mechanism[^06-not-just-a-stats-problem-1] in the DAGs matches what generated the datasets, so we can use the DAGs to determine the correct effect: unadjusted in datasets 1 and 4 and adjusted in dataset 2.
 For dataset 3, it depends on which mediation effect we want: adjusted for the direct effect and unadjusted for the total effect.
 
 [^06-not-just-a-stats-problem-1]: See @dagostinomcgowan2023 for the models that generated the datasets.
@@ -349,31 +349,31 @@ For dataset 3, it depends on which mediation effect we want: adjusted for the di
 #| tbl-cap: "The data generating mechanism and true causal effects in each dataset. Sometimes, the unadjusted effect is the same, and sometimes it is not, depending on the mechanism and question." 
 tibble::tribble(
   ~`Data generating mechanism`, ~`Correct causal model`, ~`Correct causal effect`,
-  "(1) Collider", "Y ~ X", "1",
-  "(2) Confounder", "Y ~ X ; Z",  "0.5",
-  "(3) Mediator", "Direct effect: Y ~ X ; Z, Total Effect: Y ~ X",  "Direct effect: 0, Total effect: 1",
-  "(4) M-Bias", "Y ~ X", "1"
+  "(1) Collider", "outcome ~ exposure", "1",
+  "(2) Confounder", "outcome ~ exposure ; covariate",  "0.5",
+  "(3) Mediator", "Direct effect: outcome ~ exposure; covariate, Total Effect: outcome ~ exposure",  "Direct effect: 0, Total effect: 1",
+  "(4) M-Bias", "outcome ~ exposure", "1"
 ) |> 
   gt()
 ```
 
-## Time as a hueristic for causal structure
+## Time as a heuristic for causal structure
 
 Hopefully, we have convinced you of the usefulness of DAGs.
-But constructing correct DAGs is not an easy endeavor. 
+However, constructing correct DAGs is a challenging endeavor. 
 In the causal quartet, we knew the DAGs because we generated the data.
-In real life, we need to use background knowledge to assemble a candidate causal structure.
+We need background knowledge to assemble a candidate causal structure in real life.
 For some questions, such background knowledge is not available.
 For others, we may worry about the complexity of the causal structure, particularly when variables mutually evolve with each other, as in @fig-feedback-loop.
 
-There is one hueristic that is particularly useful when a DAG is incomplete or uncertain: time.
-Because causality is temporal in nature, a cause must precede an effect.
+One heuristic is particularly useful when a DAG is incomplete or uncertain: time.
+Because causality is temporal, a cause must precede an effect.
 Many, but not all, problems in deciding if we should adjust for a confounder are solved by simply putting the variables in order by time.
-Time ordering is also one of the most critical assumptions you visualize in a DAG, so it's a good place to start regardless of the completeness of the DAG.
+Time order is also one of the most critical assumptions you can visualize in a DAG, so it's an excellent place to start, regardless of the completeness of the DAG.
 
 Consider @fig-quartets_time_ordered, a time-ordered version of the collider DAG where the covariate is measured at both baseline and follow-up.
 The original DAG actually represents the *second* measurement, where the covariate is a descendant of both the outcome and exposure.
-If, however, we control for the same covariate as measured at the start of the study, it cannot be a descendant of the outcome at follow-up because it hasn't happened yet.
+If, however, we control for the same covariate as measured at the start of the study, it cannot be a descendant of the outcome at follow-up because it has yet to happen.
 Thus, when you are missing background knowledge as to the causal structure of the covariate, you can use time-ordering as a defensive measure to avoid bias.
 Only control for variables that precede the outcome.
 
@@ -381,7 +381,7 @@ Only control for variables that precede the outcome.
 #| label: fig-quartets_time_ordered
 #| fig-subcap: 
 #|   - "In a time-ordered version of the collider DAG, controlling for the covariate at follow-up induces bias."
-#|   - "On the other hand, controlling for the covariate as measured at baseline does not induce bias because it is not a descendant of the outcome."
+#|   - "Conversely, controlling for the covariate as measured at baseline does not induce bias because it is not a descendant of the outcome."
 #| layout-ncol: 2
 #| echo: false
 #| fig-width: 4
@@ -466,7 +466,7 @@ The time-ordering heuristic relies on a simple rule: don't adjust for the future
 :::
 
 The quartet package's `causal_quartet_time` has time-ordered measurements of each variable for the four datasets.
-Each has a `*_baseline` and `*_followup` measurement.
+Each has a `*_baseline` and `*_follow-up` measurement.
 
 ```{r}
 causal_quartet_time
@@ -497,17 +497,17 @@ causal_quartet_time |>
 ```
 
 Where it fails is in dataset 4, the M-bias example.
-In this case, `covariate_baseline` is still a collider, because the collision occurs prior to both the exposure and outcome.
-As we discussed in @sec-m-bias, however, if you are in doubt whether something is truly M-bias, it is better to adjust for it than not.
+In this case, `covariate_baseline` is still a collider because the collision occurs before both the exposure and outcome.
+As we discussed in @sec-m-bias, however, if you are in doubt whether something is genuinely M-bias, it is better to adjust for it than not.
 Confounding bias tends to be worse, and meaningful M-bias is probably rare in real life.
-As the true causal structure deviates from perfect M-bias, the severity of the bias tends to decrease.
+As the actual causal structure deviates from perfect M-bias, the severity of the bias tends to decrease.
 So, if it is clearly M-bias, don't adjust for the variable.
 If it's not clear, adjust for it.
 
 ::: callout-tip
 Remember as well that it is possible to block bias induced by adjusting for a collider in certain circumstances because collider bias is just another open path.
-If we had `u1` and `u2`, we could both control for `covariate` and block any potential collider bias.
-In other words, sometimes when we open a path, we can close it again.
+If we had `u1` and `u2`, we could control for `covariate` while blocking potential collider bias.
+In other words, sometimes, when we open a path, we can close it again.
 
 ```{r}
 #| label: fig-m_bias_adjust
@@ -521,21 +521,21 @@ In other words, sometimes when we open a path, we can close it again.
 ### Prediction metrics
 
 Predictive measurements also fail to distinguish between the four datasets.
-In @tbl-quartet_time_predictive, we show the difference in a couple of common predictive metrics when we add `covariate` to the model.
+In @tbl-quartet_time_predictive, we show the difference in a couple of standard predictive metrics when we add `covariate` to the model.
 In each dataset, `covariate` adds information to the model because it contains associational information about the outcome [^06-not-just-a-stats-problem-2].
-The RMSE goes down, indicating a better fit, and the R^2^ goes up, indicating more variance explained.
-The coefficients for `covariate` represent the information about `outcome` it contains; it doesn't tell us from where in the causal structure that information originates. 
+The RMSE goes down, indicating a better fit, and the R^2^ goes up, showing more variance explained.
+The coefficients for `covariate` represent the information about `outcome` it contains; they don't tell us from where in the causal structure that information originates. 
 Correlation isn't causation, and neither is prediction.
-In the case of the collider data set, it's not even a useful prediction tool, because you wouldn't have `covariate` at the time of prediction, given that it happens after the exposure and outcome.
+In the case of the collider data set, it's not even a helpful prediction tool because you wouldn't have `covariate` at the time of prediction, given that it happens after the exposure and outcome.
 
-[^06-not-just-a-stats-problem-2]: For M-bias, including `covariate` in the model is helpful to the extent that it has information about `u2`, one of the causes about the outcome.
-In this cause, the data generating mechanism was such that `covariate` contains more information from `u1` than `u2`, so it doesn't add as much predictive value.
+[^06-not-just-a-stats-problem-2]: For M-bias, including `covariate` in the model is helpful to the extent that it has information about `u2`, one of the causes of the outcome.
+In this case, the data generating mechanism was such that `covariate` contains more information from `u1` than `u2`, so it doesn't add as much predictive value.
 Random noise represents most of what `u2` doesn't account for.
 
 ```{r}
 #| label: tbl-quartet_time_predictive
 #| echo: false
-#| tbl-cap: "The difference in predictive metrics on `outcome` in each dataset with and without `covariate`. In each dataset, `covariate` adds information to the model, but this offers little guidances as to the proper causal model."
+#| tbl-cap: "The difference in predictive metrics on `outcome` in each dataset with and without `covariate`. In each dataset, `covariate` adds information to the model, but this offers little guidance regarding the proper causal model."
 
 get_rmse <- function(data, model) {
   sqrt(mean((data$outcome - predict(model, data)) ^ 2))
@@ -575,23 +575,23 @@ causal_quartet |>
 
 ### The Table Two Fallacy[^06-not-just-a-stats-problem-3]
 
-[^06-not-just-a-stats-problem-3]: If you recall, the Table Two Fallacy is named after the tendency in journals of health research to have a complete set of model coefficients in the second table of an article.
+[^06-not-just-a-stats-problem-3]: If you recall, the Table Two Fallacy is named after the tendency in health research journals to have a complete set of model coefficients in the second table of an article.
 See @Westreich2013 for a detailed discussion of the Table Two Fallacy.
 
 Relatedly, model coefficients for variables *other* than those of the causes we're interested in can be difficult to interpret.
-It's tempting, in a model with `outcome ~ exposure + covariate`, to present the coefficient of `covariate` as well as `exposure`.
-The problem, as discussed @sec-pred-or-explain, is that the causal structure for the effect of `covariate` on `outcome` may be different than that of the effect of `exposure` on `outcome`.
-Let's consider a variation of the quartet DAGs that has some other variables.
+In a model with `outcome ~ exposure + covariate`, it's tempting to present the coefficient of `covariate` as well as `exposure`.
+The problem, as discussed @sec-pred-or-explain, is that the causal structure for the effect of `covariate` on `outcome` may differ from that of `exposure` on `outcome`.
+Let's consider a variation of the quartet DAGs with other variables.
 
 First, let's start with the confounder DAG.
 In @fig-quartet_confounder, we see that `covariate` is a confounder.
 If this DAG represents the complete causal structure for `outcome`, the model `outcome ~ exposure + covariate` will give an unbiased estimate of the effect on `outcome` for `exposure`, assuming we've met other assumptions of the modeling process.
 The adjustment set for `covariate`'s effect on `outcome` is empty, and `exposure` is not a collider, so controlling for it does not induce bias[^06-not-just-a-stats-problem-4].
 But look again.
-`exposure` is a mediator for `covariate`'s effect on `outcome`; some of the total effect is mediated through `outcome`, while there is also a direct effect of `covariate` on `outcome`. **Both estimates are unbiased, but they are different *types* of estimates**. The effect of `exposure` on `outcome` is the *total effect* of that relationship, while the effect of `covariate` on `outcome` is the *direct effect*.
+`exposure` is a mediator for `covariate`'s effect on `outcome`; some of the total effect is mediated through `outcome`, while there is also a direct effect of `covariate` on `outcome`. **Both estimates are unbiased but different *types* of estimates**. The effect of `exposure` on `outcome` is the *total effect* of that relationship, while the effect of `covariate` on `outcome` is the *direct effect*.
 
 [^06-not-just-a-stats-problem-4]: Additionally, OLS produces a *collapsable* effect.
-Other types of effects, like the odds and hazards ratios, are *non-collapsable*, meaning including unrelated variables in the model *can* change the effect estimate.
+Other effects, like the odds and hazards ratios, are *non-collapsable*, meaning including unrelated variables in the model *can* change the effect estimate.
 
 ```{r}
 #| label: fig-quartet_confounder
@@ -606,15 +606,15 @@ p_conf +
 What if we add `q`, a mutual cause of `covariate` and `outcome`?
 In @fig-quartet_confounder_q, the adjustment sets are still different.
 The adjustment set for `outcome ~ exposure` is still the same: `{covariate}`.
-The adjusment set for `outcome ~ covariate` is `{q}`.
+The `outcome ~ covariate` adjustment set is `{q}`.
 In other words, `q` is a confounder for `covariate`'s effect on `outcome`.
 The model `outcome ~ exposure + covariate` will produce the correct effect for `exposure` but not for the direct effect of `covariate`.
-Now, we have a situation where `covariate` not only answers a different type of question than `exposure`, but it also is biased by the absence of `q`.
+Now, we have a situation where `covariate` not only answers a different type of question than `exposure` but is also biased by the absence of `q`.
 
 ```{r}
 #| label: fig-quartet_confounder_q
 #| echo: false
-#| fig-cap: "A modification of the DAG for dataset 2, where `covariate` is a confounder. Now, the relationship between `covariate` and `outcome` is confounded by `q`, a variable not neccessary to calculate the unbiased effect of `exposure` on `outcome`."
+#| fig-cap: "A modification of the DAG for dataset 2, where `covariate` is a confounder. Now, the relationship between `covariate` and `outcome` is confounded by `q`, a variable not necessary to calculate the unbiased effect of `exposure` on `outcome`."
 #| fig-width: 3.5
 #| fig-height: 3
 coords <- list(
@@ -654,6 +654,6 @@ p_conf2 <- d_conf2 |>
 p_conf2
 ```
 
-Specifying a single causal model is deeply challenging. Trying to have a single model answer multiple causal questions is exponentially more difficult. If you are attempting to do so, make sure you apply the same scrutiny to both questions. Is it possible to have a single adjustment set that answers both questions? If not, you may need to specify two models or forego one of the questions. If so, you need to make sure that the the estimates answer the correct question. 
+Specifying a single causal model is deeply challenging. Having a single model answer multiple causal questions is exponentially more difficult. If attempting to do so, apply the same scrutiny to both questions. Is it possible to have a single adjustment set that answers both questions? If not, specify two models or forego one of the questions. If so, you need to ensure that the estimates answer the correct question. 
 
-Unfortunately, algorithms for detecting adjustment sets for multiple exposures and effect types are not well-developed, so you may need to rely on your own knowledge of the causal structure in determining the intersection of the adjustment sets. 
+Unfortunately, algorithms for detecting adjustment sets for multiple exposures and effect types are not well-developed, so you may need to rely on your knowledge of the causal structure in determining the intersection of the adjustment sets. 
