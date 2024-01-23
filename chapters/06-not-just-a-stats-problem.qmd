@@ -64,6 +64,9 @@ The difference is the causal structure that generated each dataset.
 causal_quartet |> 
   # hide the dataset names
   mutate(dataset = as.integer(factor(dataset))) |> 
+  group_by(dataset) |>
+  mutate(exposure = scale(exposure), outcome = scale(outcome)) |> 
+  ungroup() |> 
   ggplot(aes(exposure, outcome)) + 
   geom_point() + 
   geom_smooth(method = "lm", se = FALSE) + 
@@ -129,7 +132,7 @@ effects |>
 :::
 
 While the visual relationship between `covariate` and `exposure` is not identical between datasets, all have the same correlation.
-In @fig-causal_quartet_covariate, dataset 4 seems to have more variance in `covariate`, but that's not actionable information.
+In @fig-causal_quartet_covariate, the standardized relationship between the two is identical.
 
 ```{r}
 causal_quartet |> 
@@ -146,11 +149,34 @@ causal_quartet |>
 causal_quartet |> 
   # hide the dataset names
   mutate(dataset = as.integer(factor(dataset))) |> 
+  group_by(dataset) |>
+  mutate(covariate = scale(covariate), exposure = scale(exposure)) |> 
+  ungroup() |> 
+  ggplot(aes(covariate, exposure)) + 
+  geom_point() + 
+  geom_smooth(method = "lm", se = FALSE) + 
+  facet_wrap(~ dataset) 
+```
+
+::: {.callout-tip} 
+## Why did we standardize the coefficients?
+
+Standardizing numeric variables to have a mean of 0 and standard deviation of 1, as implemented in `scale()`, is a common technique in statistics. It's useful for a variety of reasons, but we chose to scale the variables here to emphasize the identical correlation between `covariate` and `exposure` in each dataset. If we didn't scale the variables, the correlation would be the same, but the plots would look different because their standard deviation are different. The beta coefficient in an OLS model is calculated with information about the covariance and the standard deviation of the variable, so scaling it makes the coefficient identical to the Pearson's correlation.
+
+@fig-causal_quartet_covariate_unscaled shows the unscaled relationship between `covariate` and `exposure`. Now, we see some differences: dataset 4 seems to have more variance in `covariate`, but that's not actionable information. In fact, it's a mathematical artifact of the data generating process.
+
+```{r}
+#| label: fig-causal_quartet_covariate_unscaled
+#| message: false
+causal_quartet |> 
+  # hide the dataset names
+  mutate(dataset = as.integer(factor(dataset))) |> 
   ggplot(aes(covariate, exposure)) + 
   geom_point() + 
   geom_smooth(method = "lm", se = FALSE) + 
   facet_wrap(~ dataset)
 ```
+:::
 
 Let's reveal the labels of the datasets, representing the causal structure of the dataset.
 @fig-causal_quartet, `covariate` plays a different role in each dataset.
