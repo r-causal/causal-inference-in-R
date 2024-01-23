@@ -196,10 +196,6 @@ The time-ordered DAG for this question (step 1) is:
 #|    in the morning at a particular park and the average
 #|    wait time between 5 pm and 6 pm.
 
-library(tidyverse)
-library(ggdag)
-library(ggokabeito)
-
 coord_dag <- list(
   x = c(Season = -1, close = -1, weather = -2, extra = 0, x = 1, y = 2),
   y = c(Season = -1, close = 1, weather = 0, extra = 0, x = 0, y = 0)
@@ -283,8 +279,10 @@ fit_models <- function(.data) {
     data = .data
   )
   
+  # return a list that we can pipe into our simulation step (up next)
   return(
     list(
+      .data = .data,
       fit_extra_magic = fit_extra_magic,
       fit_wait_minutes_posted = fit_wait_minutes_posted,
       fit_wait_minutes_actual = fit_wait_minutes_actual
@@ -298,18 +296,24 @@ Next, we write a function which will complete step 3: from a random sample from 
 
 ```{r}
 # The arguments to simulate_process are as follows:
-# .data is the source data
+# fit_obj is a list which is returned from our fit_models function
+# contrast gives exposure (default 60) and control group (default 50) settings
 # n_sample is the size of the baseline resample of .data
-# fits is a list which is returned from our fit_models function
-simulate_process <- function(.data, n_sample = 10000, fits) {
+simulate_process <- function(
+    fit_obj, 
+    contrast = c(60, 50),
+    n_sample = 10000
+) {
   
   # Draw a random sample of baseline variables
-  df_baseline <- .data |> 
+  df_baseline <- fit_obj |> 
+    pluck(".data") |> 
     select(park_ticket_season, park_close, park_temperature_high) |> 
     sample_n(n_sample, replace = TRUE)
   
   # Simulate park_extra_magic_morning
-  df_sim_time_1 <- fits$fit_extra_magic |> 
+  df_sim_time_1 <- fit_obj |> 
+    pluck("fit_extra_magic") |> 
     augment(newdata = df_baseline, type.predict = "response") |> 
     # .fitted is the probability that park_extra_magic_morning is 1,
     # so let's use that to generate a 0/1 outcome
@@ -328,25 +332,55 @@ simulate_process <- function(.data, n_sample = 10000, fits) {
   df_sim_time_2 <- df_sim_time_1 |> 
     mutate(
       wait_minutes_posted_avg = 
-        c(rep(1, n_sample/2), rep(0, n_sample/2))
+        c(rep(contrast[1], n_sample/2), rep(contrast[2], n_sample/2))
     )
   
   # Simulate the outcome 
-  df_outcome <- fits$fit_wait_minutes_actual |> 
+  df_outcome <- fit_obj |> 
+    pluck("fit_wait_minutes_actual") |> 
     augment(newdata = df_sim_time_2) |> 
     rename(wait_minutes_actual_avg = .fitted)
   
-  return(df_outcome)
+  # return a list that we can pipe into the contrast estimation step (up next)
+  return(
+    list(
+      df_outcome = df_outcome,
+      contrast = contrast
+    )
+  )
 }
 ```
 
 Finally, in step 4, we compute the causal contrast of interest using our simulated data. 
 
 ```{r}
-compute_contrast <- function(.data) {
+# sim_obj is a list created by our simulate_process() function
+compute_contrast <- function(sim_obj) {
   
+  exposure_val <- sim_obj |> 
+    pluck("contrast", 1)
+  
+  control_val <- sim_obj |> 
+    pluck("contrast", 2)
+  
+  sim_obj |> 
+    pluck("df_outcome") |> 
+    group_by(wait_minutes_posted_avg) |> 
+    summarize(avg_wait_actual = mean(wait_minutes_actual_avg)) |> 
+    pivot_wider(
+      names_from = wait_minutes_posted_avg, 
+      values_from = avg_wait_actual,
+      names_prefix = "x_"
+    ) |> 
+    summarize(
+      !!sym(paste0("x_", exposure_val)) - !!sym(paste0("x_", control_val))
+    )
+
 }
 ```
+
+Now, let's put it all together to get a single point estimate. 
+Once we've seen that in action, we'll bootstrap for a confidence interval.
 
 ```{r}
 # Wrangle the data to reflect the causal question we are asking
@@ -362,8 +396,11 @@ wait_times <- eight |>
   left_join(nine, by = "park_date") |>
   drop_na(wait_minutes_actual_avg)
 
-test_fits <- fit_models(wait_times)
-simulate_process(wait_times, n_sample = 10000, test_fits)
+# get a single point estimate to make sure things work as we planned
+wait_times |> 
+  fit_models() |> 
+  simulate_process() |> 
+  compute_contrast()
 ```
 
 ## Dynamic treatment regimes with the g-formula
