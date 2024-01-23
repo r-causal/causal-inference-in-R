@@ -168,6 +168,7 @@ Standardizing numeric variables to have a mean of 0 and standard deviation of 1,
 ```{r}
 #| label: fig-causal_quartet_covariate_unscaled
 #| message: false
+#| fig-cap: "@fig-causal_quartet_covariate, unscaled"
 causal_quartet |> 
   # hide the dataset names
   mutate(dataset = as.integer(factor(dataset))) |> 
