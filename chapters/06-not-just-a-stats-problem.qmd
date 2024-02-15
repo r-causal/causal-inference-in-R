@@ -188,7 +188,7 @@ In 3, it's a mediator (it depends on the research question).
 ```{r}
 #| label: fig-causal_quartet
 #| message: false
-#| fig-cap: "The Causal Quartet, revealed. The first and last datasets are types of collider bias; we should *not* control for `covariate.` In the second dataset, `covariate` is a confounder, and we *should* control for it. In the third dataset, `covariate` is a mediator, and we should control for it if we want the total effect, but not if we want the direct effect."
+#| fig-cap: "The Causal Quartet, revealed. The first and last datasets are types of collider bias; we should *not* control for `covariate.` In the second dataset, `covariate` is a confounder, and we *should* control for it. In the third dataset, `covariate` is a mediator, and we should control for it if we want the direct effect, but not if we want the total effect."
 causal_quartet |> 
   ggplot(aes(exposure, outcome)) + 
   geom_point() + 
