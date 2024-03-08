@@ -23,15 +23,15 @@ These are often linear models for continuous variables or logistic regressions f
 Monte Carlo simulations are computational approaches that generate a sample of outcomes for random processes.
 One example would be to calculate the probability of rolling "snake eyes" (two ones) on a single roll of two six-sided dice. 
 We could certainly calculate this probability mathematically ($\frac{1}{6}*\frac{1}{6}=\frac{1}{36}\approx 2.8$%), though it can be just as quick to write a Monte Carlo simulation of the process (1,000,000 rolls shown below).
-```{r}
-library(tidyverse)
 
+```{r}
 n <- 1000000
 tibble(
   roll_1 = sample(1:6, n, replace = TRUE),
   roll_2 = sample(1:6, n, replace = TRUE),
 ) |> 
   reframe(roll_1 + roll_2 == 2) |> 
+  pull() |> 
   sum()/n
 ```
 Monte Carlo simulations are extremely useful for estimating outcomes of complex processes for which closed mathematical solutions are not easy to determine. 
@@ -111,6 +111,7 @@ dagify(
 The second step is to specify a parametric model for each non-baseline variable that is based upon previously measured variables in the DAG. 
 This particular example is simple, since we only have two variables that are affected by previous features (`park_extra_magic_morning` and `wait_minutes_posted_avg`). 
 Let's suppose that adequate models for these two variables are the simple logistic and linear models that follow.
+Of note, we're not yet going to use the model for the exposure (`park_extra_magic_morning`), but we're including the step here because it will be an important part of patterns you will see in the next section (@sec-dynamic).
 
 ```{r}
 # Load packages and data
@@ -273,7 +274,10 @@ fit_models <- function(.data) {
   )
   
   # A linear model for wait_minutes_actual_avg
-  # Let's go ahead an add a spline and interaction for further flexibility
+  # Let's go ahead an add a spline for further flexibility.
+  # Be aware this is an area where you can add many options here
+  # (interactions, etc) but you may get warnings and/or models which
+  # fail to converge if you don't have enough data.
   fit_wait_minutes_actual <- lm(
     wait_minutes_actual_avg ~ 
       ns(wait_minutes_posted_avg, df = 3) + 
@@ -321,16 +325,9 @@ simulate_process <- function(
     augment(newdata = df_baseline, type.predict = "response") |> 
     # .fitted is the probability that park_extra_magic_morning is 1,
     # so let's use that to generate a 0/1 outcome
-    rowwise() |> 
     mutate(
-      park_extra_magic_morning = sample(
-        x = 1:0,
-        size = 1,
-        replace = TRUE,
-        prob = c(.fitted, 1 - .fitted)
-      )
-    ) |> 
-    ungroup()
+      park_extra_magic_morning = rbinom(n(), 1, .fitted)
+    )
   
   # Assign wait_minutes_posted_avg, since it's the intervention
   df_sim_time_2 <- df_sim_time_1 |> 
@@ -377,10 +374,7 @@ compute_stats <- function(sim_obj) {
       names_prefix = "x_"
     ) |> 
     summarize(
-      !!sym(paste0("x_", exposure_val)),
-      !!sym(paste0("x_", control_val)),
-      !!sym(paste0("x_", exposure_val)) - 
-        !!sym(paste0("x_", control_val))
+      x_60, x_30, x_60 - x_30
     )
   
 }
@@ -438,9 +432,14 @@ results <- int_pctl(boots, models)
 results
 ```
 
-## Dynamic treatment regimes with the g-formula
+In summary, our results are intepreted as follows: setting the posted wait time at 8am to 60 minutes results in an actual wait time at 9am of `r results |>  filter(term == "x_60") |> pull(.estimate) |> round()`, while setting the posted wait time to 30 minutes gives a longer wait time of `r results |>  filter(term == "x_30") |> pull(.estimate) |> round()`. Put another way, increasing the posted wait time at 8am from 30 minutes to 60 minutes results in a `r round(-results[3,3])` minute shorter wait time at 9am.
 
+Note that one of our models threw a warning regarding perfect discrimination (`fitted probabilities numerically 0 or 1 occurred`); this can happen when we don't have a large sample size and one of our models is overspecified due to complexity.
+In this exercise, the flexibility added by the spline in the regression for `wait_minutes_actual_avg` is what caused the issue.
+One remedy when this happens is to simplify the offending model (i.e. if you modify the `wait_minutes_actual_avg` to include a simple linear term for `wait_minutes_posted_avg`), the warning is resolved.
+We've left the warning here to highlight a common challenge that needs resolution when working with the parametric g-formula on small- to mid-sized data sets.
 
-## Calculating estimates with G-Computation
+## Dynamic treatment regimes with the g-formula {#sec-dynamic}
+
 
 ## The Natural Course
