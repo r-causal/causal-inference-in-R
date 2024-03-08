@@ -936,7 +936,7 @@ podcast_dag3 |>
   ggdag_adjustment_set(effect = "direct", text = FALSE, use_labels = "label")
 ```
 
-#### M-Bias and Butterfly Bias
+#### M-Bias and Butterfly Bias {#sec-m-bias}
 
 A particular case of selection bias that you'll often see people talk about is *M-bias*.
 It's called M-bias because it looks like an M when arranged top to bottom.

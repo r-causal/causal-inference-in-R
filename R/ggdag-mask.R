@@ -29,7 +29,7 @@ geom_dag_label_repel_internal <- function(..., seed = 10) {
     family = getOption("book.base_family"),
     seed = seed,
     label.size = NA,
-    label.padding = 0.1
+    label.padding = 0.01
   )
 }
 
