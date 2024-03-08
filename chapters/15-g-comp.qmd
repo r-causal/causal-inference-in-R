@@ -252,6 +252,8 @@ In this case, we need such models for `park_extra_magic_morning`, `wait_minutes_
 One extension to our previous implementation is that we're going to embed the each step of the process into a function, since this will allow us to bootstrap the entire pipeline and obtain confidence intervals.
 
 ```{r}
+library(splines)
+
 fit_models <- function(.data) {
   
   # A logistic regression for park_extra_magic_morning
@@ -271,9 +273,11 @@ fit_models <- function(.data) {
   )
   
   # A linear model for wait_minutes_actual_avg
+  # Let's go ahead an add a spline and interaction for further flexibility
   fit_wait_minutes_actual <- lm(
     wait_minutes_actual_avg ~ 
-      wait_minutes_posted_avg + park_extra_magic_morning +
+      ns(wait_minutes_posted_avg, df = 3) + 
+      park_extra_magic_morning +
       park_ticket_season + park_close +
       park_temperature_high,
     data = .data
@@ -297,11 +301,11 @@ Next, we write a function which will complete step 3: from a random sample from 
 ```{r}
 # The arguments to simulate_process are as follows:
 # fit_obj is a list which is returned from our fit_models function
-# contrast gives exposure (default 60) and control group (default 50) settings
+# contrast gives exposure (default 60) and control group (default 30) settings
 # n_sample is the size of the baseline resample of .data
 simulate_process <- function(
     fit_obj, 
-    contrast = c(60, 50),
+    contrast = c(60, 30),
     n_sample = 10000
 ) {
   
@@ -351,11 +355,11 @@ simulate_process <- function(
 }
 ```
 
-Finally, in step 4, we compute the causal contrast of interest using our simulated data. 
+Finally, in step 4, we compute the summary statistics and causal contrast of interest using our simulated data. 
 
 ```{r}
 # sim_obj is a list created by our simulate_process() function
-compute_contrast <- function(sim_obj) {
+compute_stats <- function(sim_obj) {
   
   exposure_val <- sim_obj |> 
     pluck("contrast", 1)
@@ -373,9 +377,12 @@ compute_contrast <- function(sim_obj) {
       names_prefix = "x_"
     ) |> 
     summarize(
-      !!sym(paste0("x_", exposure_val)) - !!sym(paste0("x_", control_val))
+      !!sym(paste0("x_", exposure_val)),
+      !!sym(paste0("x_", control_val)),
+      !!sym(paste0("x_", exposure_val)) - 
+        !!sym(paste0("x_", control_val))
     )
-
+  
 }
 ```
 
@@ -400,7 +407,8 @@ wait_times <- eight |>
 wait_times |> 
   fit_models() |> 
   simulate_process() |> 
-  compute_contrast() |> 
+  compute_stats() |> 
+  # rsample wants results labelled this way
   pivot_longer(
     names_to = "term", 
     values_to = "estimate", 
@@ -411,21 +419,23 @@ wait_times |>
 library(rsample)
 
 boots <- bootstraps(wait_times, times = 1000, apparent = TRUE) |> 
-  mutate(models = map(
-    splits, 
-    \(.x) analysis(.x) |> 
-      fit_models() |> 
-      simulate_process() |> 
-      compute_contrast() |> 
-      pivot_longer(
-        names_to = "term", 
-        values_to = "estimate", 
-        cols = everything()
-      )
-  )
+  mutate(
+    models = map(
+      splits, 
+      \(.x) analysis(.x) |> 
+        fit_models() |> 
+        simulate_process() |> 
+        compute_stats() |> 
+        pivot_longer(
+          names_to = "term", 
+          values_to = "estimate", 
+          cols = everything()
+        )
+    )
   )
 
-int_pctl(boots, models)
+results <- int_pctl(boots, models)
+results
 ```
 
 ## Dynamic treatment regimes with the g-formula
