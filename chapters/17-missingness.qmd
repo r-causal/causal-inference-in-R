@@ -2,11 +2,39 @@
 
 {{< include 00-setup.qmd >}}
 
-## Missingness as structural bias
+Missing data is a problem for most real datasets that impacts all three types of analysis: description, prediction, and causal inference. As with analysis, the impact of missingness is also different across all three, even when we are using the same tools (like multiple imputation) to address it. You can think of missingness as an extreme version of measurement error: we intended to measure certain variables that are important for the analysis and in some capacity have not succeeded. In this chapter, we'll explore how bias can arise in causal analyses in the presence of missingness and how to address them (if we can!).
+
+## Missingness and measurement error as structural bias
+
+Thus far, we've made a big assumption in our DAGs that the variables that we've included are actually the variables we have in our data. In other words, we assume that the data is measured perfectly. This is almost always untrue. Let's consider a few scenarios using causal diagrams to understand the impact of mismeasurement and missingness.
+
+Both measurement error and missingness are often visualized in DAGs as either an *indicator* of missingness, something akin to second variable on which you're conditioning, and a second variable that represents the variable as you have it measured. We'll use the second approach: Each variable we'll have a second node that represents the variable-as-observed. Let's look at an example.
+
+In the touring plans data, most variables are complete and likely measured with high accuracy (e.g., ticket season and historic weather are well-measured). One variable with missingness and measurement error is the actual wait times for rides. If you recall, the data relies on humans to wait in line, either consumers of the data who report their experience or people hired to wait in line to report the wait time. Thus, missingness is largely related to whether or not someone is there there to measure the wait time. When someone is there to measure it, it's also likely measured with error, e.g. someone estimating their wait time and submitting it to touring plans is likely producing a value with more error than someone paid to stay in line and count the minutes. Both aspects can be captured by treating the measured value as a separate node. 
 
 ```{r}
-rnorm(5)
+#| echo: false
+labels <- c(
+  "actual" = "actual wait",
+  "actual_star" = "measured actual",
+  "posted" = "posted wait",
+  "posted_star" = "measured posted",
+  "u_posted" = "unmeasured",
+  "u_actual" = "unmeasured "
+)
+
+dagify(
+  actual ~ posted,
+  posted_star ~ u_posted + posted,
+  actual_star ~ u_actual + actual,
+  coords = time_ordered_coords(),
+  labels = labels
+) |> 
+  tidy_dagitty() |> 
+  mutate(label = stringr::str_trim(label)) |> 
+  ggdag(use_text = FALSE, use_labels = TRUE)
 ```
+
 
 ## Multiple Imputation
 
