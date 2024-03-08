@@ -13,7 +13,7 @@ One alternative approach to weighting is called the parametric G-formula, which 
 2. For each point in time after baseline, decide on a parametric model that predicts each variable's value based on previously measured variables in the DAG. 
 These are often linear models for continuous variables or logistic regressions for binary variables.
 
-3. Starting with the observed distribution of data at baseline, generate values for all subsequent variables according to the models in step 2 (i.e. conduct a *Monte Carlo simulation*). Do this with one key modification: for each exposure regime you are interested in comparing (e.g. everyone exposed versus everyone unexposed), assign the exposure variables accordingly (that is, don't let the simulation assign values for exposure variables).
+3. Starting with a sample from the observed distribution of data at baseline, generate values for all subsequent variables according to the models in step 2 (i.e. conduct a *Monte Carlo simulation*). Do this with one key modification: for each exposure regime you are interested in comparing (e.g. everyone exposed versus everyone unexposed), assign the exposure variables accordingly (that is, don't let the simulation assign values for exposure variables).
 
 4. Compute the causal contrast of interest based on the simulated outcome in each exposure group.
 
@@ -400,7 +400,32 @@ wait_times <- eight |>
 wait_times |> 
   fit_models() |> 
   simulate_process() |> 
-  compute_contrast()
+  compute_contrast() |> 
+  pivot_longer(
+    names_to = "term", 
+    values_to = "estimate", 
+    cols = everything()
+  )
+
+# compute bootstrap confidence intervals
+library(rsample)
+
+boots <- bootstraps(wait_times, times = 1000, apparent = TRUE) |> 
+  mutate(models = map(
+    splits, 
+    \(.x) analysis(.x) |> 
+      fit_models() |> 
+      simulate_process() |> 
+      compute_contrast() |> 
+      pivot_longer(
+        names_to = "term", 
+        values_to = "estimate", 
+        cols = everything()
+      )
+  )
+  )
+
+int_pctl(boots, models)
 ```
 
 ## Dynamic treatment regimes with the g-formula
