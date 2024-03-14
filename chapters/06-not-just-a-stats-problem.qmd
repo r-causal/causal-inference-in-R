@@ -620,7 +620,7 @@ But look again.
 `exposure` is a mediator for `covariate`'s effect on `outcome`; some of the total effect is mediated through `outcome`, while there is also a direct effect of `covariate` on `outcome`. **Both estimates are unbiased, but they are different *types* of estimates**. The effect of `exposure` on `outcome` is the *total effect* of that relationship, while the effect of `covariate` on `outcome` is the *direct effect*.
 
 [^06-not-just-a-stats-problem-4]: Additionally, OLS produces a *collapsable* effect.
-    Other effects, like the odds and hazards ratios, are *non-collapsable*, meaning including unrelated variables in the model *can* change the effect estimate.
+    Other effects, like the odds and hazards ratios, are *non-collapsable*, meaning you may need to include non-confounding variables in the model that cause the outcome in order to estimate the effect of interest accurately.
 
 ```{r}
 #| label: fig-quartet_confounder
