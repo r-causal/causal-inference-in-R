@@ -176,7 +176,29 @@ df_outcome |>
   summarize(wait_minutes = mean(wait_minutes_posted_avg))
 ```
 
+```{r}
+avg_predictions(
+  fit_wait_minutes, 
+  variables = "park_extra_magic_morning")
+
+ park_extra_magic_morning Estimate Std. Error    z Pr(>|z|)     S 2.5 % 97.5 %
+                        0     68.1      0.915 74.4   <0.001   Inf  66.3   69.9
+                        1     74.2      2.052 36.2   <0.001 949.9  70.2   78.3
+```
+
 We see that the difference, $74.3-68.1=6.2$ is the same as our estimate of 6.2 when we used IP weighting.
+
+
+```{r}
+avg_predictions(
+  fit_wait_minutes, 
+  hypothesis = "b2 - b1 = 0",
+  variables = "park_extra_magic_morning")
+
+    Term Estimate Std. Error    z Pr(>|z|)   S 2.5 % 97.5 %
+ b2-b1=0     6.16       2.26 2.73  0.00636 7.3  1.74   10.6
+```
+
 
 ## The g-formula for continuous exposures
 
@@ -409,6 +431,7 @@ wait_times |>
     cols = everything()
   )
 
+
 # compute bootstrap confidence intervals
 library(rsample)
 
@@ -430,6 +453,32 @@ boots <- bootstraps(wait_times, times = 1000, apparent = TRUE) |>
 
 results <- int_pctl(boots, models)
 results
+```
+
+```{r}
+fit_wait_minutes_actual <- lm(
+  wait_minutes_actual_avg ~ 
+    ns(wait_minutes_posted_avg, df = 3) + 
+    park_extra_magic_morning +
+    park_ticket_season + park_close +
+    park_temperature_high,
+  data = wait_times
+)
+
+avg_predictions(fit_wait_minutes_actual, 
+  variables = list(wait_minutes_posted_avg = c(60, 30))
+)
+
+ wait_minutes_posted_avg Estimate Std. Error     z Pr(>|z|)    S 2.5 % 97.5 %
+                      60     29.8       7.05  4.23   <0.001 15.4  16.0   43.7
+                      30     40.7       3.84 10.60   <0.001 84.8  33.2   48.2
+
+avg_comparisons(fit_wait_minutes_actual, 
+  variables = list(wait_minutes_posted_avg = c(60, 30))
+)
+
+                    Term            Contrast Estimate Std. Error     z Pr(>|z|)   S 2.5 % 97.5 %
+ wait_minutes_posted_avg mean(60) - mean(30)    -10.8       8.13 -1.33    0.182 2.5 -26.8   5.09
 ```
 
 In summary, our results are intepreted as follows: setting the posted wait time at 8am to 60 minutes results in an actual wait time at 9am of `r results |>  filter(term == "x_60") |> pull(.estimate) |> round()`, while setting the posted wait time to 30 minutes gives a longer wait time of `r results |>  filter(term == "x_30") |> pull(.estimate) |> round()`. Put another way, increasing the posted wait time at 8am from 30 minutes to 60 minutes results in a `r round(-results[3,3])` minute shorter wait time at 9am.
