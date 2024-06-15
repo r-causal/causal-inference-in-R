@@ -180,7 +180,11 @@ Alternate adjustment sets are a way of probing the logical implications of your 
 2. Inactivate the hypothesized active ingredient. 
 3. Check for an effect that would be impossible by the hypothesized outcome. 
 
-To find a good negative control, you usually need to extend your DAG to include more of the causal structure surrounding your question. Let's look at some examples. First, we'll look at a negative exposure control. If extra magic mornings really do cause an increase in wait time, it stands to reason that this effect is time-limited. In other words, there should be some period of time after which the effect of extra magic morning dissipates. It's call today *i* and the previous day *i - d* where *j* is the number days previous the negative exposure is. First, let's explore `j = 63`, e.g. whether or not there was extra magic morning 9 weeks ago. That seems like a pretty reasonable starting point: it's exceedingly unlikely that the effect on wait time would still be present 63 days later. This is an example of leaving out an essential ingredient: we waited too long for this to be realistic. Any remaining effect is likely due to residual confounding. 
+To find a good negative control, you usually need to extend your DAG to include more of the causal structure surrounding your question. Let's look at some examples. 
+
+#### Negative exposures
+
+First, we'll look at a negative exposure control. If extra magic mornings really do cause an increase in wait time, it stands to reason that this effect is time-limited. In other words, there should be some period of time after which the effect of extra magic morning dissipates. It's call today *i* and the previous day *i - d* where *j* is the number days previous the negative exposure is. First, let's explore `j = 63`, e.g. whether or not there was extra magic morning 9 weeks ago. That seems like a pretty reasonable starting point: it's exceedingly unlikely that the effect on wait time would still be present 63 days later. This is an example of leaving out an essential ingredient: we waited too long for this to be realistic. Any remaining effect is likely due to residual confounding. 
 
 Let's look at a DAG visualizing this situation. In @fig-dag-day-i, we've essentially added an identical layer to our original one: now there are two extra magic mornings: one for day `i` and one for day `i - 63`. Similarly, there are two versions of the confounders for each day. One important detail in this DAG is that we're assuming that there *is* an effect of day `i - 63`'s extra magic morning on day `i`'s; whether or not there is an extra magic morning one day does likely effect whether or not they happen on another day. The decision about where to place them across the year is not random. If this is true, then we *would* expect an effect: the indirect effect via day `i`'s extra magic morning status. To get a true negative control, we need to *inactivate this effect*, which we can do statistically by controlling for it. So, given the DAG, our adjustment set is any combination of the confounders (as long as we have at least one version of each) and day `i`'s extra magic morning (suppressing the indirect effect).
 
@@ -277,7 +281,9 @@ ggplot(data.frame(coefs = coefs, x = 1:200), aes(x = x, y = coefs)) +
   labs(y = "difference in wait times (minutes)\n on day (i) for EMM on day (i - n)", x = "day (i - n)")
 ```
 
-If these results are accurate, it implies that we have some residual confounding in our effect. We'll revisit this problem in a moment.
+If these results are accurate, it implies that we have some residual confounding in our effect. 
+
+#### Negative outcomes
 
 Now, let's look at an example of a negative control outcome: the wait time at a ride in Universal Studios. Universal Studios is also in Orlando, and so the set of causes for wait times are likely comparable to those at Disney World on the same day. Of course, whether or not there are extra magic mornings at Disney shouldn't effect the wait times at Universal on the same day: they are separate parks, and presumably most people don't visit both within an hour of one another. This is an example of an effect that would be implausible by the hypothesized mechanism. 
 
@@ -444,7 +450,7 @@ dags[[2]] |> dagitty::adjustmentSets(type = "all")
 
 <!-- TODO: I think this should be an extension of what we do in the machine learning chapter, e.g. we throw a more complex set of covariates at TMLE then we revisit that analysis here. In other words, this alt dag should have a little bit of a thread through the book. -->
 
-As we mentioned in @sec-dags-iterate, you should ideally specify your DAG ahead of time with ample feedback from other experts. Let's now go on the opposite direction as the last example: what if we used the original DAG but, after the analysis, receive feedback that we should add more variables? Consider this expanded DAG in @fig-dag-extra-days. We've added two new confounders: whether it's a weekend and whether it's a holiday. 
+As we mentioned in @sec-dags-iterate, you should ideally specify your DAG ahead of time with ample feedback from other experts. Let's now go on the opposite direction as the last example: what if we used the original DAG but, after the analysis, receive feedback that we should add more variables? Consider this expanded DAG in @fig-dag-extra-days. We've added two new confounders: whether it's a weekend and whether it's a holiday. This is different than when we checked alternate adjustment sets in the same DAG; in that case, we're checking the logical consistency of the DAG. In this case, we're considering a different causal structure altogether. 
 
 ```{r}
 #| label: fig-dag-extra-days
@@ -478,17 +484,7 @@ emm_wait_dag3 |>
   ) +
   geom_dag_edges_link() +
   geom_dag_point() +
-  geom_dag_label_repel(
-    aes(x, y, label = label),
-    box.padding = 3.5, 
-    inherit.aes = FALSE,
-    max.overlaps = Inf, 
-    family = "sans",
-    seed = 1630,
-    label.size = NA, 
-    label.padding = 0.1,
-    size = 14 / 3
-  ) +
+  geom_dag_label_repel() +
   scale_color_okabe_ito(na.value = "grey90") +
   theme_dag() +
   theme(
@@ -549,9 +545,13 @@ fit_ipw_effect(
 )
 ```
 
-The effect here is slightly bigger than what we got without the two new confounders. Scientifically, you most likely want to report *both* effects because in this case, it was a deviation from the analysis plan. That said, this new DAG is likely more correct than the original one. From a decision point of view, though, the difference is small in absolute terms and results in an effect in the same direction. In other words, the result is not terribly sensitive to this change if we consider how we might act on it.
+The effect here is slightly bigger than what we got without the two new confounders. Scientifically, you most likely want to report *both* effects because in this case, it was a deviation from the analysis plan. That said, this new DAG is likely more correct than the original one. From a decision point of view, though, the difference is small in absolute terms and results in an effect in the same direction. In other words, the result is not terribly sensitive to this change in terms of how we might act on it.
+
+One other point here: sometimes people present the results of using increasingly complicated adjustment sets. This comes from the tradition of trying to to compare complex models to parsimonious ones. This is a sort of sensitivity analysis in its own right, but it should be principled: rather than fitting models that are simple for simplicity's sake, you should compare *competing* adjustment sets or conditions. For instance, you may feel like these two DAGs are equally plausible, or you may want to examine if adding other variables better captures the baseline crowd flow at the Magic Kingdom. 
 
 ## Quantitative bias analyses
+
+Thus far we've probed some of the assumptions we've made around the causal structure of the question. We can take this further using *quantitative bias analysis*, where we use mathematical assumptions to see how results would change under different conditions.
 
 ### Tipping point analyses
 
