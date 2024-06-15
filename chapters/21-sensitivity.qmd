@@ -379,40 +379,98 @@ In our DAG, for instance, there are actually two DAGs which can generate the sam
 
 ```{r}
 #| label: fig-equiv-dag
-ggdag_equivalent_dags(emm_wait_dag, use_labels = TRUE, use_text = FALSE, edge_type = "arc")
+ggdag_equivalent_dags(
+  emm_wait_dag, use_labels = 
+    TRUE, 
+  use_text = FALSE, 
+  edge_type = "arc"
+)
 ```
 
 Let's take a look at a more extreme example, where we remove the arrows from park close time and historic temperature to Extra Magic Morning.
 
+```{r}
+emm_wait_dag2 <- dagify(
+  wait_minutes_posted_avg ~ park_extra_magic_morning + park_close + park_ticket_season + park_temperature_high,
+  park_extra_magic_morning ~ park_ticket_season,
+  coords = coord_dag,
+  labels = labels,
+  exposure = "park_extra_magic_morning",
+  outcome = "wait_minutes_posted_avg"
+)
 
+query_conditional_independence(emm_wait_dag2) |>
+  unnest(conditioned_on)
+```
+
+
+```{r}
+test_conditional_independence(
+  emm_wait_dag2,
+  data = touringplans::seven_dwarfs_train_2018 |>
+    mutate(
+      across(where(is.character), factor),
+      park_close = as.numeric(park_close)
+    ) |> as.data.frame(),
+  type = "cis.loess",
+  R = 200
+) |>
+  ggdag_conditional_independence()
+```
+
+```{r}
+ggdag_equivalent_dags(emm_wait_dag2)
+```
+
+```{r}
+ggdag_equivalent_class(emm_wait_dag2)
+```
+
+```{r}
+# no overlapping sets
+dagitty::equivalenceClass(emm_wait_dag) |>
+  dagitty::adjustmentSets(type = "all")
+
+dags <- dagitty::equivalentDAGs(emm_wait_dag)
+
+# no overlapping sets
+# however, the reversable edge is season -> emm. This is implausible
+dags[[1]] |> dagitty::adjustmentSets(type = "all")
+dags[[2]] |> dagitty::adjustmentSets(type = "all")
+```
 
 
 ### Alternate DAGs
 
-As we mentioned in @sec-dags-iterate, you should ideally specify your DAG ahead of time with ample feedback from other experts. Let's now go on the opposite direction as the last example: what if we used the original DAG but, after the analysis, receive feedback that we should add more variables? Consider this expanded DAG in @fig-dag-extra-days that includes two more confounders: whether it's a weekend, and whether it's a major US holiday.
+<!-- TODO: I think this should be an extension of what we do in the machine learning chapter, e.g. we throw a more complex set of covariates at TMLE then we revisit that analysis here. In other words, this alt dag should have a little bit of a thread through the book. -->
+
+As we mentioned in @sec-dags-iterate, you should ideally specify your DAG ahead of time with ample feedback from other experts. Let's now go on the opposite direction as the last example: what if we used the original DAG but, after the analysis, receive feedback that we should add more variables? Consider this expanded DAG in @fig-dag-extra-days. We've added two new confounders: whether it's a weekend and whether it's a holiday. 
 
 ```{r}
 #| label: fig-dag-extra-days
 #| echo: false
+
 labels <- c(
-  x = "Extra Magic Morning (i)",
-  y = "Average wait",
-  season = "Ticket Season",
-  weather = "Historic high temperature",
-  close = "Time park closed (i)",
-  weekend = "Weekend Day",
-  holiday = "Holiday"
+  park_extra_magic_morning = "Extra Magic Morning",
+  wait_minutes_posted_avg = "Average wait",
+  park_ticket_season = "Ticket Season",
+  park_temperature_high = "Historic high temperature",
+  park_close = "Time park closed",
+  crowd_flow = "Crowd flow"
 )
 
-dagify(
-  y ~ x + close + season + weather + weekend + holiday,
-  x ~ weather + close + season + weekend + holiday,
-  close ~ weekend + holiday,
+emm_wait_dag3 <- dagify(
+  wait_minutes_posted_avg ~ park_extra_magic_morning + park_close + park_ticket_season + park_temperature_high + is_weekend + is_holiday,
+  park_extra_magic_morning ~ park_temperature_high + park_close + park_ticket_season + is_weekend + is_holiday,
+  park_close ~ is_weekend + is_holiday,
+  # TODO: specify coords
   coords = time_ordered_coords(),
   labels = labels,
-  exposure = "x",
-  outcome = "y"
-) |>
+  exposure = "park_extra_magic_morning",
+  outcome = "wait_minutes_posted_avg"
+)
+
+emm_wait_dag3 |>
   tidy_dagitty() |>
   node_status() |>
   ggplot(
@@ -445,15 +503,16 @@ We can calculate both of these features from `park_date` using the timeDate pack
 ```{r}
 library(timeDate)
 
-holidays <- c("USChristmasDay", "USColumbusDay", "USIndependenceDay", 
-  "USLaborDay", "USLincolnsBirthday", 
-  "USMemorialDay", "USMLKingsBirthday", "USNewYearsDay", "USPresidentsDay", 
+holidays <- c(
+  "USChristmasDay", "USColumbusDay", "USIndependenceDay", 
+  "USLaborDay", "USLincolnsBirthday", "USMemorialDay", 
+  "USMLKingsBirthday", "USNewYearsDay", "USPresidentsDay", 
   "USThanksgivingDay", "USVeteransDay", "USWashingtonsBirthday"
 ) |> 
   holiday(2018, Holiday = _) |> 
   as.Date()
 
-seven_dwarfs_with_days <- touringplans::seven_dwarfs_train_2018 |> 
+seven_dwarfs_with_days <- seven_dwarfs_train_2018 |> 
   mutate(
     is_holiday = park_date %in% holidays, 
     is_weekend = isWeekend(park_date)
@@ -480,6 +539,8 @@ seven_dwarfs_with_days |>
   summarise(mean_wait = mean(wait_minutes_posted_avg, na.rm = TRUE))
 ```
 
+Now, let's refit the IPW model including this expanded adjustment set.
+
 ```{r}
 fit_ipw_effect(
   park_extra_magic_morning ~ park_temperature_high +
@@ -488,7 +549,7 @@ fit_ipw_effect(
 )
 ```
 
-Now let's check the previous two strategies: negative exposure controls and DAG-data consistency.
+The effect here is slightly bigger than what we got without the two new confounders. Scientifically, you most likely want to report *both* effects because in this case, it was a deviation from the analysis plan. That said, this new DAG is likely more correct than the original one. From a decision point of view, though, the difference is small in absolute terms and results in an effect in the same direction. In other words, the result is not terribly sensitive to this change if we consider how we might act on it.
 
 ## Quantitative bias analyses
 
