@@ -31,11 +31,11 @@ coord_dag <- list(
 )
 
 labels <- c(
-  park_extra_magic_morning = "Extra Magic Morning",
-  wait_minutes_posted_avg = "Average wait",
-  park_ticket_season = "Ticket Season",
-  park_temperature_high = "Historic high temperature",
-  park_close = "Time park closed"
+  park_extra_magic_morning = "Extra Magic\nMorning",
+  wait_minutes_posted_avg = "Average\nwait",
+  park_ticket_season = "Ticket\nSeason",
+  park_temperature_high = "Historic high\ntemperature",
+  park_close = "Time park\nclosed"
 )
 
 emm_wait_dag <- dagify(
@@ -47,37 +47,32 @@ emm_wait_dag <- dagify(
   outcome = "wait_minutes_posted_avg"
 )
 
+curvatures <- rep(0, 7)
+curvatures[5] <- .3
+
 emm_wait_dag |>
   tidy_dagitty() |>
   node_status() |>
   ggplot(
     aes(x, y, xend = xend, yend = yend, color = status)
   ) +
-  geom_dag_edges_arc(curvature = c(rep(0, 4), .3, rep(0, 2))) +
+  geom_dag_edges_arc(curvature = curvatures, edge_color = "grey80") +
   geom_dag_point() +
-  geom_dag_label_repel(seed = 1630) +
+  geom_dag_text_repel(aes(label = label), size = 3.8, seed = 1630, color = "#494949") +
   scale_color_okabe_ito(na.value = "grey90") +
   theme_dag() +
-  theme(
-    legend.position = "none",
-    axis.text.x = element_text()
-  ) +
+  theme(legend.position = "none") +
   coord_cartesian(clip = "off") +
   scale_x_continuous(
     limits = c(-1.25, 2.25),
-    breaks = c(-1, 0, 1, 2),
-    labels = c(
-      "\n(one year ago)",
-      "\n(6 months ago)",
-      "\n(3 months ago)",
-      "9am - 10am\n(Today)"
-    )
+    breaks = c(-1, 0, 1, 2)
   )
 ```
 
 In this DAG, there's only one adjustment set because all three confounders represent independent backdoor paths. Let's say, though, that we had used this DAG instead, which is missing an arrow from park close time to whether or not there was an extra magic morning.
 
 ```{r}
+#| echo: false
 emm_wait_dag_missing <- dagify(
   wait_minutes_posted_avg ~ park_extra_magic_morning + park_close + park_ticket_season + park_temperature_high,
   park_extra_magic_morning ~ park_ticket_season,
@@ -87,9 +82,14 @@ emm_wait_dag_missing <- dagify(
   outcome = "wait_minutes_posted_avg"
 )
 
-adj_sets <- unclass(dagitty::adjustmentSets(emm_wait_dag_missing, type = "all")) |> 
-  map_chr(\(.x) glue::glue('{unlist(glue::glue_collapse(.x, sep = " + "))}')) |> 
+# produces below:
+# park_ticket_season, park_close + park_ticket_season, park_temperature_high + park_ticket_season, or park_close + park_temperature_high + park_ticket_season
+adj_sets <- unclass(dagitty::adjustmentSets(emm_wait_dag_missing, type = "all")) |>
+  map_chr(\(.x) glue::glue('{unlist(glue::glue_collapse(.x, sep = " + "))}')) |>
   glue::glue_collapse(sep = ", ", last = ", or ")
+
+curvatures <- rep(0, 5)
+curvatures[3] <- .3
 
 emm_wait_dag_missing |>
   tidy_dagitty() |>
@@ -97,56 +97,48 @@ emm_wait_dag_missing |>
   ggplot(
     aes(x, y, xend = xend, yend = yend, color = status)
   ) +
-  geom_dag_edges_arc(curvature = c(rep(0, 2), .3, rep(0, 2))) +
+  geom_dag_edges_arc(curvature = curvatures, edge_color = "grey80") +
   geom_dag_point() +
-  geom_dag_label_repel(seed = 1630) +
+  geom_dag_text_repel(aes(label = label), size = 3.8, seed = 1630, color = "#494949") +
   scale_color_okabe_ito(na.value = "grey90") +
   theme_dag() +
-  theme(
-    legend.position = "none",
-    axis.text.x = element_text()
-  ) +
+  theme(legend.position = "none") +
   coord_cartesian(clip = "off") +
   scale_x_continuous(
     limits = c(-1.25, 2.25),
-    breaks = c(-1, 0, 1, 2),
-    labels = c(
-      "\n(one year ago)",
-      "\n(6 months ago)",
-      "\n(3 months ago)",
-      "9am - 10am\n(Today)"
-    )
+    breaks = c(-1, 0, 1, 2)
   )
 ```
 
-Now there are `r length(dagitty::adjustmentSets(emm_wait_dag_missing, type = "all"))` potential adjustment sets: `r adj_sets`. @tbl-alt-sets presents the IPW estimates for each adjustment set. The effects are quite different. Some small variation in the estimates is expected since they are estimated using different variables, if this DAG were right, we should see them much more closely aligned than this. In particular, it seems that there is about a 3 minute difference in the models with and without park close time.
+Now there are `r length(dagitty::adjustmentSets(emm_wait_dag_missing, type = "all"))` potential adjustment sets: `park_ticket_season, park_close + park_ticket_season`, `park_temperature_high + park_ticket_season`, or `park_close + park_temperature_high + park_ticket_season`. @tbl-alt-sets presents the IPW estimates for each adjustment set. The effects are quite different. Some small variation in the estimates is expected since they are estimated using different variables, if this DAG were right, we should see them much more closely aligned than this. In particular, it seems that there is about a 3 minute difference in the models with and without park close time.
 
 ```{r}
 #| label: tbl-alt-sets
 #| tbl-cap: "TODO. Sorted"
+#| echo: false
 seven_dwarfs <- touringplans::seven_dwarfs_train_2018 |>
   filter(wait_hour == 9)
 
 # we'll use `.data` and `.trt` later
 fit_ipw_effect <- function(.fmla, .data = seven_dwarfs, .trt = "park_extra_magic_morning", .outcome_fmla = wait_minutes_posted_avg ~ park_extra_magic_morning) {
   .trt_var <- rlang::ensym(.trt)
-  
+
   # fit propensity score model
   propensity_model <- glm(
     .fmla,
     data = .data,
     family = binomial()
   )
-  
+
   # calculate ATE weights
   .df <- propensity_model |>
-    augment(type.predict = "response", data = .data) |> 
+    augment(type.predict = "response", data = .data) |>
     mutate(w_ate = wt_ate(.fitted, !!.trt_var, exposure_type = "binary"))
 
-  # fit correctly bootstrapped ipw model 
+  # fit correctly bootstrapped ipw model
   lm(.outcome_fmla, data = .df, weights = w_ate) |>
-    tidy() |> 
-    filter(term == .trt) |> 
+    tidy() |>
+    filter(term == .trt) |>
     pull(estimate)
 }
 
@@ -156,7 +148,7 @@ effects <- list(
   park_extra_magic_morning ~ park_temperature_high + park_ticket_season,
   park_extra_magic_morning ~ park_temperature_high +
     park_close + park_ticket_season
-) |> 
+) |>
   map_dbl(fit_ipw_effect)
 
 tibble(
@@ -167,8 +159,8 @@ tibble(
     "Historic temperature, close time, ticket season"
   ),
   ATE = effects
-) |> 
-  arrange(ATE) |> 
+) |>
+  arrange(ATE) |>
   gt()
 ```
 
@@ -190,16 +182,17 @@ Let's look at a DAG visualizing this situation. In @fig-dag-day-i, we've essenti
 
 ```{r}
 #| label: fig-dag-day-i
+#| echo: false
 labels <- c(
-  x63 = "Extra Magic Morning (i-63)",
-  x = "Extra Magic Morning (i)",
-  y = "Average wait",
-  season = "Ticket Season",
-  weather = "Historic high temperature",
-  close = "Time park closed (i)",
-  season63 = "Ticket Season (i-63)",
-  weather63 = "Historic high temperature (i-63)",
-  close63 = "Time park closed (i-63)"
+  x63 = "Extra Magic\nMorning (i-63)",
+  x = "Extra Magic\nMorning (i)",
+  y = "Average\nwait",
+  season = "Ticket\nSeason",
+  weather = "Historic\nhigh\ntemperature",
+  close = "Time park\nclosed (i)",
+  season63 = "Ticket Season\n(i-63)",
+  weather63 = "Historic\nhigh\ntemperature\n(i-63)",
+  close63 = "Time park\nclosed (i-63)"
 )
 
 dagify(
@@ -207,7 +200,7 @@ dagify(
   x ~ weather + close + season + x63,
   x63 ~ weather63 + close63 + season63,
   weather ~ weather63,
-  close ~ close63, 
+  close ~ close63,
   season ~ season63,
   coords = time_ordered_coords(),
   labels = labels,
@@ -219,69 +212,84 @@ dagify(
   ggplot(
     aes(x, y, xend = xend, yend = yend, color = status)
   ) +
-  geom_dag_edges_link() +
+  geom_dag_edges_link(edge_color = "grey80") +
   geom_dag_point() +
-  geom_dag_label_repel() +
+  geom_dag_text_repel(aes(label = label), size = 3.8, color = "#494949") +
   scale_color_okabe_ito(na.value = "grey90") +
   theme_dag() +
-  theme() +
+  theme(legend.position = "none") +
   coord_cartesian(clip = "off")
 ```
 
-Since the exposure is on day `i - 63`, we prefer to control for the confounders related to that day, so we'll use the `i - 63` versions. To get those variables, we'll use `lag()` from dplyr. We're going to check other days, too, so let's write this as a function.
+Since the exposure is on day `i - 63`, we prefer to control for the confounders related to that day, so we'll use the `i - 63` versions. To get those variables, we'll use `lag()` from dplyr. 
 
 ```{r}
+#| eval: false
+n_days_lag <- 63
+distinct_emm <- seven_dwarfs_train_2018 |>
+  filter(wait_hour == 9) |>
+  arrange(park_date) |>
+  transmute(
+    park_date,
+    prev_park_extra_magic_morning = lag(park_extra_magic_morning, n = n_days_lag),
+    prev_park_temperature_high = lag(park_temperature_high, n = n_days_lag),
+    prev_park_close = lag(park_close, n = n_days_lag),
+    prev_park_ticket_season = lag(park_ticket_season, n = n_days_lag)
+  )
+
+seven_dwarfs_train_2018_lag <- seven_dwarfs_train_2018 |>
+  filter(wait_hour == 9) |>
+  left_join(distinct_emm, by = "park_date") |>
+  filter(!is.na(prev_park_extra_magic_morning))
+```
+
+
+```{r}
+#| echo: false
 calculate_coef <- function(n_days_lag) {
-  distinct_emm <- seven_dwarfs_train_2018 |> 
-    filter(wait_hour == 9) |> 
-    arrange(park_date) |> 
+  distinct_emm <- seven_dwarfs_train_2018 |>
+    filter(wait_hour == 9) |>
+    arrange(park_date) |>
     transmute(
-      park_date, 
+      park_date,
       prev_park_extra_magic_morning = lag(park_extra_magic_morning, n = n_days_lag),
       prev_park_temperature_high = lag(park_temperature_high, n = n_days_lag),
       prev_park_close = lag(park_close, n = n_days_lag),
       prev_park_ticket_season = lag(park_ticket_season, n = n_days_lag)
     )
-  
-  seven_dwarfs_train_2018_lag <- seven_dwarfs_train_2018 |> 
-    filter(wait_hour == 9) |> 
-    left_join(distinct_emm, by = "park_date") |> 
+
+  seven_dwarfs_train_2018_lag <- seven_dwarfs_train_2018 |>
+    filter(wait_hour == 9) |>
+    left_join(distinct_emm, by = "park_date") |>
     filter(!is.na(prev_park_extra_magic_morning))
-  
+
   fit_ipw_effect(
     prev_park_extra_magic_morning ~ prev_park_temperature_high + prev_park_close + prev_park_ticket_season,
-    .data = seven_dwarfs_train_2018_lag, 
+    .data = seven_dwarfs_train_2018_lag,
     .trt = "prev_park_extra_magic_morning",
     .outcome_fmla = wait_minutes_posted_avg ~ prev_park_extra_magic_morning + park_extra_magic_morning
   )
 }
 
-calculate_coef(63)
+result63 <- calculate_coef(63) |>
+  round(2)
 ```
 
-Well, the effect is much closer to null than what we found on day `i`. Let's take a look at the effect over time. We suppose that, while there might be a lingering effect of extra magic mornings for a little while (say, the span of an average trip to Disney World), it should quickly approach null.
+When we use these data for the IPW effect, we get `r result63` minutes, much closer to null than what we found on day `i`. Let's take a look at the effect over time. We suppose that, while there might be a lingering effect of extra magic mornings for a little while (say, the span of an average trip to Disney World), it should quickly approach null. However, in @fig-sens-i-63, we see that, while it does approach null eventually, there is quite a bit of lingering effect. If these results are accurate, it implies that we have some residual confounding in our effect.
 
 ```{r}
+#| label: fig-sens-i-63
+#| echo: false
+#| warning: false
+#| message: false
 coefs <- purrr::map_dbl(1:63, calculate_coef)
 
-ggplot(data.frame(coefs = coefs, x = 1:63), aes(x = x, y = coefs)) + 
-  geom_hline(yintercept = 0) + 
-  geom_smooth() + 
+ggplot(data.frame(coefs = coefs, x = 1:63), aes(x = x, y = coefs)) +
+  geom_hline(yintercept = 0) +
+  geom_point() +
+  geom_smooth(se = FALSE) +
   labs(y = "difference in wait times (minutes)\n on day (i) for EMM on day (i - n)", x = "day (i - n)")
 ```
-
-If you try this with lags going further in time, you'll see the residual association comes and goes apparently cyclically, although the estimate is less and less stable for every day's lag because of the sample size.
-
-```{r}
-coefs <- purrr::map_dbl(1:200, calculate_coef)
-
-ggplot(data.frame(coefs = coefs, x = 1:200), aes(x = x, y = coefs)) + 
-  geom_hline(yintercept = 0) + 
-  geom_smooth() + 
-  labs(y = "difference in wait times (minutes)\n on day (i) for EMM on day (i - n)", x = "day (i - n)")
-```
-
-If these results are accurate, it implies that we have some residual confounding in our effect. 
 
 #### Negative outcomes
 
@@ -290,29 +298,31 @@ Now, let's look at an example of a negative control outcome: the wait time at a 
 We don't have ride data for Universal, so let's simulate what would happen with and without residual confounding. We'll generate wait times that are based on the historic temperature, park close time, and ticket season (the second two are technically specific to Disney but we expect a strong correlation with the Universal versions). Because this is a negative outcome, it is not related to whether or not there were Extra Magic Morning hours at Disney.
 
 ```{r}
-seven_dwarfs_sim <- seven_dwarfs_train_2018 |> 
+seven_dwarfs_sim <- seven_dwarfs_train_2018 |>
   mutate(
     # we scale each variable and add a bit of random noise
     # to simulate reasonable Universal wait times
-    wait_time_universal = 
-      park_temperature_high / 150 + 
-      as.numeric(park_close) / 1500 +
-      as.integer(factor(park_ticket_season)) / 1000 + 
-      rnorm(n(), 5, 5)
+    wait_time_universal =
+      park_temperature_high / 150 +
+        as.numeric(park_close) / 1500 +
+        as.integer(factor(park_ticket_season)) / 1000 +
+        rnorm(n(), 5, 5)
   )
 ```
 
 ```{r}
-wait_universal <- seven_dwarfs_sim |> 
+#| echo: false
+wait_universal <- seven_dwarfs_sim |>
   fit_ipw_effect(
     park_extra_magic_morning ~ park_temperature_high +
       park_close + park_ticket_season,
     .data = _,
     .outcome_fmla = wait_time_universal ~ park_extra_magic_morning
-  ) |> round(2)
+  ) |>
+  round(2)
 ```
 
-If we calculate the IPW effect for `wait_time_universal`, we get `r wait_universal`, a roughly null effect, as expected. But what if we missed an unmeasured confounder, `u`, which was a cause of Extra Magic Mornings and wait times at both Disney and universal? Let's simulate that scenario but augmenting the data further.
+If we calculate the IPW effect of `park_extra_magic_morning` on `wait_time_universal`, we get `r wait_universal` minutes, a roughly null effect, as expected. But what if we missed an unmeasured confounder, `u`, which was a cause of Extra Magic Mornings and wait times at both Disney and universal? Let's simulate that scenario but augmenting the data further.
 
 ```{r}
 seven_dwarfs_sim2 <- seven_dwarfs_train_2018 |>
@@ -320,22 +330,24 @@ seven_dwarfs_sim2 <- seven_dwarfs_train_2018 |>
     u = rnorm(n(), mean = 10, sd = 3),
     wait_minutes_posted_avg = wait_minutes_posted_avg + u,
     park_extra_magic_morning = ifelse(u > 10, rbinom(1, 1, .1), park_extra_magic_morning),
-    wait_time_universal = 
-      park_temperature_high / 150 + 
-      as.numeric(park_close) / 1500 +
-      as.integer(factor(park_ticket_season)) / 1000 + 
-      u + 
-      rnorm(n(), 5, 5)
+    wait_time_universal =
+      park_temperature_high / 150 +
+        as.numeric(park_close) / 1500 +
+        as.integer(factor(park_ticket_season)) / 1000 +
+        u +
+        rnorm(n(), 5, 5)
   )
 ```
 
 ```{r}
+#| echo: false
 disney <- seven_dwarfs_sim2 |>
   fit_ipw_effect(
     park_extra_magic_morning ~ park_temperature_high +
       park_close + park_ticket_season,
     .data = _
-  ) |> round(2)
+  ) |>
+  round(2)
 
 universal <- seven_dwarfs_sim2 |>
   fit_ipw_effect(
@@ -343,10 +355,11 @@ universal <- seven_dwarfs_sim2 |>
       park_close + park_ticket_season,
     .data = _,
     .outcome_fmla = wait_time_universal ~ park_extra_magic_morning
-  ) |> round(2)
+  ) |>
+  round(2)
 ```
 
-Now the effect for both Disney and Universal wait times is different. If we had seen `r disney` for the effect for Disney, we wouldn't necessarily know that we had a confounded result. However, since we know the wait times at Universal should be unrelated, it's suspicious that the result, `r universal`, is not null. That is evidence that we have unmeasured confounding.
+Now the effect for both Disney and Universal wait times is different. If we had seen `r disney` minutes for the effect for Disney, we wouldn't necessarily know that we had a confounded result. However, since we know the wait times at Universal should be unrelated, it's suspicious that the result, `r universal` minutes, is not null. That is evidence that we have unmeasured confounding.
 
 ### DAG-data consistency
 
@@ -362,38 +375,36 @@ In this DAG, there are three relationships that should be null: 1) `park_close` 
 ```{r}
 #| label: fig-conditional-ind
 test_conditional_independence(
-    emm_wait_dag,
-    data = touringplans::seven_dwarfs_train_2018 |>
-        mutate(
-            across(where(is.character), factor),
-            park_close = as.numeric(park_close),
-            month = lubridate::week(park_date)
-        ) |> as.data.frame(),
-    type = "cis.loess",
-    R = 200
+  emm_wait_dag,
+  data = touringplans::seven_dwarfs_train_2018 |>
+    mutate(
+      across(where(is.character), factor),
+      park_close = as.numeric(park_close),
+      month = lubridate::week(park_date)
+    ) |> as.data.frame(),
+  type = "cis.loess",
+  R = 200
 ) |>
   ggdag_conditional_independence()
 ```
 
 Why might we be seeing a relationship when there isn't supposed to be one? A simple explanation is chance: just like in any type of statistical inference, we need to be cautious about over-extrapolating what we see in the limited sample we have. Since we have data for every day in 2018, though, we could probably rule that out. Another reason is that we're missing direct arrows from one variable to the other, e.g. from historic temperature to park close time. This is pretty reasonable: close time and ticket season both closely track the weather. That's a little bit of evidence that we're missing an arrow.
 
-At this point, we need to be cautious about overfitting the DAG to the data. DAG-data consistency tests *cannot* prove your DAG right and wrong, and as we saw in @sec-quartets, statistical techniques alone cannot determine the causal structure of a problem. So why use these tests? As with negative controls, they provide a way to probe your assumptions. While we can never be sure about them, we *do* have information in the data. Finding that conditional independencies hold is a little more evidence in support of your assumptions. There's a fine line here, so we recommend being transparent about these types of checks: if you make changes based on the results of these tests, you should report your original DAG, too.
+At this point, we need to be cautious about overfitting the DAG to the data. DAG-data consistency tests *cannot* prove your DAG right and wrong, and as we saw in @sec-quartets, statistical techniques alone cannot determine the causal structure of a problem. So why use these tests? As with negative controls, they provide a way to probe your assumptions. While we can never be sure about them, we *do* have information in the data. Finding that conditional independencies hold is a little more evidence in support of your assumptions. There's a fine line here, so we recommend being transparent about these types of checks: if you make changes based on the results of these tests, you should report your original DAG, too. Notably, in this case, adding direct arrows to all three of these relationships results in an identical adjustment set. 
 
-Notably, in this case, adding direct arrows to all three of these relationships results in an identical adjustment set. That's an important detail! Sometimes we have the option to use an adjustment set that works for more than one DAG. This is good news for DAG-data consistency checks, because we have a related problem: different DAGs can have the same set of conditional independencies. 
-
-In our DAG, for instance, there are actually two DAGs which can generate the same implied conditional independencies (@fig-equiv-dag).
+Let's take a look at an example more likely to be misspecified, where we remove the arrows from park close time and historic temperature to Extra Magic Morning.
 
 ```{r}
-#| label: fig-equiv-dag
-ggdag_equivalent_dags(
-  emm_wait_dag, use_labels = 
-    TRUE, 
-  use_text = FALSE, 
-  edge_type = "arc"
+#| echo: false
+labels <- c(
+  park_extra_magic_morning = "Extra Magic\nMorning",
+  wait_minutes_posted_avg = "Average\nwait",
+  park_ticket_season = "Ticket\nSeason",
+  park_temperature_high = "Historic high\ntemperature",
+  park_close = "Time park\nclosed"
 )
 ```
 
-Let's take a look at a more extreme example, where we remove the arrows from park close time and historic temperature to Extra Magic Morning.
 
 ```{r}
 emm_wait_dag2 <- dagify(
@@ -409,6 +420,7 @@ query_conditional_independence(emm_wait_dag2) |>
   unnest(conditioned_on)
 ```
 
+This introduces two new relationships that should be independent. In the DAG-data consistency check, they show a relationship with Extra Magic Morning.
 
 ```{r}
 test_conditional_independence(
@@ -424,27 +436,70 @@ test_conditional_independence(
   ggdag_conditional_independence()
 ```
 
+So, is this DAG wrong? It seems likely that's the case based on our understanding of the problem, but interpreting DAG-data consistency tests has a hiccup: different DAGs can have the same set of conditional independencies.  In our DAG, for instance, there are actually two DAGs which can generate the same implied conditional independencies (@fig-equiv-dag). These are called *equivalent* DAGs because their implications are the same.
+
 ```{r}
+#| eval: false
 ggdag_equivalent_dags(emm_wait_dag2)
 ```
 
+
 ```{r}
-ggdag_equivalent_class(emm_wait_dag2)
+#| label: fig-equiv-dag
+#| echo: false
+#| fig-width: 9
+curvatures <- rep(0, 10)
+curvatures[c(3, 9)] <- .25
+
+ggdag_equivalent_dags(emm_wait_dag2, use_edges = FALSE, use_text = FALSE) +
+  geom_dag_edges_arc(data = function(x) distinct(x), curvature = curvatures, edge_color = "grey80") +
+  geom_dag_edges_link(data = function(x) filter(x, (name == "park_extra_magic_morning" & to == "park_ticket_season") | (name == "park_ticket_season" & to == "park_extra_magic_morning")), edge_color = "black") +
+  geom_dag_text_repel(aes(label = label), data = function(x) filter(x, label %in% c("Extra Magic\nMorning", "Ticket\nSeason")), box.padding = 3, seed = 1398, color = "#494949") +
+  theme_dag()
+```
+
+Equivalent DAGs are generated by *reversing* arrows. The subset of DAGs with reversable arrows that generate the same implications are called an *equivalence class*. While technical, this aspect of the relationship can condense the visualization to a single DAG where the reversable edges are marked by a straight line without arrows.
+
+```{r}
+#| eval: false
+ggdag_equivalent_class(emm_wait_dag2, use_text = FALSE, use_labels = TRUE)
 ```
 
 ```{r}
-# no overlapping sets
-dagitty::equivalenceClass(emm_wait_dag) |>
-  dagitty::adjustmentSets(type = "all")
+#| label: fig-equiv-class
+#| echo: false
+curvatures <- rep(0, 4)
+curvatures[3] <- .25
 
-dags <- dagitty::equivalentDAGs(emm_wait_dag)
-
-# no overlapping sets
-# however, the reversable edge is season -> emm. This is implausible
-dags[[1]] |> dagitty::adjustmentSets(type = "all")
-dags[[2]] |> dagitty::adjustmentSets(type = "all")
+emm_wait_dag2 |>
+  node_equivalent_class() |>
+  ggdag(use_edges = FALSE, use_text = FALSE) +
+  geom_dag_edges_arc(data = function(x) filter(x, !reversable), curvature = curvatures, edge_color = "grey90") +
+  geom_dag_edges_link(data = function(x) filter(x, reversable), arrow = NULL) +
+  geom_dag_text_repel(aes(label = label), data = function(x) filter(x, label %in% c("Extra Magic\nMorning", "Ticket\nSeason")), box.padding = 3, seed = 1398, size = 5, color = "#494949") +
+  theme_dag()
 ```
 
+So, getting back to the sensitivity analysis, what do we do with this information? Since many DAGs can produce the same set of conditional independencies, one strategy is to find all the adjustment sets that would be valid for every equivalent DAG. dagitty makes this straightforward by calling `equivalenceClass()` and `adjustmentSets()`, but in this case, there are *no* overlapping adjustment sets. 
+
+```{r}
+library(dagitty)
+# determine valid sets for all equiv. DAGs
+equivalenceClass(emm_wait_dag2) |>
+  adjustmentSets(type = "all")
+```
+
+We can see that by looking at the individual equivalent DAGs.
+
+```{r}
+dags <- equivalentDAGs(emm_wait_dag2)
+
+# no overlapping sets
+dags[[1]] |> adjustmentSets(type = "all")
+dags[[2]] |> adjustmentSets(type = "all")
+```
+
+The good news is that, in this case, one of the equivalent DAGs doesn't make logical sense: the reversible edge is from ticket season to Extra Magic Morning, but it's implausible that a day's Extra Magic Morning affects the season. Even though we're using more data in these types of checks, we need to think through the logical and time-ordered plausibility of potential scenarios. 
 
 ### Alternate DAGs
 
@@ -457,24 +512,27 @@ As we mentioned in @sec-dags-iterate, you should ideally specify your DAG ahead 
 #| echo: false
 
 labels <- c(
-  park_extra_magic_morning = "Extra Magic Morning",
-  wait_minutes_posted_avg = "Average wait",
-  park_ticket_season = "Ticket Season",
-  park_temperature_high = "Historic high temperature",
-  park_close = "Time park closed",
-  crowd_flow = "Crowd flow"
+  park_extra_magic_morning = "Extra Magic\nMorning",
+  wait_minutes_posted_avg = "Average\nwait",
+  park_ticket_season = "Ticket\nSeason",
+  park_temperature_high = "Historic high\ntemperature",
+  park_close = "Time park\nclosed",
+  is_weekend = "Weekend",
+  is_holiday = "Holiday"
 )
 
 emm_wait_dag3 <- dagify(
   wait_minutes_posted_avg ~ park_extra_magic_morning + park_close + park_ticket_season + park_temperature_high + is_weekend + is_holiday,
   park_extra_magic_morning ~ park_temperature_high + park_close + park_ticket_season + is_weekend + is_holiday,
   park_close ~ is_weekend + is_holiday,
-  # TODO: specify coords
   coords = time_ordered_coords(),
   labels = labels,
   exposure = "park_extra_magic_morning",
   outcome = "wait_minutes_posted_avg"
 )
+
+curvatures <- rep(0, 13)
+curvatures[11] <- .25
 
 emm_wait_dag3 |>
   tidy_dagitty() |>
@@ -482,15 +540,12 @@ emm_wait_dag3 |>
   ggplot(
     aes(x, y, xend = xend, yend = yend, color = status)
   ) +
-  geom_dag_edges_link() +
+  geom_dag_edges_arc(curvature = curvatures, edge_color = "grey80") +
   geom_dag_point() +
-  geom_dag_label_repel() +
+  geom_dag_text_repel(aes(label = label), size = 3.8, seed = 16301, color = "#494949") +
   scale_color_okabe_ito(na.value = "grey90") +
   theme_dag() +
-  theme(
-    legend.position = "none",
-    axis.text.x = element_text()
-  ) +
+  theme(legend.position = "none") +
   coord_cartesian(clip = "off")
 ```
 
@@ -500,52 +555,65 @@ We can calculate both of these features from `park_date` using the timeDate pack
 library(timeDate)
 
 holidays <- c(
-  "USChristmasDay", "USColumbusDay", "USIndependenceDay", 
-  "USLaborDay", "USLincolnsBirthday", "USMemorialDay", 
-  "USMLKingsBirthday", "USNewYearsDay", "USPresidentsDay", 
+  "USChristmasDay", "USColumbusDay", "USIndependenceDay",
+  "USLaborDay", "USLincolnsBirthday", "USMemorialDay",
+  "USMLKingsBirthday", "USNewYearsDay", "USPresidentsDay",
   "USThanksgivingDay", "USVeteransDay", "USWashingtonsBirthday"
-) |> 
-  holiday(2018, Holiday = _) |> 
+) |>
+  holiday(2018, Holiday = _) |>
   as.Date()
 
-seven_dwarfs_with_days <- seven_dwarfs_train_2018 |> 
+seven_dwarfs_with_days <- seven_dwarfs_train_2018 |>
   mutate(
-    is_holiday = park_date %in% holidays, 
+    is_holiday = park_date %in% holidays,
     is_weekend = isWeekend(park_date)
-  ) |> 
+  ) |>
   filter(wait_hour == 9)
 ```
 
 Both extra magic morning hours and posted wait times are associated with whether it's a holiday or weekend.
 
 ```{r}
-# TODO: hide the code and make a table or plot?
-seven_dwarfs_with_days |> 
-  count(is_holiday, park_extra_magic_morning)
+#| label: tbl-days
+#| echo: false
+tbl_labels <- list(
+  is_weekend ~ "Weekend",
+  is_holiday ~ "Holiday",
+  park_extra_magic_morning ~ "Extra Magic Morning",
+  wait_minutes_posted_avg ~ "Posted Wait Time"
+)
 
-seven_dwarfs_with_days |> 
-  group_by(is_holiday) |> 
-  summarise(mean_wait = mean(wait_minutes_posted_avg, na.rm = TRUE))
+tbl_data_days <- seven_dwarfs_with_days |>
+  select(wait_minutes_posted_avg, park_extra_magic_morning, is_weekend, is_holiday)
 
-seven_dwarfs_with_days |> 
-  count(is_weekend, park_extra_magic_morning)
+tbl1 <- gtsummary::tbl_summary(
+  tbl_data_days,
+  by = is_weekend,
+  label = tbl_labels[-2],
+  include = -is_holiday
+)
 
-seven_dwarfs_with_days |> 
-  group_by(is_weekend) |> 
-  summarise(mean_wait = mean(wait_minutes_posted_avg, na.rm = TRUE))
+tbl2 <- gtsummary::tbl_summary(
+  tbl_data_days,
+  by = is_holiday,
+  label = tbl_labels[-1],
+  include = -is_weekend
+)
+
+gtsummary::tbl_merge(list(tbl1, tbl2), c("Weekend", "Holiday"))
 ```
 
-Now, let's refit the IPW model including this expanded adjustment set.
 
 ```{r}
-fit_ipw_effect(
+#| echo: false
+ipw_results_with_days <- fit_ipw_effect(
   park_extra_magic_morning ~ park_temperature_high +
     park_close + park_ticket_season + is_weekend + is_holiday,
   .data = seven_dwarfs_with_days
-)
+) |> round(2)
 ```
 
-The effect here is slightly bigger than what we got without the two new confounders. Scientifically, you most likely want to report *both* effects because in this case, it was a deviation from the analysis plan. That said, this new DAG is likely more correct than the original one. From a decision point of view, though, the difference is small in absolute terms and results in an effect in the same direction. In other words, the result is not terribly sensitive to this change in terms of how we might act on it.
+When we refit the IPW estimator, we get `r ipw_results_with_days` minutes, slightly bigger than what we got without the two new confounders. Scientifically, you most likely want to report *both* effects because in this case, it was a deviation from the analysis plan. That said, this new DAG is likely more correct than the original one. From a decision point of view, though, the difference is small in absolute terms and results in an effect in the same direction. In other words, the result is not terribly sensitive to this change in terms of how we might act on it.
 
 One other point here: sometimes people present the results of using increasingly complicated adjustment sets. This comes from the tradition of trying to to compare complex models to parsimonious ones. This is a sort of sensitivity analysis in its own right, but it should be principled: rather than fitting models that are simple for simplicity's sake, you should compare *competing* adjustment sets or conditions. For instance, you may feel like these two DAGs are equally plausible, or you may want to examine if adding other variables better captures the baseline crowd flow at the Magic Kingdom. 
 
