@@ -1,4 +1,4 @@
-# Sensitivity analysis  {#sec-sensitivity}
+# Sensitivity analysis {#sec-sensitivity}
 
 {{< include 00-setup.qmd >}}
 
@@ -12,16 +12,21 @@ library(propensity)
 library(gt)
 ```
 
-
-Because many of the assumptions of causal inference are unverifiable, it's reasonable to be concerned about the validity of your results. In this chapter, we'll provide some ways to probe our assumptions and results for strengths and weaknesses. We'll explore two main ways to do so: exploring the logical implications of the causal question and related DAGs and using mathematical techniques to quantify how different our results would be under other circumstances, such as in the presence of unmeasured confounding. These techniques are known as *sensitivity analyses*: how sensitive is our result to other conditions than laid out in our assumptions and analysis?
+Because many of the assumptions of causal inference are unverifiable, it's reasonable to be concerned about the validity of your results.
+In this chapter, we'll provide some ways to probe our assumptions and results for strengths and weaknesses.
+We'll explore two main ways to do so: exploring the logical implications of the causal question and related DAGs and using mathematical techniques to quantify how different our results would be under other circumstances, such as in the presence of unmeasured confounding.
+These techniques are known as *sensitivity analyses*: how sensitive is our result to other conditions than laid out in our assumptions and analysis?
 
 ## Checking DAGs for robustness
 
-Let's start with where we started the modeling process: creating causal diagrams. Because DAGs encode the assumptions we're basing our analysis on, they are a natural point of critique from both others and ourselves.
+Let's start with where we started the modeling process: creating causal diagrams.
+Because DAGs encode the assumptions we're basing our analysis on, they are a natural point of critique from both others and ourselves.
 
 ### Alternate adjustment sets and alternate DAGs
 
-The same mathematical underpinnings of DAGs that allow us to to query them for things like adjustment sets also allow us to query other implications of DAGs. One of the simplest is that, if your DAG is right and your data are well-measured, any valid adjustment set should result in an unbiased estimate of the causal effect. Let's consider the DAG we introduced in @fig-dag-magic
+The same mathematical underpinnings of DAGs that allow us to to query them for things like adjustment sets also allow us to query other implications of DAGs.
+One of the simplest is that, if your DAG is right and your data are well-measured, any valid adjustment set should result in an unbiased estimate of the causal effect.
+Let's consider the DAG we introduced in @fig-dag-magic
 
 ```{r}
 #| label: fig-dag-magic-orig
@@ -78,7 +83,8 @@ emm_wait_dag |>
   )
 ```
 
-In @fig-dag-magic-orig, there's only one adjustment set because all three confounders represent independent backdoor paths. Let's say, though, that we had used @fig-dag-magic-missing instead, which is missing an arrow from park close time to whether or not there was an extra magic morning.
+In @fig-dag-magic-orig, there's only one adjustment set because all three confounders represent independent backdoor paths.
+Let's say, though, that we had used @fig-dag-magic-missing instead, which is missing an arrow from park close time to whether or not there was an extra magic morning.
 
 ```{r}
 #| label: fig-dag-magic-missing
@@ -125,7 +131,11 @@ emm_wait_dag_missing |>
   )
 ```
 
-Now there are `r length(dagitty::adjustmentSets(emm_wait_dag_missing, type = "all"))` potential adjustment sets: `park_ticket_season, park_close + park_ticket_season`, `park_temperature_high + park_ticket_season`, or `park_close + park_temperature_high + park_ticket_season`. @tbl-alt-sets presents the IPW estimates for each adjustment set. The effects are quite different. Some small variation in the estimates is expected since they are estimated using different variables, if this DAG were right, we should see them much more closely aligned than this. In particular, it seems that there is about a 3 minute difference in the models with and without park close time.
+Now there are `r length(dagitty::adjustmentSets(emm_wait_dag_missing, type = "all"))` potential adjustment sets: `park_ticket_season, park_close + park_ticket_season`, `park_temperature_high + park_ticket_season`, or `park_close + park_temperature_high + park_ticket_season`.
+@tbl-alt-sets presents the IPW estimates for each adjustment set.
+The effects are quite different.
+Some small variation in the estimates is expected since they are estimated using different variables, if this DAG were right, we should see them much more closely aligned than this.
+In particular, it seems that there is about a 3 minute difference in the models with and without park close time.
 
 ```{r}
 #| label: tbl-alt-sets
@@ -181,19 +191,39 @@ tibble(
 
 ### Negative controls
 
-Alternate adjustment sets are a way of probing the logical implications of your DAG: if it's correct, there should then be may ways to correctly account for the open backdoor paths. The reverse is also true: the causal structure of your research question also implies relationships that, if you are correct, should be *null*. One way that researchers take advantage of this implication is through *negative controls*. A negative control is either an exposure (negative exposure control) or outcome (negative outcome control) which is similar to your question in as many ways as possible except that there *shouldn't* be a causal effect. @TODO describe negative controls for observational research. In their article, they reference common controls in bench science:
+Alternate adjustment sets are a way of probing the logical implications of your DAG: if it's correct, there should then be may ways to correctly account for the open backdoor paths.
+The reverse is also true: the causal structure of your research question also implies relationships that, if you are correct, should be *null*.
+One way that researchers take advantage of this implication is through *negative controls*.
+A negative control is either an exposure (negative exposure control) or outcome (negative outcome control) which is similar to your question in as many ways as possible except that there *shouldn't* be a causal effect.
+[@Lipsitch2010] describe negative controls for observational research.
+In their article, they reference common controls in bench science:
 
-1. Leave out an essential ingredient. 
-2. Inactivate the hypothesized active ingredient. 
-3. Check for an effect that would be impossible by the hypothesized outcome. 
+1.  Leave out an essential ingredient.
+2.  Inactivate the hypothesized active ingredient.
+3.  Check for an effect that would be impossible by the hypothesized outcome.
 
-To find a good negative control, you usually need to extend your DAG to include more of the causal structure surrounding your question. Let's look at some examples. 
+To find a good negative control, you usually need to extend your DAG to include more of the causal structure surrounding your question.
+Let's look at some examples.
 
 #### Negative exposures
 
-First, we'll look at a negative exposure control. If extra magic mornings really do cause an increase in wait time, it stands to reason that this effect is time-limited. In other words, there should be some period of time after which the effect of extra magic morning dissipates. It's call today *i* and the previous day *i - d* where *j* is the number days previous the negative exposure is. First, let's explore `j = 63`, e.g. whether or not there was extra magic morning 9 weeks ago. That seems like a pretty reasonable starting point: it's exceedingly unlikely that the effect on wait time would still be present 63 days later. This is an example of leaving out an essential ingredient: we waited too long for this to be realistic. Any remaining effect is likely due to residual confounding. 
+First, we'll look at a negative exposure control.
+If extra magic mornings really do cause an increase in wait time, it stands to reason that this effect is time-limited.
+In other words, there should be some period of time after which the effect of extra magic morning dissipates.
+It's call today *i* and the previous day *i - d* where *j* is the number days previous the negative exposure is.
+First, let's explore `j = 63`, e.g. whether or not there was extra magic morning 9 weeks ago.
+That seems like a pretty reasonable starting point: it's exceedingly unlikely that the effect on wait time would still be present 63 days later.
+This is an example of leaving out an essential ingredient: we waited too long for this to be realistic.
+Any remaining effect is likely due to residual confounding.
 
-Let's look at a DAG visualizing this situation. In @fig-dag-day-i, we've essentially added an identical layer to our original one: now there are two extra magic mornings: one for day `i` and one for day `i - 63`. Similarly, there are two versions of the confounders for each day. One important detail in this DAG is that we're assuming that there *is* an effect of day `i - 63`'s extra magic morning on day `i`'s; whether or not there is an extra magic morning one day does likely effect whether or not they happen on another day. The decision about where to place them across the year is not random. If this is true, then we *would* expect an effect: the indirect effect via day `i`'s extra magic morning status. To get a true negative control, we need to *inactivate this effect*, which we can do statistically by controlling for it. So, given the DAG, our adjustment set is any combination of the confounders (as long as we have at least one version of each) and day `i`'s extra magic morning (suppressing the indirect effect).
+Let's look at a DAG visualizing this situation.
+In @fig-dag-day-i, we've essentially added an identical layer to our original one: now there are two extra magic mornings: one for day `i` and one for day `i - 63`.
+Similarly, there are two versions of the confounders for each day.
+One important detail in this DAG is that we're assuming that there *is* an effect of day `i - 63`'s extra magic morning on day `i`'s; whether or not there is an extra magic morning one day does likely effect whether or not they happen on another day.
+The decision about where to place them across the year is not random.
+If this is true, then we *would* expect an effect: the indirect effect via day `i`'s extra magic morning status.
+To get a true negative control, we need to *inactivate this effect*, which we can do statistically by controlling for it.
+So, given the DAG, our adjustment set is any combination of the confounders (as long as we have at least one version of each) and day `i`'s extra magic morning (suppressing the indirect effect).
 
 ```{r}
 #| label: fig-dag-day-i
@@ -242,7 +272,8 @@ dagify(
   coord_cartesian(clip = "off")
 ```
 
-Since the exposure is on day `i - 63`, we prefer to control for the confounders related to that day, so we'll use the `i - 63` versions. To get those variables, we'll use `lag()` from dplyr. 
+Since the exposure is on day `i - 63`, we prefer to control for the confounders related to that day, so we'll use the `i - 63` versions.
+To get those variables, we'll use `lag()` from dplyr.
 
 ```{r}
 #| eval: false
@@ -263,7 +294,6 @@ seven_dwarfs_train_2018_lag <- seven_dwarfs_train_2018 |>
   left_join(distinct_emm, by = "park_date") |>
   drop_na(prev_park_extra_magic_morning)
 ```
-
 
 ```{r}
 #| echo: false
@@ -296,7 +326,11 @@ result63 <- calculate_coef(63) |>
   round(2)
 ```
 
-When we use these data for the IPW effect, we get `r result63` minutes, much closer to null than what we found on day `i`. Let's take a look at the effect over time. We suppose that, while there might be a lingering effect of extra magic mornings for a little while (say, the span of an average trip to Disney World), it should quickly approach null. However, in @fig-sens-i-63, we see that, while it does approach null eventually, there is quite a bit of lingering effect. If these results are accurate, it implies that we have some residual confounding in our effect.
+When we use these data for the IPW effect, we get `r result63` minutes, much closer to null than what we found on day `i`.
+Let's take a look at the effect over time.
+We suppose that, while there might be a lingering effect of extra magic mornings for a little while (say, the span of an average trip to Disney World), it should quickly approach null.
+However, in @fig-sens-i-63, we see that, while it does approach null eventually, there is quite a bit of lingering effect.
+If these results are accurate, it implies that we have some residual confounding in our effect.
 
 ```{r}
 #| label: fig-sens-i-63
@@ -316,9 +350,14 @@ ggplot(data.frame(coefs = coefs, x = 1:63), aes(x = x, y = coefs)) +
 
 #### Negative outcomes
 
-Now, let's look at an example of a negative control outcome: the wait time at a ride in Universal Studios. Universal Studios is also in Orlando, and so the set of causes for wait times are likely comparable to those at Disney World on the same day. Of course, whether or not there are extra magic mornings at Disney shouldn't effect the wait times at Universal on the same day: they are separate parks, and presumably most people don't visit both within an hour of one another. This is an example of an effect that would be implausible by the hypothesized mechanism. 
+Now, let's look at an example of a negative control outcome: the wait time at a ride in Universal Studios.
+Universal Studios is also in Orlando, and so the set of causes for wait times are likely comparable to those at Disney World on the same day.
+Of course, whether or not there are extra magic mornings at Disney shouldn't effect the wait times at Universal on the same day: they are separate parks, and presumably most people don't visit both within an hour of one another.
+This is an example of an effect that would be implausible by the hypothesized mechanism.
 
-We don't have ride data for Universal, so let's simulate what would happen with and without residual confounding. We'll generate wait times that are based on the historic temperature, park close time, and ticket season (the second two are technically specific to Disney but we expect a strong correlation with the Universal versions). Because this is a negative outcome, it is not related to whether or not there were Extra Magic Morning hours at Disney.
+We don't have ride data for Universal, so let's simulate what would happen with and without residual confounding.
+We'll generate wait times that are based on the historic temperature, park close time, and ticket season (the second two are technically specific to Disney but we expect a strong correlation with the Universal versions).
+Because this is a negative outcome, it is not related to whether or not there were Extra Magic Morning hours at Disney.
 
 ```{r}
 seven_dwarfs_sim <- seven_dwarfs_train_2018 |>
@@ -345,7 +384,9 @@ wait_universal <- seven_dwarfs_sim |>
   round(2)
 ```
 
-If we calculate the IPW effect of `park_extra_magic_morning` on `wait_time_universal`, we get `r wait_universal` minutes, a roughly null effect, as expected. But what if we missed an unmeasured confounder, `u`, which was a cause of Extra Magic Mornings and wait times at both Disney and universal? Let's simulate that scenario but augmenting the data further.
+If we calculate the IPW effect of `park_extra_magic_morning` on `wait_time_universal`, we get `r wait_universal` minutes, a roughly null effect, as expected.
+But what if we missed an unmeasured confounder, `u`, which was a cause of Extra Magic Mornings and wait times at both Disney and universal?
+Let's simulate that scenario but augmenting the data further.
 
 ```{r}
 seven_dwarfs_sim2 <- seven_dwarfs_train_2018 |>
@@ -382,18 +423,33 @@ universal <- seven_dwarfs_sim2 |>
   round(2)
 ```
 
-Now the effect for both Disney and Universal wait times is different. If we had seen `r disney` minutes for the effect for Disney, we wouldn't necessarily know that we had a confounded result. However, since we know the wait times at Universal should be unrelated, it's suspicious that the result, `r universal` minutes, is not null. That is evidence that we have unmeasured confounding.
+Now the effect for both Disney and Universal wait times is different.
+If we had seen `r disney` minutes for the effect for Disney, we wouldn't necessarily know that we had a confounded result.
+However, since we know the wait times at Universal should be unrelated, it's suspicious that the result, `r universal` minutes, is not null.
+That is evidence that we have unmeasured confounding.
 
 ### DAG-data consistency
 
-Negative controls make use of the logical implications of the causal structure you assume. We can extend that idea to the entire DAG: there are many implications of the ways, statistically, that different variables in the DAG should and should not be related to each other if the DAG is correct. Like with negative controls, we can check if variables that *should* be independent *are* independent in the data. Sometimes, the way that DAGs imply independence between variables is *conditional* on other variables. Thus, this technique is sometimes called *implied conditional independencies* Let's query our original DAG to find what the DAG says about the relationships among the variables.
+Negative controls make use of the logical implications of the causal structure you assume.
+We can extend that idea to the entire DAG: there are many implications of the ways, statistically, that different variables in the DAG should and should not be related to each other if the DAG is correct.
+Like with negative controls, we can check if variables that *should* be independent *are* independent in the data.
+Sometimes, the way that DAGs imply independence between variables is *conditional* on other variables.
+Thus, this technique is sometimes called *implied conditional independencies* [@Textor2016]*.* Let's query our original DAG to find what the DAG says about the relationships among the variables.
 
 ```{r}
 query_conditional_independence(emm_wait_dag) |>
   unnest(conditioned_on)
 ```
 
-In this DAG, there are three relationships that should be null: 1) `park_close` and `park_temperature_high` 2) `park_close` and `park_ticket_season` and 3) `park_temperature_high` and `park_ticket_season`. None of these relationships need to condition on another variable to achieve independence; in other words, they should be unconditionally independent from one another. We can use simple techniques like correlation and regression, as well as other statistical tests, to see if nullness holds for these relationships. Conditional independencies quickly grow in number in complex DAGs, and so dagitty implements a way to automate checks for DAG-data consistency given these implied nulls. dagitty specifically checks if the residuals of a given conditional relationship are correlated, which can be modeled automatically in a number of ways. We'll tell dagitty to calculate the residuals using non-linear models with `type = "cis.loess"`. Since we're working with correlations, the results should be around 0 if our DAG is right. As we see in @fig-conditional-ind, though, one of these relationships don't hold. There is a correlation park close time and ticket season.
+In this DAG, there are three relationships that should be null: 1) `park_close` and `park_temperature_high` 2) `park_close` and `park_ticket_season` and 3) `park_temperature_high` and `park_ticket_season`.
+None of these relationships need to condition on another variable to achieve independence; in other words, they should be unconditionally independent from one another.
+We can use simple techniques like correlation and regression, as well as other statistical tests, to see if nullness holds for these relationships.
+Conditional independencies quickly grow in number in complex DAGs, and so dagitty implements a way to automate checks for DAG-data consistency given these implied nulls.
+dagitty specifically checks if the residuals of a given conditional relationship are correlated, which can be modeled automatically in a number of ways.
+We'll tell dagitty to calculate the residuals using non-linear models with `type = "cis.loess"`.
+Since we're working with correlations, the results should be around 0 if our DAG is right.
+As we see in @fig-conditional-ind, though, one of these relationships don't hold.
+There is a correlation park close time and ticket season.
 
 ```{r}
 #| label: fig-conditional-ind
@@ -415,9 +471,21 @@ test_conditional_independence(
   ggdag_conditional_independence()
 ```
 
-Why might we be seeing a relationship when there isn't supposed to be one? A simple explanation is chance: just like in any type of statistical inference, we need to be cautious about over-extrapolating what we see in the limited sample we have. Since we have data for every day in 2018, though, we could probably rule that out. Another reason is that we're missing direct arrows from one variable to the other, e.g. from historic temperature to park close time. This is pretty reasonable: close time and ticket season both closely track the weather. That's a little bit of evidence that we're missing an arrow.
+Why might we be seeing a relationship when there isn't supposed to be one?
+A simple explanation is chance: just like in any type of statistical inference, we need to be cautious about over-extrapolating what we see in the limited sample we have.
+Since we have data for every day in 2018, though, we could probably rule that out.
+Another reason is that we're missing direct arrows from one variable to the other, e.g. from historic temperature to park close time.
+This is pretty reasonable: close time and ticket season both closely track the weather.
+That's a little bit of evidence that we're missing an arrow.
 
-At this point, we need to be cautious about overfitting the DAG to the data. DAG-data consistency tests *cannot* prove your DAG right and wrong, and as we saw in @sec-quartets, statistical techniques alone cannot determine the causal structure of a problem. So why use these tests? As with negative controls, they provide a way to probe your assumptions. While we can never be sure about them, we *do* have information in the data. Finding that conditional independencies hold is a little more evidence in support of your assumptions. There's a fine line here, so we recommend being transparent about these types of checks: if you make changes based on the results of these tests, you should report your original DAG, too. Notably, in this case, adding direct arrows to all three of these relationships results in an identical adjustment set. 
+At this point, we need to be cautious about overfitting the DAG to the data.
+DAG-data consistency tests *cannot* prove your DAG right and wrong, and as we saw in @sec-quartets, statistical techniques alone cannot determine the causal structure of a problem.
+So why use these tests?
+As with negative controls, they provide a way to probe your assumptions.
+While we can never be sure about them, we *do* have information in the data.
+Finding that conditional independencies hold is a little more evidence in support of your assumptions.
+There's a fine line here, so we recommend being transparent about these types of checks: if you make changes based on the results of these tests, you should report your original DAG, too.
+Notably, in this case, adding direct arrows to all three of these relationships results in an identical adjustment set.
 
 Let's take a look at an example more likely to be misspecified, where we remove the arrows from park close time and ticket season to Extra Magic Morning.
 
@@ -431,7 +499,6 @@ labels <- c(
   park_close = "Time park\nclosed"
 )
 ```
-
 
 ```{r}
 emm_wait_dag2 <- dagify(
@@ -447,7 +514,8 @@ query_conditional_independence(emm_wait_dag2) |>
   unnest(conditioned_on)
 ```
 
-This introduces two new relationships that should be independent. In @fig-conditional-ind-misspec, we see an additional association between ticket season and Extra Magic Morning.
+This introduces two new relationships that should be independent.
+In @fig-conditional-ind-misspec, we see an additional association between ticket season and Extra Magic Morning.
 
 ```{r}
 #| label: fig-conditional-ind-misspec
@@ -468,7 +536,10 @@ test_conditional_independence(
   ggdag_conditional_independence()
 ```
 
-So, is this DAG wrong? It seems likely that's the case based on our understanding of the problem, but interpreting DAG-data consistency tests has a hiccup: different DAGs can have the same set of conditional independencies.  In our DAG, for instance, there are actually two DAGs which can generate the same implied conditional independencies (@fig-equiv-dag). These are called *equivalent* DAGs because their implications are the same.
+So, is this DAG wrong?
+It seems likely that's the case based on our understanding of the problem, but interpreting DAG-data consistency tests has a hiccup: different DAGs can have the same set of conditional independencies.
+In our DAG, for instance, there are actually two DAGs which can generate the same implied conditional independencies (@fig-equiv-dag).
+These are called *equivalent* DAGs because their implications are the same.
 
 ```{r}
 #| eval: false
@@ -494,7 +565,9 @@ ggdag_equivalent_dags(emm_wait_dag2, use_edges = FALSE, use_text = FALSE) +
   theme_dag()
 ```
 
-Equivalent DAGs are generated by *reversing* arrows. The subset of DAGs with reversable arrows that generate the same implications are called an *equivalence class*. While technical, this aspect of the relationship can condense the visualization to a single DAG where the reversible edges are denoted by a straight line without arrows.
+Equivalent DAGs are generated by *reversing* arrows.
+The subset of DAGs with reversable arrows that generate the same implications are called an *equivalence class*.
+While technical, this aspect of the relationship can condense the visualization to a single DAG where the reversible edges are denoted by a straight line without arrows.
 
 ```{r}
 #| eval: false
@@ -521,7 +594,9 @@ emm_wait_dag2 |>
   theme_dag()
 ```
 
-So, getting back to the sensitivity analysis, what do we do with this information? Since many DAGs can produce the same set of conditional independencies, one strategy is to find all the adjustment sets that would be valid for every equivalent DAG. dagitty makes this straightforward by calling `equivalenceClass()` and `adjustmentSets()`, but in this case, there are *no* overlapping adjustment sets. 
+So, getting back to the sensitivity analysis, what do we do with this information?
+Since many DAGs can produce the same set of conditional independencies, one strategy is to find all the adjustment sets that would be valid for every equivalent DAG.
+dagitty makes this straightforward by calling `equivalenceClass()` and `adjustmentSets()`, but in this case, there are *no* overlapping adjustment sets.
 
 ```{r}
 library(dagitty)
@@ -540,13 +615,19 @@ dags[[1]] |> adjustmentSets(type = "all")
 dags[[2]] |> adjustmentSets(type = "all")
 ```
 
-The good news is that, in this case, one of the equivalent DAGs doesn't make logical sense: the reversible edge is from historic weather to Extra Magic Morning, but that is impossible for both time-ordering reasons (historic temperature obviously occurs in the past) and for logical ones (Disney may be powerful, but to our knowledge they can't yet control the weather). Even though we're using more data in these types of checks, we need to think through the logical and time-ordered plausibility of potential scenarios. 
+The good news is that, in this case, one of the equivalent DAGs doesn't make logical sense: the reversible edge is from historic weather to Extra Magic Morning, but that is impossible for both time-ordering reasons (historic temperature obviously occurs in the past) and for logical ones (Disney may be powerful, but to our knowledge they can't yet control the weather).
+Even though we're using more data in these types of checks, we need to think through the logical and time-ordered plausibility of potential scenarios.
 
 ### Alternate DAGs
 
 <!-- TODO: I think this should be an extension of what we do in the machine learning chapter, e.g. we throw a more complex set of covariates at TMLE then we revisit that analysis here. In other words, this alt dag should have a little bit of a thread through the book. -->
 
-As we mentioned in @sec-dags-iterate, you should ideally specify your DAG ahead of time with ample feedback from other experts. Let's now go on the opposite direction as the last example: what if we used the original DAG but, after the analysis, receive feedback that we should add more variables? Consider this expanded DAG in @fig-dag-extra-days. We've added two new confounders: whether it's a weekend and whether it's a holiday. This is different than when we checked alternate adjustment sets in the same DAG; in that case, we're checking the logical consistency of the DAG. In this case, we're considering a different causal structure altogether. 
+As we mentioned in @sec-dags-iterate, you should ideally specify your DAG ahead of time with ample feedback from other experts.
+Let's now go on the opposite direction as the last example: what if we used the original DAG but, after the analysis, receive feedback that we should add more variables?
+Consider this expanded DAG in @fig-dag-extra-days.
+We've added two new confounders: whether it's a weekend and whether it's a holiday.
+This is different than when we checked alternate adjustment sets in the same DAG; in that case, we're checking the logical consistency of the DAG.
+In this case, we're considering a different causal structure altogether.
 
 ```{r}
 #| label: fig-dag-extra-days
@@ -648,7 +729,6 @@ tbl2 <- gtsummary::tbl_summary(
 gtsummary::tbl_merge(list(tbl1, tbl2), c("Weekend", "Holiday"))
 ```
 
-
 ```{r}
 #| echo: false
 ipw_results_with_days <- fit_ipw_effect(
@@ -658,13 +738,21 @@ ipw_results_with_days <- fit_ipw_effect(
 ) |> round(2)
 ```
 
-When we refit the IPW estimator, we get `r ipw_results_with_days` minutes, slightly bigger than what we got without the two new confounders. Scientifically, you most likely want to report *both* effects because in this case, it was a deviation from the analysis plan. That said, this new DAG is likely more correct than the original one. From a decision point of view, though, the difference is small in absolute terms and results in an effect in the same direction. In other words, the result is not terribly sensitive to this change in terms of how we might act on it.
+When we refit the IPW estimator, we get `r ipw_results_with_days` minutes, slightly bigger than what we got without the two new confounders.
+Scientifically, you most likely want to report *both* effects because in this case, it was a deviation from the analysis plan.
+That said, this new DAG is likely more correct than the original one.
+From a decision point of view, though, the difference is small in absolute terms and results in an effect in the same direction.
+In other words, the result is not terribly sensitive to this change in terms of how we might act on it.
 
-One other point here: sometimes people present the results of using increasingly complicated adjustment sets. This comes from the tradition of trying to to compare complex models to parsimonious ones. This is a sort of sensitivity analysis in its own right, but it should be principled: rather than fitting models that are simple for simplicity's sake, you should compare *competing* adjustment sets or conditions. For instance, you may feel like these two DAGs are equally plausible, or you may want to examine if adding other variables better captures the baseline crowd flow at the Magic Kingdom. 
+One other point here: sometimes people present the results of using increasingly complicated adjustment sets.
+This comes from the tradition of trying to to compare complex models to parsimonious ones.
+This is a sort of sensitivity analysis in its own right, but it should be principled: rather than fitting models that are simple for simplicity's sake, you should compare *competing* adjustment sets or conditions.
+For instance, you may feel like these two DAGs are equally plausible, or you may want to examine if adding other variables better captures the baseline crowd flow at the Magic Kingdom.
 
 ## Quantitative bias analyses
 
-Thus far we've probed some of the assumptions we've made around the causal structure of the question. We can take this further using *quantitative bias analysis*, where we use mathematical assumptions to see how results would change under different conditions.
+Thus far we've probed some of the assumptions we've made around the causal structure of the question.
+We can take this further using *quantitative bias analysis*, where we use mathematical assumptions to see how results would change under different conditions.
 
 ### Tipping point analyses
 
