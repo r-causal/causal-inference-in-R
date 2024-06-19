@@ -15,7 +15,7 @@ library(gt)
 Because many of the assumptions of causal inference are unverifiable, it's reasonable to be concerned about the validity of your results.
 In this chapter, we'll provide some ways to probe our assumptions and results for strengths and weaknesses.
 We'll explore two main ways to do so: exploring the logical implications of the causal question and related DAGs and using mathematical techniques to quantify how different our results would be under other circumstances, such as in the presence of unmeasured confounding.
-These techniques are known as *sensitivity analyses*: How sensitive is our result to conditions other than those laid out in our assumptions and analysis?
+These approaches are known as *sensitivity analyses*: How sensitive is our result to conditions other than those laid out in our assumptions and analysis?
 
 ## Checking DAGs for robustness
 
@@ -35,9 +35,9 @@ Let's consider the DAG we introduced in @fig-dag-magic.
 #|   The original proposed DAG for the relationship between Extra Magic Hours
 #|   in the morning at a particular park and the average wait
 #|   time between 9 am and 10 am.
-#|   As before, we are saying that we believe 1) Extra Magic Hours impacts 
-#|   average wait time and 2) both Extra Magic Hours and average wait time 
-#|   are determined by the time the park closes, historic high temperatures, 
+#|   As before, we are saying that we believe 1) Extra Magic Hours impacts
+#|   average wait time and 2) both Extra Magic Hours and average wait time
+#|   are determined by the time the park closes, historic high temperatures,
 #|   and ticket season.
 coord_dag <- list(
   x = c(park_ticket_season = 0, park_close = 0, park_temperature_high = -1, park_extra_magic_morning = 1, wait_minutes_posted_avg = 2),
@@ -84,7 +84,7 @@ emm_wait_dag |>
 ```
 
 In @fig-dag-magic-orig, there's only one adjustment set because all three confounders represent independent backdoor paths.
-Let's say, though, that we had used @fig-dag-magic-missing instead, which is missing an arrow from the park close to whether there was an extra magic morning.
+Let's say, though, that we had used @fig-dag-magic-missing instead, which is missing arrows from the park close time and historical temperature to whether there was an Extra Magic Morning.
 
 ```{r}
 #| label: fig-dag-magic-missing
@@ -93,7 +93,7 @@ Let's say, though, that we had used @fig-dag-magic-missing instead, which is mis
 #|   An alternative DAG for the relationship between Extra Magic Hours
 #|   in the morning at a particular park and the average wait
 #|   time between 9 am and 10 am.
-#|   This DAG has no arrow from park close time to Extra Magic Hours.
+#|   This DAG has no arrows from park close time and historical temperature to Extra Magic Hours.
 emm_wait_dag_missing <- dagify(
   wait_minutes_posted_avg ~ park_extra_magic_morning + park_close + park_ticket_season + park_temperature_high,
   park_extra_magic_morning ~ park_ticket_season,
@@ -134,8 +134,9 @@ emm_wait_dag_missing |>
 Now there are `r length(dagitty::adjustmentSets(emm_wait_dag_missing, type = "all"))` potential adjustment sets: `park_ticket_season, park_close + park_ticket_season`, `park_temperature_high + park_ticket_season`, or `park_close + park_temperature_high + park_ticket_season`.
 @tbl-alt-sets presents the IPW estimates for each adjustment set.
 The effects are quite different.
-Some slight variation in the estimates is expected since they are estimated using different variables; if this DAG were right, we should see them much more closely aligned than this.
+Some slight variation in the estimates is expected since they are estimated using different variables that may not be measured perfectly; if this DAG were right, however, we should see them much more closely aligned than this.
 In particular, there seems to be a 3-minute difference between the models with and without park close time.
+The difference in these results implies that there is something off about the causal structure we specified.
 
 ```{r}
 #| label: tbl-alt-sets
@@ -192,46 +193,47 @@ tibble(
 ### Negative controls
 
 Alternate adjustment sets are a way of probing the logical implications of your DAG: if it's correct, there could be many ways to account for the open backdoor paths correctly.
-The reverse is also true: the causal structure of your research question also implies relationships that, if you are correct, should be *null*.
+The reverse is also true: the causal structure of your research question also implies relationships that should be *null*.
 One way that researchers take advantage of this implication is through *negative controls*.
 A negative control is either an exposure (negative exposure control) or outcome (negative outcome control) similar to your question in as many ways as possible, except that there *shouldn't* be a causal effect.
-[@Lipsitch2010] describe negative controls for observational research.
-In their article, they reference standard controls in bench science:
+@Lipsitch2010 describe negative controls for observational research.
+In their article, they reference standard controls in bench science. In a lab experiment, any of these actions should lead to a null effect:
 
 1.  Leave out an essential ingredient.
 2.  Inactivate the hypothesized active ingredient.
 3.  Check for an effect that would be impossible by the hypothesized outcome.
 
+There's nothing unique to lab work here; these scientists merely probe the logical implications of their understanding and hypotheses. 
 To find a good negative control, you usually need to extend your DAG to include more of the causal structure surrounding your question.
 Let's look at some examples.
 
 #### Negative exposures
 
 First, we'll look at a negative exposure control.
-If extra magic mornings really cause an increase in wait time, it stands to reason that this effect is time-limited.
-In other words, there should be some period after which the effect of extra magic morning dissipates.
-Let's call today *i* and the previous day *i - n*, where *n* is the number of days before the negative exposure.
+If Extra Magic Mornings really cause an increase in wait time, it stands to reason that this effect is time-limited.
+In other words, there should be some period after which the effect of Extra Magic Morning dissipates.
+Let's call today *i* and the previous day *i - n*, where *n* is the number of days before the outcome that the negative exposure control occurs.
 First, let's explore `n = 63`, e.g., whether or not there was an Extra Magic Morning nine weeks ago.
 That is a pretty reasonable starting point: it's unlikely that the effect on wait time would still be present 63 days later.
 This analysis is an example of leaving out an essential ingredient: we waited too long for this to be a realistic cause.
 Any remaining effect is likely due to residual confounding.
 
 Let's look at a DAG to visualize this situation.
-In @fig-dag-day-i, we've added an identical layer to our original one: now there are two extra magic mornings: one for day `i` and one for day `i - 63`.
+In @fig-dag-day-i, we've added an identical layer to our original one: now there are two Extra Magic Mornings: one for day `i` and one for day `i - 63`.
 Similarly, there are two versions of the confounders for each day.
-One crucial detail in this DAG is that we're assuming that there *is* an effect of day `i - 63`'s extra magic morning on day `i`'s; whether or not there is an extra magic morning one day likely affects whether or not it happens on another day.
+One crucial detail in this DAG is that we're assuming that there *is* an effect of day `i - 63`'s Extra Magic Morning on day `i`'s; whether or not there is an Extra Magic Morning one day likely affects whether or not it happens on another day.
 The decision about where to place them across the year is not random.
-If this is true, we *would* expect an effect: the indirect effect via day `i`'s extra magic morning status.
+If this is true, we *would* expect an effect: the indirect effect via day `i`'s Extra Magic Morning status.
 To get a valid negative control, we need to *inactivate this effect*, which we can do statistically by controlling for day `i`'s Extra Magic Morning status.
-So, given the DAG, our adjustment set is any combination of the confounders (as long as we have at least one version of each) and day `i`'s extra magic morning (suppressing the indirect effect).
+So, given the DAG, our adjustment set is any combination of the confounders (as long as we have at least one version of each) and day `i`'s Extra Magic Morning (suppressing the indirect effect).
 
 ```{r}
 #| label: fig-dag-day-i
 #| echo: false
 #| fig-cap: >
-#|   An expansion of the causal structure presented in @fig-dag-magic. 
+#|   An expansion of the causal structure presented in @fig-dag-magic.
 #|   In this DAG, the exposure is instead whether or not there were Extra Magic Hours
-#|   63 days before the day's wait time we are examining. 
+#|   63 days before the day's wait time we are examining.
 #|   Because of the long period, there should be no effect.
 #|   Similarly, the DAG also has earlier confounders related to day `i - 63`.
 labels <- c(
@@ -328,14 +330,14 @@ result63 <- calculate_coef(63) |>
 
 When we use these data for the IPW effect, we get `r result63` minutes, much closer to null than we found on day `i`.
 Let's take a look at the effect over time.
-While there might be a lingering effect of extra magic mornings for a little while (say, the span of an average trip to Disney World), it should quickly approach null.
+While there might be a lingering effect of Extra Magic Mornings for a little while (say, the span of an average trip to Disney World), it should quickly approach null.
 However, in @fig-sens-i-63, we see that, while it eventually approaches null, there is quite a bit of lingering effect.
 If these results are accurate, it implies that we have some residual confounding in our effect.
 
 ```{r}
 #| label: fig-sens-i-63
 #| fig-cap: >
-#|    A scatterplot with a smoothed regression of the relationship between wait times on day `i` and whether there were Extra Magic Hours on day `i - n`, where `n` represents the number of days previous to day `i`. We expect this relationship to rapidly approach the null, but the effect hovers above null for quite some time. This lingering effect implies we have some residual confounding present. 
+#|    A scatterplot with a smoothed regression of the relationship between wait times on day `i` and whether there were Extra Magic Hours on day `i - n`, where `n` represents the number of days previous to day `i`. We expect this relationship to rapidly approach the null, but the effect hovers above null for quite some time. This lingering effect implies we have some residual confounding present.
 #| echo: false
 #| warning: false
 #| message: false
@@ -352,7 +354,7 @@ ggplot(data.frame(coefs = coefs, x = 1:63), aes(x = x, y = coefs)) +
 
 Now, let's examine an example of a negative control outcome: the wait time for a ride at Universal Studios.
 Universal Studios is also in Orlando, so the set of causes for wait times are likely comparable to those at Disney World on the same day.
-Of course, whether or not there are extra magic mornings at Disney shouldn't affect the wait times at Universal on the same day: they are separate parks, and most people don't visit both within an hour of one another.
+Of course, whether or not there are Extra Magic Mornings at Disney shouldn't affect the wait times at Universal on the same day: they are separate parks, and most people don't visit both within an hour of one another.
 This negative control is an example of an effect implausible by the hypothesized mechanism.
 
 We don't have Universal's ride data, so let's simulate what would happen with and without residual confounding.
@@ -393,7 +395,11 @@ seven_dwarfs_sim2 <- seven_dwarfs_train_2018 |>
   mutate(
     u = rnorm(n(), mean = 10, sd = 3),
     wait_minutes_posted_avg = wait_minutes_posted_avg + u,
-    park_extra_magic_morning = ifelse(u > 10, rbinom(1, 1, .1), park_extra_magic_morning),
+    park_extra_magic_morning = ifelse(
+      u > 10,
+      rbinom(1, 1, .1),
+      park_extra_magic_morning
+    ),
     wait_time_universal =
       park_temperature_high / 150 +
         as.numeric(park_close) / 1500 +
@@ -503,7 +509,8 @@ labels <- c(
 
 ```{r}
 emm_wait_dag2 <- dagify(
-  wait_minutes_posted_avg ~ park_extra_magic_morning + park_close + park_ticket_season + park_temperature_high,
+  wait_minutes_posted_avg ~ park_extra_magic_morning + park_close +
+    park_ticket_season + park_temperature_high,
   park_extra_magic_morning ~ park_temperature_high,
   coords = coord_dag,
   labels = labels,
@@ -521,7 +528,7 @@ In @fig-conditional-ind-misspec, we see an additional association between ticket
 ```{r}
 #| label: fig-conditional-ind-misspec
 #| fig-cap: >
-#|    A plot of the estimates and 95% confidence intervals of the correlations between the residuals resulting from a regression of variables in the DAG that should have no relationship. While two relationships appear null, park close time and ticket season seem to be correlated, suggesting we have misspecified the DAG. One source of this misspecification may be missing arrows between the variables. Notably, the adjustment sets are identical with and without this arrow.
+#|    A plot of the estimates and 95% confidence intervals of the correlations between the residuals resulting from a regression of variables in the DAG that should have no relationship. While two relationships appear null, park close time and ticket season seem to be correlated, suggesting we have misspecified the DAG. One source of this misspecification may be missing arrows between the variables.
 test_conditional_independence(
   emm_wait_dag2,
   data = seven_dwarfs_train_2018 |>
@@ -553,8 +560,8 @@ ggdag_equivalent_dags(emm_wait_dag2)
 #| fig-width: 9
 #| fig-cap: >
 #|    Equivalent DAGs for the likely misspecified version of @fig-dag-magic.
-#|    These two DAGs produce the same set of implied conditional independencies. 
-#|    The difference between them is only the direction of the arrow between 
+#|    These two DAGs produce the same set of implied conditional independencies.
+#|    The difference between them is only the direction of the arrow between
 #|    historic high temperature and Extra Magic Hours.
 curvatures <- rep(0, 10)
 curvatures[c(4, 9)] <- .25
@@ -625,7 +632,7 @@ Even though we're using more data in these types of checks, we need to consider 
 
 As we mentioned in @sec-dags-iterate, you should specify your DAG ahead of time with ample feedback from other experts.
 Let's now take the opposite approach to the last example: what if we used the original DAG but received feedback after the analysis that we should add more variables?
-Consider this expanded DAG in @fig-dag-extra-days.
+Consider the expanded DAG in @fig-dag-extra-days.
 We've added two new confounders: whether it's a weekend or a holiday.
 This analysis differs from when we checked alternate adjustment sets in the same DAG; in that case, we checked the DAG's logical consistency.
 In this case, we're considering a different causal structure.
@@ -680,10 +687,18 @@ We can calculate these features from `park_date` using the timeDate package.
 library(timeDate)
 
 holidays <- c(
-  "USChristmasDay", "USColumbusDay", "USIndependenceDay",
-  "USLaborDay", "USLincolnsBirthday", "USMemorialDay",
-  "USMLKingsBirthday", "USNewYearsDay", "USPresidentsDay",
-  "USThanksgivingDay", "USVeteransDay", "USWashingtonsBirthday"
+  "USChristmasDay",
+  "USColumbusDay",
+  "USIndependenceDay",
+  "USLaborDay",
+  "USLincolnsBirthday",
+  "USMemorialDay",
+  "USMLKingsBirthday",
+  "USNewYearsDay",
+  "USPresidentsDay",
+  "USThanksgivingDay",
+  "USVeteransDay",
+  "USWashingtonsBirthday"
 ) |>
   holiday(2018, Holiday = _) |>
   as.Date()
@@ -696,7 +711,7 @@ seven_dwarfs_with_days <- seven_dwarfs_train_2018 |>
   filter(wait_hour == 9)
 ```
 
-Both extra magic morning hours and posted wait times are associated with whether it's a holiday or weekend.
+Both Extra Magic Morning hours and posted wait times are associated with whether it's a holiday or weekend.
 
 ```{r}
 #| label: tbl-days
@@ -741,8 +756,8 @@ ipw_results_with_days <- fit_ipw_effect(
 
 When we refit the IPW estimator, we get `r ipw_results_with_days` minutes, slightly bigger than we got without the two new confounders.
 Because it was a deviation from the analysis plan, you should likely report both effects.
-That said, this new DAG is likely more correct than the original one.
-From a decision point of view, though, the difference is slight in absolute terms and results in an effect in the same direction.
+That said, this new DAG is probably more correct than the original one.
+From a decision point of view, though, the difference is slight in absolute terms (about a minute) and the effect in the same direction as the original estimate.
 In other words, the result is not terribly sensitive to this change regarding how we might act on the information.
 
 One other point here: sometimes, people present the results of using increasingly complicated adjustment sets.
