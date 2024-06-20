@@ -31,8 +31,6 @@ jobs:
 
       - name: Install Google Fonts
         run: |
-          brew tap homebrew/cask
-          brew tap homebrew/cask-fonts
           brew install font-open-sans
 
       - name: Query dependencies

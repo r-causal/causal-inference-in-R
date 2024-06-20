@@ -227,7 +227,7 @@ data_observed <- data |>
     # change the exposure to randomized, generate from a binomial distribution
     # with a probability 0.5 for being in either group
     exposure = case_when(
-      rbinom(10, 1, 0.5) == 1 ~ "chocolate",
+      rbinom(n(), 1, 0.5) == 1 ~ "chocolate",
       TRUE ~ "vanilla"
     ),
     observed_outcome = case_when(
@@ -314,8 +314,8 @@ set.seed(11)
 data_observed <- data |>
   mutate(
     exposure_unobserved = case_when(
-      rbinom(10, 1, 0.25) == 1 ~ "chocolate (spoiled)",
-      rbinom(10, 1, 0.25) == 1 ~ "chocolate",
+      rbinom(n(), 1, 0.25) == 1 ~ "chocolate (spoiled)",
+      rbinom(n(), 1, 0.25) == 1 ~ "chocolate",
       TRUE ~ "vanilla"
     ),
     observed_outcome = case_when(
@@ -355,7 +355,7 @@ set.seed(11)
 data_observed <- data |>
   mutate(
     exposure = case_when(
-      rbinom(10, 1, 0.5) == 1 ~ "chocolate",
+      rbinom(n(), 1, 0.5) == 1 ~ "chocolate",
       TRUE ~ "vanilla"
     ),
     exposure_partner =
@@ -452,9 +452,9 @@ data_observed <- data |>
     prefer_chocolate = y_chocolate > y_vanilla,
     exposure = case_when(
       # people who like chocolate more chose that 80% of the time
-      prefer_chocolate ~ ifelse(rbinom(10, 1, 0.8), "chocolate", "vanilla"),
+      prefer_chocolate ~ ifelse(rbinom(n(), 1, 0.8), "chocolate", "vanilla"),
       # people who like vanilla more chose that 80% of the time
-      !prefer_chocolate ~ ifelse(rbinom(10, 1, 0.8), "vanilla", "chocolate")
+      !prefer_chocolate ~ ifelse(rbinom(n(), 1, 0.8), "vanilla", "chocolate")
     ),
     observed_outcome = case_when(
       exposure == "chocolate" ~ y_chocolate,
