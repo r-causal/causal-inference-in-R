@@ -19,6 +19,8 @@ That said, let's take measurement error and missingness one at a time. First, le
 ```{r}
 #| label: fig-meas-err-dag
 #| echo: false
+#| message: false
+library(ggdag)
 labels <- c(
   "actual" = "actual wait",
   "actual_star" = "measured actual",
@@ -46,11 +48,11 @@ Actual wait times, on the other hand, probably have a good deal of measurement e
 
 So, an update DAG might look like @fig-meas-err-other-1. This DAG describes the structural causes of measurement error in `actual`; notably, though, that structure is not connected to `posted`. This is easier to see if we show a *null* DAG in which there is no arrow from `posted` to `actual` (@fig-meas-err-other-2). Posted time is not connected to the mechanisms that cause measurement error in actual[^1]. In other words, the bias caused by this measurement error is *not* due to nonexchangability; it's due to a numerical error in the measurement, not an open path in the causal graph.
 
-# TODO: cross check independent vs differential
+<!-- TODO: cross check independent vs differential -->
 Instead of the type of nonexchangability that is induced by confounding, this type of bias in measurement is due to the fact that we're analyzing the effect of `posted` to `actual_measured` as a proxy for the effect of `posted` on `actual`. The correctness of the result depends entirely on how well `actual_measured` approximates `actual`. This is called *non-differential* measurement error: the error is not due to structural nonexchangability but . 
 
 ```{r}
-#| label: fig-meas-err-dag-other
+#| label: fig-meas-err-other
 #| echo: false
 #| layout-ncol: 2
 labels <- c(
