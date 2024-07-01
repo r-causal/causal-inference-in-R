@@ -23,14 +23,14 @@ If you're interested in randomization techniques, don't put away this resource j
 
 We're making a few assumptions about you as a reader:
 
-1.  You're familiar with the [tidyverse](https://www.tidyverse.org/) ecosystem of R packages and their general philosophy. For instance, we use a lot of dplyr and ggplot2 in this book, but we won't explain their basic grammar. To learn more about starting with the tidyverse, we recommend [R for Data Science](https://r4ds.hadley.nz/).
-2.  You're familiar with basic statistical modeling in R. For instance, we'll fit many models with `lm()` and `glm()`, but we won't discuss how they work. If you want to learn more about R's powerful modeling functions, we recommend reading ["A Review of R Modeling Fundamentals"](https://www.tmwr.org/base-r.html) in [Tidy Modeling with R](https://www.tmwr.org).
-3.  We also assume you have familiarity with other R basics, such as [writing functions](https://r4ds.hadley.nz/functions.html). [R for Data Science](https://r4ds.hadley.nz/) is also a good resource for these topics. (For a deeper dive into the R programming language, we recommend [Advanced R](https://adv-r.hadley.nz/index.html), although we don't assume you have mastered its material for this book).
+1.  You're familiar with the [tidyverse](https://www.tidyverse.org/) ecosystem of R packages and their general philosophy. For instance, we use a lot of dplyr and ggplot2 in this book, but we won't explain their basic grammar. To learn more about starting with the tidyverse, we recommend [*R for Data Science*](https://r4ds.hadley.nz/).
+2.  You're familiar with basic statistical modeling in R. For instance, we'll fit many models with `lm()` and `glm()`, but we won't discuss how they work. If you want to learn more about R's powerful modeling functions, we recommend reading ["A Review of R Modeling Fundamentals"](https://www.tmwr.org/base-r.html) in [*Tidy Modeling with R*](https://www.tmwr.org).
+3.  We also assume you have familiarity with other R basics, such as [writing functions](https://r4ds.hadley.nz/functions.html). [*R for Data Science*](https://r4ds.hadley.nz/) is also a good resource for these topics. (For a deeper dive into the R programming language, we recommend [*Advanced R*](https://adv-r.hadley.nz/index.html), although we don't assume you have mastered its material for this book).
 
 We'll also use tools from the tidymodels ecosystem, a set of R packages for modeling related to the tidyverse.
 We don't assume you have used them before.
 tidymodels also focuses on predictive modeling, so many of its tools aren't appropriate for this book.
-Nevertheless, if you are interested in this topic, we recommend [Tidy Modeling with R](https://www.tmwr.org).
+Nevertheless, if you are interested in this topic, we recommend [*Tidy Modeling with R*](https://www.tmwr.org).
 
 There are also several other excellent books on causal inference.
 This book is different in its focus on R, but it's still helpful to see this area from other perspectives.
