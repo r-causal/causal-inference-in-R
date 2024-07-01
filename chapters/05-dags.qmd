@@ -1216,7 +1216,7 @@ dag_data_used |>
 
 In this section, we'll offer some advice from @Tennant2021 and our own experience assembling DAGs.
 
-### Iterate early and often
+### Iterate early and often {#sec-dags-iterate}
 
 One of the best things you can do for the quality of your results is to make the DAG before you conduct the study, ideally before you even collect the data.
 If you're already working with your data, at minimum, build your DAG before doing data analysis.
