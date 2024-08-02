@@ -440,7 +440,7 @@ Here's the distribution of the propensity score by group, created by `geom_mirro
 ```{r}
 #| label: fig-mirror-histogram-net-data-unweighted
 #| fig.cap: >
-#|   A mirrored histogram of the propensity scores of those who used nets (top, blue) versus those who who did not use nets (bottom, orange). The range of propensity scores is similar between groups, with those who used nets slightly to the left of those who didn't, but the shapes of the distribution are different.
+#|   A mirrored histogram of the propensity scores of those who used nets (top, blue) versus those who did not use nets (bottom, orange). The range of propensity scores is similar between groups, with those who used nets slightly to the left of those who didn't, but the shapes of the distribution are different.
 library(halfmoon)
 ggplot(net_data_wts, aes(.fitted)) +
   geom_mirror_histogram(
@@ -456,7 +456,7 @@ The weighted propensity score creates a pseudo-population where the distribution
 ```{r}
 #| label: fig-mirror-histogram-net-data-weighted
 #| fig.cap: >
-#|   A mirrored histogram of the propensity scores of those who used nets (top, blue) versus those who who did not use nets (bottom, orange). The shaded region represents the unweighted distribution, and the colored region represents the weighted distributions. The ATE weights up-weight the groups to be similar in range and shape of the distribution of propensity scores.
+#|   A mirrored histogram of the propensity scores of those who used nets (top, blue) versus those who did not use nets (bottom, orange). The shaded region represents the unweighted distribution, and the colored region represents the weighted distributions. The ATE weights up-weight the groups to be similar in range and shape of the distribution of propensity scores.
 ggplot(net_data_wts, aes(.fitted)) +
   geom_mirror_histogram(
     aes(group = net),
