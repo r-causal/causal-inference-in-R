@@ -8,13 +8,17 @@ Missing data is a problem for most real datasets that impacts all three types of
 
 It's frequently been observed that causal inference can be thought of fundamentally as a missing data problem; after all, what we really want to compare is counterfactual states, but all such states outside of the factual world are missing. Causal inference as missingness is interesting philosophically and connects methods from the two areas of statistics. Here, we'll consider the reverse proposition: missingness (and measurement error) is a causal inference problem.
 
-Thus far, we've made a big assumption in our DAGs that the variables that we've included are actually the variables we have in our data. In other words, we assume that the data is measured perfectly. This is almost always untrue. Let's consider a few scenarios using causal diagrams to understand the impact of mismeasurement and missingness.
+Thus far, we've made a big assumption in our DAGs that the variables that we've included are actually the variables we have in our data. In other words, we assume that the data is measured perfectly and completely. This is almost always untrue. Let's consider a few scenarios using causal diagrams to understand the impact of mismeasurement and missingness.
 
-Both measurement error and missingness are often visualized in DAGs as either an *indicator* of missingness, something akin to second variable on which you're conditioning, and a second variable that represents the variable as you have it measured. We'll use the second approach: Each variable we'll have a second node that represents the variable-as-observed. Let's look at an example.
+<!-- TODO: double check if you want this paragraph: Both measurement error and missingness are often visualized in DAGs as either an *indicator* of missingness, something akin to second variable on which you're conditioning, and a second variable that represents the variable as you have it measured. We'll use the second approach: Each variable we'll have a second node that represents the variable-as-observed. Let's look at an example. -->
 
 In the Touring Plans data, most variables are complete and likely measured with high accuracy (e.g., ticket season and historic weather are well-measured). One variable with missingness and measurement error is the actual wait times for rides. If you recall, the data relies on humans to wait in line, either consumers of the data who report their experience or people hired to wait in line to report the wait time. Thus, missingness is largely related to whether or not someone is there there to measure the wait time. When someone is there to measure it, it's also likely measured with error, and that error likely depends on who the person is, e.g. someone estimating their wait time and submitting it to Touring Plans is likely producing a value with more error than someone paid to stay in line and count the minutes. Both aspects can be captured by treating the measured value as a separate node. 
 
-That said, let's take measurement error and missingness one at a time. First, let's consider measurement error. In @fig-meas-err-dag, the measured versions of actual and posted wait times have two variables that influence them: the real values and unknown or unmeasured factors that influence their mismeasurement. Notably, the ways in which the two wait times are mismeasured are independent of one another. 
+That said, let's take measurement error and missingness one at a time. 
+
+### Structural measurement error
+
+First, let's consider measurement error. In @fig-meas-err-dag, the measured versions of actual and posted wait times have two variables that influence them: the real values and unknown or unmeasured factors that influence their mismeasurement. Notably, the ways in which the two wait times are mismeasured are independent of one another. 
 
 ```{r}
 #| label: fig-meas-err-dag
@@ -46,14 +50,13 @@ The posted wait times are scraped by Touring Plans from what Disney posts on the
 
 Actual wait times, on the other hand, probably have a good deal of measurement error. Humans have to manually measure this period, so there is some natural error in that process. Measurement also likely depends on whether or not the person measuring the wait time is being paid to do so. Presumably, someone who is entering it out of good will is more likely to submit an approximate wait time, and someone who is paid is more likely to be precise. 
 
-So, an update DAG might look like @fig-meas-err-other-1. This DAG describes the structural causes of measurement error in `actual`; notably, though, that structure is not connected to `posted`. This is easier to see if we show a *null* DAG in which there is no arrow from `posted` to `actual` (@fig-meas-err-other-2). Posted time is not connected to the mechanisms that cause measurement error in actual[^1]. In other words, the bias caused by this measurement error is *not* due to nonexchangability; it's due to a numerical error in the measurement, not an open path in the causal graph.
+So, an updated DAG might look like @fig-meas-err-other-1. This DAG describes the structural causes of measurement error in `actual`; notably, though, that structure is not connected to `posted`. This is easier to see if we show a *null* DAG in which there is no arrow from `posted` to `actual` (@fig-meas-err-other-2). Posted time is not connected to the mechanisms that cause measurement error in actual. In other words, the bias caused by this measurement error is *not* due to nonexchangability; it's due to a numerical error in the measurement, not an open path in the causal graph. The extent of this error depends on how well the measured version correlates with the real values. As the correlation approaches 0, the measurement of  becomes random with respect to the relationship under study. Often this means that, when variables are measured with independent measurement error, their relationship approaches null even if there is an arrow between them. This isn't always true, however.
 
 ::: callout-tip
 If you change your point of view to treating the measured variables as the cause and effect under study, we're actually taking advantage the causal structure to approximate the study of the real variables. The measured variables in @fig-meas-err-dag do not cause one another. However, if we calculate their relationship, they'll be confounded by the real variables. Unusually, we're using this confounding to approximate the relationship in the real variables. The extent to that we can do that depends on exchangability *with the exception of the real variables* as well as the amount of independent measurement error for each variable (such as `unknown` here).
 :::
 
-<!-- TODO: cross check independent vs differential -->
-Instead of the type of nonexchangability that is induced by confounding, this type of bias in measurement is due to the fact that we're analyzing the effect of `posted_measured` to `actual_measured` as a proxy for the effect of `posted` on `actual`. The correctness of the result depends entirely on how well `actual_measured` approximates `actual`. This is called *non-differential* measurement error: the error is not due to structural nonexchangability but . 
+Instead of the type of nonexchangability that is induced by confounding, this type of bias in measurement is due to the fact that we're analyzing the effect of `posted_measured` to `actual_measured` as a proxy for the effect of `posted` on `actual`. The correctness of the result depends entirely on how well `actual_measured` approximates `actual`. This is sometimes called *independent, non-differential* measurement error: the error is not due to structural nonexchangability but the differences in the observed and real values for actual and posted times. 
 
 ```{r}
 #| label: fig-meas-err-other
@@ -95,7 +98,30 @@ u_actual -> actual_star
   ggdag(use_text = FALSE, use_labels = TRUE)
 ```
 
-Let's say, however, that there is another unknown factor that influences both the posted wait time and the measurement of the actual wait time.
+Let's say, however, that there is another unknown factor that influences both the posted wait time and the measurement of the actual wait time. In addition to the problem we have above, there's also nonexchangability because of confounding in the measured variables. This is called *dependent, non-differential* measurement error.
+
+```{r}
+#| label: fig-meas-err-dag-dep
+#| echo: false
+labels <- c(
+    "actual" = "actual wait",
+    "actual_star" = "measured actual",
+    "posted" = "posted wait",
+    "employed" = "employed by TP",
+    "u_actual" = "unknown",
+    "u3" = "TODO"
+)
+
+dagify(
+    u_actual ~ u3,
+    posted_star ~ posted + u3,
+    actual_star ~ u_actual + actual + employed,
+    coords = time_ordered_coords(),
+    labels = c(labels, u3 = "unknown")
+) |> ggdag_paths("posted_star", "actual_star", use_text = FALSE, use_labels = TRUE) 
+```
+
+When the nonexchangability is related to the exposure, outcome, or both, it's called *differential* measurement error, which can be dependent or independent. Let's expand @fig-meas-err-dag-dep to include an arrow from posted time to how actual wait time is measured, a case of *dependent, differential* measurement error (without the the path introduced in @fig-meas-err-dag-dep, it would be independent and differential).
 
 ```{r}
 #| label: fig-meas-err-dag-diff
@@ -105,57 +131,38 @@ labels <- c(
     "actual_star" = "measured actual",
     "posted" = "posted wait",
     "employed" = "employed by TP",
-    "u_actual" = "unknown"
+    "u_actual" = "unknown",
+    "u3" = "TODO"
 )
 
 dagify(
-    actual ~ posted,
     u_actual ~ u3,
-    posted ~ u3,
-    actual_star ~ u_actual + actual + employed,
+    posted_star ~ posted + u3,
+    actual_star ~ u_actual + actual + employed + posted,
     coords = time_ordered_coords(),
     labels = c(labels, u3 = "unknown")
-) |> ggdag_paths("posted", "actual", adjust_for = "actual_star", use_text = FALSE, use_labels = TRUE) 
+) |> ggdag_paths("posted_star", "actual_star", use_text = FALSE, use_labels = TRUE) 
 ```
-
-
-In these DAGs, we assumed that the measurement of actual wait time has no impact on posted wait time and vice versa. Because posted time happens before actual time, it's reasonable to assume that that is the case for that relationship. However, the posted wait time *may* influence the *missingness* of the actual wait time. If the posted wait time is high, for instance, someone may not get in the line at all. 
-
-
-```{r}
-#| label: fig-missing-dag
-#| echo: false
-labels <- c(
-  "actual" = "actual wait",
-  "actual_star" = "observed actual",
-  "posted" = "posted wait",
-  "posted_star" = "observed posted",
-  "u_posted" = "unknown",
-  "u_actual" = "unknown "
-)
-
-dagify(
-  actual ~ posted,
-  posted_star ~ u_posted + posted,
-  actual_star ~ u_actual + actual,
-  coords = time_ordered_coords(),
-  labels = labels
-) |> 
-  tidy_dagitty() |> 
-  mutate(label = stringr::str_trim(label)) |> 
-  ggdag(use_text = FALSE, use_labels = TRUE)
-```
-
-In addition, the confounders in the causal model may also contribute to the missingness of actual wait time, say if season or temperature influences whether TouringPlans sends someone in to do a measurement.
-
 
 ::: callout-tip
-Mismeasured confounders also cause problems. Firstly, if we have a poorly measured confounder, we may not have closed the backdoor path completely, meaning there is residual confounding. Secondly, mismeasured confounders can also appear to be effect modifiers when the mismeasurement is differential with respect to the outcome. Usually the bias from the residual confounding us worse, but often there is a small but significant interaction effect between the exposure and the mismeasured confounder.
+The measurement of variables may not match the time-ordering of the values they represent. An exposure may happen long before an outcome, but their measurement could happen in any order. Using values measured in time-order helps avoid some types of measurement error, such as when the outcome impacts the measurement of the exposure.
+:::
+
+In this case, it's unlikely that posted time impacts the measurement of actual time, so we can probably rule the extra arrow in @fig-meas-err-dag-diff out. 
+
+::: callout-tip
+The names of the types of measurement error are conceptual. In reality, there are just two forms of bias happening: numerical inconsistency of the measured variables with their real values (independent, non-differential measurement error) and nonexchangability (the other three types of measurement error). Whether the error is dependent or differential is based on whether the nonexchangibility involves the exposure and/or the outcome. 
+
+One inconvenience of the dependent/differential groupings is that it masks the fact that these two sources of bias can and do occur together. Often, you have all of these circumstances happening (numerical inconsistency with the true values and open backdoor paths involving the exposure/outcome as well as other paths). In this case, the bias is due to *both* how well the measured variable correlates with the true variable and structural nonexchangbility.
+:::
+
+Mismeasured confounders also cause problems. Firstly, if we have a poorly measured confounder, we may not have closed the backdoor path completely, meaning there is residual confounding. Secondly, mismeasured confounders can also appear to be effect modifiers when the mismeasurement is differential with respect to the outcome. Usually the bias from the residual confounding is worse, but often there is a small but significant interaction effect between the exposure and the mismeasured confounder.
 
 ```{r}
 # TODO: hide? show only simulation? switch to the touringplans data?
 library(gt)
 n <- 10000
+set.seed(1)
 confounder <- rnorm(n)
 exposure <- confounder + rnorm(n)
 outcome <- exposure + confounder + rnorm(n)
@@ -191,10 +198,90 @@ map(
   gt()
 ```
 
-:::
+### Structural missingness
+
+In these DAGs, we assumed that the measurement of actual wait time has no impact on posted wait time and vice versa. Because posted time happens before actual time, it's reasonable to assume that that is the case for that relationship. However, the posted wait time *may* influence the *missingness* of the actual wait time. If the posted wait time is high, for instance, someone may not get in the line at all and thus not submit an actual wait time to TouringPlans. For simplicity, we've removed details about measurement error (and confounding, as with the above DAGs) and assume that the variables are well-measured and free from confounding. Let's also continue using a null DAG (with no arrow from `posted` to `actual`), since any remaining open paths will be biasing.
+
+@fig-missing-dag-1 represents a slightly different situation than the DAGs in the measurement error examples. The problem here is that we are inherently conditioning whether or not we observed the data. This is always true. We are always conditioning on the data we actually have. In the best case, missingness is unrelated to the causal structure of the research question and the only impact is a reduction in sample size (and thus precision). When missingness is collider, conditioning on it induces bias. In this case, whether or not actual wait times was measured is a descendant of the both actual and posted wait times. Conditioning on it opens a backdoor path, creating nonexchangability, as in @fig-missing-dag-2.
+
+```{r}
+#| label: fig-missing-dag
+#| echo: false
+labels <- c(
+  "actual" = "actual wait",
+  "actual_missing" = "missingness",
+  "posted" = "posted wait",
+  "u_actual" = "unknown"
+)
+
+missing_dag <- dagify(
+  actual ~ posted,
+  actual_missing ~ u_actual + actual + posted,
+  coords = time_ordered_coords(),
+  labels = labels,
+  exposure = "posted",
+  outcome = "actual"
+)
+
+missing_dag |> 
+  ggdag(use_text = FALSE, use_labels = TRUE)
+
+
+missing_dag |> 
+  ggdag_paths(adjust_for = "actual_missing", use_text = FALSE, use_labels = TRUE)
+```
+
+In addition, the confounders in the causal model may also contribute to the missingness of actual wait time, say if season or temperature influences whether TouringPlans sends someone in to do a measurement. As we'll see in @sec-imputation, the structural causes of the missingness and which variables are missing in our data impact exactly what effects we can estimate under missingness.
+
+Now lets discuss some analytic techniques for addressing measurement error and missingness to correct for both the numerical issues and structural nonexchangability we see in these DAGs. In [Chapter -@sec-sensitivity], we'll also discuss sensitivity analyses for missingness and measurement error.
 
 ## Regression Calibration
 
-## Multiple Imputation
+Sometimes, you have a well-measured version of a variable for a subset of observations and a version with more measurement errors for a greater proportion of the dataset. When this is the case, you can use a simple approach called *regression calibration* to predict the value of the well-measured version for more observations in the dataset. The name of this technique refers to the fact that you're recalibrating the variable that you've observed more of given the subset of values you have for the well-measured version. But other than that, it's just a prediction model that includes the version of the variable you have more observations of, as well as other variables you find important to the measurement process.
+
+As we know, the actual wait times have a lot of missingness. What if we considered posted wait times as a proxy for actual wait times? In this case, we could redo the analysis of the effect of Extra Magic Morning on the calibrated version of actual wait times. 
+
+First, we'll fit a model to predict `wait_minutes_actual_avg` using `wait_minutes_posted_avg`. Where `wait_minutes_actual_avg` is available we'll use that. If it's `NA`, we'll use the calibrated value.
+
+```{r}
+#TODO: should we include the confounders in this model? they're also in the later model so I think no. Not quite analagous to multiple imputation
+library(splines)
+calib_model <- lm(
+  wait_minutes_actual_avg ~ ns(wait_minutes_posted_avg, df = 4),
+  # use log of wait_minutes_actual_avg
+  data = seven_dwarfs_train_2018 |> 
+    mutate(wait_minutes_actual_avg = log1p(wait_minutes_actual_avg))
+)
+
+seven_dwarves_calib <- calib_model |> 
+  augment(newdata = seven_dwarfs_train_2018) |> 
+  rename(wait_minutes_actual_calib = .fitted) |> 
+  # convert back to original scale and fill in real values where they exist
+  mutate(
+    wait_minutes_actual_calib = exp(wait_minutes_actual_calib) - 1,
+    wait_minutes_actual_calib = coalesce(
+      wait_minutes_actual_avg, 
+      wait_minutes_actual_calib
+    )
+  )
+```
+
+Fitting this model with the IPW estimator results in an effect of TODO.
+
+```{r}
+# TODO: convert to IPW
+lm(
+  wait_minutes_actual_calib ~ park_extra_magic_morning +
+    park_temperature_high + 
+    park_close + park_ticket_season,
+  data = seven_dwarves_calib |> filter(wait_hour == 9)
+)
+```
+
+::: callout-warning
+The regression calibration model introduces uncertainty into the estimates of calibrated variable. Be sure to include the fitting of this model in your bootstrap to get the correct standard errors.
+::: 
+
+## Multiple Imputation {#sec-imputation}
 
 ## Combining MICE and IPW
