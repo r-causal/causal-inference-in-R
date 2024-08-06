@@ -1,4 +1,4 @@
-# Missingness {#sec-missingness}
+# Missingness and measurement {#sec-missingness}
 
 {{< include 00-setup.qmd >}}
 
@@ -23,9 +23,9 @@ That said, let's take measurement error and missingness one at a time. First, le
 library(ggdag)
 labels <- c(
   "actual" = "actual wait",
-  "actual_star" = "measured actual",
+  "actual_star" = "measured\nactual",
   "posted" = "posted wait",
-  "posted_star" = "measured posted",
+  "posted_star" = "measured\nposted",
   "u_posted" = "unknown",
   "u_actual" = "unknown "
 )
@@ -44,46 +44,53 @@ dagify(
 
 The posted wait times are scraped by Touring Plans from what Disney posts on the web. There is a plausible mechanism by which which this could be mismeasured: Disney could post the wrong times online compared to what's posted at the park, or Touring Plans could have a mistake in its data acquisition code. That said, it's reasonable to assume that this error would probably be small.
 
-Actual wait times, on the other hand, probably have a good deal of measurement error. Humans have to manually measure this period, so there is some natural error in that process. Measurement also likely depends on whether or not the person measuring the wait time is being paid to do so. Presumably, someone who is entering it out of good will is more likely to submit an approximate wait time that they experienced, and someone who is paid is more likely to be precise. 
+Actual wait times, on the other hand, probably have a good deal of measurement error. Humans have to manually measure this period, so there is some natural error in that process. Measurement also likely depends on whether or not the person measuring the wait time is being paid to do so. Presumably, someone who is entering it out of good will is more likely to submit an approximate wait time, and someone who is paid is more likely to be precise. 
 
 So, an update DAG might look like @fig-meas-err-other-1. This DAG describes the structural causes of measurement error in `actual`; notably, though, that structure is not connected to `posted`. This is easier to see if we show a *null* DAG in which there is no arrow from `posted` to `actual` (@fig-meas-err-other-2). Posted time is not connected to the mechanisms that cause measurement error in actual[^1]. In other words, the bias caused by this measurement error is *not* due to nonexchangability; it's due to a numerical error in the measurement, not an open path in the causal graph.
 
+::: callout-tip
+If you change your point of view to treating the measured variables as the cause and effect under study, we're actually taking advantage the causal structure to approximate the study of the real variables. The measured variables in @fig-meas-err-dag do not cause one another. However, if we calculate their relationship, they'll be confounded by the real variables. Unusually, we're using this confounding to approximate the relationship in the real variables. The extent to that we can do that depends on exchangability *with the exception of the real variables* as well as the amount of independent measurement error for each variable (such as `unknown` here).
+:::
+
 <!-- TODO: cross check independent vs differential -->
-Instead of the type of nonexchangability that is induced by confounding, this type of bias in measurement is due to the fact that we're analyzing the effect of `posted` to `actual_measured` as a proxy for the effect of `posted` on `actual`. The correctness of the result depends entirely on how well `actual_measured` approximates `actual`. This is called *non-differential* measurement error: the error is not due to structural nonexchangability but . 
+Instead of the type of nonexchangability that is induced by confounding, this type of bias in measurement is due to the fact that we're analyzing the effect of `posted_measured` to `actual_measured` as a proxy for the effect of `posted` on `actual`. The correctness of the result depends entirely on how well `actual_measured` approximates `actual`. This is called *non-differential* measurement error: the error is not due to structural nonexchangability but . 
 
 ```{r}
 #| label: fig-meas-err-other
 #| echo: false
 #| layout-ncol: 2
 labels <- c(
-  "actual" = "actual wait",
-  "actual_star" = "measured actual",
+  "actual" = "actual\nwait",
+  "actual_star" = "measured\nactual",
   "posted" = "posted wait",
-  "employed" = "employed by TP",
+  "posted_star" = "measured\nposted",
+  "employed" = "employed\nby TP",
   "u_actual" = "unknown"
 )
 
 dagify(
   actual ~ posted,
+  posted_star ~ posted,
   actual_star ~ u_actual + actual + employed,
   coords = time_ordered_coords(),
   labels = labels
 ) |> 
   ggdag(use_text = FALSE, use_labels = TRUE)
 
-
 dagitty::dagitty(
   'dag {
-actual [pos="2.000,-1.000"]
-actual_star [pos="3.000,0.000"]
-employed [pos="2.000,0.000"]
-posted [pos="1.000,0.000"]
-u_actual [pos="2.000,1.000"]
+actual [pos="1.000,-2.000"]
+actual_star [pos="2.000,-1.000"]
+employed [pos="1.000,-1.000"]
+posted [pos="1.000,2.000"]
+posted_star [pos="2.000,1.000"]
+u_actual [pos="1.000,1.000"]
 actual -> actual_star
 employed -> actual_star
-posted
+posted -> posted_star
 u_actual -> actual_star
-}') |> 
+}'
+) |> 
   dag_label(labels = labels) |> 
   ggdag(use_text = FALSE, use_labels = TRUE)
 ```
@@ -140,6 +147,53 @@ dagify(
 ```
 
 In addition, the confounders in the causal model may also contribute to the missingness of actual wait time, say if season or temperature influences whether TouringPlans sends someone in to do a measurement.
+
+
+::: callout-tip
+Mismeasured confounders also cause problems. Firstly, if we have a poorly measured confounder, we may not have closed the backdoor path completely, meaning there is residual confounding. Secondly, mismeasured confounders can also appear to be effect modifiers when the mismeasurement is differential with respect to the outcome. Usually the bias from the residual confounding us worse, but often there is a small but significant interaction effect between the exposure and the mismeasured confounder.
+
+```{r}
+# TODO: hide? show only simulation? switch to the touringplans data?
+library(gt)
+n <- 10000
+confounder <- rnorm(n)
+exposure <- confounder + rnorm(n)
+outcome <- exposure + confounder + rnorm(n)
+
+true_model <- lm(outcome ~ exposure * confounder)
+
+# mismeasure confounder
+confounder <- ifelse(
+  outcome > 0, 
+  confounder, 
+  confounder + 10 * rnorm(n)
+)
+
+mismeasured_model <- lm(outcome ~ exposure * confounder)
+
+
+pull_interaction <- function(mdl) {
+  mdl |> 
+    tidy() |>
+    filter(term == "exposure:confounder") |> 
+    mutate(
+      estimate = round(estimate, 3),
+      p.value = scales::label_pvalue()(p.value)
+    ) |> 
+    select(term, estimate, `p-value` = p.value)
+}
+
+map(
+  list("true" = true_model, "mismeasured" = mismeasured_model),
+  pull_interaction
+) |> 
+  list_rbind(names_to = "model") |> 
+  gt()
+```
+
+:::
+
+## Regression Calibration
 
 ## Multiple Imputation
 
