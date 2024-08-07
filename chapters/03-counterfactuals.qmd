@@ -227,7 +227,7 @@ data_observed <- data |>
     # change the exposure to randomized, generate from a binomial distribution
     # with a probability 0.5 for being in either group
     exposure = case_when(
-      rbinom(10, 1, 0.5) == 1 ~ "chocolate",
+      rbinom(n(), 1, 0.5) == 1 ~ "chocolate",
       TRUE ~ "vanilla"
     ),
     observed_outcome = case_when(
@@ -314,8 +314,8 @@ set.seed(11)
 data_observed <- data |>
   mutate(
     exposure_unobserved = case_when(
-      rbinom(10, 1, 0.25) == 1 ~ "chocolate (spoiled)",
-      rbinom(10, 1, 0.25) == 1 ~ "chocolate",
+      rbinom(n(), 1, 0.25) == 1 ~ "chocolate (spoiled)",
+      rbinom(n(), 1, 0.25) == 1 ~ "chocolate",
       TRUE ~ "vanilla"
     ),
     observed_outcome = case_when(
@@ -355,7 +355,7 @@ set.seed(11)
 data_observed <- data |>
   mutate(
     exposure = case_when(
-      rbinom(10, 1, 0.5) == 1 ~ "chocolate",
+      rbinom(n(), 1, 0.5) == 1 ~ "chocolate",
       TRUE ~ "vanilla"
     ),
     exposure_partner =
@@ -373,7 +373,7 @@ data_observed |>
   group_by(exposure) |>
   summarise(avg_outcome = mean(observed_outcome))
 ```
-Now our estimated causal effect (because interference exists) is `r data_observed |> group_by(exposure) |> summarise(avg_outcome = mean(observed_outcome)) |> mutate(exposure = c(1, 0)) |> pivot_wider(names_from = exposure, values_from = avg_outcome, names_prefix = "x_") |> summarise(estimate = x_1 - x_0) |> pull() |> round(1)`. This demonstrates what can go wrong when *interference* occurs. One of the main ways to combat interference is change the *unit* under consideration. Here, each individual, each unique *id*, is considered a unit, and there is interference between units (i.e. between partners). If instead we consider each *partner* as a unit and randomize the partners rather than the individuals, we solve the interference issue, as there is not interference *between* different partner sets. This is sometimes referred to as a *cluster randomized trial*. What we decide to do within each cluster may depend on the causal question at hand. For example, if we want to know what would happen if *everyone* at chocolate ice cream versus if *everyone* at vanilla, we would want to randomize both partners to either chocolate or vanilla, as seen below.
+Now our estimated causal effect (because interference exists) is `r data_observed |> group_by(exposure) |> summarise(avg_outcome = mean(observed_outcome)) |> mutate(exposure = c(1, 0)) |> pivot_wider(names_from = exposure, values_from = avg_outcome, names_prefix = "x_") |> summarise(estimate = x_1 - x_0) |> pull() |> round(1)`. This demonstrates what can go wrong when *interference* occurs. One of the main ways to combat interference is change the *unit* under consideration. Here, each individual, each unique *id*, is considered a unit, and there is interference between units (i.e. between partners). If instead we consider each *partner* as a unit and randomize the partners rather than the individuals, we solve the interference issue, as there is not interference *between* different partner sets. This is sometimes referred to as a *cluster randomized trial*. What we decide to do within each cluster may depend on the causal question at hand. For example, if we want to know what would happen if *everyone* ate chocolate ice cream versus if *everyone* ate vanilla, we would want to randomize both partners to either chocolate or vanilla, as seen below.
 
 ```{r}
 set.seed(11)
@@ -452,9 +452,9 @@ data_observed <- data |>
     prefer_chocolate = y_chocolate > y_vanilla,
     exposure = case_when(
       # people who like chocolate more chose that 80% of the time
-      prefer_chocolate ~ ifelse(rbinom(10, 1, 0.8), "chocolate", "vanilla"),
+      prefer_chocolate ~ ifelse(rbinom(n(), 1, 0.8), "chocolate", "vanilla"),
       # people who like vanilla more chose that 80% of the time
-      !prefer_chocolate ~ ifelse(rbinom(10, 1, 0.8), "vanilla", "chocolate")
+      !prefer_chocolate ~ ifelse(rbinom(n(), 1, 0.8), "vanilla", "chocolate")
     ),
     observed_outcome = case_when(
       exposure == "chocolate" ~ y_chocolate,
