@@ -26,6 +26,7 @@ Imports:
     here,
     janitor,
     kableExtra,
+    labelled,
     lubridate,
     MatchIt,
     patchwork,
