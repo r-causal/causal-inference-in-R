@@ -118,6 +118,7 @@ ggplot(
 ```{r}
 #| label: fig-weighted-boxplot
 #| fig.cap: "Weighted boxplot showing the difference in historical high temperature between days that had extra magic hours and those that did not after incorporating the propensity score weight (ATE weight)."
+#| warning: false
 ggplot(
   seven_dwarfs_9_with_wt,
   aes(
