@@ -161,6 +161,7 @@ Mismeasured confounders also cause problems. Firstly, if we have a poorly measur
 ```{r}
 # TODO: hide? show only simulation? switch to the touringplans data?
 library(gt)
+library(broom)
 n <- 10000
 set.seed(1)
 confounder <- rnorm(n)
@@ -246,6 +247,7 @@ First, we'll fit a model to predict `wait_minutes_actual_avg` using `wait_minute
 ```{r}
 #TODO: should we include the confounders in this model? they're also in the later model so I think no. Not quite analagous to multiple imputation
 library(splines)
+library(touringplans)
 calib_model <- lm(
   wait_minutes_actual_avg ~ ns(wait_minutes_posted_avg, df = 4),
   # use log of wait_minutes_actual_avg
