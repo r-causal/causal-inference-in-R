@@ -44,6 +44,7 @@ For simplicity, we've removed the confounders from this DAG.
 
 ```{r}
 #| label: fig-meas-err-dag
+#| fig-cap: "A DAG showing the relationship between posted wait times and actual wait times, with additional information about measurement. The mismeasured versions of the two wait time variables are represented as separate nodes. The mismeasured versions are caused by the true values, as well as an unknown mechanism that worsens measurement. When we are conducting a causal analysis with mismeasured variables, we are using them as proxies for the true values."
 #| echo: false
 #| message: false
 library(ggdag)
@@ -68,7 +69,10 @@ edges_with_aes <- function(..., edge_color = "grey85", shadow = TRUE) {
         data = \(.x) filter(.x, is.na(path)),
         edge_color = edge_color
       ),
-      geom_dag_edges_link(aes(edge_color = path))
+      geom_dag_edges_link(
+        aes(edge_color = path), 
+        data = \(.x) mutate(.x, path = ifelse(is.na(to), NA, path))
+      )
     )
 }
 
@@ -156,6 +160,9 @@ The extent of this error depends on how well the measured version correlates wit
 
 ```{r}
 #| label: fig-meas-err-other
+#| fig-subcap: 
+#|   - "An updated DAG where the measured version of posted wait times is only caused by the true value, meaning it is perfectly measured. For the actual wait times, the three causes are the true values, whether or not the reporter was employed by TouringPlans, and an unknown mismeasurement mechanism."
+#|   - "A null DAG, meaning we have removed the arrow from actual wait times to posted wait times. When we look at a null DAG, we can see the mechanisms of mismeasurement are separate for the two wait time variables."
 #| echo: false
 #| layout-ncol: 2
 #| fig-width: 4
@@ -258,6 +265,9 @@ This is called *dependent, non-differential* measurement error.
 
 ```{r}
 #| label: fig-meas-err-dag-dep
+#| fig-subcap: 
+#|   - "Now, the DAG includes an arrow from `unknown` to both of the measured variables, meaning that the way they are mismeasured is not independent from one another. In other words, `unknown` is now a mutual cause of the mismeasured variables---a confounder."
+#|   - "The open paths in this DAG. Because this is a null DAG, the only open pathway is a biasing one from the two mismeasured variables via `unknown`."
 #| echo: false
 #| layout-ncol: 2
 #| fig-width: 4
@@ -303,6 +313,7 @@ Let's expand @fig-meas-err-dag-dep-1 to include an arrow from posted time to how
 
 ```{r}
 #| label: fig-meas-err-dag-diff
+#| fig-cap: "When the true value of posted wait times affects the measurement of both measured variables, it becomes a confounder for them. When the backdoor path is due to either the exposure or the outcome, it's classified as differential measurement error."
 #| echo: false
 #| fig-width: 7.5
 labels <- c(
@@ -382,6 +393,7 @@ mismeasured_model <- lm(outcome ~ exposure * confounder)
 ```{r}
 #| echo: false
 #| label: tbl-confounder-me
+#| tbl-cap: "The coefficients of interaction terms between a confounder and the exposure. In one mode, the confounder is measured correctly. In another, it is mismeasured differentially by the outcome. In addition to not closing the backdoor path completely, this type of mismeasurement often appears as an interaction between the exposure and confounder, even when such an interaction does not exist."
 library(gt)
 library(broom)
 pull_interaction <- function(mdl) {
@@ -411,7 +423,7 @@ However, the posted wait time *may* influence the *missingness* of the actual wa
 If the posted wait time is high, for instance, someone may not get in the line at all and thus not submit an actual wait time to TouringPlans.
 For simplicity, we've removed details about measurement error and assume that the variables are well-measured and free from confounding.
 
-@fig-missing-dag represents a slightly different situation than the DAGs in the measurement error examples.
+@fig-missing-dag-1 represents a slightly different situation than the DAGs in the measurement error examples.
 We still have two nodes for a given variable, but one represents the true values, and the other represents a *missingness indicator*, whether the value is missing or not.
 The problem here is that we are inherently conditioning whether or not we observed the data.
 This is always true.
@@ -424,6 +436,7 @@ The unknown mechanism is random, but mechanism related to posted wait times is n
 
 ```{r}
 #| label: fig-missing-dag-1
+#| fig-cap: "A DAG representing the missingness structure of actual wait time. In this DAG, missingness is caused by posted wait times, as well as an unknown mechansim the affects whether or not actual wait times is measured. Missingness in actual wait times is represented as a separate node, a missingness indicator."
 #| echo: false
 #| fig-width: 5
 labels <- c(
@@ -462,6 +475,7 @@ However, in this simple DAG, conditioning on missingness does not open a backdoo
 
 ```{r}
 #| label: fig-missing-dag-2
+#| fig-cap: "In DAGs with missingness, we are also conditioning on the missingness indicators because we're stratifying by whether or not we have a given variable. In this DAG, even though `missing` is a collider, stratifying on it does not open a backdoor path between the exposure and outcome."
 #| echo: false
 #| fig-width: 4
 #| fig-height: 4
@@ -496,6 +510,9 @@ In this case, there is no way to close the backdoor paths opened by conditioning
 
 ```{r}
 #| label: fig-missing-dag-actual
+#| fig-subcap: 
+#|   - "Now, the DAG includes an arrow from actual wait times to the missingness indicator for actual wait times. In other words, the vaues of actual wait times themselves influence whether or not we've managed to measure them."
+#|   - "Conditioning on the missingness indicator now opens a backdoor paths between the exposure and the outcome, and we have no means to close it."
 #| echo: false
 #| layout-ncol: 2
 #| fig-width: 5
@@ -546,6 +563,7 @@ Each of the DAGs represents a simple but differing structure of missingness.
 
 ```{r}
 #| label: fig-missing-dags-sim
+#| fig-cap: "5 DAGs where `a` is `actual`, `p` is `posted`, `u` is `unknown`, and `m` is `missing`. Each DAG represents a slightly different missingness mechanism. In DAGs 1-3, it is the actual wait time values that have missingness; in DAGs 4-5, posted wait times are missing. The causal structure of missingness impacts what we can estimate."
 #| echo: false
 library(patchwork)
 
@@ -610,6 +628,7 @@ In DAG 4, we can calculate the mean of `actual` and the causal effect but not th
 
 ```{r}
 #| label: fig-recoverables
+#| fig-cap: "A forest plot of the results of three different effects for data simulated from each of the DAGs in @fig-missing-dags-sim. In the non-missing results, we can see what the effect should be for the sample. For each of the DAGs, we're limited in what we can estimate correctly. Each dataset has 365 rows with missingness in either actual or posted wait times."
 #| echo: false
 set.seed(123) 
 posted <- rnorm(365, mean = 30, sd = 5)
