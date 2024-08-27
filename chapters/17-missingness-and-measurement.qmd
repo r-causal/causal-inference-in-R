@@ -26,18 +26,18 @@ Many tools in R, like `lm()`, quietly drop rows that are not complete for necess
 Using only observation where the needed variables are all complete is sometimes called a *complete-case analysis*, which we've been doing thus far in the book.
 :::
 
-In the Touring Plans data, most variables are complete and likely accurately measured (e.g., ticket season and historic weather are well-measured).
+In the TouringPlans data, most variables are complete and likely accurately measured (e.g., ticket season and historic weather are well-measured).
 One variable with missingness and measurement error is the actual wait times for rides.
 If you recall, the data relies on humans to wait in line, either consumers of the data who report their experience or people hired to wait in line to report the wait time.
 Thus, missingness is primarily related to whether someone is there to measure the wait time.
-When someone is there to measure it, it's also likely measured with error, and that error likely depends on who the person is. For example, a visitor to Disney World estimating their wait time and submitting it to Touring Plans is likely producing a value with more error than someone paid to stay in line and count the minutes.
+When someone is there to measure it, it's also likely measured with error, and that error likely depends on who the person is. For example, a visitor to Disney World estimating their wait time and submitting it to TouringPlans is likely producing a value with more error than someone paid to stay in line and count the minutes.
 
 That said, let's take measurement error and missingness one at a time.
 
 ### Structural measurement error
 
 First, let's consider measurement error.
-In @fig-meas-err-dag, we represent actual and posted wait times twice: the true and measured versions.
+In @fig-meas-err-dag, we represent actual and posted wait times twice: the true version and the measured version.
 The measured versions are influenced by two variables: the real values and unknown or unmeasured factors that influence their mismeasurement.
 How the two wait times are mismeasured are independent of one another.
 For simplicity, we've removed the confounders from this DAG.
@@ -104,7 +104,7 @@ add_missing <- function(.df) {
   mutate(
     .df,
     missing = case_when(
-      str_detect(label, "missing") ~ "missing",
+      str_detect(label, "missing") ~ "missingness indicator",
       str_detect(label, "wait") ~ "wait times",
       .default = NA
     ))
@@ -143,8 +143,8 @@ dagify(
 ```
 
 TouringPlans scraped the posted wait times from what Disney posts on the web.
-There is a plausible mechanism by which this could be mismeasured: Disney could post the wrong times online compared to what's posted at the park, or Touring Plans could have a mistake in its data acquisition code.
-That said, assuming that this error would be small is reasonable.
+There is a plausible mechanism by which this could be mismeasured: Disney could post the wrong times online compared to what's posted at the park, or TouringPlans could have a mistake in its data acquisition code.
+That said, it's reasonable to assume this error is small.
 
 On the other hand, actual wait times probably have a lot of measurement error.
 Humans have to measure this period manually, so that process has some natural error.
@@ -219,20 +219,21 @@ This is sometimes called *independent, non-differential* measurement error: the 
 ::: callout-warning
 As the correlation approaches 0, measurement becomes random for the relationship under study.
 This often means that when variables are measured with independent measurement error, the relationship of the measured values approaches null even if there is an arrow between the true values.
-Here, the coefficient of `x` should be about 1, but as the random measurement worsens, the coefficient gets closer to 0. There's no relationship between the randomness induced by mismeasurement and `y`.
+Here, the coefficient of `x` should be about 1, but as the random measurement worsens, the coefficient gets closer to 0. There's no relationship between the randomness (`u`) induced by mismeasurement and `y`.
 
 ```{r}
 n <- 1000
 x <- rnorm(n)
 y <- x + rnorm(n)
 # bad measurement of x
-x_measured <- .01 * x + rnorm(n)
+u <- rnorm(n)
+x_measured <- .01 * x + u
 cor(x, x_measured)
 lm(y ~ x_measured)
 ```
 
-Not all random mismeasurement with bring the effect towards the null, however.
-For instance, for categorical variables with more than two categories, mismeasurement changes the counts of variables (this is sometimes called misclassification for categorical variables).
+Not all random mismeasurement will bring the effect towards the null, however.
+For instance, for categorical variables with more than two categories, mismeasurement changes the distribution of counts of their values (this is sometimes called misclassification for categorical variables).
 Even in random misclassification, some of the relationships will be biased towards the null and some away from the null simply because when counts are removed from one category, they go into another.
 For instance, if we randomly mix up the labels `"c"` and `"d"`, they average towards each other, making the coefficient for `c` too big and the coefficient for `d` too small, while the other two remain correct.
 
@@ -256,7 +257,7 @@ lm(y ~ x_measured)
 ```
 
 Some researchers rely on the hope that random measurement error is predictably towards the null, but this isn't always true.
-See [@Yland2022] for more details on when this is false.
+See @Yland2022 for more details on when this is false.
 :::
 
 However, let's say that a single unknown factor affects the measurement of both the posted wait time and actual wait time, as in @fig-meas-err-dag-dep-1.
@@ -418,7 +419,6 @@ map(
 ### Structural missingness
 
 Above, we argued that posted wait time likely has no impact on the measurement of actual wait time.
-Because posted time happens before actual time, it's reasonable to assume that that is the case for that relationship.
 However, the posted wait time *may* influence the *missingness* of the actual wait time.
 If the posted wait time is high, someone may not get in the line and thus not submit an actual wait time to TouringPlans.
 For simplicity, we've removed details about measurement error and assume that the variables are well-measured and free from confounding.
@@ -427,7 +427,7 @@ For simplicity, we've removed details about measurement error and assume that th
 We still have two nodes for a given variable, but one represents the true values, and the other represents a *missingness indicator*, whether the value is missing or not.
 The problem is that we are inherently conditioning whether or not we observed the data.
 We are always conditioning on the data we actually have.
-In the case of missingness, we're usually talking about conditioning on *complete* observations, e.g., we've measured all the variables that we need for the analysis.
+In the case of missingness, we're usually talking about conditioning on *complete* observations, e.g., we're using the subset of data where all the values are complete for the variables we need.
 In the best case, missingness is unrelated to the causal structure of the research question, and the only impact is a reduction in sample size (and thus precision).
 
 In @fig-missing-dag-1, though, we're saying that the missingness of `actual` is related to the posted wait times and to an unknown mechanism.
@@ -562,7 +562,7 @@ Each of the DAGs represents a simple but differing structure of missingness.
 
 ```{r}
 #| label: fig-missing-dags-sim
-#| fig-cap: "5 DAGs where `a` is `actual`, `p` is `posted`, `u` is `unknown`, and `m` is `missing`. Each DAG represents a slightly different missingness mechanism. In DAGs 1-3, the actual wait time values have missingness; in DAGs 4-5, posted wait times are missing. The causal structure of missingness impacts what we can estimate."
+#| fig-cap: "5 DAGs where `a` is `actual`, `p` is `posted`, `u` is `unknown`, and `m` is `missing`. Each DAG represents a slightly different missingness mechanism. In DAGs 1-3, the actual wait time values have missingness; in DAGs 4-5, some posted wait times are missing. The causal structure of missingness impacts what we can estimate."
 #| echo: false
 library(patchwork)
 
@@ -627,7 +627,7 @@ In DAG 4, we can calculate the mean of `actual` and the causal effect but not th
 
 ```{r}
 #| label: fig-recoverables
-#| fig-cap: "A forest plot of the results of three different effects for data simulated from each DAG in @fig-missing-dags-sim. In the non-missing results, we can see what the effect should be for the sample. For each of the DAGs, we're limited in what we can estimate correctly. Each dataset has 365 rows with missingness in either actual or posted wait times."
+#| fig-cap: "A forest plot of the results of three different effects for data simulated from each DAG in @fig-missing-dags-sim. In the non-missing results, we can see what the effect should be for the sample. Each simulated dataset has 365 rows with missingness in either actual or posted wait times. For each of the DAGs, we're limited in what we can estimate correctly."
 #| echo: false
 set.seed(123) 
 posted <- rnorm(365, mean = 30, sd = 5)
@@ -705,7 +705,7 @@ dag_stats |>
   labs(y = NULL, color = NULL)
 ```
 
-See [@Moreno-Betancur2018] for a comprehensive overview of what effects are recoverable from different structures of missingness.
+See @Moreno-Betancur2018 for a comprehensive overview of what effects are recoverable from different structures of missingness.
 
 As in measurement error, the confounders in the causal model may also contribute to the missingness of actual wait time, such as if season or temperature influences whether TouringPlans sends someone in to do a measurement.
 In these data, all the confounders are observed, but missingness in confounders can cause both residual confounding and selection bias from stratification on complete cases.
@@ -724,13 +724,10 @@ These terms don't always tell you what to do next, so we'll avoid them in favor 
 
 Is measurement error missingness because we're missing the true value?
 Is missingness measurement error, because we've badly mismeasured some values as `NA`?
-
 We've presented the two problems using different structures, where measurement error is represented by calculating the causal effects of proxy variables, and missingness is represented by calculating the causal effects of the true variables conditional on missingness.
 These two structures better illuminate the biases that emerge from the two situations.
-
 That said, it can also be helpful to think of them from the other perspective.
 For instance, thinking about measurement error as a missingness problem allows you to use techniques like multiple imputation to address it.
-
 Of course, we often do both because data are missing for some observations and observed but mismeasured for others.
 
 Now, let's discuss some analytic techniques for addressing measurement error and missingness to correct for both the numerical issues and structural nonexchangeability we see in these DAGs.
