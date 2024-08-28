@@ -2,6 +2,12 @@
 
 {{< include 00-setup.qmd >}}
 
+```{r}
+#| echo: false
+# TODO: remove when complete
+status("complete")
+```
+
 ## Visualizing Causal Assumptions
 
 > Draw your assumptions before your conclusions --@hernan2021

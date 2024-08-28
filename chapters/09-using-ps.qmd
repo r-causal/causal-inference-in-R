@@ -2,6 +2,13 @@
 
 {{< include 00-setup.qmd >}}
 
+```{r}
+#| echo: false
+# TODO: remove when complete
+status("polishing")
+```
+
+
 The propensity score is a *balancing* tool -- we use it to help us make our exposure groups *exchangeable*. There are many ways to incorporate the propensity score into an analysis. Commonly used techniques include stratification (estimating the causal effect within propensity score stratum), matching, weighting, and direct covariate adjustment. In this section, we will focus on *matching* and *weighting*; other techniques will be discussed once we introduce the *outcome model*. Recall at this point in the book we are still in the *design* phase. We have not yet incorporated the outcome into our analysis at all. 
 
 ## Matching

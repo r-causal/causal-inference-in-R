@@ -2,6 +2,13 @@
 
 {{< include 00-setup.qmd >}}
 
+```{r}
+#| echo: false
+# TODO: remove when complete
+status("wip")
+```
+
+
 ## The Parametric G-Formula
 
 Let's pause to recap a typical goal of the causal analyses we've seen in this book so far: to estimate what would happen if *everyone* in the study were exposed versus what would happen if *no one* was exposed.

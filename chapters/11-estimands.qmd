@@ -2,6 +2,12 @@
 
 {{< include 00-setup.qmd >}}
 
+```{r}
+#| echo: false
+# TODO: remove when complete
+status("polishing")
+```
+
 ## Estimands, Estimators, Estimates
 
 When analyzing to make causal inferences, we need to keep the causal question that we're interested in close to our chest.

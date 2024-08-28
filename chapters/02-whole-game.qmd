@@ -2,6 +2,12 @@
 
 {{< include 00-setup.qmd >}}
 
+```{r}
+#| echo: false
+# TODO: remove when complete
+status("complete")
+```
+
 In this chapter, we'll analyze data using techniques we learn in this book.
 We'll play the [whole game](https://www.gse.harvard.edu/news/uk/09/01/education-bat-seven-principles-educators) of causal analysis using a few key steps:
 

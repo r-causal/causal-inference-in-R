@@ -2,6 +2,12 @@
 
 {{< include 00-setup.qmd >}}
 
+```{r}
+#| echo: false
+# TODO: remove when complete
+status("unstarted")
+```
+
 ## Loss to follow-up
 
 ```{r}

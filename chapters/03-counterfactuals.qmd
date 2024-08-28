@@ -2,6 +2,12 @@
 
 {{< include 00-setup.qmd >}}
 
+```{r}
+#| echo: false
+# TODO: remove when complete
+status("polishing")
+```
+
 ## Potential Outcomes {#sec-potential}
 
 Let's begin by thinking about the philosophical concept of a *potential outcome.* Prior to some "cause" occurring, for example receiving some exposure, the *potential outcomes* are all of the potential things that could occur depending on what you are exposed to.
