@@ -29,10 +29,10 @@ n <- 1000000
 tibble(
   roll_1 = sample(1:6, n, replace = TRUE),
   roll_2 = sample(1:6, n, replace = TRUE),
-) |> 
-  reframe(roll_1 + roll_2 == 2) |> 
-  pull() |> 
-  sum()/n
+) |>
+  reframe(roll_1 + roll_2 == 2) |>
+  pull() |>
+  sum() / n
 ```
 Monte Carlo simulations are extremely useful for estimating outcomes of complex processes for which closed mathematical solutions are not easy to determine. 
 Indeed, that's why Monte Carlo simulations are so useful for the real-world causal mechanisms described in this book!
@@ -123,7 +123,7 @@ seven_dwarfs_9 <- seven_dwarfs_train_2018 |>
 
 # A logistic regression for park_extra_magic_morning
 fit_extra_magic <- glm(
-  park_extra_magic_morning ~ 
+  park_extra_magic_morning ~
     park_ticket_season + park_close + park_temperature_high,
   data = seven_dwarfs_9,
   family = "binomial"
@@ -131,7 +131,7 @@ fit_extra_magic <- glm(
 
 # A linear model for wait_minutes_posted_avg
 fit_wait_minutes <- lm(
-  wait_minutes_posted_avg ~ 
+  wait_minutes_posted_avg ~
     park_extra_magic_morning + park_ticket_season + park_close +
     park_temperature_high,
   data = seven_dwarfs_9
@@ -146,8 +146,8 @@ In the present case, we'll use sampling with replacement to generate a data fram
 # It's important to set seeds for reproducibility in Monte Carlo runs
 set.seed(8675309)
 
-df_sim_baseline <- seven_dwarfs_9 |> 
-  select(park_ticket_season, park_close, park_temperature_high) |> 
+df_sim_baseline <- seven_dwarfs_9 |>
+  select(park_ticket_season, park_close, park_temperature_high) |>
   sample_n(10000, replace = TRUE)
 ```
 
@@ -158,12 +158,12 @@ Other simulations (in this case, the only remaining variable, `wait_minutes_post
 
 ```{r}
 # Set the exposure groups for the causal contrast we wish to estimate
-df_sim_time_1 <- df_sim_baseline |> 
+df_sim_time_1 <- df_sim_baseline |>
   mutate(park_extra_magic_morning = c(rep(1, 5000), rep(0, 5000)))
 
 # Simulate the outcome according to the parametric model in step 2
-df_outcome <- fit_wait_minutes |> 
-  augment(newdata = df_sim_time_1) |> 
+df_outcome <- fit_wait_minutes |>
+  augment(newdata = df_sim_time_1) |>
   rename(wait_minutes_posted_avg = .fitted)
 ```
 
@@ -171,8 +171,8 @@ All that is left to do is compute the causal contrast we wish to estimate.
 Here, that contrast is the difference between expected wait minutes on extra magic mornings versus mornings without the extra magic program. 
 
 ```{r}
-df_outcome |> 
-  group_by(park_extra_magic_morning) |> 
+df_outcome |>
+  group_by(park_extra_magic_morning) |>
   summarize(wait_minutes = mean(wait_minutes_posted_avg))
 ```
 
@@ -256,37 +256,36 @@ One extension to our previous implementation is that we're going to embed the ea
 library(splines)
 
 fit_models <- function(.data) {
-  
   # A logistic regression for park_extra_magic_morning
   fit_extra_magic <- glm(
-    park_extra_magic_morning ~ 
+    park_extra_magic_morning ~
       park_ticket_season + park_close + park_temperature_high,
     data = .data,
     family = "binomial"
   )
-  
+
   # A linear model for wait_minutes_posted_avg
   fit_wait_minutes_posted <- lm(
-    wait_minutes_posted_avg ~ 
+    wait_minutes_posted_avg ~
       park_extra_magic_morning + park_ticket_season + park_close +
       park_temperature_high,
     data = .data
   )
-  
+
   # A linear model for wait_minutes_actual_avg
   # Let's go ahead an add a spline for further flexibility.
   # Be aware this is an area where you can add many options here
   # (interactions, etc) but you may get warnings and/or models which
   # fail to converge if you don't have enough data.
   fit_wait_minutes_actual <- lm(
-    wait_minutes_actual_avg ~ 
-      ns(wait_minutes_posted_avg, df = 3) + 
+    wait_minutes_actual_avg ~
+      ns(wait_minutes_posted_avg, df = 3) +
       park_extra_magic_morning +
       park_ticket_season + park_close +
       park_temperature_high,
     data = .data
   )
-  
+
   # return a list that we can pipe into our simulation step (up next)
   return(
     list(
@@ -296,7 +295,6 @@ fit_models <- function(.data) {
       fit_wait_minutes_actual = fit_wait_minutes_actual
     )
   )
-  
 }
 ```
 
@@ -308,40 +306,38 @@ Next, we write a function which will complete step 3: from a random sample from 
 # contrast gives exposure (default 60) and control group (default 30) settings
 # n_sample is the size of the baseline resample of .data
 simulate_process <- function(
-    fit_obj, 
+    fit_obj,
     contrast = c(60, 30),
-    n_sample = 10000
-) {
-  
+    n_sample = 10000) {
   # Draw a random sample of baseline variables
-  df_baseline <- fit_obj |> 
-    pluck(".data") |> 
-    select(park_ticket_season, park_close, park_temperature_high) |> 
+  df_baseline <- fit_obj |>
+    pluck(".data") |>
+    select(park_ticket_season, park_close, park_temperature_high) |>
     sample_n(n_sample, replace = TRUE)
-  
+
   # Simulate park_extra_magic_morning
-  df_sim_time_1 <- fit_obj |> 
-    pluck("fit_extra_magic") |> 
-    augment(newdata = df_baseline, type.predict = "response") |> 
+  df_sim_time_1 <- fit_obj |>
+    pluck("fit_extra_magic") |>
+    augment(newdata = df_baseline, type.predict = "response") |>
     # .fitted is the probability that park_extra_magic_morning is 1,
     # so let's use that to generate a 0/1 outcome
     mutate(
       park_extra_magic_morning = rbinom(n(), 1, .fitted)
     )
-  
+
   # Assign wait_minutes_posted_avg, since it's the intervention
-  df_sim_time_2 <- df_sim_time_1 |> 
+  df_sim_time_2 <- df_sim_time_1 |>
     mutate(
-      wait_minutes_posted_avg = 
-        c(rep(contrast[1], n_sample/2), rep(contrast[2], n_sample/2))
+      wait_minutes_posted_avg =
+        c(rep(contrast[1], n_sample / 2), rep(contrast[2], n_sample / 2))
     )
-  
-  # Simulate the outcome 
-  df_outcome <- fit_obj |> 
-    pluck("fit_wait_minutes_actual") |> 
-    augment(newdata = df_sim_time_2) |> 
+
+  # Simulate the outcome
+  df_outcome <- fit_obj |>
+    pluck("fit_wait_minutes_actual") |>
+    augment(newdata = df_sim_time_2) |>
     rename(wait_minutes_actual_avg = .fitted)
-  
+
   # return a list that we can pipe into the contrast estimation step (up next)
   return(
     list(
@@ -357,26 +353,24 @@ Finally, in step 4, we compute the summary statistics and causal contrast of int
 ```{r}
 # sim_obj is a list created by our simulate_process() function
 compute_stats <- function(sim_obj) {
-  
-  exposure_val <- sim_obj |> 
+  exposure_val <- sim_obj |>
     pluck("contrast", 1)
-  
-  control_val <- sim_obj |> 
+
+  control_val <- sim_obj |>
     pluck("contrast", 2)
-  
-  sim_obj |> 
-    pluck("df_outcome") |> 
-    group_by(wait_minutes_posted_avg) |> 
-    summarize(avg_wait_actual = mean(wait_minutes_actual_avg)) |> 
+
+  sim_obj |>
+    pluck("df_outcome") |>
+    group_by(wait_minutes_posted_avg) |>
+    summarize(avg_wait_actual = mean(wait_minutes_actual_avg)) |>
     pivot_wider(
-      names_from = wait_minutes_posted_avg, 
+      names_from = wait_minutes_posted_avg,
       values_from = avg_wait_actual,
       names_prefix = "x_"
-    ) |> 
+    ) |>
     summarize(
       x_60, x_30, x_60 - x_30
     )
-  
 }
 ```
 
@@ -398,31 +392,31 @@ wait_times <- eight |>
   drop_na(wait_minutes_actual_avg)
 
 # get a single point estimate to make sure things work as we planned
-wait_times |> 
-  fit_models() |> 
-  simulate_process() |> 
-  compute_stats() |> 
+wait_times |>
+  fit_models() |>
+  simulate_process() |>
+  compute_stats() |>
   # rsample wants results labelled this way
   pivot_longer(
-    names_to = "term", 
-    values_to = "estimate", 
+    names_to = "term",
+    values_to = "estimate",
     cols = everything()
   )
 
 # compute bootstrap confidence intervals
 library(rsample)
 
-boots <- bootstraps(wait_times, times = 1000, apparent = TRUE) |> 
+boots <- bootstraps(wait_times, times = 1000, apparent = TRUE) |>
   mutate(
     models = map(
-      splits, 
-      \(.x) analysis(.x) |> 
-        fit_models() |> 
-        simulate_process() |> 
-        compute_stats() |> 
+      splits,
+      \(.x) analysis(.x) |>
+        fit_models() |>
+        simulate_process() |>
+        compute_stats() |>
         pivot_longer(
-          names_to = "term", 
-          values_to = "estimate", 
+          names_to = "term",
+          values_to = "estimate",
           cols = everything()
         )
     )

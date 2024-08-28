@@ -57,23 +57,25 @@ glyph <- function(data, params, size) {
 
 show_edge_color <- function(...) {
   list(
-    theme(legend.position = "bottom"), 
-    ggokabeito::scale_edge_color_okabe_ito(name = NULL, breaks = ~ .x[!is.na(.x)]), 
+    theme(legend.position = "bottom"),
+    ggokabeito::scale_edge_color_okabe_ito(name = NULL, breaks = ~ .x[!is.na(.x)]),
     guides(color = "none")
   )
 }
 
 edges_with_aes <- function(..., edge_color = "grey85", shadow = TRUE) {
   list(
-      if (shadow) geom_dag_edges_link(
+    if (shadow) {
+      geom_dag_edges_link(
         data = \(.x) filter(.x, is.na(path)),
         edge_color = edge_color
-      ),
-      geom_dag_edges_link(
-        aes(edge_color = path), 
-        data = \(.x) mutate(.x, path = ifelse(is.na(to), NA, path))
       )
+    },
+    geom_dag_edges_link(
+      aes(edge_color = path),
+      data = \(.x) mutate(.x, path = ifelse(is.na(to), NA, path))
     )
+  )
 }
 
 ggdag2 <- function(.dag, ..., order = 1:9, seed = 1633, box.padding = 3.4, edges = geom_dag_edges_link(edge_color = "grey85")) {
@@ -81,13 +83,13 @@ ggdag2 <- function(.dag, ..., order = 1:9, seed = 1633, box.padding = 3.4, edges
     .dag,
     aes_dag(...)
   ) +
-  edges +
-  geom_dag_point(key_glyph = glyph) +
-  geom_dag_text_repel(aes(label = label), size = 3.8, seed = seed, color = "#494949", box.padding = box.padding) +
-  ggokabeito::scale_color_okabe_ito(order = order, na.value = "grey90", breaks = ~ .x[!is.na(.x)]) +
-  theme_dag() +
-  theme(legend.position = "none") +
-  coord_cartesian(clip = "off")
+    edges +
+    geom_dag_point(key_glyph = glyph) +
+    geom_dag_text_repel(aes(label = label), size = 3.8, seed = seed, color = "#494949", box.padding = box.padding) +
+    ggokabeito::scale_color_okabe_ito(order = order, na.value = "grey90", breaks = ~ .x[!is.na(.x)]) +
+    theme_dag() +
+    theme(legend.position = "none") +
+    coord_cartesian(clip = "off")
 }
 
 add_measured <- function(.df) {
@@ -97,7 +99,8 @@ add_measured <- function(.df) {
       str_detect(label, "measured") ~ "measured",
       str_detect(label, "wait") ~ "truth",
       .default = NA
-    ))
+    )
+  )
 }
 
 add_missing <- function(.df) {
@@ -107,7 +110,8 @@ add_missing <- function(.df) {
       str_detect(label, "missing") ~ "missingness indicator",
       str_detect(label, "wait") ~ "wait times",
       .default = NA
-    ))
+    )
+  )
 }
 
 labels <- c(
@@ -124,14 +128,14 @@ dagify(
   posted_star ~ u_posted + posted,
   actual_star ~ u_actual + actual,
   coords = time_ordered_coords(),
-  labels = labels, 
+  labels = labels,
   exposure = "posted_star",
   outcome = "actual_star"
-) |> 
-  tidy_dagitty() |> 
-  add_measured() |> 
+) |>
+  tidy_dagitty() |>
+  add_measured() |>
   ggdag2(color = measured, order = 6:7) +
-  theme(legend.position = "bottom") + 
+  theme(legend.position = "bottom") +
   labs(color = NULL) +
   theme(
     legend.key.spacing.x = unit(4, "points"),
@@ -160,7 +164,7 @@ The extent of this error depends on how well the measured version correlates wit
 
 ```{r}
 #| label: fig-meas-err-other
-#| fig-subcap: 
+#| fig-subcap:
 #|   - "An updated DAG where the measured version of posted wait times is only caused by the true value, meaning it is perfectly measured. For the actual wait times, the three causes are the true values, whether or not TouringPlans employed the reporter, and an unknown mismeasurement mechanism."
 #|   - "A null DAG, meaning we have removed the arrow from actual wait times to posted wait times. When we look at a null DAG, we can see the mechanisms of mismeasurement are separate for the two wait time variables."
 #| echo: false
@@ -182,9 +186,9 @@ dagify(
   actual_star ~ u_actual + actual + employed,
   coords = time_ordered_coords(),
   labels = labels
-) |> 
-  tidy_dagitty() |> 
-  add_measured() |> 
+) |>
+  tidy_dagitty() |>
+  add_measured() |>
   ggdag2(color = measured, order = 6:7, box.padding = 3.7, seed = 123)
 
 dagitty::dagitty(
@@ -200,9 +204,9 @@ employed -> actual_star
 posted -> posted_star
 u_actual -> actual_star
 }'
-) |> 
-  dag_label(labels = labels) |> 
-  add_measured() |> 
+) |>
+  dag_label(labels = labels) |>
+  add_measured() |>
   ggdag2(color = measured, order = 6:7, box.padding = 2.5)
 ```
 
@@ -248,7 +252,7 @@ y <- case_when(
 )
 
 x_measured <- ifelse(
-  x %in% c("c", "d"), 
+  x %in% c("c", "d"),
   sample(c("c", "d"), size = n, replace = TRUE),
   x
 )
@@ -266,7 +270,7 @@ This is called *dependent, non-differential* measurement error.
 
 ```{r}
 #| label: fig-meas-err-dag-dep
-#| fig-subcap: 
+#| fig-subcap:
 #|   - "Now, the DAG includes an arrow from `unknown` to both measured variables, meaning that the way they are mismeasured is not independent. In other words, `unknown` is now a mutual cause of the mismeasured variables---a confounder."
 #|   - "The open paths in this DAG. Because this is a null DAG, the only open pathway is a biasing one from the two mismeasured variables via `unknown`."
 #| echo: false
@@ -274,12 +278,12 @@ This is called *dependent, non-differential* measurement error.
 #| fig-width: 4
 #| fig-height: 4
 labels <- c(
-    "actual" = "actual wait",
-    "actual_star" = "measured\nactual",
-    "posted" = "posted wait",
-    "posted_star" = "measured\nposted",
-    "employed" = "employed by TP",
-    "u_actual" = "unknown"
+  "actual" = "actual wait",
+  "actual_star" = "measured\nactual",
+  "posted" = "posted wait",
+  "posted_star" = "measured\nposted",
+  "employed" = "employed by TP",
+  "u_actual" = "unknown"
 )
 
 depend_dag <- dagify(
@@ -287,22 +291,22 @@ depend_dag <- dagify(
   actual_star ~ u_actual + actual + employed,
   coords = time_ordered_coords(),
   labels = labels,
-  exposure = "posted_star", 
+  exposure = "posted_star",
   outcome = "actual_star"
 )
 
-depend_dag |> 
-  tidy_dagitty() |> 
-  add_measured() |> 
+depend_dag |>
+  tidy_dagitty() |>
+  add_measured() |>
   ggdag2(color = measured, order = 6:7, box.padding = 3)
 
-depend_dag |> 
-  tidy_dagitty() |> 
-  dag_paths() |> 
+depend_dag |>
+  tidy_dagitty() |>
+  dag_paths() |>
   ggdag2(
-    color = path, 
-    edge_color = path, 
-    box.padding = 2.35, 
+    color = path,
+    edge_color = path,
+    box.padding = 2.35,
     edges = edges_with_aes(shadow = FALSE)
   ) +
   show_edge_color()
@@ -318,12 +322,12 @@ Let's expand @fig-meas-err-dag-dep-1 to include an arrow from posted time to how
 #| echo: false
 #| fig-width: 7.5
 labels <- c(
-    "actual" = "actual wait",
-    "actual_star" = "measured\nactual",
-    "posted" = "posted wait",
-    "posted_star" = "measured\nposted",
-    "employed" = "employed by TP",
-    "u_actual" = "unknown"
+  "actual" = "actual wait",
+  "actual_star" = "measured\nactual",
+  "posted" = "posted wait",
+  "posted_star" = "measured\nposted",
+  "employed" = "employed by TP",
+  "u_actual" = "unknown"
 )
 
 depend_dag <- dagify(
@@ -335,17 +339,17 @@ depend_dag <- dagify(
   outcome = "actual_star"
 )
 
-depend_dag |> 
-  tidy_dagitty() |> 
-  dag_paths() |> 
+depend_dag |>
+  tidy_dagitty() |>
+  dag_paths() |>
   ggdag2(
-    color = path, 
-    edge_color = path, 
+    color = path,
+    edge_color = path,
     seed = 234,
     edges = edges_with_aes(edge_color = "grey90")
   ) +
   show_edge_color() +
-  facet_wrap(~ set) +
+  facet_wrap(~set) +
   theme(strip.text = element_blank())
 ```
 
@@ -383,8 +387,8 @@ true_model <- lm(outcome ~ exposure * confounder)
 
 # mismeasure confounder
 confounder <- ifelse(
-  outcome > 0, 
-  confounder, 
+  outcome > 0,
+  confounder,
   confounder + 10 * rnorm(n)
 )
 
@@ -398,21 +402,21 @@ mismeasured_model <- lm(outcome ~ exposure * confounder)
 library(gt)
 library(broom)
 pull_interaction <- function(mdl) {
-  mdl |> 
+  mdl |>
     tidy() |>
-    filter(term == "exposure:confounder") |> 
+    filter(term == "exposure:confounder") |>
     mutate(
       estimate = round(estimate, 3),
       p.value = scales::label_pvalue()(p.value)
-    ) |> 
+    ) |>
     select(term, estimate, `p-value` = p.value)
 }
 
 map(
   list("true" = true_model, "mismeasured" = mismeasured_model),
   pull_interaction
-) |> 
-  list_rbind(names_to = "model") |> 
+) |>
+  list_rbind(names_to = "model") |>
   gt()
 ```
 
@@ -454,11 +458,11 @@ missing_dag <- dagify(
   outcome = "actual"
 )
 
-missing_dag |> 
-  tidy_dagitty() |> 
-  add_missing() |> 
+missing_dag |>
+  tidy_dagitty() |>
+  add_missing() |>
   ggdag2(color = missing, order = c(5, 3), box.padding = 3) +
-  theme(legend.position = "bottom") + 
+  theme(legend.position = "bottom") +
   labs(color = NULL) +
   theme(
     legend.key.spacing.x = unit(4, "points"),
@@ -478,14 +482,14 @@ However, in this simple DAG, conditioning on missingness does not open a backdoo
 #| echo: false
 #| fig-width: 4
 #| fig-height: 4
-missing_dag |> 
-  tidy_dagitty() |> 
-  add_missing() |> 
-  dag_paths(adjust_for = "actual_missing") |> 
+missing_dag |>
+  tidy_dagitty() |>
+  add_missing() |>
+  dag_paths(adjust_for = "actual_missing") |>
   ggdag2(
-    color = path, 
+    color = path,
     edge_color = path,
-    box.padding = 3, 
+    box.padding = 3,
     seed = 234,
     edges = edges_with_aes(edge_color = "grey90")
   ) +
@@ -509,7 +513,7 @@ In this case, there is no way to close the backdoor paths opened by conditioning
 
 ```{r}
 #| label: fig-missing-dag-actual
-#| fig-subcap: 
+#| fig-subcap:
 #|   - "Now, the DAG includes an arrow from actual wait times to the missingness indicator for actual wait times. In other words, the values of actual wait times themselves influence whether or not we've managed to measure them."
 #|   - "Conditioning on the missingness indicator now opens a backdoor path between the exposure and the outcome, and we have no means to close it."
 #| echo: false
@@ -532,23 +536,23 @@ missing_dag <- dagify(
   outcome = "actual"
 )
 
-missing_dag |> 
-  tidy_dagitty() |> 
-  add_missing() |> 
+missing_dag |>
+  tidy_dagitty() |>
+  add_missing() |>
   ggdag2(color = missing, order = c(5, 3))
 
-missing_dag |> 
-  tidy_dagitty() |> 
-  add_missing() |> 
-  dag_paths(adjust_for = "actual_missing") |> 
+missing_dag |>
+  tidy_dagitty() |>
+  add_missing() |>
+  dag_paths(adjust_for = "actual_missing") |>
   ggdag2(
-    color = path, 
-    edge_color = path, 
+    color = path,
+    edge_color = path,
     seed = 234,
     edges = edges_with_aes(edge_color = "grey90")
   ) +
   show_edge_color() +
-  facet_wrap(~ set) +
+  facet_wrap(~set) +
   expand_plot(expand_x = expansion(c(.2, .2))) +
   theme(strip.text = element_blank())
 ```
@@ -572,46 +576,46 @@ define_dag <- function(..., tag, title) {
     coords = time_ordered_coords(),
     exposure = "p",
     outcome = "a"
-  ) |> 
-    ggdag(size = .7) + 
-    labs(title = paste0(tag, ": ", title)) + 
+  ) |>
+    ggdag(size = .7) +
+    labs(title = paste0(tag, ": ", title)) +
     theme_dag() +
-    theme(plot.title = element_text(size = 12)) + 
+    theme(plot.title = element_text(size = 12)) +
     expand_plot(expansion(c(0.4, 0.4)), expansion(c(0.4, 0.4)))
 }
 
 dag_1 <- define_dag(
   a ~ p,
   m ~ u,
-  tag = "1", 
+  tag = "1",
   title = "`actual` is missing"
 )
 
 dag_2 <- define_dag(
   a ~ p,
   m ~ u + p,
-  tag = "2", 
+  tag = "2",
   title = "`actual` is missing"
 )
 
 dag_3 <- define_dag(
   a ~ p,
   m ~ u + a,
-  tag = "3", 
+  tag = "3",
   title = "`actual` is missing"
 )
 
 dag_4 <- define_dag(
   a ~ p,
   m ~ u + p,
-  tag = "4", 
+  tag = "4",
   title = "`posted` is missing"
 )
 
 dag_5 <- define_dag(
   a ~ p,
   m ~ u + a,
-  tag = "5", 
+  tag = "5",
   title = "`posted` is missing"
 )
 
@@ -629,10 +633,10 @@ In DAG 4, we can calculate the mean of `actual` and the causal effect but not th
 #| label: fig-recoverables
 #| fig-cap: "A forest plot of the results of three different effects for data simulated from each DAG in @fig-missing-dags-sim. In the non-missing results, we can see what the effect should be for the sample. Each simulated dataset has 365 rows with missingness in either actual or posted wait times. For each of the DAGs, we're limited in what we can estimate correctly."
 #| echo: false
-set.seed(123) 
+set.seed(123)
 posted <- rnorm(365, mean = 30, sd = 5)
 # create an effect where an hour of posted time creates 50 min of actual time
-coef <- 50 / 60  
+coef <- 50 / 60
 actual <- coef * posted + rnorm(365, mean = 0, sd = 2)
 
 posted_60 <- posted / 60
@@ -650,16 +654,16 @@ fit_stats <- function(dag, actual, posted_60, missing_by = NULL, missing_for = "
   if (!is.null(missing_by) & missing_for == "actual") {
     actual[missing_by] <- NA
   }
-  
+
   if (!is.null(missing_by) & missing_for == "posted") {
     posted_60[missing_by] <- NA
   }
-  
+
   t_actual <- t.test(actual)
   t_posted <- t.test(posted_60 * 60)
   mdl <- lm(actual ~ posted_60)
   mdl_confints <- confint(mdl)
-  
+
   tibble(
     dag = dag,
     mean_actual_estimate = as.numeric(t_actual$estimate),
@@ -671,7 +675,7 @@ fit_stats <- function(dag, actual, posted_60, missing_by = NULL, missing_for = "
     coef_60_estimate = coefficients(mdl)[["posted_60"]],
     coef_60_lower = mdl_confints[2, 1],
     coef_60_upper = mdl_confints[2, 2]
-  ) |> 
+  ) |>
     pivot_longer(
       cols = -dag,
       names_to = c("stat", ".value"),
@@ -688,20 +692,20 @@ dag_stats <- bind_rows(
   fit_stats("DAG 5", actual, posted_60, missing_by = missing_dag_5, missing_for = "posted"),
 )
 
-dag_stats |> 
+dag_stats |>
   mutate(
     true_value = ifelse(dag == "No missingness", "True value", "Observed value"),
     dag = factor(dag, levels = c(paste("DAG", 5:1), "No missingness")),
     stat = factor(
-      stat, 
-      levels = c("mean_posted", "mean_actual", "coef_60"), 
+      stat,
+      levels = c("mean_posted", "mean_actual", "coef_60"),
       labels = c("Mean of Posted", "Mean of Actual", "Causal effect")
     )
-  ) |> 
-  ggplot(aes(color = true_value)) + 
-  geom_point(aes(estimate, dag)) + 
-  geom_segment(aes(x = lower, xend = upper, y = dag, yend = dag, group = stat)) + 
-  facet_wrap(~ stat, scales = "free_x") +
+  ) |>
+  ggplot(aes(color = true_value)) +
+  geom_point(aes(estimate, dag)) +
+  geom_segment(aes(x = lower, xend = upper, y = dag, yend = dag, group = stat)) +
+  facet_wrap(~stat, scales = "free_x") +
   labs(y = NULL, color = NULL)
 ```
 
@@ -759,19 +763,19 @@ calib_model <- lm(
     ns(wait_minutes_posted_avg, df = 4) * wait_hour +
     park_temperature_high + park_close + park_ticket_season,
   # use log of `wait_minutes_actual_avg`
-  data = seven_dwarfs_train_2018 |> 
+  data = seven_dwarfs_train_2018 |>
     mutate(wait_minutes_actual_avg = log1p(wait_minutes_actual_avg))
 )
 
-seven_dwarves_calib <- calib_model |> 
-  augment(newdata = seven_dwarfs_train_2018) |> 
-  rename(wait_minutes_actual_calib = .fitted) |> 
-  # convert back to the original scale 
+seven_dwarves_calib <- calib_model |>
+  augment(newdata = seven_dwarfs_train_2018) |>
+  rename(wait_minutes_actual_calib = .fitted) |>
+  # convert back to the original scale
   # and fill in real values where they exist
   mutate(
     wait_minutes_actual_calib = exp(wait_minutes_actual_calib) - 1,
     wait_minutes_actual_calib = coalesce(
-      wait_minutes_actual_avg, 
+      wait_minutes_actual_avg,
       wait_minutes_actual_calib
     )
   )
@@ -803,11 +807,11 @@ fit_ipw_effect <- function(.fmla, .data = seven_dwarfs, .trt = "park_extra_magic
 }
 
 effect_calib <- fit_ipw_effect(
-  park_extra_magic_morning ~ park_temperature_high + 
+  park_extra_magic_morning ~ park_temperature_high +
     park_close + park_ticket_season,
   .outcome_fmla = wait_minutes_actual_calib ~ park_extra_magic_morning,
   .data = seven_dwarves_calib |> filter(wait_hour == 9)
-) |> 
+) |>
   round(2)
 ```
 

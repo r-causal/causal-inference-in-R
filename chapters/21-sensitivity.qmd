@@ -718,27 +718,26 @@ Both Extra Magic Morning hours and posted wait times are associated with whether
 #| tbl-cap: >
 #|    The descriptive associations between the two new variables, holiday and weekend, and the exposure and outcome. The average posted waiting time differs on both holidays and weekends, as do the occurrences of Extra Magic Hours. While we can't determine a confounding relationship from descriptive statistics alone, this adds to the evidence that these are confounders.
 #| echo: false
-tbl_labels <- list(
-  is_weekend ~ "Weekend",
-  is_holiday ~ "Holiday",
-  park_extra_magic_morning ~ "Extra Magic Morning",
-  wait_minutes_posted_avg ~ "Posted Wait Time"
-)
-
 tbl_data_days <- seven_dwarfs_with_days |>
   select(wait_minutes_posted_avg, park_extra_magic_morning, is_weekend, is_holiday)
+
+library(labelled)
+var_label(tbl_data_days) <- list(
+  is_weekend = "Weekend",
+  is_holiday = "Holiday",
+  park_extra_magic_morning = "Extra Magic Morning",
+  wait_minutes_posted_avg = "Posted Wait Time"
+)
 
 tbl1 <- gtsummary::tbl_summary(
   tbl_data_days,
   by = is_weekend,
-  label = tbl_labels[-2],
   include = -is_holiday
 )
 
 tbl2 <- gtsummary::tbl_summary(
   tbl_data_days,
   by = is_holiday,
-  label = tbl_labels[-1],
   include = -is_weekend
 )
 
