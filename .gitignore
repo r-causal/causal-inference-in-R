@@ -8,3 +8,4 @@ _bookdown_files
 .DS_Store
 
 /.quarto/
+_freeze/
