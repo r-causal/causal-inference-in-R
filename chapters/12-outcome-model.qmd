@@ -72,6 +72,25 @@ lm(
 Using weighting, we estimate that among days that have extra magic hours, the expected impact of having extra magic hours on the average posted wait time between 9 and 10am is 6.2 minutes. 
 While this approach will get us the desired estimate for the point estimate, the default output using the `lm` function for the uncertainty (the standard errors and confidence intervals) are not correct.
 
+::: {.callout-tip}
+## Causal inference with `group_by()` and `summarize()`, revisted
+
+For this simple example, the weighted outcome model is equivalent to taking the difference in the weighted means.
+
+```{r}
+
+wt_means <- seven_dwarfs_9_with_wt |> 
+  group_by(park_extra_magic_morning) |> 
+  summarize(average_wait = weighted.mean(wait_minutes_posted_avg, w = w_att))
+
+wt_means
+```
+
+The difference is `r round(wt_means$average_wait[[2]] - wt_means$average_wait[[1]], 2)`, the same as the weighted outcome model.
+
+The weighted population is a psuedo-population where there is no confounding by the variables in the propensity score. Philosophically and practically, we can make calculations with the data from this population. Causal inference with `group_by()` and `summarize()` works just fine now, since we've already accounted for confounding in the weights.
+:::
+
 
 ## Estimating uncertainty
 
