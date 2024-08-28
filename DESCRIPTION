@@ -16,6 +16,7 @@ Depends:
 Imports: 
     broom,
     broom.helpers,
+    cardx,
     causalworkshop (>= 0.1.0),
     datasauRus,
     emo (>= 0.0.0.9000),
