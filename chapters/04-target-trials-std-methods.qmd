@@ -59,6 +59,7 @@ Recall our diagrams from @sec-diag (@fig-diagram-4); several of these protocol e
 #| label: fig-diagram-4
 #| fig-height: 2
 #| fig-cap: "Example diagram mapped to causal analysis terminology"
+#| warning: false
 data <- data.frame(
   labels = c("exposure", "outcome", "eligibility criteria", "time zero", "target population", "follow-up time"),
   x = c(1.25, 1.75, 1.25, 1.55, 1.8, 2.15),
@@ -430,32 +431,27 @@ dagify(
 
 Let's examine three models: (1) an unadjusted model (@tbl-panel-1), (2) a linear model that adjusts for the baseline covariates (@tbl-panel-2), and (3) a propensity score weighted model (@tbl-panel-3).
 
-::: {#tbl-panel layout-ncol="2"}
+
 ```{r}
+#| label: tbl-panel
+#| layout-ncol: 2
+#| tbl-cap: Three ways to estimate a causal effect.
+#| tbl-subcap: 
+#|   - Unadjusted regression 
+#|   - Adjusted regression 
+#|   - Propensity score weighted regression
 #| code-fold: true
 #| message: false
 #| warning: false
 library(gtsummary)
 lm(y ~ treatment, d) |>
   tbl_regression() |>
-  modify_column_unhide(column = std.error) |>
-  modify_caption("Unadjusted regression")
-```
+  modify_column_unhide(column = std.error)
 
-```{r}
-#| code-fold: true
-#| message: false
-#| warning: false
 lm(y ~ treatment + age + weight, d) |>
   tbl_regression() |>
-  modify_column_unhide(column = std.error) |>
-  modify_caption("Adjusted regression")
-```
+  modify_column_unhide(column = std.error) 
 
-```{r}
-#| code-fold: true
-#| message: false
-#| warning: false
 d |>
   mutate(
     p = glm(treatment ~ weight + age, data = d) |> predict(type = "response"),
@@ -478,11 +474,8 @@ tibble(
   `95% CI` = glue::glue("{round(x$est.wt - 1.96 * x$std.wt, 1)}, {round(x$est.wt + 1.96 * x$std.wt, 1)}"),
   `p-value` = "<0.001"
 ) |>
-  knitr::kable(caption = "Propensity score weighted regression")
+  knitr::kable()
 ```
-
-Three ways to estimate the causal effect.
-:::
 
 Looking at the three outputs in @tbl-panel, we can first notice that all three are "unbiased" estimates of the causal effect (we know the true average treatment effect is 1, based on our simulation) -- the estimated causal effect in each table is in the `Beta` column.
 Great, so all methods give us an unbiased estimate.
@@ -538,31 +531,25 @@ dagify(
   ggdag() + theme_dag()
 ```
 
-::: {#tbl-panel-2 layout-ncol="2"}
 ```{r}
+#| label: tbl-panel-2
 #| code-fold: true
 #| message: false
 #| warning: false
+#| layout-ncol: 2
+#| tbl-cap: Three ways to estimate a causal effect in a non-randomized setting
+#| tbl-subcap: 
+#|   - Unadjusted regression 
+#|   - Adjusted regression 
+#|   - Propensity score weighted regression
 lm(y ~ treatment, d) |>
   tbl_regression() |>
-  modify_column_unhide(column = std.error) |>
-  modify_caption("Unadjusted regression")
-```
+  modify_column_unhide(column = std.error) 
 
-```{r}
-#| code-fold: true
-#| message: false
-#| warning: false
 lm(y ~ treatment + age + weight, d) |>
   tbl_regression() |>
-  modify_column_unhide(column = std.error) |>
-  modify_caption("Adjusted regression")
-```
+  modify_column_unhide(column = std.error)
 
-```{r}
-#| code-fold: true
-#| message: false
-#| warning: false
 d |>
   mutate(
     p = glm(treatment ~ weight + age, data = d, family = binomial) |> predict(type = "response"),
@@ -584,12 +571,9 @@ tibble(
   SE = round(x$std.wt, 3),
   `95% CI` = glue::glue("{round(x$est.wt - 1.96 * x$std.wt, 1)}, {round(x$est.wt + 1.96 * x$std.wt, 1)}"),
   `p-value` = "<0.001"
-) |>
-  knitr::kable(caption = "Propensity score weighted regression")
+) |> 
+  knitr::kable()
 ```
-
-Three ways to estimate a causal effect in a non-randomized setting
-:::
 
 First, let's look at @tbl-panel-2-1.
 Here, we see that the unadjusted effect is *biased* (it differs from the true effect, 1, and the true effect is *not* contained in the reported 95% confidence interval).
