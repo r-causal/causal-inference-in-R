@@ -53,7 +53,7 @@ book:
       - chapters/14-categorical-exposures.qmd
       - chapters/15-g-comp.qmd
       - chapters/16-interaction.qmd
-      - chapters/17-missingness.qmd
+      - chapters/17-missingness-and-measurement.qmd
       - chapters/18-longitudinal.qmd
       - chapters/19-survival.qmd
       - chapters/20-mediation.qmd
