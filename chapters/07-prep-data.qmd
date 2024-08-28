@@ -2,6 +2,12 @@
 
 {{< include 00-setup.qmd >}}
 
+```{r}
+#| echo: false
+# TODO: remove when first edition complete
+status("polishing")
+```
+
 ## Introduction to the data {#sec-data}
 
 Throughout this book we will be using data obtained from [Touring Plans](https://touringplans.com).

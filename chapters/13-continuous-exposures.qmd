@@ -2,6 +2,12 @@
 
 {{< include 00-setup.qmd >}}
 
+```{r}
+#| echo: false
+# TODO: remove when first edition complete
+status("wip")
+```
+
 ## Calculating propensity scores for continuous exposures
 
 Propensity scores generalize to many other types of exposures, including continuous exposures.

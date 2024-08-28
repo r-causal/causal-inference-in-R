@@ -2,6 +2,12 @@
 
 {{< include 00-setup.qmd >}}
 
+```{r}
+#| echo: false
+# TODO: remove when first edition complete
+status("complete")
+```
+
 ## The Causal Quartet
 
 We now have the tools to look at something we've alluded to thus far in the book: causal inference is not (just) a statistical problem.

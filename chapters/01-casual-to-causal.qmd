@@ -4,6 +4,12 @@
 
 {{< include 00-setup.qmd >}}
 
+```{r}
+#| echo: false
+# TODO: remove when first edition complete
+status("complete")
+```
+
 ## Casual inference
 
 The heart of causal analysis is the causal question; it dictates what data we analyze, how we analyze it, and to which populations our inferences apply.

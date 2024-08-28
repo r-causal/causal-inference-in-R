@@ -2,6 +2,11 @@
 
 {{< include 00-setup.qmd >}}
 
+```{r}
+#| echo: false
+# TODO: remove when first edition complete
+status("polishing")
+```
 
 ## Randomized trials {#sec-rand-trials}
 

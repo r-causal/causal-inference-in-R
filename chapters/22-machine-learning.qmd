@@ -2,6 +2,12 @@
 
 {{< include 00-setup.qmd >}}
 
+```{r}
+#| echo: false
+# TODO: remove when first edition complete
+status("unstarted")
+```
+
 ## Prediction and causal inference, again
 
 ## Augmented propensity scores

@@ -2,6 +2,12 @@
 
 {{< include 00-setup.qmd >}}
 
+```{r}
+#| echo: false
+# TODO: remove when first edition complete
+status("polishing")
+```
+
 Propensity scores are inherently *balancing* scores. The goal is to *balance* the exposure groups across confounders. 
 
 ## Calculating the standardized mean difference

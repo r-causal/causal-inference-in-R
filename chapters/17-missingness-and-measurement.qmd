@@ -2,6 +2,12 @@
 
 {{< include 00-setup.qmd >}}
 
+```{r}
+#| echo: false
+# TODO: remove when first edition complete
+status("wip")
+```
+
 Missing and mismeasured data are problems for most real datasets that impact all three types of analysis: description, prediction, and causal inference.
 As with analysis, the impact of missingness and mismeasurement is also different across all three, even when we use the same tools (like multiple imputation) to address it.
 At their best, missingness and mismeasurement can worsen the precision and bias of the sample; at their worst, they can create unresolvable selection bias, giving you a completely wrong answer.
