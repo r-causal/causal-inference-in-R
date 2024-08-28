@@ -402,7 +402,7 @@ To do so, we are going to use the `tbl_summary()` function from the `{gtsummary}
 library(gtsummary)
 library(labelled)
 seven_dwarfs_train_2018 <- seven_dwarfs_train_2018 |>
-  mutate(park_close = as.character(park_close)) |> 
+  mutate(park_close = as.character(park_close)) |>
   set_variable_labels(
     park_ticket_season = "Ticket Season",
     park_close = "Close Time",
