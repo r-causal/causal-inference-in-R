@@ -563,46 +563,8 @@ The nominal coverage of the confidence intervals will thus be wrong (they aren't
 
 We've got several ways to address this problem, which we'll discuss in detail in @sec-outcome-model, including the bootstrap, robust standard errors, and manually accounting for the dependence with empirical sandwich estimators.
 For this example, we'll use the bootstrap, a flexible tool that calculates distributions of parameters using re-sampling.
+The bootstrap is a useful tool for many causal models where closed-form solutions to problems (particularly standard errors) don't exist; see @sec-appendix-bootstrap for a description of what it is and how it works.
 We'll use the rsample package from the tidymodels ecosystem to work with bootstrap samples.
-
-::: callout-note
-## The Bootstrap
-
-The bootstrap is a simple but flexible algorithm for calculating statistics using re-sampling with replacement.
-It's handy when a closed-form solution doesn't exist to calculate something, as is commonly the case in causal inference (particularly for standard errors), and when we suspect the parametric calculations are not valid for a given situation.
-
-Bootstrapping in R has a long tradition of writing functions to calculate the statistic of interest, starting with the classic boot package.
-Throughout the book, we'll use rsample, a more modern alternative for re-sampling, but generally, we start with writing a function to calculate the estimate we're interested in.
-
-Let's say we want to calculate `some_statistic()` for `this_data`.
-To bootstrap for *R* samples, we:
-
-1.  Re-sample `this_data` with replacement.
-    The same row may appear multiple (or no) times in a given bootstrap sample, simulating the sampling process in the underlying population.
-
-    ``` r
-    indices <- sample(
-      # create a vector of indices:
-      # 1 through the number of rows
-      seq_len(nrow(this_data)), 
-      # sample a vector indices 
-      # that's the same length as `this_data`
-      size = nrow(this_data), 
-      replace = TRUE
-    )
-    bootstrap_sample <- this_data[indices, ]
-    ```
-
-2.  Fit `some_statistic()` on the `bootstrap_sample`
-
-    ``` r
-    estimate <- some_statistic(bootstrap_sample)
-    ```
-
-3.  Repeat *R* times
-
-We then end up with a distribution of `estimate`s, with which we can calculate population statistics, such as point estimates, standard errors, and confidence intervals.
-:::
 
 Because the bootstrap is so flexible, we need to think carefully about the sources of uncertainty in the statistic we're calculating.
 It might be tempting to write a function like this to fit the statistic we're interested in (the point estimate for `netTRUE`):

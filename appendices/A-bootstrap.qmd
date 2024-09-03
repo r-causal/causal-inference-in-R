@@ -1,0 +1,46 @@
+# The Bootstrap {#sec-appendix-bootstrap}
+
+{{< include ../chapters/00-setup.qmd >}}
+
+```{r}
+#| echo: false
+# TODO: remove when first edition complete
+status("polishing")
+```
+
+## Overview
+
+The bootstrap is a simple but flexible algorithm for calculating statistics using re-sampling with replacement.
+It's handy when a closed-form solution doesn't exist to calculate something, as is commonly the case in causal inference (particularly for standard errors), and when we suspect the parametric calculations are not valid for a given situation.
+
+Bootstrapping in R has a long tradition of writing functions to calculate the statistic of interest, starting with the classic boot package.
+Throughout the book, we'll use rsample, a more modern alternative for re-sampling, but generally, we start with writing a function to calculate the estimate we're interested in.
+
+Let's say we want to calculate `some_statistic()` for `this_data`.
+To bootstrap for *R* samples, we:
+
+1.  Re-sample `this_data` with replacement.
+    The same row may appear multiple (or no) times in a given bootstrap sample, simulating the sampling process in the underlying population.
+
+    ``` r
+    indices <- sample(
+      # create a vector of indices:
+      # 1 through the number of rows
+      seq_len(nrow(this_data)), 
+      # sample a vector indices 
+      # that's the same length as `this_data`
+      size = nrow(this_data), 
+      replace = TRUE
+    )
+    bootstrap_sample <- this_data[indices, ]
+    ```
+
+2.  Fit `some_statistic()` on the `bootstrap_sample`
+
+    ``` r
+    estimate <- some_statistic(bootstrap_sample)
+    ```
+
+3.  Repeat *R* times
+
+We then end up with a distribution of `estimate`s, with which we can calculate population statistics, such as point estimates, standard errors, and confidence intervals.

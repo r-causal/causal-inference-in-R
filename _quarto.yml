@@ -63,7 +63,8 @@ book:
       - chapters/24-evidence.qmd
       
     - chapters/99-references.qmd
-      
+  appendices: 
+    - appendices/A-bootstrap.qmd
 bibliography: citations.bib
 
 format:
