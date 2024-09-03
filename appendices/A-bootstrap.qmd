@@ -5,7 +5,7 @@
 ```{r}
 #| echo: false
 # TODO: remove when first edition complete
-status("polishing")
+status("wip")
 ```
 
 ## Overview
@@ -44,3 +44,18 @@ To bootstrap for *R* samples, we:
 3.  Repeat *R* times
 
 We then end up with a distribution of `estimate`s, with which we can calculate population statistics, such as point estimates, standard errors, and confidence intervals.
+
+
+## Bootstrapping with rsample
+
+## Why does it work?
+
+## Why resampling with replacement?
+
+## How many bootstrapped samples?
+
+## Which confidence intervals to use?
+
+## Effects and normal distributions
+
+## When does the bootstrap fail or not work out of box?
