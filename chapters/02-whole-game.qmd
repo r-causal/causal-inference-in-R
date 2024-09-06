@@ -563,7 +563,7 @@ The nominal coverage of the confidence intervals will thus be wrong (they aren't
 
 We've got several ways to address this problem, which we'll discuss in detail in @sec-outcome-model, including the bootstrap, robust standard errors, and manually accounting for the dependence with empirical sandwich estimators.
 For this example, we'll use the bootstrap, a flexible tool that calculates distributions of parameters using re-sampling.
-The bootstrap is a useful tool for many causal models where closed-form solutions to problems (particularly standard errors) don't exist; see @sec-appendix-bootstrap for a description of what it is and how it works.
+The bootstrap is a useful tool for many causal models where closed-form solutions to problems (particularly standard errors) don't exist or when we want to avoid parametric assumptions inherent to many such solutions; see @sec-appendix-bootstrap for a description of what the bootstrap is and how it works.
 We'll use the rsample package from the tidymodels ecosystem to work with bootstrap samples.
 
 Because the bootstrap is so flexible, we need to think carefully about the sources of uncertainty in the statistic we're calculating.
