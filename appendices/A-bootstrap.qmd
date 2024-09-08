@@ -10,16 +10,16 @@ status("wip")
 
 ## Overview {#sec-boot-alg}
 
-The bootstrap is a simple but flexible algorithm for calculating statistics using re-sampling with replacement.
+The bootstrap is a simple but flexible algorithm for calculating statistics using resampling with replacement.
 It's handy when a closed-form solution doesn't exist to calculate something, as is commonly the case in causal inference (particularly for standard errors), or when we suspect the assumptions used for a parametric approach are not valid for a given situation.
 
 Bootstrapping in R has a long tradition of writing functions to calculate the statistic of interest, starting with the classic boot package.
-Throughout the book, we'll use rsample, a more modern alternative for re-sampling, but generally, we start with writing a function to calculate the estimate we're interested in.
+Throughout the book, we'll use rsample, a more modern alternative for resampling, but generally, we start with writing a function to calculate the estimate we're interested in.
 
 Let's say we want to calculate `some_statistic()` for `this_data`.
 To bootstrap for *R* samples, we:
 
-1.  Re-sample `this_data` with replacement.
+1. Resample` this_data` with replacement.
     The same row may appear multiple (or no) times in a given bootstrap sample, simulating the sampling process in the underlying population.
 
     ``` r
@@ -48,15 +48,15 @@ We then end up with a distribution of `estimate`s, with which we can calculate p
 ## Bootstrapping with rsample
 
 rsample is a resampling package from the tidymodels framework, but it works well for problems outside of tidymodels.
-It has a little more overhead than the boot package, but as a consequence, it's also more flexible.
+It has a little more overhead than the boot package, but consequently, it's more flexible.
 
 Let's say we have some sampled data with three variables, `x`, `z`, and `y`, and we want to calculate confidence intervals for the coefficients of `x` and `z` in a linear regression with the outcome as `y`.
-In addition to using the closed-form solutions for calculating them that come with R, we can use the bootstrap.
+We can calculate them using the bootstrap (in addition to the closed-form solutions provided with R).
 
 ```{r}
-set.seed(134)
 library(tidyverse)
 library(rsample)
+set.seed(1)
 n <- 1000
 sampled_data <- tibble(
   z = rnorm(n),
@@ -67,7 +67,7 @@ sampled_data <- tibble(
 lm(y ~ x + z, data = sampled_data)
 ```
 
-First, we use the `bootstraps()` function to create a nested dataset with each of the resampled datasets stored as `rsplit` objects.
+First, we use the `bootstraps()` function to create a nested dataset with each resampled dataset stored as `rsplit` objects.
 
 ```{r}
 bootstrapped_samples <- bootstraps(sampled_data, times = 10)
@@ -76,7 +76,7 @@ bootstrapped_samples$splits[[1]]
 ```
 
 Here, the first bootstrapped dataset contains `r n_distinct(bootstrapped_samples$splits[[1]]$in_id)` of the original rows, and `r n - n_distinct(bootstrapped_samples$splits[[1]]$in_id)` were not included.
-If we look at the resulting data frame, there are `r n` rows, the same as the original dataset.
+If we look at the resulting data frame, we see `r n` rows, the same as in the original dataset.
 That means that some of the included rows are there more than once; each row is sampled *with replacement*.
 This spread is close to what we expect on average: about two-thirds of the original dataset ends up in each bootstrapped dataset.
 
@@ -105,7 +105,7 @@ bootstrapped_samples$splits[[1]] |>
   fit_lm()
 ```
 
-Rather than doing this one-by-one, we'll use iteration to run the regression on each sample.
+Rather than doing this one by one, we'll use iteration to run the regression on each sample.
 `bootstrapped_samples$splits` is a list, so we could iterate over that with `map()` and get a list back.
 `bootstrapped_samples$splits` is specifically a list-column, a list that is a column in a data frame.
 We'll take advantage of the existing structure in `bootstrapped_samples` to store the results as another list-column.
@@ -122,7 +122,8 @@ Here's the model from the last sample.
 bootstrapped_samples$lm_results[[10]]
 ```
 
-Now, we have `r n` estimates of each coefficient in the model.
+Now, we have ten estimates of each of the three coefficients in the model (the intercept, `x`, and `z`).
+@fig-r-10 presents their distributions.
 
 ```{r}
 library(broom)
@@ -132,9 +133,13 @@ bootstrapped_samples <- bootstrapped_samples |>
 unnested_results <- bootstrapped_samples |> 
   select(id, tidy_results) |> 
   unnest(tidy_results)
+
+unnested_results
 ```
 
 ```{r}
+#| label: fig-r-10
+#| fig-cap: "The bootstrapped distributions of the coefficients from the model `lm(y ~ x + z, data = .df)`. The distributions were calculated with 10 bootstrapped samples."
 unnested_results |> 
   ggplot(aes(estimate)) + 
   geom_density(fill = "steelblue", color = NA) +
@@ -142,10 +147,15 @@ unnested_results |>
 ```
 
 The more times we resample, the smoother the distribution of estimates.
-Here's 1000 times.
+Here's 1000 times (@fig-r-1000).
 
 ```{r}
-bootstrapped_samples_1k <- bootstraps(sampled_data, times = 1000) |> 
+#| label: fig-r-1000
+#| fig-cap: "The bootstrapped distributions of the coefficients from the model `lm(y ~ x + z, data = .df)`. The distributions were calculated with 1000 bootstrapped samples."
+bootstrapped_samples_1k <- bootstraps(
+  sampled_data, 
+  times = 1000
+) |> 
   mutate(
     lm_results = map(splits, fit_lm),
     tidy_results = map(lm_results, tidy)
@@ -159,30 +169,29 @@ bootstrapped_samples_1k |>
   facet_wrap(~ term, scales = "free")
 ```
 
-Now we can calculate information about the spread of these coefficients using the confidence interval functions in rsample, which follow the pattern `int_*(nested_results, list_column_name)`.
-rsample expects the result to be either the results of `broom::tidy()` or a dataframe with similar columns.
+We can calculate information about the spread of these coefficients using the confidence interval functions in rsample, which follow the pattern `int_*(nested_results, list_column_name)`.
+rsample expects the result to be either the results of `broom::tidy()` or a data frame with similar columns.
 
-Let's get simple percentile-based confidence intervals.
-These will get the lower 2.5% quantile and the upper 97.5% quantile.
+Let's get simple percentile-based confidence intervals with `int_pctl()`.
+These will get the lower 2.5% and upper 97.5% quantiles.
 
 ```{r}
 int_pctl(bootstrapped_samples_1k, tidy_results)
 ```
 
-Now we've got a data frame with each of our estimates and their bootstrapped confidence intervals.
-The remarkable thing about the bootstrap is that we can take this recipe and apply it to an astonishing array of statistical problems, including to problems which would otherwise be impossible to solve.
+Now, we've got a data frame with each of our estimates and their bootstrapped confidence intervals.
+The remarkable thing about the bootstrap is that we can apply this recipe to an astonishing array of statistical problems, including problems that would otherwise be impossible to solve.
 
 ## Why does it work?
 
 Why does this remarkably simple algorithm work so well for so many problems?
-For the technical details, we direct you to the original paper and book on the bootstrap (@TODO).
-But let's try to build some intuition for what's happening.
+We direct you to the original paper and book on the bootstrap [@efron1979; @EfroTibs93] for the technical details.
+But let's build some intuition for what's happening.
 
 Consider a population we want to understand.
-Sometimes, we have data on every observation in the population, but often we need to sample the population, either out of necessity or efficiency.
+Sometimes, we have data on every observation in the population, but often, we need to sample the population, either out of necessity or efficiency.
 
 ```{r}
-set.seed(134)
 library(tidyverse)
 n <- 1000000
 population <- tibble(
@@ -192,10 +201,10 @@ population <- tibble(
 )
 ```
 
-`population` has a million observations, but we're going to sample 200 observations randomly from the whole population.
+`population` has a million observations, but we will randomly sample 200 observations from the whole population.
 If we need to conduct more sampling, we do so independently of the original sample.
 A given observation may end up in more than one study.
-Let's imagine that 20 such studies have been done, all from the same population.
+Suppose 20 such studies have been done, all from the same population.
 
 ```{r}
 samples <- map(1:20, ~ population[sample(n, size = 200), ]) |> 
@@ -204,9 +213,12 @@ samples <- map(1:20, ~ population[sample(n, size = 200), ]) |>
 ```
 
 Because of random sampling variation, each sample's mean of `x` is slightly different than in `population`, which is `r mean(population$x)`.
-Each of these sample estimates hovers around the population estimate.
+Each of these sample estimates hovers around the population estimate (@fig-pop-samples).
 
 ```{r}
+#| label: fig-pop-samples
+#| fig-cap: "The distributions of the sample means of `x` for twenty samples. Each sample is sampled from `population` and has a sample size of 200."
+#| warning: false
 sample_means <- samples |> 
   group_by(sample) |> 
   summarize(across(everything(), mean))
@@ -214,13 +226,17 @@ sample_means <- samples |>
 samples |> 
   ggplot(aes(x = x)) +
   geom_histogram() +
-  geom_vline(data = sample_means, aes(xintercept = x), color = "firebrick") + 
+  geom_vline(
+    data = sample_means, 
+    aes(xintercept = x), 
+    color = "firebrick"
+  ) + 
   facet_wrap(~ sample)
 ```
 
 You may notice that sampling from the population bears a similarity to the sampling we do in the bootstrap.
 We're treating the sample as representative of the population from which it comes.
-This helps us translate the distribution we see in terms of the original population, much the same we as we get when we use parametric confidence intervals.
+This helps us translate the distribution we see into terms of the original population, much the same way we get when we use parametric confidence intervals.
 A key difference from sampling the population is that the bootstrap will determine the spread around the *sample* estimate, not the population estimate.
 Let's look at sample 8 a bit closer.
 
@@ -233,10 +249,13 @@ sample_8 |>
 ```
 
 The sample mean of `x` is `r round(mean(sample_8$x), 2)`.
-Now let's bootstrap this sample and calculate the mean of `x` for each bootstrapped sample.
-The distribution of bootstrapped estimates fall symmetrically around the sample mean.
+Now, let's bootstrap this sample and calculate the mean of `x` for each bootstrapped sample.
+The distribution of bootstrapped estimates in @fig-boot-x falls symmetrically around the sample mean.
 
 ```{r}
+#| label: fig-boot-x
+#| fig-cap: "The bootstrapped distribution of x for a single sample. While we are simulating the sampling process from the underlying population, the distribution is centered around the sample mean, not the population mean."
+#| warning: false
 calculate_mean <- function(.df, what = "x", ...) {
   .df <- analysis(.df)
   t <- t.test(.df[[what]])
@@ -265,11 +284,11 @@ s8_boots |>
 
 Even though the distribution of estimates is around the sample mean, the bootstrap, by simulating the process of sampling from the population, grants us a population interpretation of the confidence intervals.
 A confidence interval is a frequentist concept related to multiple samplings from the same population.
-For 95% confidence intervals, 95% of confidence intervals estimated from a sample will contain the true population estimate.
+For 95% confidence intervals, 95% of confidence intervals estimated from samples will contain the actual population estimate.
 When this is true (e.g., 95 of 100 studies sampled from the population estimate confidence intervals that contain the population estimate), we say that the confidence intervals have *nominal* coverage.
 
 For instance, let's get the proportion of confidence intervals that contain the population mean of `x`.
-We'll also increase the number of samples to get a better approximation of the coverage.
+We'll also increase the number of samples to approximate the coverage better.
 (The more we increase the number of samples, the closer we'll get to 95%.)
 
 ```{r}
@@ -291,7 +310,7 @@ between(
   mean()
 ```
 
-Bootstrapping allows us to attain confidence intervals with nominal coverage under many circumstances, the same as we see with the well-defined parametric approach below.
+Bootstrapping allows us to attain confidence intervals with nominal coverage under many circumstances, the same as we see with the well-defined parametric approach above.
 We won't run this since it requires `r_bootstraps * n_samples` calculations, but the results are similar.
 
 ```{r}
@@ -319,22 +338,27 @@ coverage <- between(
 
 ## Why resampling with replacement?
 
-People first encountering the bootstrap are often surprised that we are resampling with replacement and that the same observation may be in a bootstrapped sample more than once.
+People first encountering the bootstrap are often surprised to learn that we are resampling with replacement and that the same observation may appear in a bootstrapped sample more than once.
 The mathematic details are in the sources we cite above, but there are a few practical reasons to help build your intuition about why resampling with replacement works.
-Firstly, if you sampled *without* replacement, and you would end up with the same estimate every time, because you'd just have the original dataset.
+Firstly, if you sampled *without* replacement, you would end up with the same estimate every time because you'd just have the original dataset.
 Jittering the samples varies the estimate.
-You could also sub-sample: sample a dataset smaller than the original dataset.
-But this doesn't work as well as resampling with replacement, even though it can be useful for other problems.
-This relates to the original population and how it's sampled.
+You could also sub-sample: sample a dataset *without* replacement smaller than the original dataset.
+However, this doesn't work as well as resampling with replacement, although it can be useful for other problems.
+The reason why relates to the original population and how it's sampled.
 Each sample is independent of one another, meaning an individual could end up in more than one sample.
-If you restricted to individuals who were not in previous samples, your sampling scheme would no longer be independent; each sample depends on the previous ones.
-Allowing each *observation* to be independent in sampling also let them represent others like them in the original population, much like what happens when we up-weight samples in inverse probability weighting (see [Chapter -@sec-using-ps]).
+If you restricted the sample to individuals who were not in previous samples, your sampling scheme would no longer be independent; each sample would depend on the previous ones.
+Allowing each observation to be independent in sampling also lets it represent others like it in the original population, much like when we up-weight samples in inverse probability weighting (see [Chapter -@sec-using-ps]).
 
 ## How many bootstrapped samples?
 
-In this book, we use a thousand bootstrapped samples for most problems as a balance of stability and computational speed. How many should you use in your real analysis?
+In this book, we use a thousand bootstrapped samples for most problems to balance stability and computational speed.
+How many should you use in your real analysis?
 
-You'll often see older recommendations in the tens or hundreds of samples, but these are from a time when processing power was more limited. On modern computers (even personal laptops), it's practical to do many more. @TODO suggests a thousand samples for rough estimates and ten to fifteen thousand samples for when accuracy matters. By "accuracy", we mean the minimal amount of variance that is due to the simulation of the bootstrap. A practical test for this is to try out `R` samples more than once and increase `R` until you are satisfied with the degree of stability in your results. 
+You'll often see older recommendations in the tens or hundreds of samples, but these are from a time when processing power was more limited.
+On modern computers (even personal laptops), it's practical to do many more.
+@Hesterberg2015 suggests a thousand samples for rough estimates and ten to fifteen thousand samples for when accuracy matters.
+By "accuracy," we mean minimal variance due to the bootstrap simulation itself.
+A practical test for this is to try out `R` samples more than once and increase `R` until you are satisfied with the degree of stability in your results.
 
 ::: callout-tip
 Each bootstrap calculation is independent of the other, meaning that for a large number of samples, you might want to use parallel processing.
@@ -342,9 +366,11 @@ With the rsample approach we've shown, you can use furrr as a parallelized drop-
 furrr is a purrr-like API to the future framework.
 
 ```{r}
+#| eval: false
 library(future)
 library(furrr)
 n_cores <- availableCores() - 1
+plan(multisession, workers = n_cores)
 
 s8_boots <- s8_boots |> 
   mutate(boot_mean_x = future_map(splits, calculate_mean))
@@ -356,29 +382,31 @@ s8_boots <- s8_boots |>
 Thus far, we've been using percentile-based confidence intervals.
 These are literally the 2.5% and 97.5% percentiles of the distribution of bootstrapped estimates.
 It's fast, simple, and intuitive.
-But there are several other types of bootstrap confidence intervals, and they can have better nominal coverage under some circumstances.
+However, several other types of bootstrap confidence intervals exist, and they can have better nominal coverage under some circumstances.
 rsample includes two others at the time of this writing: `int_t()` and `int_bca()`.
 `int_t()` calculates confidence intervals from the bootstrapped T-statistic.
-`int_bca()` calculates bias-corrected and accelerated confidence intervals. 
+`int_bca()` calculates bias-corrected and accelerated confidence intervals.
 
-For these types of confidence intervals, you need estimates from the original data set.
+You need estimates from the original data set for these types of confidence intervals.
 You can tell rsample to include the original one with `bootstraps(data, times = 1000, apparent = TRUE)` (we've already done that for `s8_boots`).
 That will result in 1001 datasets: the original plus 1000 bootstrapped datasets.
-For `int_bca()`, you also need to provide the function (to the `.fn` argument) you used to calculate the estimate, in this case `calculate_mean`.
+For `int_bca()`, you also need to provide the function (to the `.fn` argument) you used to calculate the estimate, in this case, `calculate_mean`.
 
 ```{r}
-cis <- bind_rows(
+ints <- bind_rows(
   int_pctl(s8_boots, boot_mean_x),
   int_t(s8_boots, boot_mean_x),
   int_bca(s8_boots, boot_mean_x, .fn = calculate_mean)
 )
 
-cis
+ints
 ```
 
-In this case, the confidence intervals are very close. That's because they all perform well for the normally distributed data like `x`.
+In this case, the confidence intervals are very close.
+That's because they all perform well for the normally distributed data like `x`.
 
-A subtle detail of nominal coverage in confidence intervals is that the proportion of estimates that fall outside of the intervals should be roughly the same on either side of the confidence intervals. 
+A subtle detail of nominal coverage in confidence intervals is that the proportion of estimates that fall outside of the intervals should be roughly the same on either side of the confidence intervals.
+We see that, for instance, with confidence intervals from the traditional t-test for `x`.
 
 ```{r}
 c(
@@ -387,19 +415,39 @@ c(
 )
 ```
 
-This is not true for many types of confidence intervals when the data are skewed. For example, a right-skewed distribution may result nominal coverage of 95% for intervals but with 1% of the values below the lower bound (the left side of the distribution) and 4% of above the upper bound (the right side of the distribution). 
+This symmetry doesn't hold for many types of confidence intervals when the data are skewed.
+For example, a right-skewed distribution may result in nominal coverage of 95% for intervals but with 1% of the values below the lower bound (the left side of the distribution) and 4% above the upper bound (the right side of the distribution).
 
-BCa intervals and, to some degree bootstrap t-statistic intervals, work better on skewed data. Notably, means approach the normal distribution as the sample size increases due to the central limit theorem regardless of the distribution of the data itself (although for skewed distributions, the required sample size can be in the thousands rather than the commonly cited 30). The same is often true of coefficients in regression models, which are conditional means. If we think the central limit theorem has taken effect, percentile and other types of confidence intervals will likely have good coverage, too.
+BCa intervals and bootstrap t-statistic intervals work better on skewed data.
+Notably, means approach the normal distribution as the sample size increases due to the central limit theorem regardless of the data's distribution (although for skewed distributions, the required sample size can be in the thousands rather than the commonly cited 30).
+The same is often true of coefficients in regression models, which are conditional means.
+If the central limit theorem has taken effect, percentiles and other types of confidence intervals will likely also have good coverage.
 
-Percentile and BCa intervals are *transformation invariant* meaning that you can transform the estimate you bootstrapped and get the same result had you bootstrapped the transformation. An example of this is the log-odds ratio versus the odds ratio. With a bootstrapped t-statistic interval, you may end up with different results depending on which you actually bootstrapped. So, if you're working with data you want to view on more than one scale, you might want to use one of these.
+::: callout-tip
+When you have a result where you have reason to believe the bootstrapped distribution should look a certain way, such as means being normally distributed, it offers a potential diagnosis for your analysis. For instance, in causal inference, if you see a coefficient that is skewed or has another unexpected distribution, that may be a sign that you have a violation of the positivity assumption (see [Chapter -@sec-counterfactuals]). Keep an eye out for unexpected instability between bootstrapped samples.
+:::
 
-A final consideration is computational speed. Percentiles are extremely fast and don't require additional information. Bootstrap t-intervals and BCa intervals require information from the original dataset. The BCa is the most computationally intensive of the three. For many problems, the difference is negligible on modern computers, but it may be work using percentile confidence intervals when you think they'd work well and BCa is taking a particularly long time.
+Percentile and BCa intervals are transformation invariant, meaning that you can transform the estimate you bootstrapped and get the same result as if you had bootstrapped the transformation.
+An example of this is the log odds ratio versus the odds ratio.
+With a bootstrapped t-statistic interval, you may end up with different results depending on which you actually bootstrapped.
+So, if you're working with data you want to view on more than one scale, you might want to use one of these.
 
-## When does the bootstrap not work out of box?
+A final consideration is computational speed.
+Percentiles are extremely fast and don't require additional information.
+Bootstrap t-intervals and BCa intervals require information from the original dataset.
+The BCa is the most computationally intensive of the three.
+For many problems, the difference in speed is negligible on modern computers, but it may be useful to use percentile confidence intervals when you think they'd work well and BCa is taking a particularly long time.
 
-The algorithm that we've presented here is simple and powerful for a great many calculations, but there are some types of estimates that are known not to work with the bootstrap or require a variation of the algorithm to calculate nominal confidence intervals. A common example of this is extrema, such as the minimum or maximum value. Bootstrapping the minimum of `x`, for example, results in a strange distribution.
+## When does the bootstrap not work out of the box?
+
+The algorithm we've presented here is simple and powerful for many calculations, but some types of estimates are known not to work with the bootstrap or require a variation of the algorithm to calculate nominal confidence intervals.
+A typical example of this is extrema, such as the minimum or maximum value.
+For example, bootstrapping the minimum of `x` results in a strange distribution.
 
 ```{r}
+#| label: fig-boot-min
+#| fig-cap: "The bootstrapped distribution of the sample minimum of `x`. The bootstrap struggles to calculate a distribution for extrema."
+#| warning: false
 calculate_min <- function(.df, what = "x", ...) {
   .df <- analysis(.df)
   
@@ -418,4 +466,7 @@ s8_boots |>
   geom_histogram()
 ```
 
-Other common situations where the bootstrap doesn't work out-of-box is regularized regression (like lasso regression) and data with strong correlational structure, like time series. Often, there exists a modified version of the bootstrap that does work for a given problem. Thomas Lumley, author of the survey package and an R Core member, has an excellent summary of common situations where the bootstrap doesn't work out of box (and some examples of modified bootstraps that do work) [@Lumley_2017]. Also see @TODO.
+Other common situations where the bootstrap doesn't work out of the box are regularized regression (like lasso regression) and data with a strong correlational structure, like time series.
+Often, there exists a modified version of the bootstrap that does work for a given problem.
+Thomas Lumley, author of the survey package and an R Core member, has an excellent summary of common situations where the bootstrap doesn't work out of the box (and some examples of modified bootstraps that work in those scenarios) [@Lumley_2017].
+Also see @Hesterberg2015.
