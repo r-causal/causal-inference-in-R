@@ -417,7 +417,7 @@ boots <- bootstraps(wait_times, times = 1000, apparent = TRUE) |>
   mutate(
     models = map(
       splits,
-      \(.x) analysis(.x) |>
+      \(.x) as.data.frame(.x) |>
         fit_models() |>
         simulate_process() |>
         compute_stats() |>

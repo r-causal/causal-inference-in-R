@@ -573,9 +573,9 @@ It might be tempting to write a function like this to fit the statistic we're in
 #| eval = FALSE
 library(rsample)
 
-fit_ipw_not_quite_rightly <- function(split, ...) {
-  # get bootstrapped data sample with `rsample::analysis()`
-  .df <- analysis(split)
+fit_ipw_not_quite_rightly <- function(.split, ...) {
+  # get bootstrapped data frame
+  .df <- as.data.frame(.split)
 
   # fit ipw model
   lm(malaria_risk ~ net, data = .df, weights = wts) |>
@@ -591,9 +591,9 @@ For every bootstrap sample, we need to fit the propensity score model, calculate
 ```{r}
 library(rsample)
 
-fit_ipw <- function(split, ...) {
-  # get bootstrapped data sample with `rsample::analysis()`
-  .df <- analysis(split)
+fit_ipw <- function(.split, ...) {
+  # get bootstrapped data frame
+  .df <- as.data.frame(.split)
 
   # fit propensity score model
   propensity_model <- glm(
@@ -837,9 +837,9 @@ mosquito_dag_full |>
 
 ```{r}
 #| include: false
-fit_ipw_full <- function(split, ...) {
-  # get bootstrapped data sample with `rsample::analysis()`
-  .df <- analysis(split)
+fit_ipw_full <- function(.split, ...) {
+  # get bootstrapped data frame
+  .df <- as.data.frame(.split)
 
   # fit propensity score model
   propensity_model <- glm(

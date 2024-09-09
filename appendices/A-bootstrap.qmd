@@ -256,8 +256,8 @@ The distribution of bootstrapped estimates in @fig-boot-x falls symmetrically ar
 #| label: fig-boot-x
 #| fig-cap: "The bootstrapped distribution of x for a single sample. While we are simulating the sampling process from the underlying population, the distribution is centered around the sample mean, not the population mean."
 #| warning: false
-calculate_mean <- function(.df, what = "x", ...) {
-  .df <- analysis(.df)
+calculate_mean <- function(.split, what = "x", ...) {
+  .df <- as.data.frame(.split)
   t <- t.test(.df[[what]])
   
   tibble(
@@ -448,8 +448,8 @@ For example, bootstrapping the minimum of `x` results in a strange distribution.
 #| label: fig-boot-min
 #| fig-cap: "The bootstrapped distribution of the sample minimum of `x`. The bootstrap struggles to calculate a distribution for extrema."
 #| warning: false
-calculate_min <- function(.df, what = "x", ...) {
-  .df <- analysis(.df)
+calculate_min <- function(.split, what = "x", ...) {
+  .df <- as.data.frame(.split)
   
   tibble(
     term = paste("min of", what), 
