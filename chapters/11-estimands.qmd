@@ -854,7 +854,7 @@ Below is a table summarizing the estimands and methods for estimating them (incl
 |          |                                  |                                                                                                                                                            |                                               | `propensity::wt_ato()` |
 +----------+----------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------+-----------------------------------------------+------------------------+
 
-## What estimand does multivariable linear regression produce?
+## What estimand does multivariable linear regression target?
 
 In @sec-standard, we discussed when standard methods like multivariable linear regression succeed and fail.
 But what estimand does a regression estimator like `lm(outcome ~ exposure + confounder)` estimate?
