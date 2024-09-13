@@ -29,6 +29,7 @@ Imports:
     janitor,
     kableExtra,
     labelled,
+    lmw,
     lubridate,
     MatchIt,
     patchwork,
