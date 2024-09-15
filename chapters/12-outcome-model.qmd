@@ -108,8 +108,9 @@ The second option is computationally the easiest, but tends to overestimate the 
 1. Create a function to run your analysis once on a sample of your data
 
 ```{r}
-fit_ipw <- function(split, ...) {
-  .df <- analysis(split)
+fit_ipw <- function(.split, ...) {
+  # get bootstrapped data frame
+  .df <- as.data.frame(.split)
 
   # fit propensity score model
   propensity_model <- glm(
