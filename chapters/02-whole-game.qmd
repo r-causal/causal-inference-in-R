@@ -737,7 +737,7 @@ tipping_points |>
 If we had an unmeasured confounder where the standardized mean difference between exposure groups was 1, the confounder would need to decrease malaria risk by about `r round(tipping_points$confounder_outcome_effect[[1]], digits = 1)`.
 That's pretty strong relative to other effects, but it may be feasible if we have an idea of something we might have missed.
 Conversely, suppose the relationship between net use and the unmeasured confounder is very strong, with a mean scaled difference of 5.
-In that case, the confounder-malaria relationship only needs to be `r round(tipping_points$exposure_confounder_effect[[5]], digits = 1)`.
+In that case, the confounder-malaria relationship only needs to be `r round(tipping_points$confounder_outcome_effect[[5]], digits = 1)`.
 Now we have to consider: which of these scenarios are plausible given our domain knowledge and the effects we see in this analysis?
 
 Now let's consider a much more specific sensitivity analysis.
