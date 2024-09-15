@@ -17,10 +17,10 @@ Bootstrapping in R has a long tradition of writing functions to calculate the st
 Throughout the book, we'll use rsample, a more modern alternative for resampling, but generally, we start with writing a function to calculate the estimate we're interested in.
 
 Let's say we want to calculate `some_statistic()` for `this_data`.
-To bootstrap for *R* samples, we:
+To bootstrap for *R* resamples, we:
 
 1. Resample` this_data` with replacement.
-    The same row may appear multiple (or no) times in a given bootstrap sample, simulating the sampling process in the underlying population.
+    The same row may appear multiple (or no) times in a given bootstrap resample, simulating the sampling process in the underlying population.
 
     ``` r
     indices <- sample(
@@ -32,13 +32,13 @@ To bootstrap for *R* samples, we:
       size = nrow(this_data), 
       replace = TRUE
     )
-    bootstrap_sample <- this_data[indices, ]
+    bootstrap_resample <- this_data[indices, ]
     ```
 
-2.  Fit `some_statistic()` on the `bootstrap_sample`
+2.  Fit `some_statistic()` on the `bootstrap_resample`
 
     ``` r
-    estimate <- some_statistic(bootstrap_sample)
+    estimate <- some_statistic(bootstrap_resample)
     ```
 
 3.  Repeat *R* times
@@ -70,27 +70,27 @@ lm(y ~ x + z, data = sampled_data)
 First, we use the `bootstraps()` function to create a nested dataset with each resampled dataset stored as `rsplit` objects.
 
 ```{r}
-bootstrapped_samples <- bootstraps(sampled_data, times = 10)
+bootstrapped_resamples <- bootstraps(sampled_data, times = 10)
 
-bootstrapped_samples$splits[[1]]
+bootstrapped_resamples$splits[[1]]
 ```
 
-Here, the first bootstrapped dataset contains `r n_distinct(bootstrapped_samples$splits[[1]]$in_id)` of the original rows, and `r n - n_distinct(bootstrapped_samples$splits[[1]]$in_id)` were not included.
+Here, the first bootstrapped dataset contains `r n_distinct(bootstrapped_resamples$splits[[1]]$in_id)` of the original rows, and `r n - n_distinct(bootstrapped_resamples$splits[[1]]$in_id)` were not included.
 If we look at the resulting data frame, we see `r n` rows, the same as in the original dataset.
 That means that some of the included rows are there more than once; each row is sampled *with replacement*.
 This spread is close to what we expect on average: about two-thirds of the original dataset ends up in each bootstrapped dataset.
 
 ```{r}
-boot_sample <- bootstrapped_samples$splits[[1]] |> 
+boot_resample <- bootstrapped_resamples$splits[[1]] |> 
   as.data.frame()
 
-boot_sample
+boot_resample
 ```
 
 As described in the algorithm in @sec-boot-alg, we'll fit the model on each bootstrapped dataset.
 
 ```{r}
-lm(y ~ x + z, data = boot_sample)
+lm(y ~ x + z, data = boot_resample)
 ```
 
 Let's express this as a function.
@@ -101,25 +101,25 @@ fit_lm <- function(.split) {
   lm(y ~ x + z, data = .df)
 }
 
-bootstrapped_samples$splits[[1]] |>
+bootstrapped_resamples$splits[[1]] |>
   fit_lm()
 ```
 
-Rather than doing this one by one, we'll use iteration to run the regression on each sample.
-`bootstrapped_samples$splits` is a list, so we could iterate over that with `map()` and get a list back.
-`bootstrapped_samples$splits` is specifically a list-column, a list that is a column in a data frame.
-We'll take advantage of the existing structure in `bootstrapped_samples` to store the results as another list-column.
+Rather than doing this one by one, we'll use iteration to run the regression on each resample.
+`bootstrapped_resamples$splits` is a list, so we could iterate over that with `map()` and get a list back.
+`bootstrapped_resamples$splits` is specifically a list-column, a list that is a column in a data frame.
+We'll take advantage of the existing structure in `bootstrapped_resamples` to store the results as another list-column.
 
 ```{r}
-bootstrapped_samples <- bootstrapped_samples |> 
+bootstrapped_resamples <- bootstrapped_resamples |> 
   mutate(lm_results = map(splits, fit_lm))
 ```
 
-Now each element of `lm_results` is an `lm` object---the regression fit to the bootstrapped sample.
-Here's the model from the last sample.
+Now each element of `lm_results` is an `lm` object---the regression fit to the bootstrapped resample.
+Here's the model from the last resample.
 
 ```{r}
-bootstrapped_samples$lm_results[[10]]
+bootstrapped_resamples$lm_results[[10]]
 ```
 
 Now, we have ten estimates of each of the three coefficients in the model (the intercept, `x`, and `z`).
@@ -127,10 +127,10 @@ Now, we have ten estimates of each of the three coefficients in the model (the i
 
 ```{r}
 library(broom)
-bootstrapped_samples <- bootstrapped_samples |> 
+bootstrapped_resamples <- bootstrapped_resamples |> 
   mutate(tidy_results = map(lm_results, tidy))
 
-unnested_results <- bootstrapped_samples |> 
+unnested_results <- bootstrapped_resamples |> 
   select(id, tidy_results) |> 
   unnest(tidy_results)
 
@@ -139,7 +139,7 @@ unnested_results
 
 ```{r}
 #| label: fig-r-10
-#| fig-cap: "The bootstrapped distributions of the coefficients from the model `lm(y ~ x + z, data = .df)`. The distributions were calculated with 10 bootstrapped samples."
+#| fig-cap: "The bootstrapped distributions of the coefficients from the model `lm(y ~ x + z, data = .df)`. The distributions were calculated with 10 bootstrapped resamples."
 unnested_results |> 
   ggplot(aes(estimate)) + 
   geom_density(fill = "steelblue", color = NA) +
@@ -151,8 +151,8 @@ Here's 1000 times (@fig-r-1000).
 
 ```{r}
 #| label: fig-r-1000
-#| fig-cap: "The bootstrapped distributions of the coefficients from the model `lm(y ~ x + z, data = .df)`. The distributions were calculated with 1000 bootstrapped samples."
-bootstrapped_samples_1k <- bootstraps(
+#| fig-cap: "The bootstrapped distributions of the coefficients from the model `lm(y ~ x + z, data = .df)`. The distributions were calculated with 1000 bootstrapped resamples."
+bootstrapped_resamples_1k <- bootstraps(
   sampled_data, 
   times = 1000
 ) |> 
@@ -161,7 +161,7 @@ bootstrapped_samples_1k <- bootstraps(
     tidy_results = map(lm_results, tidy)
   )
 
-bootstrapped_samples_1k |> 
+bootstrapped_resamples_1k |> 
   select(id, tidy_results) |> 
   unnest(tidy_results) |> 
   ggplot(aes(estimate)) + 
@@ -176,7 +176,7 @@ Let's get simple percentile-based confidence intervals with `int_pctl()`.
 These will get the lower 2.5% and upper 97.5% quantiles.
 
 ```{r}
-int_pctl(bootstrapped_samples_1k, tidy_results)
+int_pctl(bootstrapped_resamples_1k, tidy_results)
 ```
 
 Now, we've got a data frame with each of our estimates and their bootstrapped confidence intervals.
@@ -235,7 +235,7 @@ samples |>
 ```
 
 You may notice that sampling from the population bears a similarity to the sampling we do in the bootstrap.
-We're treating the sample as representative of the population from which it comes.
+We're treating the resample as representative of the population from which it comes.
 This helps us translate the distribution we see into terms of the original population, much the same way we get when we use parametric confidence intervals.
 A key difference from sampling the population is that the bootstrap will determine the spread around the *sample* estimate, not the population estimate.
 Let's look at sample 8 a bit closer.
@@ -249,7 +249,7 @@ sample_8 |>
 ```
 
 The sample mean of `x` is `r round(mean(sample_8$x), 2)`.
-Now, let's bootstrap this sample and calculate the mean of `x` for each bootstrapped sample.
+Now, let's bootstrap this sample and calculate the mean of `x` for each bootstrapped resample.
 The distribution of bootstrapped estimates in @fig-boot-x falls symmetrically around the sample mean.
 
 ```{r}
@@ -288,7 +288,7 @@ For 95% confidence intervals, 95% of confidence intervals estimated from samples
 When this is true (e.g., 95 of 100 studies sampled from the population estimate confidence intervals that contain the population estimate), we say that the confidence intervals have *nominal* coverage.
 
 For instance, let's get the proportion of confidence intervals that contain the population mean of `x`.
-We'll also increase the number of samples to approximate the coverage better.
+We'll also increase the number of resamples to approximate the coverage better.
 (The more we increase the number of samples, the closer we'll get to 95%.)
 
 ```{r}
@@ -347,21 +347,21 @@ However, this doesn't work as well as resampling with replacement, although it c
 The reason why relates to the original population and how it's sampled.
 Each sample is independent of one another, meaning an individual could end up in more than one sample.
 If you restricted the sample to individuals who were not in previous samples, your sampling scheme would no longer be independent; each sample would depend on the previous ones.
-Allowing each observation to be independent in sampling also lets it represent others like it in the original population, much like when we up-weight samples in inverse probability weighting (see [Chapter -@sec-using-ps]).
+Allowing each observation to be independent in resampling also lets it represent others like it in the original population, much like when we up-weight samples in inverse probability weighting (see [Chapter -@sec-using-ps]).
 
-## How many bootstrapped samples?
+## How many bootstrapped resamples?
 
-In this book, we use a thousand bootstrapped samples for most problems to balance stability and computational speed.
+In this book, we use a thousand bootstrapped resamples for most problems to balance stability and computational speed.
 How many should you use in your real analysis?
 
-You'll often see older recommendations in the tens or hundreds of samples, but these are from a time when processing power was more limited.
+You'll often see older recommendations in the tens or hundreds of resamples, but these are from a time when processing power was more limited.
 On modern computers (even personal laptops), it's practical to do many more.
-@Hesterberg2015 suggests a thousand samples for rough estimates and ten to fifteen thousand samples for when accuracy matters.
+@Hesterberg2015 suggests a thousand resamples for rough estimates and ten to fifteen thousand resamples for when accuracy matters.
 By "accuracy," we mean minimal variance due to the bootstrap simulation itself.
-A practical test for this is to try out `R` samples more than once and increase `R` until you are satisfied with the degree of stability in your results.
+A practical test for this is to try out `R` resamples more than once and increase `R` until you are satisfied with the degree of stability in your results.
 
 ::: callout-tip
-Each bootstrap calculation is independent of the other, meaning that for a large number of samples, you might want to use parallel processing.
+Each bootstrap calculation is independent of the other, meaning that for a large number of resamples, you might want to use parallel processing.
 With the rsample approach we've shown, you can use furrr as a parallelized drop-in replacement for `map()`.
 furrr is a purrr-like API to the future framework.
 
@@ -424,7 +424,7 @@ The same is often true of coefficients in regression models, which are condition
 If the central limit theorem has taken effect, percentiles and other types of confidence intervals will likely also have good coverage.
 
 ::: callout-tip
-When you have a result where you have reason to believe the bootstrapped distribution should look a certain way, such as means being normally distributed, it offers a potential diagnosis for your analysis. For instance, in causal inference, if you see a coefficient that is skewed or has another unexpected distribution, that may be a sign that you have a violation of the positivity assumption (see [Chapter -@sec-counterfactuals]). Keep an eye out for unexpected instability between bootstrapped samples.
+When you have a result where you have reason to believe the bootstrapped distribution should look a certain way, such as means being normally distributed, it offers a potential diagnosis for your analysis. For instance, in causal inference, if you see a coefficient that is skewed or has another unexpected distribution, that may be a sign that you have a violation of the positivity assumption (see [Chapter -@sec-counterfactuals]). Keep an eye out for unexpected instability between bootstrapped resamples.
 :::
 
 Percentile and BCa intervals are transformation invariant, meaning that you can transform the estimate you bootstrapped and get the same result as if you had bootstrapped the transformation.
