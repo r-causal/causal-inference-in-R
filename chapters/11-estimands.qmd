@@ -241,7 +241,7 @@ Many weights in @fig-sd-ate-hist are close to 1 (the smallest possible value for
 This distribution highlights a potential problem with ATE weights.
 They range from 1 to infinity; if your weights are too large in small samples, this can lead to bias in your estimates (known as finite sample bias).
 
-::: {.callout-warning}
+::: callout-warning
 ## Finite sample bias
 
 We know that not accounting for confounders can bias our causal estimates, but it turns out that even after accounting for all confounders, we may still get a biased estimate in finite samples.
@@ -686,7 +686,7 @@ ggplot(seven_dwarfs_wts, aes(w_ato)) +
 
 Like the ATM weights, the ATO weights are bounded by 0 and 1, making them more stable than the ATE, ATT, and ATU, regardless of the exposed and unexposed imbalance.
 
-::: {.callout-warning}
+::: callout-warning
 ## Finite sample bias - revisited
 
 Let's revisit our finite sample bias simulation, adding in the ATO weights to examine whether they are impacted by this potential for bias.
@@ -853,3 +853,75 @@ Below is a table summarizing the estimands and methods for estimating them (incl
 |          |                                  |                                                                                                                                                            |                                               |                        |
 |          |                                  |                                                                                                                                                            |                                               | `propensity::wt_ato()` |
 +----------+----------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------+-----------------------------------------------+------------------------+
+
+## What estimand does multivariable linear regression target?
+
+In @sec-standard, we discussed when standard methods like multivariable linear regression succeed and fail.
+But what estimand does a regression estimator like `lm(outcome ~ exposure + confounder)` estimate?
+
+While exploring simple problems, you'll notice that the answer you get from multivariable regression is often close to the answer you get for the ATE weights.
+If you had a distribution among the exposures where the treated or the untreated are disproportionately high, you might think it's closer to the ATT or ATU.
+
+The reality is that it's not always clear which estimand we're dealing with.
+One way to probe it is to use a technique to derive the *implied* weights from linear regression [@chattopadhyay2022; @aronow2015].
+The lmw package allows us to calculate these weights.
+The default is for the ATE, but we can also target other estimands.
+
+```{r}
+library(lmw)
+implied_weights <- lmw(
+  ~ park_extra_magic_morning + park_ticket_season + park_close + park_temperature_high, 
+  data = seven_dwarfs_with_ps,
+  treat = "park_extra_magic_morning"
+)
+seven_dwarfs_with_ps$iw <- implied_weights$weights
+```
+
+These implied weights have some nice properties.
+They are perfectly balanced on the mean and have the lowest variance of such weights.
+
+```{r}
+seven_dwarfs_with_ps |> 
+  mutate(park_close = as.numeric(park_close)) |> 
+  tidy_smd(
+    .vars = c(park_ticket_season, park_close, park_temperature_high),
+    .group = park_extra_magic_morning,
+    .wts = iw
+  ) |> 
+  ggplot(aes(abs(smd), variable, color = method, group = method)) + 
+  geom_love()
+```
+
+They also have a mean of 1, meaning they sum to the original size of the dataset.
+
+```{r}
+seven_dwarfs_with_ps |> 
+  summarize(mean = mean(iw), sum = sum(iw), n = n())
+```
+
+The problem is that they also have some incoherent properties.
+Even though they balance on the mean, they may not create balance for the target population.
+Relatedly, they also sometimes generate negative weights.
+For instance, if we add interaction terms to this model, some weights are less than 0.
+Negative weights imply extrapolation beyond the joint distribution of the covariates in the data.
+Although they are close to 0 here, they can be more extreme.
+So, even though we've targeted the ATE, we may not have done so very precisely.
+
+```{r}
+implied_weights_int <- lmw(
+  ~ park_extra_magic_morning * (park_ticket_season + park_close + park_temperature_high), 
+  data = seven_dwarfs_with_ps,
+  treat = "park_extra_magic_morning"
+)
+
+min(implied_weights_int$weights)
+```
+
+Suppose you feel OK about how these properties have played out for your problem.
+In that case, this approach offers an additional benefit: you can now use the techniques in this book to diagnose the balance and functional form of a multivariable linear model without peeking at the relationship between the outcome and the exposure.
+Since they are just weights, you can still use all the tools in halfmoon, gtsummary, and any other approach you like for working with weights.
+lmw even comes with a handy estimation function, `lmw_est()`, to calculate the effect on the outcome with a robust standard error.
+So, if your collaborators want to use OLS but you want to think critically about balance and extrapolation, you can have the best of both worlds.
+If you end up with negative weights and other strange properties, though, it might be better to use another approach, depending on your estimand.
+
+We'll discuss another way to use a multivariable outcome model like this to target different estimands in [Chapter -@sec-g-comp].
