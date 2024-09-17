@@ -81,7 +81,7 @@ That means that some of the included rows are there more than once; each row is 
 This spread is close to what we expect on average: about two-thirds of the original dataset ends up in each bootstrapped dataset.
 
 ```{r}
-boot_resample <- bootstrapped_resamples$splits[[1]] |> 
+boot_resample <- bootstrapped_resamples$splits[[1]] |>
   as.data.frame()
 
 boot_resample
@@ -111,7 +111,7 @@ Rather than doing this one by one, we'll use iteration to run the regression on 
 We'll take advantage of the existing structure in `bootstrapped_resamples` to store the results as another list-column.
 
 ```{r}
-bootstrapped_resamples <- bootstrapped_resamples |> 
+bootstrapped_resamples <- bootstrapped_resamples |>
   mutate(lm_results = map(splits, fit_lm))
 ```
 
@@ -127,11 +127,11 @@ Now, we have ten estimates of each of the three coefficients in the model (the i
 
 ```{r}
 library(broom)
-bootstrapped_resamples <- bootstrapped_resamples |> 
+bootstrapped_resamples <- bootstrapped_resamples |>
   mutate(tidy_results = map(lm_results, tidy))
 
-unnested_results <- bootstrapped_resamples |> 
-  select(id, tidy_results) |> 
+unnested_results <- bootstrapped_resamples |>
+  select(id, tidy_results) |>
   unnest(tidy_results)
 
 unnested_results
@@ -140,10 +140,10 @@ unnested_results
 ```{r}
 #| label: fig-r-10
 #| fig-cap: "The bootstrapped distributions of the coefficients from the model `lm(y ~ x + z, data = .df)`. The distributions were calculated with 10 bootstrapped resamples."
-unnested_results |> 
-  ggplot(aes(estimate)) + 
+unnested_results |>
+  ggplot(aes(estimate)) +
   geom_density(fill = "steelblue", color = NA) +
-  facet_wrap(~ term, scales = "free")
+  facet_wrap(~term, scales = "free")
 ```
 
 The more times we resample, the smoother the distribution of estimates.
@@ -153,20 +153,20 @@ Here's 1000 times (@fig-r-1000).
 #| label: fig-r-1000
 #| fig-cap: "The bootstrapped distributions of the coefficients from the model `lm(y ~ x + z, data = .df)`. The distributions were calculated with 1000 bootstrapped resamples."
 bootstrapped_resamples_1k <- bootstraps(
-  sampled_data, 
+  sampled_data,
   times = 1000
-) |> 
+) |>
   mutate(
     lm_results = map(splits, fit_lm),
     tidy_results = map(lm_results, tidy)
   )
 
-bootstrapped_resamples_1k |> 
-  select(id, tidy_results) |> 
-  unnest(tidy_results) |> 
-  ggplot(aes(estimate)) + 
+bootstrapped_resamples_1k |>
+  select(id, tidy_results) |>
+  unnest(tidy_results) |>
+  ggplot(aes(estimate)) +
   geom_density(fill = "steelblue", color = NA) +
-  facet_wrap(~ term, scales = "free")
+  facet_wrap(~term, scales = "free")
 ```
 
 We can calculate information about the spread of these coefficients using the confidence interval functions in rsample, which follow the pattern `int_*(nested_results, list_column_name)`.
@@ -207,8 +207,8 @@ A given observation may end up in more than one study.
 Suppose 20 such studies have been done, all from the same population.
 
 ```{r}
-samples <- map(1:20, ~ population[sample(n, size = 200), ]) |> 
-  bind_rows(.id = "sample") |> 
+samples <- map(1:20, ~ population[sample(n, size = 200), ]) |>
+  bind_rows(.id = "sample") |>
   mutate(sample = as.numeric(sample))
 ```
 
@@ -219,19 +219,19 @@ Each of these sample estimates hovers around the population estimate (@fig-pop-s
 #| label: fig-pop-samples
 #| fig-cap: "The distributions of the sample means of `x` for twenty samples. Each sample is sampled from `population` and has a sample size of 200."
 #| warning: false
-sample_means <- samples |> 
-  group_by(sample) |> 
+sample_means <- samples |>
+  group_by(sample) |>
   summarize(across(everything(), mean))
 
-samples |> 
+samples |>
   ggplot(aes(x = x)) +
   geom_histogram() +
   geom_vline(
-    data = sample_means, 
-    aes(xintercept = x), 
+    data = sample_means,
+    aes(xintercept = x),
     color = "firebrick"
-  ) + 
-  facet_wrap(~ sample)
+  ) +
+  facet_wrap(~sample)
 ```
 
 You may notice that sampling from the population bears a similarity to the sampling we do in the bootstrap.
@@ -241,10 +241,10 @@ A key difference from sampling the population is that the bootstrap will determi
 Let's look at sample 8 a bit closer.
 
 ```{r}
-sample_8 <- samples |> 
+sample_8 <- samples |>
   filter(sample == "8")
 
-sample_8 |> 
+sample_8 |>
   summarize(across(everything(), mean))
 ```
 
@@ -259,24 +259,24 @@ The distribution of bootstrapped estimates in @fig-boot-x falls symmetrically ar
 calculate_mean <- function(.split, what = "x", ...) {
   .df <- as.data.frame(.split)
   t <- t.test(.df[[what]])
-  
+
   tibble(
-    term = paste("mean of", what), 
+    term = paste("mean of", what),
     estimate = as.numeric(t$estimate),
     std.error = t$stderr
   )
 }
 
 s8_boots <- bootstraps(sample_8, times = 1000, apparent = TRUE)
-s8_boots <- s8_boots |> 
+s8_boots <- s8_boots |>
   mutate(boot_mean_x = map(splits, calculate_mean))
 
-s8_boots |> 
-  mutate(boot_mean_x = map_dbl(boot_mean_x, \(.df) .df$estimate)) |> 
+s8_boots |>
+  mutate(boot_mean_x = map_dbl(boot_mean_x, \(.df) .df$estimate)) |>
   ggplot(aes(x = boot_mean_x)) +
   geom_histogram() +
   geom_vline(
-    data = sample_means |> filter(sample == "8"), 
+    data = sample_means |> filter(sample == "8"),
     aes(xintercept = x),
     color = "firebrick"
   )
@@ -294,19 +294,19 @@ We'll also increase the number of resamples to approximate the coverage better.
 ```{r}
 n_samples <- 1000
 
-samples <- map(seq_len(n_samples), ~ population[sample(n, size = 200), ]) |> 
-  bind_rows(.id = "sample") |> 
+samples <- map(seq_len(n_samples), ~ population[sample(n, size = 200), ]) |>
+  bind_rows(.id = "sample") |>
   mutate(sample = as.numeric(sample))
 
-cis <- samples |> 
-  group_by(sample) |> 
+cis <- samples |>
+  group_by(sample) |>
   group_modify(~ t.test(.x$x) |> tidy())
 
 between(
-  rep(mean(population$x), n_samples), 
-  cis$conf.low, 
+  rep(mean(population$x), n_samples),
+  cis$conf.low,
   cis$conf.high
-) |> 
+) |>
   mean()
 ```
 
@@ -317,22 +317,22 @@ We won't run this since it requires `r_bootstraps * n_samples` calculations, but
 #| eval: false
 bootstrap_ci <- function(.sample_df, ...) {
   sample_boots <- bootstraps(.sample_df, times = 1000)
-  sample_boots <- sample_boots |> 
+  sample_boots <- sample_boots |>
     mutate(boot_mean_x = future_map(splits, calculate_mean))
-  
-  sample_boots |> 
+
+  sample_boots |>
     int_pctl(boot_mean_x)
 }
 
-boot_cis <- samples |> 
-  group_by(sample) |> 
+boot_cis <- samples |>
+  group_by(sample) |>
   group_modify(bootstrap_ci)
 
 coverage <- between(
-  rep(mean(population$x), n_samples), 
-  boot_cis$.lower, 
+  rep(mean(population$x), n_samples),
+  boot_cis$.lower,
   boot_cis$.upper
-) |> 
+) |>
   mean()
 ```
 
@@ -372,7 +372,7 @@ library(furrr)
 n_cores <- availableCores() - 1
 plan(multisession, workers = n_cores)
 
-s8_boots <- s8_boots |> 
+s8_boots <- s8_boots |>
   mutate(boot_mean_x = future_map(splits, calculate_mean))
 ```
 :::
@@ -410,7 +410,7 @@ We see that, for instance, with confidence intervals from the traditional t-test
 
 ```{r}
 c(
-  mean(mean(population$x) < cis$conf.low), 
+  mean(mean(population$x) < cis$conf.low),
   mean(mean(population$x) > cis$conf.high)
 )
 ```
@@ -450,18 +450,18 @@ For example, bootstrapping the minimum of `x` results in a strange distribution.
 #| warning: false
 calculate_min <- function(.split, what = "x", ...) {
   .df <- as.data.frame(.split)
-  
+
   tibble(
-    term = paste("min of", what), 
+    term = paste("min of", what),
     estimate = min(.df[[what]])
   )
 }
 
-s8_boots <- s8_boots |> 
+s8_boots <- s8_boots |>
   mutate(boot_min_x = map(splits, calculate_min))
 
-s8_boots |> 
-  mutate(boot_min_x = map_dbl(boot_min_x, \(.df) .df$estimate)) |> 
+s8_boots |>
+  mutate(boot_min_x = map_dbl(boot_min_x, \(.df) .df$estimate)) |>
   ggplot(aes(x = boot_min_x)) +
   geom_histogram()
 ```

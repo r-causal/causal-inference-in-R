@@ -870,7 +870,7 @@ The default is for the ATE, but we can also target other estimands.
 ```{r}
 library(lmw)
 implied_weights <- lmw(
-  ~ park_extra_magic_morning + park_ticket_season + park_close + park_temperature_high, 
+  ~ park_extra_magic_morning + park_ticket_season + park_close + park_temperature_high,
   data = seven_dwarfs_with_ps,
   treat = "park_extra_magic_morning"
 )
@@ -881,21 +881,21 @@ These implied weights have some nice properties.
 They are perfectly balanced on the mean and have the lowest variance of such weights.
 
 ```{r}
-seven_dwarfs_with_ps |> 
-  mutate(park_close = as.numeric(park_close)) |> 
+seven_dwarfs_with_ps |>
+  mutate(park_close = as.numeric(park_close)) |>
   tidy_smd(
     .vars = c(park_ticket_season, park_close, park_temperature_high),
     .group = park_extra_magic_morning,
     .wts = iw
-  ) |> 
-  ggplot(aes(abs(smd), variable, color = method, group = method)) + 
+  ) |>
+  ggplot(aes(abs(smd), variable, color = method, group = method)) +
   geom_love()
 ```
 
 They also have a mean of 1, meaning they sum to the original size of the dataset.
 
 ```{r}
-seven_dwarfs_with_ps |> 
+seven_dwarfs_with_ps |>
   summarize(mean = mean(iw), sum = sum(iw), n = n())
 ```
 
@@ -909,7 +909,7 @@ So, even though we've targeted the ATE, we may not have done so very precisely.
 
 ```{r}
 implied_weights_int <- lmw(
-  ~ park_extra_magic_morning * (park_ticket_season + park_close + park_temperature_high), 
+  ~ park_extra_magic_morning * (park_ticket_season + park_close + park_temperature_high),
   data = seven_dwarfs_with_ps,
   treat = "park_extra_magic_morning"
 )

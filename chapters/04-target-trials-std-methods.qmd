@@ -441,9 +441,9 @@ Let's examine three models: (1) an unadjusted model (@tbl-panel-1), (2) a linear
 #| label: tbl-panel
 #| layout-ncol: 2
 #| tbl-cap: Three ways to estimate a causal effect.
-#| tbl-subcap: 
-#|   - Unadjusted regression 
-#|   - Adjusted regression 
+#| tbl-subcap:
+#|   - Unadjusted regression
+#|   - Adjusted regression
 #|   - Propensity score weighted regression
 #| code-fold: true
 #| message: false
@@ -455,7 +455,7 @@ lm(y ~ treatment, d) |>
 
 lm(y ~ treatment + age + weight, d) |>
   tbl_regression() |>
-  modify_column_unhide(column = std.error) 
+  modify_column_unhide(column = std.error)
 
 d |>
   mutate(
@@ -543,13 +543,13 @@ dagify(
 #| warning: false
 #| layout-ncol: 2
 #| tbl-cap: Three ways to estimate a causal effect in a non-randomized setting
-#| tbl-subcap: 
-#|   - Unadjusted regression 
-#|   - Adjusted regression 
+#| tbl-subcap:
+#|   - Unadjusted regression
+#|   - Adjusted regression
 #|   - Propensity score weighted regression
 lm(y ~ treatment, d) |>
   tbl_regression() |>
-  modify_column_unhide(column = std.error) 
+  modify_column_unhide(column = std.error)
 
 lm(y ~ treatment + age + weight, d) |>
   tbl_regression() |>
@@ -576,7 +576,7 @@ tibble(
   SE = round(x$std.wt, 3),
   `95% CI` = glue::glue("{round(x$est.wt - 1.96 * x$std.wt, 1)}, {round(x$est.wt + 1.96 * x$std.wt, 1)}"),
   `p-value` = "<0.001"
-) |> 
+) |>
   knitr::kable()
 ```
 
