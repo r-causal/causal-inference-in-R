@@ -356,8 +356,10 @@ data <- data.frame(
 )
 
 # partner's happiness increases by 2 when they get a different flavor
-data <- data |> mutate(y_chocolate_vanilla = y_chocolate_chocolate + 2,
-                       y_vanilla_chocolate = y_vanilla_vanilla + 2)
+data <- data |> mutate(
+  y_chocolate_vanilla = y_chocolate_chocolate + 2,
+  y_vanilla_chocolate = y_vanilla_vanilla + 2
+)
 
 set.seed(11)
 data_observed <- data |>

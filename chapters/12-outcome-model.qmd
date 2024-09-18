@@ -78,9 +78,8 @@ While this approach will get us the desired estimate for the point estimate, the
 For this simple example, the weighted outcome model is equivalent to taking the difference in the weighted means.
 
 ```{r}
-
-wt_means <- seven_dwarfs_9_with_wt |> 
-  group_by(park_extra_magic_morning) |> 
+wt_means <- seven_dwarfs_9_with_wt |>
+  group_by(park_extra_magic_morning) |>
   summarize(average_wait = weighted.mean(wait_minutes_posted_avg, w = w_att))
 
 wt_means

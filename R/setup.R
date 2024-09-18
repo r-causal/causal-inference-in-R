@@ -62,20 +62,20 @@ est_ci <- function(.df, rsample = FALSE) {
 # based on https://github.com/hadley/r-pkgs/blob/main/common.R
 status <- function(type) {
   status <- switch(type,
-                   unstarted = "is unstarted, but don't worry, it's on our roadmap",
-                   polishing = "has its foundations written but is still undergoing changes",
-                   wip = "is actively undergoing work and may be restructured or changed. It may also be incomplete",
-                   complete = "is mostly complete, but we might make small tweaks or copyedits",
-                   stop("Invalid `type`", call. = FALSE)
+    unstarted = "is unstarted, but don't worry, it's on our roadmap",
+    polishing = "has its foundations written but is still undergoing changes",
+    wip = "is actively undergoing work and may be restructured or changed. It may also be incomplete",
+    complete = "is mostly complete, but we might make small tweaks or copyedits",
+    stop("Invalid `type`", call. = FALSE)
   )
-  
+
   class <- switch(type,
-                  complete = ,                 
-                  polishing = "callout-note",
-                  wip = "callout-warning",
-                  unstarted = "callout-warning"
+    complete = ,
+    polishing = "callout-note",
+    wip = "callout-warning",
+    unstarted = "callout-warning"
   )
-  
+
   knitr::asis_output(paste0(
     "::: ", class, "\n",
     "## Work-in-progress 🚧\n",
