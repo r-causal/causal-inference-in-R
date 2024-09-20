@@ -793,7 +793,7 @@ Let's think about why this works in the context of our example above. Suppose @f
 #| fig-cap: >
 #|   The original proposed DAG for the relationship between Extra Magic Hours
 #|   in the morning at a particular park and the average wait
-#|   time between 9 am and 10 am with the line type of each edge displaying 
+#|   time between 9 am and 10 am with the line type of each edge displaying
 #|   what is measured. Here, we have not measured Historic high temperature.
 #|   As before, we are saying that we believe 1) Extra Magic Hours impacts
 #|   average wait time and 2) both Extra Magic Hours and average wait time
@@ -935,7 +935,7 @@ adjust_coef(
   effect_observed = 6.58,
   exposure_confounder_effect = -.17,
   confounder_outcome_effect = -2.3
-  )
+)
 ```
 
 Examining this output, we see that if there were an unmeasured confounder like the one we specified above, our observed effect, 6.58, would be attenuated to 6.19. That is, rather than the effect of extra magic morning hours increasing the average posted wait time at 9am by 6.58 minutes, the true effect would be 6.19 minutes, assuming our specifications about the unmeasured confounder were correct. Take a look at @tbl-alt-sets, this number should look familiar.
@@ -945,10 +945,10 @@ In this case, our "guesses" about the relationship between our unmeasured confou
 ```{r}
 #| label: fig-sens-array
 #| fig-cap: >
-#|   Impact of a Normally distributed unmeasured confounder with an assumed 
-#|   confounder-outcome effect of -2.3 on an observed coefficient of 6.58 (dashed line). 
+#|   Impact of a Normally distributed unmeasured confounder with an assumed
+#|   confounder-outcome effect of -2.3 on an observed coefficient of 6.58 (dashed line).
 #|   The x-axis shows the assumed relationship between the exposure and unmeasured confounder.
-#|   The y-axis shows the corresponding relationship between the exposure and outcome after 
+#|   The y-axis shows the corresponding relationship between the exposure and outcome after
 #|   adjusting for the unmeasured confounder
 
 library(tipr)
@@ -957,16 +957,22 @@ adjust_df <- adjust_coef(
   exposure_confounder_effect = seq(0, -1, by = -0.05),
   confounder_outcome_effect = -2.3,
   verbose = FALSE
-  )
+)
 
-ggplot(adjust_df,
-  aes(x = exposure_confounder_effect,
-      y = effect_adjusted)) +
+ggplot(
+  adjust_df,
+  aes(
+    x = exposure_confounder_effect,
+    y = effect_adjusted
+  )
+) +
   geom_hline(yintercept = 6.58, lty = 2) +
   geom_point() +
   geom_line() +
-  labs(x = "Exposure - unmeasured confounder effect",
-       y = "Adjusted Effect")
+  labs(
+    x = "Exposure - unmeasured confounder effect",
+    y = "Adjusted Effect"
+  )
 ```
 
 
@@ -976,13 +982,13 @@ Many times, we find ourselves without any certainty about a potential unmeasured
 ```{r}
 #| label: fig-sens-array-2
 #| fig-cap: >
-#|   Impact of a Normally distributed unmeasured confounder with an observed coefficient of #|   6.58 (dashed line). 
-#|   The dotted line shows were the effect crosses the *null*, that is, where the adjusted  
+#|   Impact of a Normally distributed unmeasured confounder with an observed coefficient of #|   6.58 (dashed line).
+#|   The dotted line shows were the effect crosses the *null*, that is, where the adjusted
 #|   effect is actually 0.
 #|   The x-axis shows the assumed relationship between the exposure and unmeasured confounder;
-#|   each line represents a different relationship between the unmeasured confounder and the 
+#|   each line represents a different relationship between the unmeasured confounder and the
 #|   outcome, varied from -1 to -7, as labeled on the left.
-#|   The y-axis shows the corresponding relationship between the exposure and outcome after 
+#|   The y-axis shows the corresponding relationship between the exposure and outcome after
 #|   adjusting for each unmeasured confounder.
 
 library(tipr)
@@ -991,23 +997,32 @@ adjust_df <- adjust_coef(
   exposure_confounder_effect = rep(seq(0, -1, by = -0.05), each = 7),
   confounder_outcome_effect = rep(seq(-1, -7, by = -1), times = 21),
   verbose = FALSE
-  )
+)
 
-ggplot(adjust_df,
-  aes(x = exposure_confounder_effect,
-      y = effect_adjusted, 
-      group = confounder_outcome_effect)) +
+ggplot(
+  adjust_df,
+  aes(
+    x = exposure_confounder_effect,
+    y = effect_adjusted,
+    group = confounder_outcome_effect
+  )
+) +
   geom_hline(yintercept = 6.58, lty = 2) +
   geom_hline(yintercept = 0, lty = 3) +
   geom_point() +
   geom_line() +
   geom_label(
-    data = adjust_df[141:147,],
-    aes(x = exposure_confounder_effect,
-        y = effect_adjusted,
-        label = confounder_outcome_effect)) +
-  labs(x = "Exposure - unmeasured confounder effect",
-       y = "Adjusted Effect")
+    data = adjust_df[141:147, ],
+    aes(
+      x = exposure_confounder_effect,
+      y = effect_adjusted,
+      label = confounder_outcome_effect
+    )
+  ) +
+  labs(
+    x = "Exposure - unmeasured confounder effect",
+    y = "Adjusted Effect"
+  )
 ```
 
 
