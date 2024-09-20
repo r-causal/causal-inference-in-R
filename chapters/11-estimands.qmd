@@ -854,6 +854,104 @@ Below is a table summarizing the estimands and methods for estimating them (incl
 |          |                                  |                                                                                                                                                            |                                               | `propensity::wt_ato()` |
 +----------+----------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------+-----------------------------------------------+------------------------+
 
+## Risk ratio, risk difference, and odds ratio
+
+In the example we've taken up, the outcome, posted wait times, is continuous. Using linear regression, the ATE and friends are calculated as a difference in means. This is a useful effect to estimate, but it's not the only one. Let's say we use ATT weights, but then use a weighted outcome model to calculate the relative change in posted wait time. This is still a treatment effect among the treated, but it's on a relative scale. The important part is that the weights allow us to average over the covariates of the treated for whichever specific estimand we're trying to estimate. Sometimes, when people say something like "average treatment effect", they really mean a difference, so it's good to be specific. 
+
+For binary outcomes, we have a three common options: the risk ratio, risk difference, and odds ratio. In the case of a binary outcome, we calculate average probabilities for each treatment group. Let's call these `p_untreated` and `p_treated`. When we're working with these probabilities, calculating the risk difference and risk ratio are simple:
+
+* **Risk difference**: `p_treated - p_untreated`
+* **Risk ratio**: `p_treated / p_untreated`
+
+The odds for a probability is calculated as `p / (1 - p)`, so the odds ratio is:
+
+* **Odds ratio**: `(p_treated / (1 - p_treated)) /  (p_untreated / (1 - p_untreated))`
+
+When outcomes are rare, `(1 - p)` approaches 1, and odds ratios approximate risk ratios. The rarer the outcome, the closer the approximation. 
+
+One feature of the logistic regression model is that the coefficients are log-odds ratios, so exponentiating them produces odds ratios. However, when you are using logistic regression, you can also work with predicted probabilities to calculate risk differences and ratios, as we'll see in [Chapter -@sec-g-comp].
+
+Just like with continuous outcomes, we can target each of these estimands for a different subset of the population, e.g., the risk ratio among the untreated, the odds ratio among the evenly matchable, and so on. 
+
+These options also extend to categorical outcomes. There are different ways of organizing them depending on the nature of the categorical variables. An effect that's commonly estimated for non-ordinal categorical variables is a series of odds ratios with one level of the outcome serving as the reference level (e.g., an OR for 1 vs. 2 and 1 vs. 3 and so on). Multinomial regression models, such as `nnet::multinom()`, can produce these as coefficients, an extension of logistic regression. Like logistic regression, you are not limited to odds ratios, as you can work with the predicted probabilities of each category to calculate the effect you're interested in. 
+::: {.callout-note}
+Case-control studies are a common design in epidemiology where participants are sampled by outcome status. Cases, those with the outcome, are contacted and controls are sampled from the population from which the cases come. These types of studies are used when outcomes are rare. They can also be faster and cheaper than studies that follow people from the time of exposure.
+
+Because of how sampling happens in case-control studies, you don't have baseline risk because you don't have all the individuals who did not have the outcome. Interestingly, you can still recover the odds ratio. When outcomes are rare, odds ratios approximate risk ratios. You cannot, however, calculate the risk difference.
+:::
+
+### Non-collapsibility
+
+Odds ratios are convenient because of their connection to logistic regression. They also have a peculiar quality: they are *non-collapsible*. This means that, when you compare odds ratios in the whole sample (marginal) versus among subgroups (conditional), the marginal odds ratio is not a weighted average of the conditional odds ratio. This is not true of, for instance, the risk ratio. Let's look at an example.
+
+Say we have an `outcome`, an `exposure`, and a `covariate`. `exposure` causes `outcome`, as does `covariate`. But `covariate` does not cause `exposure`; it's *not* a confounder. In other words, the effect estimate of `exposure` on `outcome` should be the same whether or not we account for `covariate`
+
+```{r}
+#| echo: false
+library(ggdag)
+dagify(
+  outcome ~ exposure + covarate, 
+  coords = time_ordered_coords()
+) |> 
+  ggdag(use_labels = TRUE, label = name, use_text = FALSE)
+```
+
+Let's simulate this.
+
+```{r}
+set.seed(123)
+n <- 10000
+
+exposure <- rbinom(n, 1, 0.5)  
+covariate <- rbinom(n, 1, 0.5) 
+outcome <- rbinom(n, 1, plogis(-0.5 + exposure + 2 * covariate))
+```
+
+```{r}
+#| echo: false
+odds_ratio <- function(tbl) {
+  or <- (tbl[2, 2] * tbl[1, 1]) / (tbl[1, 2] * tbl[2, 1])
+  round(or, digits = 2)
+}
+marginal_table <- table(exposure, outcome)
+marginal_or <- odds_ratio(marginal_table)
+conditional_tables <- table(exposure, outcome, covariate)
+conditional_or_0 <- odds_ratio(conditional_tables[, , 1])
+conditional_or_1 <- odds_ratio(conditional_tables[, , 2])
+```
+
+First, let's look at the relationship between `exposure` and `outcome` among everyone.
+
+```{r}
+table(exposure, outcome)
+```
+
+TODO: check this renders correctly
+
+We can calculate the odds ratio using this frequency table: ((`r marginal_table[2, 2]` * `r marginal_table[1, 1]`) / (`r marginal_table[1, 2]` * `r marginal_table[2, 1]`)) = `r marginal_or`.
+
+```{r}
+table(exposure, outcome, covariate)
+```
+
+The odds ratio for those with `covariate = 0` is `r conditional_or_0`. For those with `covariate = 1`, it's `r conditional_or_1`. 
+
+The risk ratio...
+
+(weighted average)
+
+So, although the subgroup risk ratios differ, you can still calculate the marginal risk ratio.
+
+* non-collapsibility is not bias. some describe as omitted variable bias
+
+::: {.callout-note}
+## The linear probability model 
+:::
+
+* multiplicative vs additive data model
+* include as many causes of outcome as is reasonable
+* present all effects rather than picking just one (among targetted subgroup, e.g. the treated)
+
 ## What estimand does multivariable linear regression target?
 
 In @sec-standard, we discussed when standard methods like multivariable linear regression succeed and fail.
