@@ -777,7 +777,7 @@ We can take this further using quantitative bias analysis, which uses mathematic
 
 ### Sensitivity analyses for unmeasured confounders
 
-Sensitivity analyses for unmeasured confounding are important tools in observational studies to assess how robust findings are to potential unmeasured factors.[@d2022sensitivity] These analyses rely on three key components: 
+Sensitivity analyses for unmeasured confounding are important tools in observational studies to assess how robust findings are to potential unmeasured factors [@d2022sensitivity]. These analyses rely on three key components: 
 
 1) the observed exposure-outcome effect after adjusting for measured confounders,  
 2) the estimated relationship between a hypothetical unmeasured confounder and the exposure, and  
