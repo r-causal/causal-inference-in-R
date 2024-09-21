@@ -945,7 +945,7 @@ In this case, our "guesses" about the relationship between our unmeasured confou
 ```{r}
 #| label: fig-sens-array
 #| fig-cap: >
-#|   Impact of a Normally distributed unmeasured confounder with an assumed
+#|   Impact of a normally distributed unmeasured confounder with an assumed
 #|   confounder-outcome effect of -2.3 on an observed coefficient of 6.58 (dashed line).
 #|   The x-axis shows the assumed relationship between the exposure and unmeasured confounder.
 #|   The y-axis shows the corresponding relationship between the exposure and outcome after
@@ -982,7 +982,7 @@ Many times, we find ourselves without any certainty about a potential unmeasured
 ```{r}
 #| label: fig-sens-array-2
 #| fig-cap: >
-#|   Impact of a Normally distributed unmeasured confounder with an observed coefficient of #|   6.58 (dashed line).
+#|   Impact of a normally distributed unmeasured confounder with an observed coefficient of #|   6.58 (dashed line).
 #|   The dotted line shows were the effect crosses the *null*, that is, where the adjusted
 #|   effect is actually 0.
 #|   The x-axis shows the assumed relationship between the exposure and unmeasured confounder;
