@@ -785,7 +785,7 @@ Sensitivity analyses for unmeasured confounding are important tools in observati
 
 By specifying plausible values for these relationships, researchers can quantify how much the observed effect might change if such an unmeasured confounder existed. 
 
-Let's think about why this works in the context of our example above. Suppose @fig-dag-magic-sens displays the true relationship between our exposure and outcome of interest, however we have an unmeasured confounder, historic high temperature, denoted by the dashed lines. The three key components above are described by 1) the arrow between 'Extra Magic Morning' and 'Average wait', 2) The arrow between 'Historic high temperature' and 'Extra Magic Morning', and 3) the arrow between 'Historic high temperature' and 'Average wait'.
+Let's think about why this works in the context of our example above. Let's assume @fig-dag-magic-sens displays the true relationship between our exposure and outcome of interest. Suppose we hadn't measured historic high temperature, denoted by the dashed lines; we have an unmeasured confounder. The three key components above are described by 1) the arrow between 'Extra Magic Morning' and 'Average wait', 2) The arrow between 'Historic high temperature' and 'Extra Magic Morning', and 3) the arrow between 'Historic high temperature' and 'Average wait'.
 
 ```{r}
 #| label: fig-dag-magic-sens
