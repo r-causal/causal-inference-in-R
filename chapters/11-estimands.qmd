@@ -863,6 +863,10 @@ For binary outcomes, we have a three common options: the risk ratio, risk differ
 * **Risk difference**: `p_treated - p_untreated`
 * **Risk ratio**: `p_treated / p_untreated`
 
+::: {.callout-note}
+By "risk", when mean the risk of an outcome. That assumes the outcome is negative, like developing a disease. A more general way to think about these is as the difference in or ratio of the probabilities of the counterfactual outcomes.
+:::
+
 The odds for a probability is calculated as `p / (1 - p)`, so the odds ratio is:
 
 * **Odds ratio**: `(p_treated / (1 - p_treated)) /  (p_untreated / (1 - p_untreated))`
@@ -874,10 +878,30 @@ One feature of the logistic regression model is that the coefficients are log-od
 Just like with continuous outcomes, we can target each of these estimands for a different subset of the population, e.g., the risk ratio among the untreated, the odds ratio among the evenly matchable, and so on. 
 
 These options also extend to categorical outcomes. There are different ways of organizing them depending on the nature of the categorical variables. An effect that's commonly estimated for non-ordinal categorical variables is a series of odds ratios with one level of the outcome serving as the reference level (e.g., an OR for 1 vs. 2 and 1 vs. 3 and so on). Multinomial regression models, such as `nnet::multinom()`, can produce these as coefficients, an extension of logistic regression. Like logistic regression, you are not limited to odds ratios, as you can work with the predicted probabilities of each category to calculate the effect you're interested in. 
+
 ::: {.callout-note}
 Case-control studies are a common design in epidemiology where participants are sampled by outcome status. Cases, those with the outcome, are contacted and controls are sampled from the population from which the cases come. These types of studies are used when outcomes are rare. They can also be faster and cheaper than studies that follow people from the time of exposure.
 
 Because of how sampling happens in case-control studies, you don't have baseline risk because you don't have all the individuals who did not have the outcome. Interestingly, you can still recover the odds ratio. When outcomes are rare, odds ratios approximate risk ratios. You cannot, however, calculate the risk difference.
+:::
+
+### Absolute and relative measures 
+
+Absolute measures, such as risk differences, and relative measures, such as the risk ratio and odds ratio, offer different perspectives on the treatment effect. Depending on the baseline probability of the outcome, absolute and relative measures might lead you to different conclusions. 
+
+Consider a rare outcome with a baseline probability of 0.0001, a rate of 1 event per 10,000 observations. That's the probability for the unexposed. Let's say the exposed have a probability of the outcome of 0.0008. That's 8 times greater than the unexposed, a remarkably large relative effect. But it's only 0.0007 on the absolute scale.
+
+Now consider a more common outcome with a baseline probability of 0.20. The exposed group has a probability of the outcome of 0.40. Now the relative risk is 2, while the risk difference is 0.20. Although the relative effect is much smaller, it creates more outcome events because of the higher prevalence of the outcome.
+
+The effect of smoking on health is a good example of this. As we know, smoking drastically increases the relative risk of lung cancer. But lung cancer is a pretty rare disease. Smoking also increases the risk heart disease, although the relative effect is not nearly as high as lung cancer. However, heart disease is much more prevalent. More people die of smoking-related heart disease than they do of lung cancer because of the absolute change in risk. Both perspectives are true.
+
+::: {.callout-note}
+## The number needed to treat
+Another perspective on the difference in probabilities is the number needed to treat (NNT) measure. It's simply the inverse of the risk difference, and it represents the number of exposed individuals needed to prevent or create one outcome.
+
+Consider a product with a baseline purchase probability of 5%, so 5 in 100 people will buy this product. The company that makes the product creates an ad, and those that see the ad have a probability of 7% to buy the product. The absolute difference in probabilities of buying the product is 0.02, and so `1 / 0.02 = 50` people need to see the ad to increase the number of purchases by one. 
+
+The NNT is an imperfect measure because of its simplicity, but it's helpful once again to change your perspective about what the treatment effect actually means in practice.
 :::
 
 ### Non-collapsibility {#sec-non-collapse}
@@ -966,7 +990,7 @@ The marginal risk ratio is `marginal_rr`. The risk ratio for those with `covaria
 
 It's tempting to think that you need to include `covariate` since the odds ratio changes when you add it in, and in fact it's closer to the model coefficient from the simulation. An important detail here is that non-collapsibility is *not* bias. Some authors describe it as omitted variable bias but in fact the marginal and conditional odds ratios are both correct because `covariate` is not a confounder. They are simply different estimands. The conditional odds ratio is the OR conditional on `covariate`. To meaningfully compare it to other odds ratios, those also need to be conditional on `covariate`. Non-collapsibility is a numerical property of odds; rather than creating bias, it creates a slightly more nuanced interpretation. The exact way non-collapsibility behaves also depends on if the data generating mechanism occurs on the additive or multiplicative scale; on the multiplicative scale, adding a variable strongly related to the outcome changes the effect estimate, while on the additive scale, adding a variable *not* related to the outcome changes the effect, albeit on a smaller scale @TODO.Instead of worrying about which version of the odds ratio is right, we recommend focusing on confounders, necessary for unbiased estimates, and predictors of the outcome, helpful for variance reduction. 
 
-Much ink has been spilled about the odds ratio versus the risk ratio and the multiplicative scale versus the additive scale. We suggest that you present all three measures (the odds ratio, the risk ratio, and the risk difference) together with the baseline risk. Each offers a different perspective on the causal effect. Be careful to interpret them with regard to the treatment group, e.g., the average risk difference among the treated.
+Much ink has been spilled about the odds ratio versus the risk ratio and the relative scale versus the absolute scale. We suggest that you present all three measures (the odds ratio, the risk ratio, and the risk difference) together with the baseline probability of the outcome. Each offers a different perspective on the causal effect. Be careful to interpret them with regard to the treatment group that you've included in your estimand, e.g., the average risk difference calculated with ATT weights is the average risk difference among the treated.
 
 ::: {.callout-note}
 ## The linear probability model 
