@@ -880,7 +880,7 @@ Case-control studies are a common design in epidemiology where participants are 
 Because of how sampling happens in case-control studies, you don't have baseline risk because you don't have all the individuals who did not have the outcome. Interestingly, you can still recover the odds ratio. When outcomes are rare, odds ratios approximate risk ratios. You cannot, however, calculate the risk difference.
 :::
 
-### Non-collapsibility
+### Non-collapsibility {#sec-non-collapse}
 
 Odds ratios are convenient because of their connection to logistic regression. They also have a peculiar quality: they are *non-collapsible*. This means that, when you compare odds ratios in the whole sample (marginal) versus among subgroups (conditional), the marginal odds ratio is not a weighted average of the conditional odds ratio. This is not true of, for instance, the risk ratio. Let's look at an example.
 
@@ -913,11 +913,21 @@ odds_ratio <- function(tbl) {
   or <- (tbl[2, 2] * tbl[1, 1]) / (tbl[1, 2] * tbl[2, 1])
   round(or, digits = 2)
 }
+
+risk_ratio <- function(tbl) {
+  risk_exposed <- tbl[2, 2] / (tbl[2, 2] + tbl[2, 1])
+  risk_unexposed <- tbl[1, 2] / (tbl[1, 2] + tbl[1, 1])
+  risk_exposed / risk_unexposed
+}
+
 marginal_table <- table(exposure, outcome)
 marginal_or <- odds_ratio(marginal_table)
+marginal_rr <- risk_ratio(marginal_table)
 conditional_tables <- table(exposure, outcome, covariate)
 conditional_or_0 <- odds_ratio(conditional_tables[, , 1])
 conditional_or_1 <- odds_ratio(conditional_tables[, , 2])
+conditional_rr_0 <- risk_ratio(conditional_tables[, , 1])
+conditional_rr_1 <- risk_ratio(conditional_tables[, , 2])
 ```
 
 First, let's look at the relationship between `exposure` and `outcome` among everyone.
@@ -930,27 +940,47 @@ TODO: check this renders correctly
 
 We can calculate the odds ratio using this frequency table: ((`r marginal_table[2, 2]` * `r marginal_table[1, 1]`) / (`r marginal_table[1, 2]` * `r marginal_table[2, 1]`)) = `r marginal_or`.
 
+This is the same result we get with logistic regression when we exponentiate the results.
+
+```{r}
+glm(outcome ~ exposure, family = binomial()) |> 
+  broom::tidy(exponentiate = TRUE)
+```
+
+This is a little off from the simulation model coefficient of `exp(1)`. We get closer when we add in `covariate`. 
+
+```{r}
+glm(outcome ~ exposure + covariate, family = binomial()) |> 
+  broom::tidy(exponentiate = TRUE)
+```
+
+`covariate` is not a confounder, so by rights it shouldn't impact the effect estimate for `exposure`. Let's look at the conditional odds ratios by `covariate`.
+
 ```{r}
 table(exposure, outcome, covariate)
 ```
 
-The odds ratio for those with `covariate = 0` is `r conditional_or_0`. For those with `covariate = 1`, it's `r conditional_or_1`. 
+The odds ratio for those with `covariate = 0` is `r conditional_or_0`. For those with `covariate = 1`, it's `r conditional_or_1`. The marginal odds ratio is smaller than both of these!
 
-The risk ratio...
+The marginal risk ratio is `marginal_rr`. The risk ratio for those with `covariate = 0` is `r conditional_rr_0`. For those with `covariate = 1`, it's `r conditional_rr_1`. In this case, the marginal risk ratio is a weighted average collapsible over the strata of `covariate`.
 
-(weighted average)
+It's tempting to think that you need to include `covariate` since the odds ratio changes when you add it in, and in fact it's closer to the model coefficient from the simulation. An important detail here is that non-collapsibility is *not* bias. Some authors describe it as omitted variable bias but in fact the marginal and conditional odds ratios are both correct because `covariate` is not a confounder. They are simply different estimands. The conditional odds ratio is the OR conditional on `covariate`. To meaningfully compare it to other odds ratios, those also need to be conditional on `covariate`. Non-collapsibility is a numerical property of odds; rather than creating bias, it creates a slightly more nuanced interpretation. The exact way non-collapsibility behaves also depends on if the data generating mechanism occurs on the additive or multiplicative scale; on the multiplicative scale, adding a variable strongly related to the outcome changes the effect estimate, while on the additive scale, adding a variable *not* related to the outcome changes the effect, albeit on a smaller scale @TODO.Instead of worrying about which version of the odds ratio is right, we recommend focusing on confounders, necessary for unbiased estimates, and predictors of the outcome, helpful for variance reduction. 
 
-So, although the subgroup risk ratios differ, you can still calculate the marginal risk ratio.
-
-* non-collapsibility is not bias. some describe as omitted variable bias
+Much ink has been spilled about the odds ratio versus the risk ratio and the multiplicative scale versus the additive scale. We suggest that you present all three measures (the odds ratio, the risk ratio, and the risk difference) together with the baseline risk. Each offers a different perspective on the causal effect. Be careful to interpret them with regard to the treatment group, e.g., the average risk difference among the treated.
 
 ::: {.callout-note}
 ## The linear probability model 
-:::
 
-* multiplicative vs additive data model
-* include as many causes of outcome as is reasonable
-* present all effects rather than picking just one (among targetted subgroup, e.g. the treated)
+Another common way to estimate treatment effects for binary outcomes is the linear probability model. The linear probability model is common in econometrics and other fields. It's just OLS, although often researchers use a robust standard error because of heterogenity in the variance of the residuals. The result is the risk difference, a collapsible measure.
+
+```{r}
+lm(outcome ~ exposure)
+```
+
+This is a handy way to model the relationship on the additive scale. It comes with a major hiccup, though: logistic regression is bounded by 0 and 1, while OLS is not. That means that individual predictions may be less than 0 or more than 1, impossible values for probabilities.
+
+We'll see an alternative method for calculating risk differences with logistic regression in [Chapter -@sec-g-comp].
+:::
 
 ## What estimand does multivariable linear regression target?
 
