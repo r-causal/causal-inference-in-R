@@ -856,7 +856,7 @@ Below is a table summarizing the estimands and methods for estimating them (incl
 
 ## Risk ratio, risk difference, and odds ratio
 
-In the example we've taken up, the outcome, posted wait times, is continuous. Using linear regression, the ATE and friends are calculated as a difference in means. This is a useful effect to estimate, but it's not the only one. Let's say we use ATT weights, but then use a weighted outcome model to calculate the relative change in posted wait time. This is still a treatment effect among the treated, but it's on a relative scale. The important part is that the weights allow us to average over the covariates of the treated for whichever specific estimand we're trying to estimate. Sometimes, when people say something like "average treatment effect", they really mean a difference, so it's good to be specific. 
+In the example we've taken up, the outcome, posted wait times, is continuous. Using linear regression, the ATE and friends are calculated as a difference in means. This is a useful effect to estimate, but it's not the only one. Let's say we use ATT weights, but then use a weighted outcome model to calculate the relative change in posted wait time. This is still a treatment effect among the treated, but it's on a relative scale. The important part is that the weights allow us to average over the covariates of the treated for whichever specific estimand we're trying to estimate. Sometimes, when people say something like "average treatment effect", they are talking about a difference in mean outcomes, so it's good to be specific. 
 
 For binary outcomes, we have a three common options: the risk ratio, risk difference, and odds ratio. In the case of a binary outcome, we calculate average probabilities for each treatment group. Let's call these `p_untreated` and `p_treated`. When we're working with these probabilities, calculating the risk difference and risk ratio are simple:
 
@@ -893,15 +893,15 @@ Consider a rare outcome with a baseline probability of 0.0001, a rate of 1 event
 
 Now consider a more common outcome with a baseline probability of 0.20. The exposed group has a probability of the outcome of 0.40. Now the relative risk is 2, while the risk difference is 0.20. Although the relative effect is much smaller, it creates more outcome events because of the higher prevalence of the outcome.
 
-The effect of smoking on health is a good example of this. As we know, smoking drastically increases the relative risk of lung cancer. But lung cancer is a pretty rare disease. Smoking also increases the risk heart disease, although the relative effect is not nearly as high as lung cancer. However, heart disease is much more prevalent. More people die of smoking-related heart disease than they do of lung cancer because of the absolute change in risk. Both perspectives are true.
+The effect of smoking on health is a good example of this. As we know, smoking drastically increases the relative risk of lung cancer. But lung cancer is a pretty rare disease. Smoking also increases the risk heart disease, although the relative effect is not nearly as high as lung cancer. However, heart disease is much more prevalent. More people die of smoking-related heart disease than they do of lung cancer because of the absolute change in risk. Both the absolute and relative perspectives are true.
 
 ::: {.callout-note}
 ## The number needed to treat
 Another perspective on the difference in probabilities is the number needed to treat (NNT) measure. It's simply the inverse of the risk difference, and it represents the number of exposed individuals needed to prevent or create one outcome.
 
-Consider a product with a baseline purchase probability of 5%, so 5 in 100 people will buy this product. The company that makes the product creates an ad, and those that see the ad have a probability of 7% to buy the product. The absolute difference in probabilities of buying the product is 0.02, and so `1 / 0.02 = 50` people need to see the ad to increase the number of purchases by one. 
+Consider a product for sale with a baseline purchase probability of 5%, so 5 in 100 people will buy this product. A marketing team creates an ad, and those that see the ad have a probability of 7% to buy the product. The absolute difference in probabilities of buying the product is 0.02, and so `1 / 0.02 = 50` people need to see the ad to increase the number of purchases by one. 
 
-The NNT is an imperfect measure because of its simplicity, but it's helpful once again to change your perspective about what the treatment effect actually means in practice.
+The NNT is an imperfect measure because of its simplicity, but it offers another perspective about what the treatment effect actually means in practice.
 :::
 
 ### Non-collapsibility {#sec-non-collapse}
@@ -912,12 +912,17 @@ Say we have an `outcome`, an `exposure`, and a `covariate`. `exposure` causes `o
 
 ```{r}
 #| echo: false
+#| message: false
+#| fig-width: 4
+#| fig-height: 4
 library(ggdag)
 dagify(
   outcome ~ exposure + covarate, 
   coords = time_ordered_coords()
-) |> 
-  ggdag(use_labels = TRUE, label = name, use_text = FALSE)
+) |>  
+  ggdag(use_text = FALSE) +
+  geom_dag_text_repel(aes(label = name)) +
+  theme_dag()
 ```
 
 Let's simulate this.
@@ -941,7 +946,7 @@ odds_ratio <- function(tbl) {
 risk_ratio <- function(tbl) {
   risk_exposed <- tbl[2, 2] / (tbl[2, 2] + tbl[2, 1])
   risk_unexposed <- tbl[1, 2] / (tbl[1, 2] + tbl[1, 1])
-  risk_exposed / risk_unexposed
+  round(risk_exposed / risk_unexposed, digits = 2)
 }
 
 marginal_table <- table(exposure, outcome)
@@ -959,8 +964,6 @@ First, let's look at the relationship between `exposure` and `outcome` among eve
 ```{r}
 table(exposure, outcome)
 ```
-
-TODO: check this renders correctly
 
 We can calculate the odds ratio using this frequency table: ((`r marginal_table[2, 2]` * `r marginal_table[1, 1]`) / (`r marginal_table[1, 2]` * `r marginal_table[2, 1]`)) = `r marginal_or`.
 
@@ -984,11 +987,11 @@ glm(outcome ~ exposure + covariate, family = binomial()) |>
 table(exposure, outcome, covariate)
 ```
 
-The odds ratio for those with `covariate = 0` is `r conditional_or_0`. For those with `covariate = 1`, it's `r conditional_or_1`. The marginal odds ratio is smaller than both of these!
+The odds ratio for those with `covariate = 0` is `r conditional_or_0`. For those with `covariate = 1`, it's `r conditional_or_1`. The marginal odds ratio, `r marginal_or`, is smaller than both of these!
 
-The marginal risk ratio is `marginal_rr`. The risk ratio for those with `covariate = 0` is `r conditional_rr_0`. For those with `covariate = 1`, it's `r conditional_rr_1`. In this case, the marginal risk ratio is a weighted average collapsible over the strata of `covariate`.
+The marginal risk ratio is `r marginal_rr`. The risk ratio for those with `covariate = 0` is `r conditional_rr_0`. For those with `covariate = 1`, it's `r conditional_rr_1`. In this case, the marginal risk ratio is a weighted average collapsible over the strata of `covariate`.
 
-It's tempting to think that you need to include `covariate` since the odds ratio changes when you add it in, and in fact it's closer to the model coefficient from the simulation. An important detail here is that non-collapsibility is *not* bias. Some authors describe it as omitted variable bias but in fact the marginal and conditional odds ratios are both correct because `covariate` is not a confounder. They are simply different estimands. The conditional odds ratio is the OR conditional on `covariate`. To meaningfully compare it to other odds ratios, those also need to be conditional on `covariate`. Non-collapsibility is a numerical property of odds; rather than creating bias, it creates a slightly more nuanced interpretation. The exact way non-collapsibility behaves also depends on if the data generating mechanism occurs on the additive or multiplicative scale; on the multiplicative scale, adding a variable strongly related to the outcome changes the effect estimate, while on the additive scale, adding a variable *not* related to the outcome changes the effect, albeit on a smaller scale @TODO.Instead of worrying about which version of the odds ratio is right, we recommend focusing on confounders, necessary for unbiased estimates, and predictors of the outcome, helpful for variance reduction. 
+It's tempting to think that you need to include `covariate` since the odds ratio changes when you add it in, and in fact it's closer to the model coefficient from the simulation. An important detail here is that non-collapsibility is *not* bias. Some authors describe it as omitted variable bias but in fact the marginal and conditional odds ratios are both correct because `covariate` is not a confounder. They are simply different estimands. The conditional odds ratio is the OR conditional on `covariate`. To meaningfully compare it to other odds ratios, those also need to be conditional on `covariate`. Non-collapsibility is a numerical property of odds; rather than creating bias, it creates a slightly more nuanced interpretation. The exact way non-collapsibility behaves also depends on if the data generating mechanism occurs on the additive or multiplicative scale; on the multiplicative scale (as in our simulation), adding a variable strongly related to the outcome changes the effect estimate, while on the additive scale, adding a variable *not* related to the outcome changes the effect, albeit on a smaller scale @TODO. Instead of worrying about which version of the odds ratio is right, we recommend focusing on confounders, necessary for unbiased estimates, and predictors of the outcome, helpful for variance reduction. 
 
 Much ink has been spilled about the odds ratio versus the risk ratio and the relative scale versus the absolute scale. We suggest that you present all three measures (the odds ratio, the risk ratio, and the risk difference) together with the baseline probability of the outcome. Each offers a different perspective on the causal effect. Be careful to interpret them with regard to the treatment group that you've included in your estimand, e.g., the average risk difference calculated with ATT weights is the average risk difference among the treated.
 
