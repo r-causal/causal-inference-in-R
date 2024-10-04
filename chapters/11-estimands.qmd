@@ -956,15 +956,19 @@ This is not true of, for instance, the risk ratio.
 Let's look at an example.
 
 Say we have an `outcome`, an `exposure`, and a `covariate`.
-`exposure` causes `outcome`, as does `covariate`.
+`exposure` causes `outcome`, as does `covariate`[^11-estimands-1].
 But `covariate` does not cause `exposure`; it's *not* a confounder.
 In other words, the effect estimate of `exposure` on `outcome` should be the same whether or not we account for `covariate`.
+
+[^11-estimands-1]: If there were no relationship between `exposure` and `outcome`, the relationship between the two would be null, and that would be collapsible regardless of the presence or absence of `covariate`.
 
 ```{r}
 #| echo: false
 #| message: false
 #| fig-width: 4
 #| fig-height: 4
+#| fig-align: "center"
+#| fig-cap: "A DAG showing the causal relationship between `outcome`, `exposure`, and `covariate`. `exposure` and `covariate` both cause `outcome` but there is no relationship between `exposure` and `covariate`. In a logistic regression, the odds ratio for exposure will be non-collapsible over strata of covariate."
 library(ggdag)
 dagify(
   outcome ~ exposure + covarate, 
