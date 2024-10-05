@@ -975,7 +975,7 @@ dagify(
   coords = time_ordered_coords()
 ) |>  
   ggdag(use_text = FALSE) +
-  geom_dag_text_repel(aes(label = name)) +
+  geom_dag_text_repel(aes(label = name), box.padding = 1.8, direction = "x") +
   theme_dag()
 ```
 
