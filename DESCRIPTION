@@ -23,7 +23,7 @@ Imports:
     ggdag (>= 0.2.10.9000),
     ggokabeito,
     ggtext,
-    gtsummary (>= 2.0.3.9000),
+    gtsummary (>= 2.0.3),
     halfmoon (>= 0.0.0.9000),
     here,
     janitor,
@@ -59,8 +59,7 @@ Remotes:
     malcolmbarrett/causalworkshop,
     malcolmbarrett/ggdag,
     malcolmbarrett/halfmoon,
-    malcolmbarrett/propensity,
-    ddsjoberg/gtsummary
+    malcolmbarrett/propensity
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
