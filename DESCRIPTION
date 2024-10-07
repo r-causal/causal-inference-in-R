@@ -51,7 +51,7 @@ Suggests:
     grkstyle (>= 0.0.3),
     styler,
     xml2
-Remotes:  
+Remotes: 
     gadenbuie/grkstyle,
     hadley/emo,
     LucyMcGowan/tipr,
