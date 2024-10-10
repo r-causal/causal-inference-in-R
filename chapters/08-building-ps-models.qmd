@@ -242,8 +242,7 @@ Conversely, including variables that are predictors of the *exposure but not the
 Luckily, this bias seems relatively negligible in practice, especially compared to the risk of confounding bias [@Myers2011].
 
 ::: callout-note
-Some estimates, such as the odds and hazard ratios, suffer from an additional problem called *non-collapsibility*.
-For these estimates, adding noise variables (variables unrelated to the exposure or outcome) doesn't reduce precision: they can bias the estimate as well---more the reason to avoid data-driven approaches to selecting variables for causal models.
+Some estimates, such as the odds and hazard ratios, have a property called *non-collapsibility*. This means that marginal odds and hazard ratios are not weighted averages of their conditional versions. In other words, the results might differ depending on the variable added or removed, even when the variable is not a confounder. We'll explore this more in @sec-non-collapse.
 :::
 
 Another variable to be wary of is a *collider*, a descendant of both the exposure and outcome.
@@ -302,6 +301,7 @@ Then, we model `y ~ x + z` and see how much the coefficient on `x` has changed.
 A common rule is to add a variable if it changes the coefficient of`x` by 10%.
 
 Unfortunately, this technique is unreliable.
-As we've discussed, controlling for mediators, colliders, and instrumental variables all affect the estimate of the relationship between `x` and `y`, and usually, they result in bias.
+As we've discussed, controlling for mediators, colliders, and instrumental variables all affect the estimate of the relationship between `x` and `y`, and usually, they result in bias. 
+Additionally, the non-collapsibility of the odds and hazards ratios mean they may change with the addition or subtraction of a variable without representing an improvement or worsening in bias.
 In other words, there are many different types of variables besides confounders that can cause a change in the coefficient of the exposure.
 As discussed above, confounding bias is often the most crucial factor, but systematically searching your variables for anything that changes the exposure coefficient can compound many types of bias.
