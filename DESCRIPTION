@@ -23,7 +23,7 @@ Imports:
     ggdag (>= 0.2.10.9000),
     ggokabeito,
     ggtext,
-    gtsummary (>= 1.7.0),
+    gtsummary (>= 2.0.3),
     halfmoon (>= 0.0.0.9000),
     here,
     janitor,
