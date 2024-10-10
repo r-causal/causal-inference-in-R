@@ -873,61 +873,73 @@ The relationship between an unmeasured confounder and the outcome can be quantif
 Let's do the coeffient-based approach. In our case, we need to estimate what we think the coefficient bewteen our standardized 'Historic high temperature' variable and our outcome after adjusting for our exposure as well as the other measured confounders (in this case ticket season and the time the park closed). Another way to describe this effect in the context of this problem is: "How would the average posted wait time change if we changed the historic high temperature by one standard deviation, after adjusting for whether there were extra magic morning hours, the park close time, and the ticket season?" Let's suppose we think this would change by -2.3 minutes. That is, if the historic high temperature is one standard deviation unit higher (in our scenario, 9 degrees warmer), we expect this to decrease the average posted wait time by 2.3 minutes.
 
 
-Below is a table, reproduced from @d2022sensitivity, that maps these quantities to mathematical symbols.
-
-| Notation | Meaning |
-|----------|---------|
-| $X$ | exposure |
-| $Y$ | outcome |
-| $\mathbf{Z}$ | all measured confounders |
-| $U$ | the unmeasured confounder |
-| **Observed exposure - outcome relationship** | |
-| $\beta_{Y\sim X | \mathbf{Z}}$| The coefficient for the exposure, $X$, from a model with the outcome Y adjusted for any measured confounders $\mathbf{Z}$ |
-| $RR_{Y\sim X |\mathbf{Z}}$ | The risk ratio for the exposure, $X$, from a model with the outcome, $Y$, adjusted for any measured confounders $\mathbf{Z}$|
-| **Updated exposure - outcome relationship after adjusting for the unmeasured confounder** | |
-| $\beta_{Y\sim X |U+\mathbf{Z}}$ | The updated coefficient for the exposure, $X$, from a model with the outcome $Y$ adjusted for the unmeasured confounder, $U$, and any measured confounders $\mathbf{Z}$ |
-| $RR_{Y\sim X |U+\mathbf{Z}}$ | The updated risk ratio for the exposure, $X$, from a model with the outcome, $Y$, adjusted for the unmeasured confounder, $U$, and any measured confounders $\mathbf{Z}$ |
-| **Unmeasured confounder - exposure relationship** | |
-| $p_0$ | the prevalence of a binary unmeasured confounder in the unexposed group |
-| $p_1$ | the prevalence of a binary unmeasured confounder in the exposed group |
-| $m_0$ | the mean of a normally distributed unmeasured confounder with unit variance in the unexposed group |
-| $m_1$ | the mean of a normally distributed unmeasured confounder with unit variance in the exposed group |
-| $d$ | $m_1$ - $m_0$ the difference in the normally distributed unmeasured confounder's means between exposure groups |
-| $R^2_{X\sim U |\mathbf{Z}}$ | The proportion of variation in the exposure explained by the unmeasured confounder after the measured covariates are removed (partial $R^2$) |
-| **Unmeasured confounder - outcome relationship** | |
-| $\beta_{Y\sim U |X+\mathbf{Z}}$ | The coefficient for the unmeasured confounder, $U$, from a model with the outcome $Y$ adjusted for the exposure, $X$, and any measured confounders $\mathbf{Z}$ |
-| $RR_{Y\sim U|X+\mathbf{Z}}$ | The risk ratio for the unmeasured confounder, $U$, from a model with the outcome, $Y$, adjusted for the exposure, $X$, and any measured confounders $\mathbf{Z}$ |
-| $R^2_{Y\sim U |X+\mathbf{Z}}$| The proportion of variation in the outcome explained by the unmeasured confounder after the exposure and measured covariates are removed (partial $R^2$) |
-: Mathematical Notation, reproduced from @d2022sensitivity
+For a mathematical explanation of these quantities, see @d2022sensitivity.
 
 #### Putting the components together
 
-Once you have estimated the above three quantities, we can calculate a updated effect estimate between the exposure and outcome that takes into account an unmeasured factor like the one specified. We can use the {tipr} R package to perform these analyses. Examine @tbl-sens to see how the factors described above can be used to perform a sensitivity analysis as well as how these map to the R functions in {tipr}. 
+Once you have estimated the above three quantities, we can calculate a updated effect estimate between the exposure and outcome that takes into account an unmeasured factor like the one specified. We can use the {tipr} R package to perform these analyses. The functions in the {tipr} package follow a unified grammar. The function names follow this form: `{action}_{effect}_with_{what}`.
 
-| Outcome | Effect of Interest | Sensitivity analysis equation | R function from the `tipr` package |
-|---------|--------------------|-----------------------------|-------------------------------------|
-| **Unmeasured confounder, $U$, is Normally distributed with a difference in means between exposure groups of $d$, unit variance, and association with $Y$ of $\beta_{Y \sim U \| X + \mathbf{Z}}$** |
-| Continuous | Coefficient | $\beta_{Y\sim X \| U + \mathbf{Z}} = \beta_{Y\sim X \| \mathbf{Z}} - \beta_{Y \sim U \| X + \mathbf{Z}}\times d$ | `adjust_coef()` |
-| Binary[^1] | Coefficient | $\beta_{Y\sim X \| U + \mathbf{Z}} = \beta_{Y\sim X \| \mathbf{Z}} - \beta_{Y \sim U \| X + \mathbf{Z}}\times d$ | `adjust_coef()` |
-| Time to event | Coefficient | $\beta_{Y\sim X \| U + \mathbf{Z}} \approx \beta_{Y\sim X \| \mathbf{Z}} - \beta_{Y \sim U \| X + \mathbf{Z}}\times d$ | `adjust_coef()` |
-| Binary | Risk ratio | $\textrm{RR}_{Y \sim X \| U + \mathbf{Z}} = \frac{\textrm{RR}_{Y \sim X \|\mathbf{Z}}}{\textrm{RR}_{Y \sim U \| X + \mathbf{Z}}^{d}}$ | `adjust_rr()` |
-| Binary | Odds ratio | $\textrm{OR}_{Y \sim X \| U + \mathbf{Z}} \approx \frac{\textrm{OR}_{Y \sim X \|\mathbf{Z}}}{\textrm{OR}_{Y \sim U \| X + \mathbf{Z}}^{d}}$ | `adjust_or()` |
-| Time to event | Hazard ratio | $\textrm{HR}_{Y \sim X \| U + \mathbf{Z}} \approx \frac{\textrm{HR}_{Y \sim X \|\mathbf{Z}}}{\textrm{HR}_{Y \sim U \| X + \mathbf{Z}}^{d}}$ | `adjust_hr()` |
-| **Unmeasured confounder, $U$, is binary with prevalence in the unexposed group of $p_0$ in the exposed group of $p_1$, and association with $Y$ of $\beta_{Y \sim U \| X + \mathbf{Z}}$** |
-| Binary[^1] | Coefficient | $\beta_{Y\sim X \| U + \mathbf{Z}} = \beta_{Y\sim X \| \mathbf{Z}} - \textrm{log}\frac{e^{\beta_{Y \sim U \| X + \mathbf{Z}}}p_1 + (1-p_1)}{e^{\beta_{Y \sim U\|X +\mathbf{Z}}}p_0 + (1 - p_0)}$ | `adjust_coef_with_binary()` |
-| Time to event | Coefficient | $\beta_{Y\sim X \| U + \mathbf{Z}} \approx \beta_{Y\sim X \| \mathbf{Z}} - \textrm{log}\frac{e^{\beta_{Y \sim U \| X + \mathbf{Z}}}p_1 + (1-p_1)}{e^{\beta_{Y \sim U\|X +\mathbf{Z}}}p_0 + (1 - p_0)}$ | `adjust_coef_with_binary()` |
-| Binary | Risk ratio | $\textrm{RR}_{Y \sim X \| U + \mathbf{Z}} = \textrm{RR}_{Y \sim X \|\mathbf{Z}}\frac{\textrm{RR}_{Y \sim U \| X + \mathbf{Z}} p_0+(1-p_0)}{\textrm{RR}_{Y \sim U \| X + \mathbf{Z}} p_1+(1-p_1)}$ | `adjust_rr_with_binary()` |
-| Binary | Odds ratio | $\textrm{OR}_{Y \sim X \| U + \mathbf{Z}} \approx \textrm{OR}_{Y \sim X \|\mathbf{Z}}\frac{\textrm{OR}_{Y \sim U \| X + \mathbf{Z}} p_0+(1-p_0)}{\textrm{OR}_{Y \sim U \| X + \mathbf{Z}} p_1+(1-p_1)}$ | `adjust_or_with_binary()` |
-| Time to event | Hazard ratio | $\textrm{HR}_{Y \sim X \| U + \mathbf{Z}} \approx \textrm{HR}_{Y \sim X \|\mathbf{Z}}\frac{\textrm{HR}_{Y \sim U \| X + \mathbf{Z}} p_0+(1-p_0)}{\textrm{HR}_{Y \sim U \| X + \mathbf{Z}} p_1+(1-p_1)}$ | `adjust_hr_with_binary()` |
-| **Unmeasured confounder, $U$, has relationships with $X$ and $Y$ characterized by partial $R^2$ as $R^2_{X\sim U\|\mathbf{Z}}$ and $R^2_{Y\sim U\|X +\mathbf{Z}}$** |
-| Continuous | Coefficient | $\beta_{Y\sim X \|U +  \mathbf{Z}} = \beta_{Y\sim X \| \mathbf{Z}} - \textrm{se}(\beta_{Y\sim X \| \mathbf{Z}})\sqrt{\frac{R^2_{Y\sim U \|X+\mathbf{Z}}\times R^2_{X\sim U\|\mathbf{Z}}}{(1 - R^2_{X\sim U\|\mathbf{Z}})}\textrm{df}}$ | `adjust_coef_with_r2()` |
-: Sensitivity analysis equations and R code from @d2022sensitivity {#tbl-sens}
+For example, to adjust (`action`) a coefficient (`effect`) with a binary unmeasured confounder (`what`), we use the function `adjust_coef_with_binary()`. 
 
-[^1]: The equality will hold for binary outcomes fit via a loglinear model. Otherwise, this is an approximation.
+
+Below is a copy of the table included in @lucy2022tipr about this package.
+
++----------+--------------------+----------------------------------------------+
+| category | Function term      | Use                                          |
++==========+====================+==============================================+
+|**action**| `adjust`           | These functions adjust observed effects,     |
+|          |                    | requiring both the unmeasured        |
+|          |                    | confounder-exposure relationship and         |
+|          |                    | unmeasured confounder-outcome relationship to|
+|          |                    | be specified.                                |
++----------+--------------------+----------------------------------------------+
+|          | `tip`              | These functions tip observed effects. Only   |
+|          |                    | one relationship, either the unmeasured      |
+|          |                    | confounder-exposure relationship or          |
+|          |                    | unmeasured confounder-outcome relationship   |
+|          |                    | needs to be specified.                       |
++----------+--------------------+----------------------------------------------+
+|**effect**| `coef`             | These functions specify an observed          |
+|          |                    | coefficient from a linear, log-linear,       |
+|          |                    | logistic, or Cox proportional hazards model  |
++----------+--------------------+----------------------------------------------+
+|          | `rr`               | These functions specify an observed          |
+|          |                    | relative risk                                |
++----------+--------------------+----------------------------------------------+
+|          | `or`               | These functions specify an observed          |
+|          |                    | odds ratio                                   |
++----------+--------------------+----------------------------------------------+
+|          | `hr`               | These functions specify an observed          |
+|          |                    | hazard ratio                                 |
+|          |                    |  
++----------+--------------------+----------------------------------------------+
+|**what**  | `continuous`       | These functions specify an unmeasured 
+|          |                    | standardized Normally distributed confounder. 
+|          |                    | These functions will include the parameters
+|          |                    | `exposure_confounder_effect` and 
+|          |                    | `confounder_outcome_effect`
++----------+--------------------+----------------------------------------------+
+|          | `binary`           | These functions specify an unmeasured binary
+|          |                    | confounder. These functions will include the 
+|          |                    | parameters `exposed_confounder_prev`, 
+|          |                    | `unexposed_confounder_prev`, and
+|          |                    | `confounder_outcome_effect`
++----------+--------------------+----------------------------------------------+
+|          | `r2`               | These functions specify an unmeasured 
+|          |                    | confounder parameterized by specifying the  
+|          |                    | percent of variation in the exposure / outcome  
+|          |                    | explained by the unmeasured confounder. These  
+|          |                    | functions will include the parameters 
+|          |                    | `confounder_exposure_r2` and 
+|          |                    | `outcome_exposure_r2`
++----------+--------------------+----------------------------------------------+
+: Grammar of `tipr` functions. {#tbl-sens}
+
+You can find full documentation here: [r-causal.github.io/tipr/](https://r-causal.github.io/tipr/)
 
 #### Example
 
-Ok, now we have everything we need to perform our sensitivity analysis. @tbl-sens provides the equations we need; we can use the {tipr} R package to apply these; we will use the `adjust_coef` function. Let's plug in the quantities we established above for each of the three parameters, `effect_observed`, `exposure_confounder_effect`, and `confounder_outcome_effect`. 
+Ok, now we have everything we need to perform our sensitivity analysis. @tbl-sens provides what we need; we can use the {tipr} R package to apply these; we will use the `adjust_coef` function. Let's plug in the quantities we established above for each of the three parameters, `effect_observed`, `exposure_confounder_effect`, and `confounder_outcome_effect`. 
 
 ```{r}
 library(tipr)
