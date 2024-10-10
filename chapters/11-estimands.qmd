@@ -859,7 +859,7 @@ Below is a table summarizing the estimands and methods for estimating them (incl
 In the example we've taken up, the outcome, posted wait times, is continuous.
 Using linear regression, the ATE and friends are calculated as a difference in means.
 A difference in means is a valuable effect to estimate, but it's not the only one.
-Let's say we use ATT weights and a weight an outcome regression to calculate the relative change in posted wait time.
+Let's say we use ATT weights and weight an outcome regression to calculate the relative change in posted wait time.
 The relative change is still a treatment effect among the treated, but it's on a relative scale.
 The important part is that the weights allow us to average over the covariates of the treated for whichever specific estimand we're trying to estimate.
 Sometimes, when people say something like "the average treatment effect", they are talking about a difference in mean outcomes among the whole sample, so it's good to be specific.
