@@ -335,5 +335,5 @@ If we apply the bias-variance trade-off to causal models, we introduce statistic
 Another subtlety is that overfitting can inflate the standard error of the estimate in the sample, which is not the same variance as the bias-variance trade-off [@schuster2016].
 From a frequentist standpoint, the confidence intervals will also not have nominal coverage (see @sec-appendix-bootstrap) because of the causal bias in the estimate.
 
-In practice, cross-validation, a technique to reduce overfitting, is often used with causal models that use machine learning, as we'll discuss in [Chapter—@sec-causal-ml].
+In practice, cross-validation, a technique to reduce overfitting, is often used with causal models that use machine learning, as we'll discuss in [Chapter -@sec-causal-ml].
 :::
