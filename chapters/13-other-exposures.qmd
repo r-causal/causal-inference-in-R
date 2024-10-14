@@ -1,4 +1,6 @@
-# Continuous exposures {#sec-continuous-exposures}
+# Continuous and categorical exposures
+
+## Continuous exposures {#sec-continuous-exposures}
 
 {{< include 00-setup.qmd >}}
 
@@ -8,7 +10,7 @@
 status("wip")
 ```
 
-## Calculating propensity scores for continuous exposures
+### Calculating propensity scores for continuous exposures
 
 Propensity scores generalize to many other types of exposures, including continuous exposures.
 At its heart, the workflow is the same: we fit a model where the exposure is the outcome and then use that model to weight a second outcome model.
@@ -109,7 +111,7 @@ lm(
   )
 ```
 
-## Diagnostics and stabilization
+### Diagnostics and stabilization
 
 Continuous exposure weights, however, are very sensitive to modeling choices.
 One problem, in particular, is the existence of extreme weights, an issue that can also affect other types of exposures.
@@ -291,4 +293,25 @@ wait_times_wts |>
 Our model predicted a much lower posted wait time than observed, so this date was upweighted.
 We don't know why the posted time was so high (the actual time was much lower), but we did find an artist rendering from that date of [Pluto digging for Seven Dwarfs Mine Train treasure](https://disneyparks.disney.go.com/blog/2018/06/disney-doodle-pluto-sniffs-out-fun-at-seven-dwarfs-mine-train/).
 
-## Fitting the outcome model for continuous exposures
+### Fitting the outcome model for continuous exposures
+
+## Categorical exposures
+
+{{< include 00-setup.qmd >}}
+
+```{r}
+#| echo: false
+# TODO: remove when first edition complete
+status("unstarted")
+```
+
+## Calculating propensity scores for categorical exposures
+
+```{r}
+rnorm(5)
+```
+
+### Diagnostics with many categories
+
+### Fitting the outcome model again
+
