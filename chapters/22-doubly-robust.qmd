@@ -1,0 +1,17 @@
+# Doubly robust models {#sec-causal-ml}
+
+{{< include 00-setup.qmd >}}
+
+```{r}
+#| echo: false
+# TODO: remove when first edition complete
+status("unstarted")
+```
+
+## Augmented propensity scores
+
+```{r}
+rnorm(5)
+```
+
+## Targeted Learning
