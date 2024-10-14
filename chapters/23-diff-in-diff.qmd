@@ -1,0 +1,17 @@
+# Difference-in-difference {#sec-diff-in-diff}
+
+{{< include 00-setup.qmd >}}
+
+```{r}
+#| echo: false
+# TODO: remove when first edition complete
+status("unstarted")
+```
+
+## Difference-in-Difference
+
+```{r}
+rnorm(5)
+```
+
+## Synthetic controls

@@ -971,9 +971,9 @@ In other words, the effect estimate of `exposure` on `outcome` should be the sam
 #| fig-cap: "A DAG showing the causal relationship between `outcome`, `exposure`, and `covariate`. `exposure` and `covariate` both cause `outcome`, but there is no relationship between `exposure` and `covariate`. In a logistic regression, the odds ratio for exposure will be non-collapsible over strata of covariate."
 library(ggdag)
 dagify(
-  outcome ~ exposure + covariate, 
+  outcome ~ exposure + covariate,
   coords = time_ordered_coords()
-) |>  
+) |>
   ggdag(use_text = FALSE) +
   geom_dag_text_repel(aes(label = name), box.padding = 1.8, direction = "x") +
   theme_dag()
@@ -985,8 +985,8 @@ Let's simulate this.
 set.seed(123)
 n <- 10000
 
-exposure <- rbinom(n, 1, 0.5)  
-covariate <- rbinom(n, 1, 0.5) 
+exposure <- rbinom(n, 1, 0.5)
+covariate <- rbinom(n, 1, 0.5)
 outcome <- rbinom(n, 1, plogis(-0.5 + exposure + 2 * covariate))
 ```
 
@@ -1024,7 +1024,7 @@ We can calculate the odds ratio using this frequency table: ((`r marginal_table[
 This odds ratio is the same result we get with logistic regression when we exponentiate the results.
 
 ```{r}
-glm(outcome ~ exposure, family = binomial()) |> 
+glm(outcome ~ exposure, family = binomial()) |>
   broom::tidy(exponentiate = TRUE)
 ```
 
@@ -1032,7 +1032,7 @@ This is a little off from the simulation model coefficient of `exp(1)`.
 We get closer when we add in `covariate`.
 
 ```{r}
-glm(outcome ~ exposure + covariate, family = binomial()) |> 
+glm(outcome ~ exposure + covariate, family = binomial()) |>
   broom::tidy(exponentiate = TRUE)
 ```
 
@@ -1065,7 +1065,8 @@ Instead of worrying about which version of the odds ratio is right, we recommend
 Much ink has been spilled about the odds ratio versus the risk ratio and the relative versus absolute scale.
 We suggest that you present all three measures (the odds ratio, the risk ratio, and the risk difference) together with the baseline probability of the outcome.
 Each offers a different perspective on the causal effect.
-Be careful to interpret them with regard to the treatment group that you've included in your estimate. For example, the average risk difference calculated with ATT weights is the average risk difference among the treated.
+Be careful to interpret them with regard to the treatment group that you've included in your estimate.
+For example, the average risk difference calculated with ATT weights is the average risk difference among the treated.
 
 ::: callout-note
 ## The linear probability model

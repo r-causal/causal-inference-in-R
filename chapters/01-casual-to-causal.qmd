@@ -107,11 +107,11 @@ In 2020, particularly in the early months of the pandemic, descriptive analyses 
 Since the coronavirus is similar to other respiratory diseases, we had many public health tools to reduce risk (e.g., distancing and, later, face masks).
 Descriptive statistics of cases by region were vital for deciding local policies and the strength of those policies.
 
-A great example of a more complex descriptive analysis during the pandemic was an [ongoing report by the Financial Times of expected deaths vs. observed deaths](https://www.ft.com/content/a2901ce8-5eb7-4633-b89c-cbdf5b386938) in various countries and regions[^3].
+A great example of a more complex descriptive analysis during the pandemic was an [ongoing report by the Financial Times of expected deaths vs. observed deaths](https://www.ft.com/content/a2901ce8-5eb7-4633-b89c-cbdf5b386938) in various countries and regions[^01-casual-to-causal-1].
 While the calculation of expected deaths is slightly more sophisticated than most descriptive statistics, it provided a tremendous amount of information about current deaths without needing to untangle causal effects (e.g., were they due to COVID-19 directly? Inaccessible healthcare? Cardiovascular events post-COVID?).
 In this (simplified) recreation of their plot from July 2020, you can see the staggering effect of the pandemic's early months.
 
-[^3]: John Burn-Murdoch was responsible for many of these presentations and gave a [fascinating talk on the subject](https://cloud.rstudio.com/resources/rstudioglobal-2021/reporting-on-and-visualising-the-pandemic/).
+[^01-casual-to-causal-1]: John Burn-Murdoch was responsible for many of these presentations and gave a [fascinating talk on the subject](https://cloud.rstudio.com/resources/rstudioglobal-2021/reporting-on-and-visualising-the-pandemic/).
 
 ```{r}
 #| label: fig-ft-chart
@@ -213,7 +213,7 @@ It also helps us be sure that the data structure we're using matches the questio
 You should always do descriptive analyses of your data when conducting causal research.
 
 Finally, as we'll see in [Chapter -@sec-trials-std], there are certain circumstances where we can make causal inferences with basic statistics.
-Be cautious about the distinction between the causal question and the descriptive component here, too: just because we're using the same calculation (e.g., a difference in means) doesn't mean that all descriptions you can generate are causal. 
+Be cautious about the distinction between the causal question and the descriptive component here, too: just because we're using the same calculation (e.g., a difference in means) doesn't mean that all descriptions you can generate are causal.
 Whether a descriptive analysis overlaps with a causal analysis is a function of the data and the question.
 
 ### Prediction
@@ -235,7 +235,7 @@ There are many excellent texts on predictive modeling, and so we refer you to th
 Prediction is the most popular topic in data science, largely thanks to machine learning applications in industry.
 Prediction, of course, has a long history in statistics, and many models popular today have been used for decades in and outside academia.
 
-Let's look at an example of prediction about COVID-19 [^chapter-01-1].
+Let's look at an example of prediction about COVID-19 [^01-casual-to-causal-2].
 In 2021, researchers published the ISARIC 4C Deterioration model, a clinical prognostic model for predicting severe adverse outcomes for acute COVID-19 [@Gupta2021].
 The authors included a descriptive analysis to understand the population from which this model was developed, particularly the distribution of the outcome and candidate predictors.
 One helpful aspect of this model is that it uses items commonly measured on day one of COVID-related hospitalization.
@@ -244,7 +244,7 @@ The final model included eleven items and a description of their model attribute
 Notably, the authors used clinical domain knowledge to select candidate variables but did not fall into the temptation of interpreting the model coefficients as causal.
 Without question, some of the predictive value of this model stems from the causal structure of the variables as they relate to the outcome, but the researchers had a different goal entirely for this model and stuck to it.
 
-[^chapter-01-1]: A natural model here is predicting cases, but infectious disease modeling is complex and usually uses techniques outside the usual predictive modeling workflow.
+[^01-casual-to-causal-2]: A natural model here is predicting cases, but infectious disease modeling is complex and usually uses techniques outside the usual predictive modeling workflow.
 
 Here are other good examples from the predictive space:
 
@@ -260,9 +260,9 @@ Here are other good examples from the predictive space:
 
 The key measure of validity in prediction modeling is predictive accuracy, which can be measured in several ways, such as root mean squared error (RMSE), mean absolute error (MAE), area under the curve (AUC), and many more.
 A convenient detail about predictive modeling is that we can often assess if we're right, which is not true of descriptive statistics for which we only have a subset of data or causal inference for which we don't know the true causal structure.
-We aren't always able to assess against the truth, but it's almost always required for fitting the initial predictive model [^chapter-01-2].
+We aren't always able to assess against the truth, but it's almost always required for fitting the initial predictive model [^01-casual-to-causal-3].
 
-[^chapter-01-2]: We say model singular, but usually data scientists fit many models for experimentation, and often the best prediction models are some combination of predictions from several models, called a stacked model
+[^01-casual-to-causal-3]: We say model singular, but usually data scientists fit many models for experimentation, and often the best prediction models are some combination of predictions from several models, called a stacked model
 
 Measurement error is also a concern for predictive modeling because we usually need accurate data for accurate predictions.
 Interestingly, measurement error and missingness can be informative in predictive settings.
@@ -357,14 +357,14 @@ We'll come back to this topic time and time again in the book---from the basics 
 
 At this point, you may wonder why the right causal model isn't just the best prediction model.
 It makes sense that the two would be related: naturally, things that cause other things would be predictors.
-It's causality all the way down, so any predictive information *is* related, in some capacity, to the causal structure of the thing we're predicting. 
+It's causality all the way down, so any predictive information *is* related, in some capacity, to the causal structure of the thing we're predicting.
 Doesn't it stand to reason that a model that predicts well is causal, too?
 It's true that *some* predictive models can be great causal models and vice versa.
-Unfortunately, this is not always the case; causal effects needn't predict particularly well, and good predictors needn't be causally unbiased [@shmueli2010a]. 
+Unfortunately, this is not always the case; causal effects needn't predict particularly well, and good predictors needn't be causally unbiased [@shmueli2010a].
 There is no way to know using data alone.
 
-Let's look at the causal perspective first because it's a bit simpler. 
-Consider a causally unbiased model for an exposure but only includes variables related to the outcome *and* the exposure. 
+Let's look at the causal perspective first because it's a bit simpler.
+Consider a causally unbiased model for an exposure but only includes variables related to the outcome *and* the exposure.
 In other words, this model provides us with the correct answer for the exposure of interest but doesn't include other predictors of the outcome (which can sometimes be a good idea, as discussed in @sec-data-causal).
 If an outcome has many causes, a model that accurately describes the relationship with the exposure likely won't predict the outcome very well.
 Likewise, if a true causal effect of the exposure on the outcome is small, it will bring little predictive value.
@@ -409,8 +409,8 @@ However, the same model in the same data with different goals will have differen
 
 ## Diagraming a causal claim {#sec-diag}
 
-Each analysis task, whether descriptive, predictive, or inferential, should start with a clear, precise question. 
-Let's diagram them to understand better the structure of causal questions (to which we'll return our focus). 
+Each analysis task, whether descriptive, predictive, or inferential, should start with a clear, precise question.
+Let's diagram them to understand better the structure of causal questions (to which we'll return our focus).
 Diagramming sentences is a grammatical method used to visually represent the structure of a sentence, occasionally taught in grammar school.
 In this technique, sentences are deconstructed into their constituent parts, such as subjects, verbs, objects, and modifiers, and then displayed using a series of lines and symbols.
 The arrangement of these elements on the diagram reflects their syntactic roles and how they interact within the sentence's overall structure.
@@ -441,8 +441,7 @@ knitr::include_graphics("../images/sentence-diagram-2.png")
 ```
 
 Let's get more specific.
-A study was published in *JAMA* (the Journal of the American Medical Association) in 2005 titled "Effect of Smoking Reduction on Lung Cancer Risk."
-This study concluded: "Among individuals who smoke 15 or more cigarettes per day, smoking reduction by 50% significantly reduces the risk of lung cancer".
+A study was published in *JAMA* (the Journal of the American Medical Association) in 2005 titled "Effect of Smoking Reduction on Lung Cancer Risk." This study concluded: "Among individuals who smoke 15 or more cigarettes per day, smoking reduction by 50% significantly reduces the risk of lung cancer".
 [@godtfredsen2005effect] The study describes the time frame studied as 5-10 years.
 Let's diagram this causal claim.
 Here, we assume that the eligibility criteria and the target population for the estimated causal effect are the same (individuals who smoke 15 or more cigarettes per day); this need not always be the case.
@@ -470,5 +469,4 @@ Let's return to the smoking example.
 Our initial question was: *Does smoking cause lung cancer?*; The evidence in the study shows: *For people who smoke 15+ cigarettes a day, reducing smoking by 50% reduces the risk of lung cancer over 5-10 years*.
 Does the answer match the question?
 Not quite.
-Let's update our question to match what the study actually showed: *For people who smoke 15+ cigarettes a day, does reducing smoking by 50% reduce the lung cancer risk over 5-10 years?*
-Honing this skill — asking answerable causal questions — is essential and one we will discuss throughout this book.
+Let's update our question to match what the study actually showed: *For people who smoke 15+ cigarettes a day, does reducing smoking by 50% reduce the lung cancer risk over 5-10 years?* Honing this skill — asking answerable causal questions — is essential and one we will discuss throughout this book.

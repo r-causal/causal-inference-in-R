@@ -26,35 +26,38 @@ In reality, we often see this assumption violated by issues such as *drop out* o
 If there is differential drop out between exposure groups (for example, if participants randomly assigned to the treatment are more likely to drop out of a study, and thus we don't observe their outcome), then the observed exposure groups are no longer *exchangeable*.
 Therefore, in @tbl-assump-solved we have two columns, one for the *ideal* randomized trial (where adherence is assumed to be perfect and no participants drop out) and one for *realistic* randomized trials where this may not be so.
 
-| Assumption            | Ideal Randomized Trial | Realistic Randomized Trial | Observational Study  |
-|-----------------|-----------------|---------------------|-------------------|
+| Assumption                          | Ideal Randomized Trial | Realistic Randomized Trial | Observational Study  |
+|-----------------|-----------------|--------------------|------------------|
 | Consistency (Well defined exposure) | `r emo::ji("smile")`   | `r emo::ji("smile")`       | `r emo::ji("shrug")` |
 | Consistency (No interference)       | `r emo::ji("shrug")`   | `r emo::ji("shrug")`       | `r emo::ji("shrug")` |
-| Positivity            | `r emo::ji("smile")`   | `r emo::ji("smile")`       | `r emo::ji("shrug")` |
-| Exchangeability       | `r emo::ji("smile")`   | `r emo::ji("shrug")`       | `r emo::ji("shrug")` |
+| Positivity                          | `r emo::ji("smile")`   | `r emo::ji("smile")`       | `r emo::ji("shrug")` |
+| Exchangeability                     | `r emo::ji("smile")`   | `r emo::ji("shrug")`       | `r emo::ji("shrug")` |
 
 : Assumptions solved by study design. `r emo::ji("smile")` indicates it is solved by default, `r emo::ji("shrug")` indicates that it is *solvable* but not solved by default. {#tbl-assump-solved}
 
-When designing a study, the first step is asking an appropriate *causal question*. We then can map this question to a *protocol*, consisting of the following seven elements, as defined by @hernan2016using:
+When designing a study, the first step is asking an appropriate *causal question*.
+We then can map this question to a *protocol*, consisting of the following seven elements, as defined by @hernan2016using:
 
-* Eligibility criteria
-* Exposure definition
-* Assignment procedures
-* Follow-up period
-* Outcome definition
-* Causal contrast of interest
-* Analysis plan
+-   Eligibility criteria
+-   Exposure definition
+-   Assignment procedures
+-   Follow-up period
+-   Outcome definition
+-   Causal contrast of interest
+-   Analysis plan
 
-In @tbl-protocol we map each of these elements to the corresponding assumption that it can address. For example, exchangeability can be addressed by the eligibility criteria (we can restrict our study to only participants for whom exposure assignment is exchangeable), assignment procedure (we could use random exposure assignment to ensure exchangeability), follow-up period (we can be sure to choose an appropriate start time for our follow-up period to ensure that we are not inducing bias -- we'll think more about this in a future chapter), and/or the analysis plan (we can adjust for any factors that would cause those in different exposure groups to lack exchangeability). 
+In @tbl-protocol we map each of these elements to the corresponding assumption that it can address.
+For example, exchangeability can be addressed by the eligibility criteria (we can restrict our study to only participants for whom exposure assignment is exchangeable), assignment procedure (we could use random exposure assignment to ensure exchangeability), follow-up period (we can be sure to choose an appropriate start time for our follow-up period to ensure that we are not inducing bias -- we'll think more about this in a future chapter), and/or the analysis plan (we can adjust for any factors that would cause those in different exposure groups to lack exchangeability).
 
 <!-- TODO: link to the chapter where we talk about time zero? immortal time bias etc? is that now? -->
 
-Assumption | Eligibility Criteria | Exposure Definition| Assignment Procedures | Follow-up Period | Outcome Definition | Causal contrast | Analysis Plan
-------------|----------------- | ------------------|---------|----------|----------|--------- | -------
-Consistency (Well defined exposure) |`r emo::ji("heavy_check_mark")`|`r emo::ji("heavy_check_mark")`|| | |
-Consistency (No interference) | | `r emo::ji("heavy_check_mark")`|`r emo::ji("heavy_check_mark")` | | `r emo::ji("heavy_check_mark")` | | `r emo::ji("heavy_check_mark")`
-Positivity |`r emo::ji("heavy_check_mark")`||`r emo::ji("heavy_check_mark")`|| | | `r emo::ji("heavy_check_mark")`
-Exchangeability |`r emo::ji("heavy_check_mark")`||`r emo::ji("heavy_check_mark")`|`r emo::ji("heavy_check_mark")`|| | `r emo::ji("heavy_check_mark")`
+| Assumption                          | Eligibility Criteria            | Exposure Definition             | Assignment Procedures           | Follow-up Period                | Outcome Definition              | Causal contrast | Analysis Plan                   |
+|---------|---------|---------|---------|---------|---------|---------|---------|
+| Consistency (Well defined exposure) | `r emo::ji("heavy_check_mark")` | `r emo::ji("heavy_check_mark")` |                                 |                                 |                                 |                 |                                 |
+| Consistency (No interference)       |                                 | `r emo::ji("heavy_check_mark")` | `r emo::ji("heavy_check_mark")` |                                 | `r emo::ji("heavy_check_mark")` |                 | `r emo::ji("heavy_check_mark")` |
+| Positivity                          | `r emo::ji("heavy_check_mark")` |                                 | `r emo::ji("heavy_check_mark")` |                                 |                                 |                 | `r emo::ji("heavy_check_mark")` |
+| Exchangeability                     | `r emo::ji("heavy_check_mark")` |                                 | `r emo::ji("heavy_check_mark")` | `r emo::ji("heavy_check_mark")` |                                 |                 | `r emo::ji("heavy_check_mark")` |
+
 : Mapping assumptions to elements of a study protocol {#tbl-protocol}
 
 Recall our diagrams from @sec-diag (@fig-diagram-4); several of these protocol elements can be mapped to these diagrams when we are attempting to define our causal question.
@@ -86,16 +89,17 @@ ggplot(data, aes(x = x, y = y)) +
   theme_void()
 ```
 
-
 ## Target Trials
 
-There are many reasons why randomization may not be possible. For example, it might not be ethical to randomly assign people to a particular exposure, there may not be funding available to run a randomized trial, or there might not be enough time to conduct a full trial. In these situations, we rely on observational data to help us answer causal questions by implementing a *target trial*.
+There are many reasons why randomization may not be possible.
+For example, it might not be ethical to randomly assign people to a particular exposure, there may not be funding available to run a randomized trial, or there might not be enough time to conduct a full trial.
+In these situations, we rely on observational data to help us answer causal questions by implementing a *target trial*.
 
 A *target trial* answers: What experiment would you design if you could?
 Specifying a target trial is nearly identical to the process we described for a randomized trial.
-We define eligibility, exposure, follow-up period, outcome, estimate of interest, and the analysis plan. 
+We define eligibility, exposure, follow-up period, outcome, estimate of interest, and the analysis plan.
 The key difference with the target trial in the observational setting, of course, is that we cannot assign exposure.
-The analysis planning and execution step of the target trial is the most technically involved and a core focus of this book; e.g. using DAGs to ensure that we have measured and are controlling for the right set of confounders, composing statistical programs that invoke an appropriate adjustment method such as IP weighting, and conducting sensitivity analyses to assess how sensitive our conclusions are to unmeasured confounding or misspecification. 
+The analysis planning and execution step of the target trial is the most technically involved and a core focus of this book; e.g. using DAGs to ensure that we have measured and are controlling for the right set of confounders, composing statistical programs that invoke an appropriate adjustment method such as IP weighting, and conducting sensitivity analyses to assess how sensitive our conclusions are to unmeasured confounding or misspecification.
 
 ## Causal inference with `group_by()` and `summarize()` {#sec-group-sum}
 
@@ -179,9 +183,13 @@ sim |>
   select(confounder, exposure, outcome, observed_potential_outcome)
 ```
 
-Great! Let's begin by proving to ourselves that this violates the exchangeability assumption. Recall from @sec-assump:
+Great!
+Let's begin by proving to ourselves that this violates the exchangeability assumption.
+Recall from @sec-assump:
 
-> **Exchangeability**: We assume that within levels of relevant variables (confounders), exposed and unexposed subjects have an equal likelihood of experiencing any outcome prior to exposure; i.e. the exposed and unexposed subjects are exchangeable. This assumption is sometimes referred to as **no unmeasured confounding**, though exchangeability implies more than that, such as no selection bias and that confounder relationships are appropriately specified. We will further define exchangeability through the lens of DAGs in the next chapter.
+> **Exchangeability**: We assume that within levels of relevant variables (confounders), exposed and unexposed subjects have an equal likelihood of experiencing any outcome prior to exposure; i.e. the exposed and unexposed subjects are exchangeable.
+> This assumption is sometimes referred to as **no unmeasured confounding**, though exchangeability implies more than that, such as no selection bias and that confounder relationships are appropriately specified.
+> We will further define exchangeability through the lens of DAGs in the next chapter.
 
 Now, let's try to estimate the effect of the `exposure` on the `outcome` assuming the two exposed groups are exchangeable.
 
@@ -260,7 +268,10 @@ Great!
 Now our estimate is much closer to the true value (0).
 
 ::: callout
-The method we are using to solve the fact that our two groups are not exchangeable is known as **stratification**. We are *stratifying* by the confounder(s) and estimating the causal effect within each stratum. To get an overall average causal effect we are averaging across the strata. This can be a great tool if there are very few confounders, however it can suffer from the curse of dimensionality as the number of confounders as well as the number of levels within each confounder increases.
+The method we are using to solve the fact that our two groups are not exchangeable is known as **stratification**.
+We are *stratifying* by the confounder(s) and estimating the causal effect within each stratum.
+To get an overall average causal effect we are averaging across the strata.
+This can be a great tool if there are very few confounders, however it can suffer from the curse of dimensionality as the number of confounders as well as the number of levels within each confounder increases.
 :::
 
 ### Two binary confounders
@@ -436,7 +447,6 @@ dagify(
 
 Let's examine three models: (1) an unadjusted model (@tbl-panel-1), (2) a linear model that adjusts for the baseline covariates (@tbl-panel-2), and (3) a propensity score weighted model (@tbl-panel-3).
 
-
 ```{r}
 #| label: tbl-panel
 #| layout-ncol: 2
@@ -501,7 +511,8 @@ Standard methods can still estimate unbiased effects, but more care needs to be 
 For example, we need the exposed an unexposed groups to be *exchangeable*; this means we must adjust for *all confounders* with their correct functional form.
 If everything is simple and linear (and there is no effect heterogeneity, that is everyone's causal effect is the same regardless of their baseline factors), then a simple regression model that adjusts for the confounders can give you an unbiased result.
 Let's look at a simple example such as this.
-Notice in the simulation below, the main difference compared to the above simulation is that the probability of treatment assignment is no longer 0.5 as it was above, but now dependent on the participants `age` and `weight`. For example, maybe doctors tend to prescribe a certain treatment to patients who are older and who weigh more.
+Notice in the simulation below, the main difference compared to the above simulation is that the probability of treatment assignment is no longer 0.5 as it was above, but now dependent on the participants `age` and `weight`.
+For example, maybe doctors tend to prescribe a certain treatment to patients who are older and who weigh more.
 The true causal effect is still 1, but now we have two confounders, `age` and `weight` (@fig-diag-2).
 
 ```{r}

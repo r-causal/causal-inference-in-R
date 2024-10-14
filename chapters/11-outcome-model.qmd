@@ -10,7 +10,8 @@ status("polishing")
 
 ## Using matched data sets
 
-When fitting an outcome model on matched data sets, we can simply subset the original data to only those who were matched and then fit a model on these data as we would otherwise. For example, re-performing the matching as we did in @sec-using-ps, we can extract the matched observations in a dataset called `matched_data` as follows.
+When fitting an outcome model on matched data sets, we can simply subset the original data to only those who were matched and then fit a model on these data as we would otherwise.
+For example, re-performing the matching as we did in @sec-using-ps, we can extract the matched observations in a dataset called `matched_data` as follows.
 
 ```{r}
 #| message: false
@@ -29,18 +30,22 @@ m <- matchit(
 matched_data <- get_matches(m)
 ```
 
-We can then fit the outcome model on this data. For this analysis, we are interested in the impact of extra magic morning hours on the average posted wait time between 9 and 10am. The linear model below will estimate this in the matched cohort.
+We can then fit the outcome model on this data.
+For this analysis, we are interested in the impact of extra magic morning hours on the average posted wait time between 9 and 10am.
+The linear model below will estimate this in the matched cohort.
 
 ```{r}
 lm(wait_minutes_posted_avg ~ park_extra_magic_morning, data = matched_data) |>
   tidy(conf.int = TRUE)
 ```
 
-Recall that by default `{MatchIt}` estimates an average treatment effect among the treated. This means among days that have extra magic hours, the expected impact of having extra magic hours on the average posted wait time between 9 and 10am is 7.9 minutes (95% CI: 1.2-14.5). 
+Recall that by default `{MatchIt}` estimates an average treatment effect among the treated.
+This means among days that have extra magic hours, the expected impact of having extra magic hours on the average posted wait time between 9 and 10am is 7.9 minutes (95% CI: 1.2-14.5).
 
 ## Using weights in outcome models
 
-Now let's use propensity score weights to estimate this same estimand. We will use the ATT weights so the analysis matches that for matching above.
+Now let's use propensity score weights to estimate this same estimand.
+We will use the ATT weights so the analysis matches that for matching above.
 
 ```{r}
 #| message: false
@@ -58,7 +63,7 @@ seven_dwarfs_9_with_wt <- seven_dwarfs_9_with_ps |>
   mutate(w_att = wt_att(.fitted, park_extra_magic_morning))
 ```
 
-We can fit a *weighted* outcome model by using the `weights` argument. 
+We can fit a *weighted* outcome model by using the `weights` argument.
 
 ```{r}
 lm(
@@ -69,10 +74,10 @@ lm(
   tidy()
 ```
 
-Using weighting, we estimate that among days that have extra magic hours, the expected impact of having extra magic hours on the average posted wait time between 9 and 10am is 6.2 minutes. 
+Using weighting, we estimate that among days that have extra magic hours, the expected impact of having extra magic hours on the average posted wait time between 9 and 10am is 6.2 minutes.
 While this approach will get us the desired estimate for the point estimate, the default output using the `lm` function for the uncertainty (the standard errors and confidence intervals) are not correct.
 
-::: {.callout-tip}
+::: callout-tip
 ## Causal inference with `group_by()` and `summarize()`, revisted
 
 For this simple example, the weighted outcome model is equivalent to taking the difference in the weighted means.
@@ -87,24 +92,26 @@ wt_means
 
 The difference is `r round(wt_means$average_wait[[2]] - wt_means$average_wait[[1]], 2)`, the same as the weighted outcome model.
 
-The weighted population is a psuedo-population where there is no confounding by the variables in the propensity score. Philosophically and practically, we can make calculations with the data from this population. Causal inference with `group_by()` and `summarize()` works just fine now, since we've already accounted for confounding in the weights.
+The weighted population is a psuedo-population where there is no confounding by the variables in the propensity score.
+Philosophically and practically, we can make calculations with the data from this population.
+Causal inference with `group_by()` and `summarize()` works just fine now, since we've already accounted for confounding in the weights.
 :::
-
 
 ## Estimating uncertainty
 
 There are three ways to estimate the uncertainty:
 
-1. A bootstrap
-2. A sandwich estimator that only takes into account the outcome model
-3. A sandwich estimator that takes into account the propensity score model
+1.  A bootstrap
+2.  A sandwich estimator that only takes into account the outcome model
+3.  A sandwich estimator that takes into account the propensity score model
 
 The first option can be computationally intensive, but should get you the correct estimates.
-The second option is computationally the easiest, but tends to overestimate the variability. There are not many current solutions in R (aside from coding it up yourself) for the third; however, the `{PSW}` package will do this. 
+The second option is computationally the easiest, but tends to overestimate the variability.
+There are not many current solutions in R (aside from coding it up yourself) for the third; however, the `{PSW}` package will do this.
 
 ### The bootstrap
 
-1. Create a function to run your analysis once on a sample of your data
+1.  Create a function to run your analysis once on a sample of your data
 
 ```{r}
 fit_ipw <- function(.split, ...) {
@@ -137,8 +144,7 @@ fit_ipw <- function(.split, ...) {
 }
 ```
 
-
-2. Use {rsample} to bootstrap our causal effect
+2.  Use {rsample} to bootstrap our causal effect
 
 ```{r}
 #| message: false
@@ -158,7 +164,6 @@ ipw_results <- bootstrapped_seven_dwarfs |>
 ipw_results
 ```
 
-
 Let's look at the results.
 
 ```{r}
@@ -176,8 +181,7 @@ ipw_results |>
   theme_minimal()
 ```
 
-
-3. Pull out the causal effect
+3.  Pull out the causal effect
 
 ```{r}
 # get t-based CIs
@@ -186,11 +190,13 @@ boot_estimate <- int_t(ipw_results, boot_fits) |>
 boot_estimate
 ```
 
-We estimate that among days that have extra magic hours, the expected impact of having extra magic hours on the average posted wait time between 9 and 10am is `r round(boot_estimate$.estimate, 1)` minutes, 95% CI (`r round(boot_estimate$.lower, 1)`, `r round(boot_estimate$.upper, 1)`). 
+We estimate that among days that have extra magic hours, the expected impact of having extra magic hours on the average posted wait time between 9 and 10am is `r round(boot_estimate$.estimate, 1)` minutes, 95% CI (`r round(boot_estimate$.lower, 1)`, `r round(boot_estimate$.upper, 1)`).
 
 ### The outcome model sandwich
 
-There are two ways to get the sandwich estimator. The first is to use the same weighted outcome model as above along with the `{sandwich}` package. Using the `sandwich` function, we can get the robust estimate for the variance for the parameter of interest, as shown below.
+There are two ways to get the sandwich estimator.
+The first is to use the same weighted outcome model as above along with the `{sandwich}` package.
+Using the `sandwich` function, we can get the robust estimate for the variance for the parameter of interest, as shown below.
 
 ```{r}
 #| message: false
@@ -205,7 +211,8 @@ weighted_mod <- lm(
 sandwich(weighted_mod)
 ```
 
-Here, our robust variance estimate is `r round(sandwich(weighted_mod)[2,2], 3)`. We can then use this to construct a robust confidence interval.
+Here, our robust variance estimate is `r round(sandwich(weighted_mod)[2,2], 3)`.
+We can then use this to construct a robust confidence interval.
 
 ```{r}
 robust_var <- sandwich(weighted_mod)[2, 2]
@@ -215,9 +222,11 @@ ub <- point_est + 1.96 * sqrt(robust_var)
 lb
 ub
 ```
-We estimate that among days that have extra magic hours, the expected impact of having extra magic hours on the average posted wait time between 9 and 10am is `r round(point_est, 1)` minutes, 95% CI (`r round(lb, 1)`, `r round(ub, 1)`). 
 
-Alternatively, we could fit the model using the `{survey}` package. To do this, we need to create a design object, like we did when fitting weighted tables.
+We estimate that among days that have extra magic hours, the expected impact of having extra magic hours on the average posted wait time between 9 and 10am is `r round(point_est, 1)` minutes, 95% CI (`r round(lb, 1)`, `r round(ub, 1)`).
+
+Alternatively, we could fit the model using the `{survey}` package.
+To do this, we need to create a design object, like we did when fitting weighted tables.
 
 ```{r}
 #| message: false
@@ -237,9 +246,13 @@ Then we can use `svyglm` to fit the outcome model.
 svyglm(wait_minutes_posted_avg ~ park_extra_magic_morning, des) |>
   tidy(conf.int = TRUE)
 ```
+
 ### Sandwich estimator that takes into account the propensity score model
 
-The correct sandwich estimator will also take into account the propensity score model. The `{PSW}` will allow us to do this. This package has some quirks, for example it doesn't work well with categorical variables, so we need to create dummy variables for `park_ticket_season` to pass into the model. *Actually, the code below isn't working because it seems there is a bug in the package. Stay tuned!*
+The correct sandwich estimator will also take into account the propensity score model.
+The `{PSW}` will allow us to do this.
+This package has some quirks, for example it doesn't work well with categorical variables, so we need to create dummy variables for `park_ticket_season` to pass into the model.
+*Actually, the code below isn't working because it seems there is a bug in the package. Stay tuned!*
 
 ```{r}
 #| eval: false
@@ -258,4 +271,3 @@ psw(
   out.var = "wait_minutes_posted_avg"
 )
 ```
-

@@ -28,40 +28,40 @@ book:
   repo-actions: [edit, issue]
   chapters:
     - index.qmd
-    
+  
     - part: Asking Causal Questions
-      chapters: 
+      chapters:
       - chapters/01-casual-to-causal.qmd
       - chapters/02-whole-game.qmd
       - chapters/03-counterfactuals.qmd
       - chapters/04-target-trials-std-methods.qmd
       - chapters/05-dags.qmd
       - chapters/06-not-just-a-stats-problem.qmd
-      
-    - part: The Design Phase 
-      chapters: 
+  
+    - part: The Design Phase
+      chapters:
       - chapters/07-prep-data.qmd
-      - chapters/08-building-ps-models.qmd
-      - chapters/09-using-ps.qmd
-      - chapters/10-evaluating-ps.qmd
-      
-    - part: Estimating Causal Effects 
-      chapters: 
-      - chapters/11-estimands.qmd
-      - chapters/12-outcome-model.qmd
-      - chapters/13-continuous-exposures.qmd
-      - chapters/14-categorical-exposures.qmd
-      - chapters/15-g-comp.qmd
-      - chapters/16-interaction.qmd
-      - chapters/17-missingness-and-measurement.qmd
-      - chapters/18-longitudinal.qmd
-      - chapters/19-survival.qmd
-      - chapters/20-mediation.qmd
-      - chapters/21-sensitivity.qmd
-      - chapters/22-machine-learning.qmd
-      - chapters/23-iv-and-friends.qmd
+      - chapters/08-propensity-scores.qmd
+      - chapters/09-evaluating-ps.qmd
+  
+    - part: Estimating Causal Effects
+      chapters:
+      - chapters/10-estimands.qmd
+      - chapters/11-outcome-model.qmd
+      - chapters/12-other-exposures.qmd
+      - chapters/13-g-comp.qmd
+      - chapters/14-interaction.qmd
+      - chapters/15-missingness-and-measurement.qmd
+      - chapters/16-mediation.qmd
+      - chapters/17-longitudinal.qmd
+      - chapters/18-time-to-event.qmd
+      - chapters/19-sensitivity.qmd
+      - chapters/20-doubly-robust.qmd
+      - chapters/21-machine-learning.qmd
+      - chapters/22-iv-and-friends.qmd
+      - chapters/23-diff-in-diff.qmd
       - chapters/24-evidence.qmd
-      
+  
     - chapters/99-references.qmd
   appendices: 
     - appendices/A-bootstrap.qmd
