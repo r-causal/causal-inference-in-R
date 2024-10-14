@@ -112,7 +112,8 @@ In any case, we must rely on statistical techniques to help construct these unob
 
 Let's suppose some happiness index, from 1-10 exists.
 We are interested in assessing whether eating chocolate ice cream versus vanilla will increase happiness.
-We have 10 individuals with two potential outcomes for each, one is what their happiness would be if they ate chocolate ice cream, (defined as `y_chocolate` in the code below), and one is what their happiness would be if they ate vanilla ice cream (defined as `y_vanilla` in the code below). We can define the true causal effect of eating chocolate ice cream (versus vanilla) on happiness for each individual as the difference between the two (@tbl-po).
+We have 10 individuals with two potential outcomes for each, one is what their happiness would be if they ate chocolate ice cream, (defined as `y_chocolate` in the code below), and one is what their happiness would be if they ate vanilla ice cream (defined as `y_vanilla` in the code below).
+We can define the true causal effect of eating chocolate ice cream (versus vanilla) on happiness for each individual as the difference between the two (@tbl-po).
 
 ```{r}
 #| label: sim-generation
@@ -147,7 +148,6 @@ data <- data |>
 data
 ```
 
-
 ```{r}
 #| label: tbl-po
 #| tbl-cap: "Potential Outcomes Simulation: The causal effect of eating chocolate (versus vanilla) ice cream on happiness"
@@ -168,9 +168,12 @@ data |>
   )
 ```
 
-For example, examining @tbl-po, the causal effect of eating chocolate ice cream (versus vanilla) for individual `4` is `r data |> filter(id == 4) |> pull(causal_effect)`, whereas the causal effect for individual `9` is `r data |> filter(id == 9) |> pull(causal_effect)`. The *average* potential happiness after eating chocolate is `r mean(data |> pull(y_chocolate))` and the *average* potential happiness after eating vanilla is `r mean(data |> pull(y_vanilla))`. The *average* treatment effect of eating chocolate (versus vanilla) ice cream among the ten individuals in this study is `r mean(data |> pull(causal_effect))`. 
+For example, examining @tbl-po, the causal effect of eating chocolate ice cream (versus vanilla) for individual `4` is `r data |> filter(id == 4) |> pull(causal_effect)`, whereas the causal effect for individual `9` is `r data |> filter(id == 9) |> pull(causal_effect)`.
+The *average* potential happiness after eating chocolate is `r mean(data |> pull(y_chocolate))` and the *average* potential happiness after eating vanilla is `r mean(data |> pull(y_vanilla))`.
+The *average* treatment effect of eating chocolate (versus vanilla) ice cream among the ten individuals in this study is `r mean(data |> pull(causal_effect))`.
 
-In reality, we cannot observe both potential outcomes, in any moment in time, each individual in our study can only eat *one* flavor of ice cream. Suppose we let our participants choose which ice cream they wanted to eat and each choose their favorite (i.e. they knew which would make them "happier" and picked that one. Now what we *observe* is shown in @tbl-obs.
+In reality, we cannot observe both potential outcomes, in any moment in time, each individual in our study can only eat *one* flavor of ice cream.
+Suppose we let our participants choose which ice cream they wanted to eat and each choose their favorite (i.e. they knew which would make them "happier" and picked that one. Now what we *observe* is shown in @tbl-obs.
 
 ```{r}
 #| results: hide
@@ -191,7 +194,6 @@ data_observed <- data |>
   select(id, exposure, observed_outcome)
 data_observed
 ```
-
 
 ```{r}
 #| label: tbl-obs
@@ -220,9 +222,13 @@ data_observed |>
   summarise(avg_outcome = mean(observed_outcome))
 ```
 
-Now, the *observed* average outcome among those who ate chocolate ice cream is `r round(avg_chocolate, 1)` (the same as the true average potential outcome), while the *observed* average outcome among those who ate vanilla is `r round(avg_vanilla, 1)` -- quite different from the *actual* average (`r mean(data |> pull(y_vanilla))`). The estimated causal effect here could be calculated as `r round(avg_chocolate, 1)` - `r round(avg_vanilla, 1)` = `r round(avg_chocolate - avg_vanilla, 1)`. 
+Now, the *observed* average outcome among those who ate chocolate ice cream is `r round(avg_chocolate, 1)` (the same as the true average potential outcome), while the *observed* average outcome among those who ate vanilla is `r round(avg_vanilla, 1)` -- quite different from the *actual* average (`r mean(data |> pull(y_vanilla))`).
+The estimated causal effect here could be calculated as `r round(avg_chocolate, 1)` - `r round(avg_vanilla, 1)` = `r round(avg_chocolate - avg_vanilla, 1)`.
 
-It turns out here, these 10 participants *chose* which ice cream they wanted to eat and they always chose to eat their favorite! This artificially made it look like eating vanilla ice cream would increase the happiness in this population when in fact we know the opposite is true. The next section will discuss which assumptions need to be true in order to allow us to *accurately* estimate causal effects using observed data. As a sneak peak, our issue here was that how the exposure was decided, if instead we *randomized* who ate chocolate versus vanilla ice cream we would (on average, with a large enough sample) recover the true causal effect.
+It turns out here, these 10 participants *chose* which ice cream they wanted to eat and they always chose to eat their favorite!
+This artificially made it look like eating vanilla ice cream would increase the happiness in this population when in fact we know the opposite is true.
+The next section will discuss which assumptions need to be true in order to allow us to *accurately* estimate causal effects using observed data.
+As a sneak peak, our issue here was that how the exposure was decided, if instead we *randomized* who ate chocolate versus vanilla ice cream we would (on average, with a large enough sample) recover the true causal effect.
 
 ```{r}
 ## we are doing something *random* so let's set a seed so we always observe the
@@ -257,11 +263,10 @@ At any given time, only one of these *potential outcomes* is observable -- namel
 Under certain assumptions, we can leverage data from individuals exposed to different inputs to compare the average differences in their observed outcomes.
 The most common assumptions across the approaches we describe in this book are:
 
-1.  **Consistency**: We assume that the causal question you claim you are answering is consistent with the one you are *actually* answering with your analysis. Mathematically, this means that $Y_{obs} = (X)Y(1) + (1 - X)Y(0)$, in other words, the outcome you observe is exactly equal to the potential outcome under the exposure you received. Two common ways to discuss this assumption are: 
-    * **Well defined exposure**: We assume that for each value of the exposure, there is no difference between subjects in the delivery of that exposure.
-Put another way, multiple versions of the treatment do not exist. 
-    * **No interference**: We assume that the outcome (technically all *potential* outcomes, regardless of whether they are observed) for any subject does not depend on another subject's exposure.
-    
+1.  **Consistency**: We assume that the causal question you claim you are answering is consistent with the one you are *actually* answering with your analysis. Mathematically, this means that $Y_{obs} = (X)Y(1) + (1 - X)Y(0)$, in other words, the outcome you observe is exactly equal to the potential outcome under the exposure you received. Two common ways to discuss this assumption are:
+    -   **Well defined exposure**: We assume that for each value of the exposure, there is no difference between subjects in the delivery of that exposure. Put another way, multiple versions of the treatment do not exist.
+    -   **No interference**: We assume that the outcome (technically all *potential* outcomes, regardless of whether they are observed) for any subject does not depend on another subject's exposure.
+
 ::: callout-tip
 ## Jargon
 
@@ -270,42 +275,46 @@ Likewise, these assumptions are sometimes referred to as *identifiability condit
 :::
 
 2.  **Exchangeability**: We assume that within levels of relevant variables (confounders), exposed and unexposed subjects have an equal likelihood of experiencing any outcome prior to exposure; i.e. the exposed and unexposed subjects are exchangeable.
-This assumption is sometimes referred to as **no unmeasured confounding**.
+    This assumption is sometimes referred to as **no unmeasured confounding**.
 
 3.  **Positivity**: We assume that within each level and combination of the study variables used to achieve exchangeability, there are exposed and unexposed subjects.
-Said differently, each individual has some chance of experiencing every available exposure level.
-Sometimes this is referred to as the **probabilistic** assumption.
-
-
-
+    Said differently, each individual has some chance of experiencing every available exposure level.
+    Sometimes this is referred to as the **probabilistic** assumption.
 
 ::: callout-note
 ## Apples-to-apples
 
-Practically, most of the assumptions we need to make for causal inference are so we can make an *apples-to-apples* comparison: we want to make sure we're comparing individuals that are similar --- who would serve as good proxies for each other's counterfactuals. 
+Practically, most of the assumptions we need to make for causal inference are so we can make an *apples-to-apples* comparison: we want to make sure we're comparing individuals that are similar --- who would serve as good proxies for each other's counterfactuals.
 
-The phrase *apples-to-apples* stems from the saying "comparing apples to oranges", e.g. comparing two things that are incomparable. 
+The phrase *apples-to-apples* stems from the saying "comparing apples to oranges", e.g. comparing two things that are incomparable.
 
-That's only one way to say it. [There are a lot of variations worldwide](https://en.wikipedia.org/wiki/Apples_and_oranges). Here are some other things people incorrectly compare:
+That's only one way to say it.
+[There are a lot of variations worldwide](https://en.wikipedia.org/wiki/Apples_and_oranges).
+Here are some other things people incorrectly compare:
 
-* Cheese and chalk (UK English)
-* Apples and pears (German)
-* Potatoes and sweet potatoes (Latin American Spanish)
-* Grandmothers and toads (Serbian)
-* Horses and donkeys (Hindi)
+-   Cheese and chalk (UK English)
+-   Apples and pears (German)
+-   Potatoes and sweet potatoes (Latin American Spanish)
+-   Grandmothers and toads (Serbian)
+-   Horses and donkeys (Hindi)
 :::
 
 ### Causal Assumptions Simulation
 
-Let's bring back our simulation from @sec-po-sim. Recall that we have individuals who will either eat chocolate or vanilla ice cream and we are interested in assessing the causal effect of this exposure on their happiness. Let's see how violations of each assumption may impact the estimation of the causal effect.
+Let's bring back our simulation from @sec-po-sim.
+Recall that we have individuals who will either eat chocolate or vanilla ice cream and we are interested in assessing the causal effect of this exposure on their happiness.
+Let's see how violations of each assumption may impact the estimation of the causal effect.
 
 #### Consistency violation
 
-Two ways the consistency assumption can be violated is (1) lack of a well defined exposure and (2) interference. Let's see how these impact our ability to accurately estimate a causal effect.
+Two ways the consistency assumption can be violated is (1) lack of a well defined exposure and (2) interference.
+Let's see how these impact our ability to accurately estimate a causal effect.
 
 ##### Well defined exposure
 
-Suppose that there were in fact two containers of chocolate ice cream, one of which was spoiled. Therefore, despite the fact that having an exposure "chocolate" could mean different things depending on where the individual's scoop came from (regular chocolate ice cream, or spoiled chocolate ice cream), we are lumping them all together under a single umbrella (hence the violation, we have "multiple versions of treatment"). You can see how this falls under consistency because the issue here is that the potential outcome we think we are estimating is not the one we are actually observing.
+Suppose that there were in fact two containers of chocolate ice cream, one of which was spoiled.
+Therefore, despite the fact that having an exposure "chocolate" could mean different things depending on where the individual's scoop came from (regular chocolate ice cream, or spoiled chocolate ice cream), we are lumping them all together under a single umbrella (hence the violation, we have "multiple versions of treatment").
+You can see how this falls under consistency because the issue here is that the potential outcome we think we are estimating is not the one we are actually observing.
 
 ```{r}
 data <- data.frame(
@@ -341,11 +350,14 @@ data_observed |>
   summarise(avg_outcome = mean(observed_outcome))
 ```
 
-We know the *true* average causal effect of (unspoiled) chocolate in the sample is `r mean(data |> pull(causal_effect))`, however our estimated causal effect (because our data are not consistent with the question we are asking) is `r data_observed |> group_by(exposure) |> summarise(avg_outcome = mean(observed_outcome)) |> mutate(exposure = c(1, 0)) |> pivot_wider(names_from = exposure, values_from = avg_outcome, names_prefix = "x_") |> summarise(estimate = x_1 - x_0) |> pull() |> round(1)`. This demonstrates what can go wrong when *well defined exposure* is violated.
+We know the *true* average causal effect of (unspoiled) chocolate in the sample is `r mean(data |> pull(causal_effect))`, however our estimated causal effect (because our data are not consistent with the question we are asking) is `r data_observed |> group_by(exposure) |> summarise(avg_outcome = mean(observed_outcome)) |> mutate(exposure = c(1, 0)) |> pivot_wider(names_from = exposure, values_from = avg_outcome, names_prefix = "x_") |> summarise(estimate = x_1 - x_0) |> pull() |> round(1)`.
+This demonstrates what can go wrong when *well defined exposure* is violated.
 
-##### Interference 
+##### Interference
 
-Interference would mean that an individual's exposure impacts another's potential outcome. For example, let's say each individual has a partner, and their potential outcome depends on both what flavor of ice cream they ate *and* what flavor their partner ate. For example, in the simulation below, having a partner that received a *different* flavor of ice cream increases their happiness by two units.
+Interference would mean that an individual's exposure impacts another's potential outcome.
+For example, let's say each individual has a partner, and their potential outcome depends on both what flavor of ice cream they ate *and* what flavor their partner ate.
+For example, in the simulation below, having a partner that received a *different* flavor of ice cream increases their happiness by two units.
 
 ```{r}
 data <- data.frame(
@@ -383,7 +395,15 @@ data_observed |>
   group_by(exposure) |>
   summarise(avg_outcome = mean(observed_outcome))
 ```
-Now our estimated causal effect (because interference exists) is `r data_observed |> group_by(exposure) |> summarise(avg_outcome = mean(observed_outcome)) |> mutate(exposure = c(1, 0)) |> pivot_wider(names_from = exposure, values_from = avg_outcome, names_prefix = "x_") |> summarise(estimate = x_1 - x_0) |> pull() |> round(1)`. This demonstrates what can go wrong when *interference* occurs. One of the main ways to combat interference is change the *unit* under consideration. Here, each individual, each unique *id*, is considered a unit, and there is interference between units (i.e. between partners). If instead we consider each *partner* as a unit and randomize the partners rather than the individuals, we solve the interference issue, as there is not interference *between* different partner sets. This is sometimes referred to as a *cluster randomized trial*. What we decide to do within each cluster may depend on the causal question at hand. For example, if we want to know what would happen if *everyone* ate chocolate ice cream versus if *everyone* ate vanilla, we would want to randomize both partners to either chocolate or vanilla, as seen below.
+
+Now our estimated causal effect (because interference exists) is `r data_observed |> group_by(exposure) |> summarise(avg_outcome = mean(observed_outcome)) |> mutate(exposure = c(1, 0)) |> pivot_wider(names_from = exposure, values_from = avg_outcome, names_prefix = "x_") |> summarise(estimate = x_1 - x_0) |> pull() |> round(1)`.
+This demonstrates what can go wrong when *interference* occurs.
+One of the main ways to combat interference is change the *unit* under consideration.
+Here, each individual, each unique *id*, is considered a unit, and there is interference between units (i.e. between partners).
+If instead we consider each *partner* as a unit and randomize the partners rather than the individuals, we solve the interference issue, as there is not interference *between* different partner sets.
+This is sometimes referred to as a *cluster randomized trial*.
+What we decide to do within each cluster may depend on the causal question at hand.
+For example, if we want to know what would happen if *everyone* ate chocolate ice cream versus if *everyone* ate vanilla, we would want to randomize both partners to either chocolate or vanilla, as seen below.
 
 ```{r}
 set.seed(11)
@@ -415,7 +435,8 @@ data_observed |>
 
 #### Exchangeability violation
 
-We have actually already seen an example of an exchangeability violation in @sec-po-sim. In that example, participants were able to choose the ice cream that they wanted to eat, so people who were more likely to have a positive effect from eating chocolate chose that, and those more likely to have a positive effect from eating vanilla chose that. 
+We have actually already seen an example of an exchangeability violation in @sec-po-sim.
+In that example, participants were able to choose the ice cream that they wanted to eat, so people who were more likely to have a positive effect from eating chocolate chose that, and those more likely to have a positive effect from eating vanilla chose that.
 
 ```{r}
 data <- data.frame(
@@ -443,11 +464,16 @@ data_observed |>
   summarise(avg_outcome = mean(observed_outcome))
 ```
 
-How could we correct this? If we had some people who preferred chocolate ice cream but ended up taking vanilla instead, we could *adjust* for the preference, and the effect conditioned on this would no longer have an exchangeability issue. It turns out that this example as we have constructed it doesn't lend itself to this solution because participants chose their preferred flavor 100% of the time making this *also* a positivity violation. 
+How could we correct this?
+If we had some people who preferred chocolate ice cream but ended up taking vanilla instead, we could *adjust* for the preference, and the effect conditioned on this would no longer have an exchangeability issue.
+It turns out that this example as we have constructed it doesn't lend itself to this solution because participants chose their preferred flavor 100% of the time making this *also* a positivity violation.
 
 #### Positivity violation
 
-As stated above, the previous example violates both *exchangeability* and *positivity*. How could we fix it? As long as *some* people chose outside their preference with some probability (even if it is small!) we can remove this violation. Let's say instead of everyone picking their flavor of preference 100% of the time, they just had a 80% chance of picking that flavor.
+As stated above, the previous example violates both *exchangeability* and *positivity*.
+How could we fix it?
+As long as *some* people chose outside their preference with some probability (even if it is small!) we can remove this violation.
+Let's say instead of everyone picking their flavor of preference 100% of the time, they just had a 80% chance of picking that flavor.
 
 ```{r}
 data <- data.frame(
@@ -478,7 +504,9 @@ lm(
   data_observed
 )
 ```
-After *adjusting* for this variable (chocolate preference), we recover the correct causal effect. This value is not exactly the same as the truth we obtain with the (unobservable) potential outcomes because we are dealing with a small sample -- as our sample size increases this will get closer to the truth.
+
+After *adjusting* for this variable (chocolate preference), we recover the correct causal effect.
+This value is not exactly the same as the truth we obtain with the (unobservable) potential outcomes because we are dealing with a small sample -- as our sample size increases this will get closer to the truth.
 
 Causal assumptions can be difficult to verify and may not hold for many data collection strategies.
 We cannot overstate the importance of checking these criteria to the extent possible!

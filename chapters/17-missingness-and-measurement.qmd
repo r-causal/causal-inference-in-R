@@ -36,7 +36,8 @@ In the TouringPlans data, most variables are complete and likely accurately meas
 One variable with missingness and measurement error is the actual wait times for rides.
 If you recall, the data relies on humans to wait in line, either consumers of the data who report their experience or people hired to wait in line to report the wait time.
 Thus, missingness is primarily related to whether someone is there to measure the wait time.
-When someone is there to measure it, it's also likely measured with error, and that error likely depends on who the person is. For example, a visitor to Disney World estimating their wait time and submitting it to TouringPlans is likely producing a value with more error than someone paid to stay in line and count the minutes.
+When someone is there to measure it, it's also likely measured with error, and that error likely depends on who the person is.
+For example, a visitor to Disney World estimating their wait time and submitting it to TouringPlans is likely producing a value with more error than someone paid to stay in line and count the minutes.
 
 That said, let's take measurement error and missingness one at a time.
 
@@ -229,7 +230,8 @@ This is sometimes called *independent, non-differential* measurement error: the 
 ::: callout-warning
 As the correlation approaches 0, measurement becomes random for the relationship under study.
 This often means that when variables are measured with independent measurement error, the relationship of the measured values approaches null even if there is an arrow between the true values.
-Here, the coefficient of `x` should be about 1, but as the random measurement worsens, the coefficient gets closer to 0. There's no relationship between the randomness (`u`) induced by mismeasurement and `y`.
+Here, the coefficient of `x` should be about 1, but as the random measurement worsens, the coefficient gets closer to 0.
+There's no relationship between the randomness (`u`) induced by mismeasurement and `y`.
 
 ```{r}
 n <- 1000

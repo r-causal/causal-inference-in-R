@@ -1065,7 +1065,8 @@ Instead of worrying about which version of the odds ratio is right, we recommend
 Much ink has been spilled about the odds ratio versus the risk ratio and the relative versus absolute scale.
 We suggest that you present all three measures (the odds ratio, the risk ratio, and the risk difference) together with the baseline probability of the outcome.
 Each offers a different perspective on the causal effect.
-Be careful to interpret them with regard to the treatment group that you've included in your estimate. For example, the average risk difference calculated with ATT weights is the average risk difference among the treated.
+Be careful to interpret them with regard to the treatment group that you've included in your estimate.
+For example, the average risk difference calculated with ATT weights is the average risk difference among the treated.
 
 ::: callout-note
 ## The linear probability model

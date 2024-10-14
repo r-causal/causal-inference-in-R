@@ -164,12 +164,17 @@ causal_quartet |>
   facet_wrap(~dataset)
 ```
 
-::: {.callout-tip} 
+::: callout-tip
 ## Why did we standardize the coefficients?
 
-Standardizing numeric variables to have a mean of 0 and standard deviation of 1, as implemented in `scale()`, is a common technique in statistics. It's useful for a variety of reasons, but we chose to scale the variables here to emphasize the identical correlation between `covariate` and `exposure` in each dataset. If we didn't scale the variables, the correlation would be the same, but the plots would look different because their standard deviation are different. The beta coefficient in an OLS model is calculated with information about the covariance and the standard deviation of the variable, so scaling it makes the coefficient identical to the Pearson's correlation.
+Standardizing numeric variables to have a mean of 0 and standard deviation of 1, as implemented in `scale()`, is a common technique in statistics.
+It's useful for a variety of reasons, but we chose to scale the variables here to emphasize the identical correlation between `covariate` and `exposure` in each dataset.
+If we didn't scale the variables, the correlation would be the same, but the plots would look different because their standard deviation are different.
+The beta coefficient in an OLS model is calculated with information about the covariance and the standard deviation of the variable, so scaling it makes the coefficient identical to the Pearson's correlation.
 
-@fig-causal_quartet_covariate_unscaled shows the unscaled relationship between `covariate` and `exposure`. Now, we see some differences: dataset 4 seems to have more variance in `covariate`, but that's not actionable information. In fact, it's a mathematical artifact of the data generating process.
+@fig-causal_quartet_covariate_unscaled shows the unscaled relationship between `covariate` and `exposure`.
+Now, we see some differences: dataset 4 seems to have more variance in `covariate`, but that's not actionable information.
+In fact, it's a mathematical artifact of the data generating process.
 
 ```{r}
 #| label: fig-causal_quartet_covariate_unscaled
@@ -631,7 +636,8 @@ But look again.
 `exposure` is a mediator for `covariate`'s effect on `outcome`; some of the total effect is mediated through `outcome`, while there is also a direct effect of `covariate` on `outcome`. **Both estimates are unbiased, but they are different *types* of estimates**. The effect of `exposure` on `outcome` is the *total effect* of that relationship, while the effect of `covariate` on `outcome` is the *direct effect*.
 
 [^06-not-just-a-stats-problem-4]: Additionally, OLS produces a *collapsible* effect.
-    Other effects, like the odds and hazards ratios, are *non-collapsible*, meaning that the conditional odds or hazards ratio might differ from its marginal version, even when there is no confounding. We'll discuss non-collapsibility in @sec-non-collapse.
+    Other effects, like the odds and hazards ratios, are *non-collapsible*, meaning that the conditional odds or hazards ratio might differ from its marginal version, even when there is no confounding.
+    We'll discuss non-collapsibility in @sec-non-collapse.
 
 ```{r}
 #| label: fig-quartet_confounder

@@ -15,4 +15,3 @@ rnorm(5)
 ```
 
 ## Time-varying confounding and exposures
-

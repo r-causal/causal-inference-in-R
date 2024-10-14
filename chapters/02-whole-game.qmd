@@ -18,7 +18,8 @@ We'll play the [whole game](https://www.gse.harvard.edu/news/uk/09/01/education-
 5.  Estimate the causal effect
 6.  Conduct sensitivity analysis on the effect estimate
 
-We'll focus on the broader ideas behind each step and what they look like all together; however, we don't expect you to fully digest each idea. We'll spend the rest of the book taking up each step in detail.
+We'll focus on the broader ideas behind each step and what they look like all together; however, we don't expect you to fully digest each idea.
+We'll spend the rest of the book taking up each step in detail.
 
 ## Specify a causal question
 
@@ -881,7 +882,8 @@ What do you think?
 Is this estimate reliable?
 Did we do a good job addressing the assumptions we need to make for a causal effect, mainly that there is no confounding?
 How might you criticize this model, and what would you do differently?
-Ok, we know that -10 is the correct answer because the data are simulated, but in practice, we can never be sure, so we need to continue probing our assumptions until we're confident they are robust. We'll explore these techniques and others in @sec-sensitivity.
+Ok, we know that -10 is the correct answer because the data are simulated, but in practice, we can never be sure, so we need to continue probing our assumptions until we're confident they are robust.
+We'll explore these techniques and others in @sec-sensitivity.
 <!-- TODO: Maybe use sickle cell as an example of a precision variable in the variable selection section later in the book. Interesting instance because sickle cell can't be downstream. Consider in the context of over adjustment. -->
 
 To calculate this effect, we:

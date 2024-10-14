@@ -147,7 +147,7 @@ Most of our data manipulation tools come from the `{dplyr}` package (@tbl-dplyr)
 We will also use `{lubridate}` to help us manipulate dates.
 
 | Target trial protocol element | {dplyr} functions                           |
-|-------------------------------|---------------------------------------------|
+|------------------------------|------------------------------------------|
 | Eligibility criteria          | `filter()`                                  |
 | Exposure definition           | `mutate()`                                  |
 | Assignment procedures         | `mutate()`                                  |

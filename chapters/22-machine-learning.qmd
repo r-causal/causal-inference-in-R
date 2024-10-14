@@ -17,5 +17,3 @@ rnorm(5)
 ```
 
 ## Targeted Learning
-
-
