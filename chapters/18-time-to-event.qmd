@@ -1,4 +1,4 @@
-# Causal survival analysis {#sec-survival}
+# Causal time-to-event models {#sec-survival}
 
 {{< include 00-setup.qmd >}}
 
@@ -8,7 +8,7 @@
 status("unstarted")
 ```
 
-## Preparing data for survival analysis
+## Preparing data for time-to-event analysis
 
 ```{r}
 rnorm(5)
@@ -16,4 +16,4 @@ rnorm(5)
 
 ## Pooled logistic regression
 
-## Confidence intervals for causal survival models
+## Confidence intervals for causal time-to-event models
