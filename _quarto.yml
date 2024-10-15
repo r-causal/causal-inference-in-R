@@ -52,10 +52,10 @@ book:
       - chapters/13-g-comp.qmd
       - chapters/14-interaction.qmd
       - chapters/15-missingness-and-measurement.qmd
-      - chapters/16-mediation.qmd
-      - chapters/17-longitudinal.qmd
-      - chapters/18-time-to-event.qmd
-      - chapters/19-sensitivity.qmd
+      - chapters/16-sensitivity.qmd
+      - chapters/17-mediation.qmd
+      - chapters/18-longitudinal.qmd
+      - chapters/19-time-to-event.qmd
       - chapters/20-doubly-robust.qmd
       - chapters/21-machine-learning.qmd
       - chapters/22-iv-and-friends.qmd
