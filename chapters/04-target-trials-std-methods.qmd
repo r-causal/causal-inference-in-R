@@ -27,7 +27,7 @@ If there is differential drop out between exposure groups (for example, if parti
 Therefore, in @tbl-assump-solved we have two columns, one for the *ideal* randomized trial (where adherence is assumed to be perfect and no participants drop out) and one for *realistic* randomized trials where this may not be so.
 
 | Assumption                          | Ideal Randomized Trial | Realistic Randomized Trial | Observational Study  |
-|-----------------|-----------------|--------------------|------------------|
+|------------------|------------------|--------------------|------------------|
 | Consistency (Well defined exposure) | `r emo::ji("smile")`   | `r emo::ji("smile")`       | `r emo::ji("shrug")` |
 | Consistency (No interference)       | `r emo::ji("shrug")`   | `r emo::ji("shrug")`       | `r emo::ji("shrug")` |
 | Positivity                          | `r emo::ji("smile")`   | `r emo::ji("smile")`       | `r emo::ji("shrug")` |
@@ -399,8 +399,9 @@ When you have no confounders and there is a linear relationship between the expo
 Even in these cases, using the methods you will learn in this book can help.
 
 1.  Adjusting for baseline covariates can make an estimate *more efficient*
-2.  Propensity score weighting is *more efficient* than direct adjustment
+2.  Propensity score weighting is *as efficient* as direct adjustment
 3.  Sometimes we are *more comfortable with the functional form of the propensity score* (predicting exposure) than the outcome model
+4.  Sometimes we want a marginal estimate
 
 Let's look at an example.
 I am going to simulate 100 observations.
@@ -445,65 +446,84 @@ dagify(
   ggdag() + theme_dag()
 ```
 
-Let's examine three models: (1) an unadjusted model (@tbl-panel-1), (2) a linear model that adjusts for the baseline covariates (@tbl-panel-2), and (3) a propensity score weighted model (@tbl-panel-3).
+Let's examine three models (@fig-panel): (1) an unadjusted model, (2) a linear model that adjusts for the baseline covariates, and (3) a propensity score weighted model.
 
 ```{r}
-#| label: tbl-panel
-#| layout-ncol: 2
-#| tbl-cap: Three ways to estimate a causal effect.
-#| tbl-subcap:
-#|   - Unadjusted regression
-#|   - Adjusted regression
-#|   - Propensity score weighted regression
+#| label: fig-panel
+#| fig-cap: Three ways to estimate a causal effect.
 #| code-fold: true
 #| message: false
 #| warning: false
 library(gtsummary)
-lm(y ~ treatment, d) |>
-  tbl_regression() |>
-  modify_column_unhide(column = std.error)
+plot_estimates <- function(d) {
+  unadj_model <- lm(y ~ treatment, data = d) |>
+    broom::tidy(conf.int = TRUE) |>
+    dplyr::filter(term == "treatment") |>
+    dplyr::mutate(model = "unadjusted")
 
-lm(y ~ treatment + age + weight, d) |>
-  tbl_regression() |>
-  modify_column_unhide(column = std.error)
+  adj_model <- lm(y ~ treatment + weight + age, data = d) |>
+    broom::tidy(conf.int = TRUE) |>
+    dplyr::filter(term == "treatment") |>
+    dplyr::mutate(model = "direct\nadjustment")
 
-d |>
-  mutate(
-    p = glm(treatment ~ weight + age, data = d) |> predict(type = "response"),
-    ate = treatment / p + (1 - treatment) / (1 - p)
-  ) |>
-  as.data.frame() -> d
-library(PSW)
-df <- as.data.frame(d)
-x <- psw(
-  df,
-  "treatment ~ weight + age",
-  weight = "ATE",
-  wt = TRUE,
-  out.var = "y"
-)
-tibble(
-  Characteristic = "treatment",
-  Beta = round(x$est.wt, 1),
-  SE = round(x$std.wt, 3),
-  `95% CI` = glue::glue("{round(x$est.wt - 1.96 * x$std.wt, 1)}, {round(x$est.wt + 1.96 * x$std.wt, 1)}"),
-  `p-value` = "<0.001"
-) |>
-  knitr::kable()
+  df <- as.data.frame(d)
+  x <- PSW::psw(
+    df,
+    "treatment ~ weight + age",
+    weight = "ATE",
+    wt = TRUE,
+    out.var = "y"
+  )
+  psw_model <- tibble(
+    term = "treatment",
+    estimate = x$est.wt,
+    std.error = x$std.wt,
+    conf.low = x$est.wt - 1.96 * x$std.wt,
+    conf.high = x$est.wt + 1.96 * x$std.wt,
+    statistic = NA,
+    p.value = NA,
+    model = "propensity\nscore-adjustment"
+  )
+
+  models <- dplyr::bind_rows(unadj_model, adj_model, psw_model) |>
+    dplyr::mutate(model = factor(model, levels = c(
+      "unadjusted", 
+      "direct\nadjustment", 
+      "propensity\nscore-adjustment"
+    )))
+
+  models |>
+    dplyr::select(model, estimate, std.error, starts_with("conf")) |>
+    tidyr::pivot_longer(c(estimate, std.error), names_to = "statistic") |>
+    dplyr::mutate(
+      conf.low = ifelse(statistic == "std.error", NA, conf.low),
+      conf.high = ifelse(statistic == "std.error", NA, conf.high),
+      statistic = case_match(statistic, "estimate" ~ "estimate (95% CI)", "std.error" ~ "standard error")
+    ) |> 
+    ggplot2::ggplot(ggplot2::aes(value, forcats::fct_rev(model))) +
+    ggplot2::geom_point() +
+    ggplot2::geom_errorbarh(aes(xmin = conf.low, xmax = conf.high), height = 0) +
+    ggplot2::facet_wrap(~statistic, scales = "free_x") +
+    theme(axis.title.y = element_blank())
+}
+plot_estimates(d)
 ```
 
-Looking at the three outputs in @tbl-panel, we can first notice that all three are "unbiased" estimates of the causal effect (we know the true average treatment effect is 1, based on our simulation) -- the estimated causal effect in each table is in the `Beta` column.
+Looking at the three outputs in @fig-panel, we can first notice that all three are "unbiased" estimates of the causal effect (we know the true average treatment effect is 1, based on our simulation) -- the estimated causal effect from each approach is around 1.
 Great, so all methods give us an unbiased estimate.
-Next, let's look at the `SE` (standard error) column along with the `95% CI` (confidence interval) column.
+Next, let's look at the standard error along with the 95% confidence interval (CI).
 Notice the unadjusted model has a *wider* confidence interval (in fact, in this case the confidence interval includes the null, 0) -- this means if we were to use this method, even though we were able to estimate an unbiased causal effect, we would often conclude that we *fail to reject the null* that relationship between the treatment and outcome is 0.
 In statistical terms, we refer to this as a *lack of efficiency*.
-Looking at the adjusted analysis in @tbl-panel-2, we see that the standard error is quite a bit smaller (and likewise the confidence interval is tighter, no longer including the null).
+Looking at the adjusted analysis, we see that the standard error is quite a bit smaller (and likewise the confidence interval is tighter, no longer including the null).
 Even though our baseline covariates `age` and `weight` were not *confounders* adjusting from them *increased the precision* of our result (this is a good thing! We want estimates that are both unbiased *and* precise).
-Finally, looking at the propensity score weighted estimate we can see that our precision was slightly improved compared to the adjusted result (0.202 compared to 0.204).
-The magnitude of this improvement will depend on several factors, but it has been shown mathematically that using propensity scores like this to adjust for baseline factors in a randomized trial will *always* improve precision [@williamson2014variance].
-What can we learn from this small demonstration?
-Even in the perfect scenario, where we can estimate unbiased results without using propensity scores, the methods we will show here can be useful.
-The utility of these methods only increases when exploring more complex examples, such as situations where the effect is *not* randomized, the introduction of time-varying confounders, etc.
+The estimate for the direct adjustment is technically a *conditional* effect (and often in causal inference we want marginal effects), but because there is no treatment heterogeneity in this simulation, the conditional and marginal effects are equal.
+Finally, looking at the propensity score weighted estimate we can see that our precision was about the same as the directly adjusted model.
+The effect from the propensity score is a *marginal* effect.
+It has been shown mathematically that using propensity scores like this to adjust for baseline factors in a randomized trial will *always* improve precision compared to the unadjusted estimate and is equivalent to the precision gained from directly adjusting [@williamson2014variance].
+The two adjustment approaches, however, are not adjusting for confounders.
+They are instead controlling the random variation in the data.
+For direct adjustment, we do this by accounting for variation in the outcome.
+For propensity scores, we do this by accounting for chance imbalances in the treatment groups across variables that relate to the outcome.
 
 What if we did not have a randomized exposure?
 There are many cases where randomization to a treatment is not ethical or feasible.
@@ -523,7 +543,7 @@ d <- tibble(
   weight = rnorm(n),
   # generate the treatment from a binomial distribution
   # with the probability of treatment dependent on the age and weight
-  treatment = rbinom(n, 1, 1 / (1 + exp(-0.01 * age - weight))),
+  treatment = rbinom(n, 1, plogis(-0.01 * age - weight)),
   ## generate the true average causal effect of the treatment: 1
   y = 1 * treatment + 0.2 * age + 0.2 * weight + rnorm(n)
 )
@@ -548,55 +568,19 @@ dagify(
 ```
 
 ```{r}
-#| label: tbl-panel-2
+#| label: fig-panel-2
 #| code-fold: true
 #| message: false
 #| warning: false
-#| layout-ncol: 2
-#| tbl-cap: Three ways to estimate a causal effect in a non-randomized setting
-#| tbl-subcap:
-#|   - Unadjusted regression
-#|   - Adjusted regression
-#|   - Propensity score weighted regression
-lm(y ~ treatment, d) |>
-  tbl_regression() |>
-  modify_column_unhide(column = std.error)
-
-lm(y ~ treatment + age + weight, d) |>
-  tbl_regression() |>
-  modify_column_unhide(column = std.error)
-
-d |>
-  mutate(
-    p = glm(treatment ~ weight + age, data = d, family = binomial) |> predict(type = "response"),
-    ate = treatment / p + (1 - treatment) / (1 - p)
-  ) |>
-  as.data.frame() -> d
-library(PSW)
-df <- as.data.frame(d)
-x <- psw(
-  df,
-  "treatment ~ weight + age",
-  weight = "ATE",
-  wt = TRUE,
-  out.var = "y"
-)
-tibble(
-  Characteristic = "treatment",
-  Beta = round(x$est.wt, 1),
-  SE = round(x$std.wt, 3),
-  `95% CI` = glue::glue("{round(x$est.wt - 1.96 * x$std.wt, 1)}, {round(x$est.wt + 1.96 * x$std.wt, 1)}"),
-  `p-value` = "<0.001"
-) |>
-  knitr::kable()
+#| fig-cap: Three ways to estimate a causal effect in a non-randomized setting
+plot_estimates(d)
 ```
 
-First, let's look at @tbl-panel-2-1.
+First, let's look at @fig-panel-2.
 Here, we see that the unadjusted effect is *biased* (it differs from the true effect, 1, and the true effect is *not* contained in the reported 95% confidence interval).
-Now let's compare @tbl-panel-2-2 and @tbl-panel-2-3.
-Technically, both are estimating unbiased causal effects.
-The output in the `Beta` column of @tbl-panel-2-2 is technically a *conditional* effect (and often in causal inference we want marginal effects), but because there is no treatment heterogeneity in this simulation, the conditional and marginal effects are equal.
-@tbl-panel-2-3, using the propensity score, also estimates an unbiased effect, but it is no longer the most *efficient* (that was true when the baseline covariates were merely causal for `y`, now that they are `confounders` the efficiency gains for using propensity score weighting are not as clear cut).
+Now let's compare the direct adjustment results to the propensity adjustment results.
+Both are estimating unbiased causal effects.
+Using the propensity score also estimates an unbiased effect, but it is no longer the most *efficient* (that was true when the baseline covariates were merely causal for `y`, now that they are `confounders`, the efficiency gains for using propensity score weighting are not as clear cut).
 So why would we ever use propensity scores in this case?
 Sometimes we have a better understanding of the functional form of the propensity score model compared to the outcome model.
 Alternatively, sometimes the outcome model is difficult to fit (for example, if the outcome is rare).
@@ -605,5 +589,5 @@ Alternatively, sometimes the outcome model is difficult to fit (for example, if 
 ## Marginal versus conditional effects
 
 In causal inference, we are often interested in *marginal* effects, mathematically, this means that we want to *marginalize* the effect of interest across the distribution of factors in a particular population that we are trying to estimate a causal effect for.
-In an adjusted regression model, the coefficients are *conditional*, in other words, when describing the estimated coefficient, we often say something like "a one-unit change in the exposure results in a `coefficient` change in the outcome *holding all other variables in the model constant*. In the case where the outcome is continuous, the effect is linear, and there are no interactions between the exposure effect and other factors about the population, the distinction between an conditional and a marginal effect is largely semantic. If there *is* an interaction in the model, that is, if the exposure has a different impact on the outcome depending on some other factor, we no longer have a single coefficient to interpret. We would want to estimate a *marginal* effect, taking into account the distribution of that factor in the population of interest. Why? We are ultimately trying to determine whether we should suggest the exposure to the target population, so we want to know *on average* whether it will be beneficial. Let's look at quick example: suppose that you are designing an online shopping site. Currently, the"Purchase" button is grey. Changing the button to red increases revenue by \$10 for people who are *not* colorblind and decreases revenue by \$10 for those who *are* colorblind -- *the effect is heterogeneous*. Whether you change the color of the button will depend on the *distribution* of colorblind folks that visit your website. For example, if 50% of the visitors are colorblind, your average effect of changing the color would be \$0. If instead, 100% are colorblind, the average effect of changing the color would be -\$10. Likewise, if 0% are colorblind, the average effect of changing the color to red would be \$10. Your decision, therefore, needs to be based on the *marginal* effect, the effect that takes into account the distribution of colorblind online customers.
+In an adjusted regression model, the coefficients are *conditional*, in other words, when describing the estimated coefficient, we often say something like "a one-unit change in the exposure results in a `coefficient` change in the outcome *holding all other variables in the model constant*. In the case where the outcome is continuous, the effect is linear, and there are no interactions between the exposure effect and other factors about the population, the distinction between an conditional and a marginal effect is largely semantic. If there *is* an interaction in the model, that is, if the exposure has a different impact on the outcome depending on some other factor, we no longer have a single coefficient to interpret. We would want to estimate a *marginal* effect, taking into account the distribution of that factor in the population of interest. Why? We are ultimately trying to determine whether we should suggest the exposure to the target population, so we want to know *on average* whether it will be beneficial. Let's look at quick example: suppose that you are designing an online shopping site. Currently, the "Purchase" button is grey. Changing the button to red increases revenue by \$10 for people who are *not* colorblind and decreases revenue by \$10 for those who *are* colorblind -- *the effect is heterogeneous*. Whether you change the color of the button will depend on the *distribution* of colorblind folks that visit your website. For example, if 50% of the visitors are colorblind, your average effect of changing the color would be \$0. If instead, 100% are colorblind, the average effect of changing the color would be -\$10. Likewise, if 0% are colorblind, the average effect of changing the color to red would be \$10. Your decision, therefore, needs to be based on the *marginal* effect, the effect that takes into account the distribution of colorblind online customers.
 :::
