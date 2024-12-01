@@ -1,4 +1,4 @@
-# Propensity scores
+# Propensity scores {#sec-ps}
 
 ## Building propensity score models {#sec-building-models}
 
