@@ -33,7 +33,7 @@ book:
       chapters:
       - chapters/01-casual-to-causal.qmd
       - chapters/02-whole-game.qmd
-      - chapters/03-estimating-counterfactuals.qmd
+      - chapters/03-po-counterfactuals.qmd
       - chapters/05-dags.qmd
       - chapters/06-not-just-a-stats-problem.qmd
   

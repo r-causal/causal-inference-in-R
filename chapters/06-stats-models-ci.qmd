@@ -1,0 +1,27 @@
+# When do standard methods succeed and fail? Statistical models in causal inference  {#sec-stats-ci}
+
+{{< include 00-setup.qmd >}}
+
+```{r}
+#| echo: false
+# TODO: remove when first edition complete
+status("wip")
+```
+
+
+## Causal inference with `group_by()` and `summarize()`
+
+### Stratification and non-parametric models
+
+## Parametric outcome models
+
+## Overview of estimators for causal inference
+
+## When do standard methods fail?
+
+-   list of bad things!
+-   non-adherence, l2fu in RCTs too
+
+## Causal methods in randomized trials
+
+-   non-adherence, l2fu in RCTs too

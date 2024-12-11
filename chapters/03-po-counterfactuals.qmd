@@ -1,4 +1,4 @@
-# Estimating counterfactuals {#sec-counterfactuals}
+# Potential outcomes and counterfactuals {#sec-counterfactuals}
 
 {{< include 00-setup.qmd >}}
 
@@ -9,11 +9,35 @@ status("wip")
 ```
 
 > | Two roads diverged in a yellow wood,
+> | 
+> | 
+> | 
+> | 
 > | And sorry I could not travel both
+> | 
+> | 
+> | 
+> | 
 > | And be one traveler, long I stood
+> | 
+> | 
+> | 
+> | 
 > | And looked down one as far as I could
+> | 
+> | 
+> | 
+> | 
 > | To where it bent in the undergrowth
+> | 
+> | 
+> | 
+> | 
 > | --- Robert Frost
+> | 
+> | 
+> | 
+> | 
 
 In 2022, Ice-T, best known as an American rapper and Fin on *Law and Order: SVU*, co-authored a book titled *Split Decision: Life Stories* [@split].
 In Split Decision, Ice-T recounts his dramatic journey from a life of crime to fame and success, contrasting it with the fate of his former crime partner and co-author, Spike.
@@ -214,12 +238,12 @@ data |>
   )
 ```
 
-In reality, we cannot observe both potential outcomes at any given moment; each individual in our study can only eat one flavor of ice cream at the moment of study[^03-estimating-counterfactuals-1].
+In reality, we cannot observe both potential outcomes at any given moment; each individual in our study can only eat one flavor of ice cream at the moment of study[^03-po-counterfactuals-1].
 Suppose we randomly gave one flavor or the other to each participant.
 Now, what we *observe* is shown in @tbl-obs. We only know one potential outcome (the one related to the exposure the participant received).
 We don't know the other one, and consequently, we don't know the individual causal effect.
 
-[^03-estimating-counterfactuals-1]: Ice cream swirls were prohibited per the study protocol.
+[^03-po-counterfactuals-1]: Ice cream swirls were prohibited per the study protocol.
 
 ```{r}
 ## we are doing something *random* so let's
@@ -332,11 +356,11 @@ Here are some other things people incorrectly compare:
 :::
 
 For the first three-fourths or so of the book, we'll deal with so-called *unconfoundedness* methods.
-These methods all assume[^03-estimating-counterfactuals-2] three things: exchangeability, positivity, and consistency.
+These methods all assume[^03-po-counterfactuals-2] three things: exchangeability, positivity, and consistency.
 We'll focus on these three assumptions for now, but other methods, such as instrumental variable analysis (@sec-iv-friends) and difference-in-differences (@sec-did), make other causal assumptions.
 Knowing a method's assumptions is important for using it correctly, but it's also worth considering if another method's assumptions are more feasible for the problem you are trying to solve.
 
-[^03-estimating-counterfactuals-2]: These *causal* assumptions are in addition to any *statistical* assumptions, such as distributional assumptions, that the estimators we use require.
+[^03-po-counterfactuals-2]: These *causal* assumptions are in addition to any *statistical* assumptions, such as distributional assumptions, that the estimators we use require.
 
 ::: callout-note
 These assumptions are sometimes called *identifiability conditions* since we need them to hold to identify causal estimates.
@@ -388,9 +412,9 @@ Exchangeability is guaranteed in the limit when you randomize the exposure, as w
 You can see where the name comes from by considering exchangeability from a randomization process.
 Let's say we mixed up the labels for who got which flavor, and we accidentally gave chocolate to the "vanilla" group and vanilla to the "chocolate" group.
 Because flavor assignment is independent of the potential outcomes, this mix-up doesn't matter.
-We've exchanged the groups by flipping their assignments, but we can still detect the right causal effect [^03-estimating-counterfactuals-3].
+We've exchanged the groups by flipping their assignments, but we can still detect the right causal effect [^03-po-counterfactuals-3].
 
-[^03-estimating-counterfactuals-3]: The numbers are slightly different because of the sample size.
+[^03-po-counterfactuals-3]: The numbers are slightly different because of the sample size.
     As the sample size increases, exchangeability is more likely to hold with randomization, and so with a large enough sample, we'd get identical answers.
 
 ```{r}
@@ -1067,20 +1091,122 @@ Let's consider the causal assumptions for this question and how they might have 
 
 ## When do study designs support causal inference?
 
+Exchangeability, positivity, and consistency are simple assumptions, but as we've seen, they can easily be violated.
+When the assumptions for a causal method are not met, we are not able to use the observed data to simulate potential outcomes to compare.
+We can address many of the potential violations, however, through careful design of studies, whether prior to collecting data or working with "found" observational data.
+
 ### Randomized trials
 
-### Target trial emulation {#sec-target-trial}
+As we've seen, randomized trials have excellent properties in terms of meeting the causal assumptions we need.
+In the limit, we expect exchangeability, because the only cause of the exposure is the randomization process itself.
+Since it's random, it's completely independent of the potential outcomes under study.
+Similarly, positivity is guaranteed by the randomization process so long as no one has a deterministic exposure; we know the probabilities we use to assign exposures.
+Randomized trials also help, but do not guarantee, consistency, particularly for well-defined exposures.
+An exposure needs to be defined in order to administer it.
+Interference, however, can still happen.
+For instance, if we randomize some people to receive a vaccine for a communicable disease, their receiving it could lower the chance of those around them contracting the infectious disease because it changes the probability of exposure.
+This requires additional considerations in the design of the trial, e.g., cluster randomization or separation of units, as the examples above.
 
--- exclusion: vanilla allergy
+::: callout-note
+We refer to analyses where the exposure is randomly assigned as a *randomized trial*.
+Sometimes, this type of randomized design is called an A/B test, as in "which is better, A or B?".
+A/B tests are common in industry, for instance in testing two different website UI designs.
+At their heart, though, they are randomized experiments, and everything in this section still applies.
+:::
 
-## When do standard methods estimate causal effects?
+However, these properties are for an *ideal* randomized trial.
+In real randomized trials, things can go wrong.
+Exchangeability can fail by chance when the sample size is too low.
+People also don't necessarily do what they're told to do; many people in studies will not adhere to their assigned exposure.
+Often, the reasons for non-adherence create problems of exchangeability.
+Similarly, people may drop out of a study in a way that creates non-exchangeability.
+We'll tackle these topics and what we can do about them in more depth in @sec-longitudinal and @sec-iv-friends.
+Exposures can also be inconsistent in real trials, either by implementation (as in the surgery example above) or by participants.
+For instance, a participant might be assigned to take two pills per day but decide to only take one per day.
+Attempts to prevent interference can also fail, e.g., randomizing on the wrong unit or units interacting with one other in an unexpected way.
 
-### Correlation is sometimes causation, actually
+Non-randomized (observational) studies have none of these guarantees.
+Like a realistic randomized trial, observational studies require careful design and execution to better meet the assumptions necessary for causal inference.
+@tbl-assump-solved summarizes how well ideal randomized trials, realistic randomized trials, and observational studies each meets the exchangeability, positivity, and consistency.
 
-### Causal inference with `group_by()` and `summarize()`
+| Assumption                          | Ideal Randomized Trial | Realistic Randomized Trial | Observational Study  |
+|-------------------------------------|------------------------|----------------------------|----------------------|
+| Consistency (Well defined exposure) | `r emo::ji("smile")`   | `r emo::ji("shrug")`       | `r emo::ji("shrug")` |
+| Consistency (No interference)       | `r emo::ji("shrug")`   | `r emo::ji("shrug")`       | `r emo::ji("shrug")` |
+| Positivity                          | `r emo::ji("smile")`   | `r emo::ji("smile")`       | `r emo::ji("shrug")` |
+| Exchangeability                     | `r emo::ji("smile")`   | `r emo::ji("shrug")`       | `r emo::ji("shrug")` |
 
-## When do standard methods fail?
+: Assumptions solved by study design. `r emo::ji("smile")` indicates it is solved by default, `r emo::ji("shrug")` indicates that it is *solvable* but not solved by default. {#tbl-assump-solved}
 
--   list of bad things!
+The design of a causal analysis requires a clear causal question.
+We then can map this question to a *protocol*, consisting of the following seven elements, as defined by @hernan2016using:
 
-### Causal methods in randomized trials
+-   **Eligibility criteria**: Who or what should be included in the study?
+-   **Exposure definition**: When eligible, what precise exposure will units under study receive?
+-   **Assignment procedures**: How will eligible units be assigned to an exposure?
+-   **Follow-up period**: When does follow-up start and end?
+-   **Outcome definition**: What precise outcomes will be measured?
+-   **Causal contrast of interest**: Which causal estimand will be estimated?
+-   **Analysis plan**: What data manipulation and statistical procedures will be applied to the data to estimate the causal contrast of interest?
+
+Recall our diagrams from @sec-diag (@fig-diagram-4); several of these protocol elements can be mapped to these diagrams when we are attempting to define our causal question.
+
+```{r}
+#| echo: false
+#| label: fig-diagram-4-again
+#| fig-height: 2
+#| fig-cap: "Example diagram mapped to causal analysis terminology"
+knitr::include_graphics("../images/sentence-diagram-4.png")
+```
+
+### Emulating target trials {#sec-target-trial}
+
+Randomized trials help meet the causal assumptions, but as discussed in @sec-causal-question, there are many reasons we may not be able to randomize, including time, money, and ethical considerations.
+We might also just be able to get a preliminary answer sooner with observational data while randomized trials play out.
+
+Even when we are not conducting a randomized trial, imagining how such a trial would proceed can improve the quality of inferences from observational data.
+This is the idea behind target trial emulation: you specify a target trial (the randomized trial you would run or which has been run previously) and try to emulate this design with observational data.
+
+Whether the design is a randomized trial or observational study, using a protocol can improve our likelihood of meeting the causal assumptions.
+In @tbl-protocol we map each of these elements to the corresponding assumption that it can address.
+
+| Assumption                          | Eligibility Criteria            | Exposure Definition             | Assignment Procedures           | Follow-up Period                | Outcome Definition              | Causal contrast                 | Analysis Plan                   |
+|-------------------------------------|---------------------------------|---------------------------------|---------------------------------|---------------------------------|---------------------------------|---------------------------------|---------------------------------|
+| Consistency (Well-defined exposure) | `r emo::ji("heavy_check_mark")` | `r emo::ji("heavy_check_mark")` | `r emo::ji("heavy_check_mark")` |                                 |                                 |                                 | `r emo::ji("heavy_check_mark")` |
+| Consistency (No interference)       | `r emo::ji("heavy_check_mark")` | `r emo::ji("heavy_check_mark")` | `r emo::ji("heavy_check_mark")` |                                 | `r emo::ji("heavy_check_mark")` |                                 | `r emo::ji("heavy_check_mark")` |
+| Positivity                          | `r emo::ji("heavy_check_mark")` | `r emo::ji("heavy_check_mark")` | `r emo::ji("heavy_check_mark")` |                                 |                                 | `r emo::ji("heavy_check_mark")` | `r emo::ji("heavy_check_mark")` |
+| Exchangeability                     | `r emo::ji("heavy_check_mark")` | `r emo::ji("heavy_check_mark")` | `r emo::ji("heavy_check_mark")` | `r emo::ji("heavy_check_mark")` | `r emo::ji("heavy_check_mark")` | `r emo::ji("heavy_check_mark")` | `r emo::ji("heavy_check_mark")` |
+
+: Mapping assumptions to elements of a study protocol {#tbl-protocol}
+
+-   **Eligibility criteria**: Eligibility criteria is particularly useful for preventing positivity violations (by excluding those who can never have one of the exposures), but it's also useful for consistency and exchangeability. You can, for instance, exclude people who are likely to effect each other's outcomes, or only include people without extreme characteristics.
+-   **Exposure definition**: A precise exposure definition is particularly useful for improving consistency, since it encourages a well-defined exposure and can better control the potential of interference. A precise exposure also helps identify factors related to exchangeability and positivity.
+-   **Assignment procedures**: In randomized assignment, exchangeability and positivity are met. Understanding the way an exposure come to happen also improves exchangeability and positivity in non-randomized studies. As we've seen, we can also use assignment procedures to prevent interference, and likewise it can help improve a well-defined exposure since the assignment mechanism needs to be clear.
+-   **Follow-up period**: We'll discuss the issues that defining a follow-up period in more detail in @sec-longitudinal, but it helps with exchangeability by making sure the follow-up time is comparable for all exposure levels. It's also closely related to consistency because a well-defined exposure may require a time element.
+-   **Outcome definition**: Defining the outcome precisely helps identify prognostic factors, which in an randomized trial improve precision but in an observatioal study can help improve exchangeability.
+-   **Causal contrast of interest**: As we'll see in @sec-estimands, some causal contrasts are less strict about exchangeability and positivity than others.
+-   **Analysis plan**: In observational studies, a clear analysis plan improves all aspects of meeting the causal assumptions. For instance, we need to be clear about variables we need to adjust for to meet exchangeability. Additionally, while we can never confirm the assumptions of a causal method are met, but we can provide evidence through exploratory analysis (@sec-eda) or probe the consequences of violating them with sensitivity analysis (@sec-sensitivity).
+
+What would a target trial and emulation look like for the ice cream example?
+Imagine that we have a database that has all the information we need.
+A store serves precisely 100g of either chocolate or vanilla, both the same brand.
+Thanks to this database, we have information on participants flavor choice and a variety of other other characteristics, including happiness (measured by the same tool we used above), with measurements at the door (baseline) and 30 minutes after eating their ice cream (follow-up).
+In @tbl-target-trial, we lay out some ideas for a randomized trial of this question and the observational study that would emulate it.
+Notably, the target trial we can emulate is usually a so-called pragmatic trial---a trial *without* blinding.
+That is because it's often not possible to blind someone's exposure from themselves.
+
+| Protocol Step               | Description                                                                                                                | Target Trial                                                                                                                                                                                                                                      | Emulation                                                                                                                                                                                                                                                                                                          |
+|-----------------------------|----------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Eligibility criteria        | Who or what should be included in the study?                                                                               | Inclusion: Age 18 to 65. Exclusion: no lactose intolerance, no allergy to any ingredients, entered store within the week of the study.                                                                                                            | Same as target trial.                                                                                                                                                                                                                                                                                              |
+| Exposure definition         | When eligible, what precise exposure will units under study receive?                                                       | 100g vanilla or chocolate ice cream in a bowl, both Ben and Jerzy brand ice cream.                                                                                                                                                                | Same as target trial.                                                                                                                                                                                                                                                                                              |
+| Assignment procedures       | How will eligible units be assigned to an exposure?                                                                        | Participants are randomized with a 50% probability of either flavor. Assignment is non-blinded.                                                                                                                                                   | Participants are assigned the flavor consistent with their data, e.g., the flavor they chose. Randomization is emulated using baseline covariates.                                                                                                                                                                 |
+| Follow-up period            | When does follow-up start and end?                                                                                         | Start: when eligibility criteria met and flavor assigned. End: 30 minutes after flavor assignment.                                                                                                                                                | Same as target trial.                                                                                                                                                                                                                                                                                              |
+| Outcome definition          | What precise outcomes will be measured?                                                                                    | Happiness (1-10) as measured by the gold-standard tool.                                                                                                                                                                                           | Same as target trial.                                                                                                                                                                                                                                                                                              |
+| Causal contrast of interest | Which causal estimand will be estimated?                                                                                   | Average Treatment Effect (ATE).                                                                                                                                                                                                                   | Same as target trial.                                                                                                                                                                                                                                                                                              |
+| Analysis plan               | What data manipulation and statistical procedures will be applied to the data to estimate the causal contrast of interest? | ATE will be calculated using inverse probability weighting, weighted for baseline happiness, age, income, education, physical activity, self-rated physical health, self-rated mental health, quality of relationships, and preference of flavor. | ATE will be calculated using inverse probability weighting, weighted for confounders (baseline happiness, age, preference of flavor) and additional baseline prognostic variables (age, income, education, physical activity, self-rated physical health, self-rated mental health, and quality of relationships). |
+
+: A protocol of a target trial of ice cream flavor on happiness and a corresponding protocol for an observational study that emulates the target trial {#tbl-target-trial}
+
+explain: we think the causes of flavor are ...
+and the causes of happiness are ...
+callout: ITT and per-protocol, weighting for rcts
