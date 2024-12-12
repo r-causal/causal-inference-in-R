@@ -22,6 +22,6 @@ status("wip")
 -   list of bad things!
 -   non-adherence, l2fu in RCTs too
 
-## Causal methods in randomized trials
+## Causal methods in randomized trials {#sec-ci-rct}
 
 -   non-adherence, l2fu in RCTs too
