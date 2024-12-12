@@ -34,8 +34,9 @@ book:
       - chapters/01-casual-to-causal.qmd
       - chapters/02-whole-game.qmd
       - chapters/03-po-counterfactuals.qmd
-      - chapters/05-dags.qmd
-      - chapters/06-not-just-a-stats-problem.qmd
+      - chapters/04-dags.qmd
+      - chapters/05-not-just-a-stats-problem.qmd
+      - chapters/06-stats-models-ci.qmd
   
     - part: The Design Phase
       chapters:
