@@ -333,8 +333,8 @@ finite_sample_sims <- map_df(
   sim
 )
 
-bias <- finite_sample_sims %>%
-  group_by(n) %>%
+bias <- finite_sample_sims |>
+  group_by(n) |>
   summarise(bias = mean(bias))
 ```
 
@@ -740,8 +740,8 @@ finite_sample_sims <- map_df(
   sim
 )
 
-bias <- finite_sample_sims %>%
-  group_by(n, weight) %>%
+bias <- finite_sample_sims |>
+  group_by(n, weight) |>
   summarise(bias = mean(bias))
 ```
 

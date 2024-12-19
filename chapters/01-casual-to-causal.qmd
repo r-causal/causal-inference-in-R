@@ -123,13 +123,13 @@ In this (simplified) recreation of their plot from July 2020, you can see the st
 ft_excess_deaths <- read_csv(here::here("data/ft_excess_deaths.csv")) |>
   mutate(year = factor(year))
 
-excess_deaths_prior_wk <- ft_excess_deaths %>%
+excess_deaths_prior_wk <- ft_excess_deaths |>
   filter(year != 2020)
 
-excess_deaths2020_wk <- ft_excess_deaths %>%
+excess_deaths2020_wk <- ft_excess_deaths |>
   filter(year == 2020)
 
-excess_deaths_wk <- ft_excess_deaths %>%
+excess_deaths_wk <- ft_excess_deaths |>
   filter(year == 2020)
 
 ggplot(
