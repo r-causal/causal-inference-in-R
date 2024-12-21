@@ -298,7 +298,7 @@ satisfaction3 <- tibble(
    # Larger customers more likely to have daily updates
   update_frequency = rbinom(n, 1, plogis(num_users / 100)), 
   # with more users come less satisfaction
-  satisfaction = 70 + -0.02 * num_users
+  satisfaction = 70 + -0.2 * num_users
 ) |>
   mutate(
     update_frequency = factor(update_frequency, labels = c("weekly", "daily"))
@@ -353,9 +353,12 @@ Let's use `lm()` to calculate the effect in our example with two binary confound
 
 ```{r}
 library(broom)
+library(gt)
 lm(satisfaction ~ update_frequency + customer_type + business_hours, data = satisfaction2) |> 
   tidy(conf.int = TRUE) |> 
-  filter(term == "update_frequencydaily")
+  filter(term == "update_frequencydaily") |> 
+  gt() |> 
+  fmt_number(-term)
 ```
 
 It also works well for continuous confounders.
@@ -364,7 +367,9 @@ We no longer need to bin it to get the correct answer:
 ```{r}
 lm(satisfaction ~ update_frequency + num_users, data = satisfaction3) |> 
   tidy(conf.int = TRUE) |> 
-  filter(term == "update_frequencydaily")
+  filter(term == "update_frequencydaily") |> 
+  gt() |> 
+  fmt_number(-term)
 ```
 
 This generalization doesn't come for free, though: we've now introduced a parametric statistical model to make estimates across the regions of our data that are sparse.
@@ -373,7 +378,7 @@ For example, the relationship between `satisfaction` and `num_users` is linear, 
 In other words, we're now dependent on the correct **functional form**, the mathematical representation of the relationship between variables in a model.
 We need the correct functional form for both the exposure and the confounders.
 This requires an understanding of the functional relationship between these variables and the outcome.
-We'll also later explore ways to use data-adaptive methods like machine learning to reduce this assumption (@secsec-causal-ml).
+We'll also later explore ways to use data-adaptive methods like machine learning to reduce this assumption (@sec-causal-ml).
 
 <!-- TODO: link appendix on model checks here -->
 
@@ -391,11 +396,7 @@ We'll explore this idea more in @sec-g-comp and @sec-dr.
 Second, it can be sometimes challenging to to get the estimate we are targeting with outcome models---an answer to a precise question---something we will probe more deeply in @sec-estimands.
 
 Relatedly, outcome models give us *conditional* coefficients.
-In other words, when describing the estimated coefficient, we often say something like "a one-unit change in the exposure results in a `coefficient` change in the outcome *holding all other variables in the model constant*. 
-In causal inference, we are often interested in *marginal* effects. 
-Mathematically, this means that we want to average the effect of interest across the distribution of factors in a particular population that we are trying to estimate a causal effect for. 
-In the case where the outcome is continuous, the effect is linear, and there are no interactions between the exposure effect and other factors about the population, the distinction between an conditional and a marginal effect is largely semantic. 
-The estimates will be identical.
+In other words, when describing the estimated coefficient, we often say something like "a one-unit change in the exposure results in a `coefficient` change in the outcome *holding all other variables in the model constant*. In causal inference, we are often interested in *marginal* effects. Mathematically, this means that we want to average the effect of interest across the distribution of factors in a particular population that we are trying to estimate a causal effect for. In the case where the outcome is continuous, the effect is linear, and there are no interactions between the exposure effect and other factors about the population, the distinction between an conditional and a marginal effect is largely semantic. The estimates will be identical.
 
 If there *is* an interaction in the model, that is, if the exposure has a different impact on the outcome depending on some other factor, we no longer have a single coefficient to interpret.
 We may want to estimate a marginal effect, taking into account the distribution of that factor in the population of interest.
@@ -423,7 +424,7 @@ Whether it's beneficial increase the update frequency to daily for everyone depe
 Marginalization tells us the average effect for the distribution of covariates in the data.
 Of course, we might want to estimate the causal effect *by* customer type; we'll discuss interaction effects in depth in @sec-interaction.
 
-::: {.callout-note}
+::: callout-note
 Conditional effects are even more complex with logistic and Cox regression models; as we'll see in @sec-non-collapse, conditional coefficients for models like these estimate answers to entirely different questions depending on the variables in the model.
 :::
 
@@ -434,7 +435,7 @@ We may, however, be able to use another method like instrumental variable analys
 The second is when we have time-varying exposures and confounding.
 Linear regression is not able to estimate these types of effects without bias, so we'll need methods like inverse probability weighting or g-computation to calculate it correctly.
 Through most of the book, we'll analyze simple pre-post data: we have baseline data, an exposure that happens at a single outpoint, and an outcome that occurs after exposure.
-In @sec-longitidinal and other chapters, we'll cover more complex questions and data.
+In @sec-longitudinal and other chapters, we'll cover more complex questions and data.
 
 ## Overview of estimators for causal inference
 
@@ -457,12 +458,20 @@ Here's a brief summary of when we might want to explore these methods instead of
 
 ### Causal methods in randomized trials {#sec-ci-rct}
 
-Randomized trials alleviate many of the assumptions we need to make for causal inference. When randomization has succeeded, we don't need to control for any confounders because they don't exist. However, causal methods can still be useful for randomized exposures.
+Randomized trials alleviate many of the assumptions we need to make for causal inference.
+When randomization has succeeded, we don't need to control for any confounders because they don't exist.
+However, causal methods can still be useful for randomized exposures.
 
-Let's consider a variation of @fig-satisfaction-dag2 where frequency of updates is randomized to each customer; customer type and business hours are still causes of customer satisfaction. In other words, they cause the outcome but not the exposure. To get a valid effect, can use an unadjusted regression model or a simple differences in means. As we discussed in @sec-dags, however, including causes of the outcome that are not causes of the exposure can improve statistical precision of an estimate. Let's look at three approaches: an unadjusted OLS outcome model, an adjusted OLS outcome model (direct adjustment), and an inverse probability weighted model. In @fig-panel, all three methods give us an unbiased effect.
+Let's consider a variation of @fig-satisfaction-dag2 where frequency of updates is randomized to each customer; customer type and business hours are still causes of customer satisfaction.
+In other words, they cause the outcome but not the exposure.
+To get a valid effect, can use an unadjusted regression model or a simple differences in means.
+As we discussed in @sec-dags, however, including causes of the outcome that are not causes of the exposure can improve statistical precision of an estimate.
+Let's look at three approaches: an unadjusted OLS outcome model, an adjusted OLS outcome model (direct adjustment), and an inverse probability weighted model.
+In @fig-panel, all three methods give us an unbiased effect.
 The effect from the propensity score is a marginal effect, while the effect from the outcome model is a conditional effect.
 Because of the way we've simulated the data, the two types of effects are identical.
-The unadjusted method, however, has a wider confidence interval and, relatedly, a larger standard error. Both the direct adjustment method and inverse probability weighting have smaller standard errors and thus narrower confidence intervals. 
+The unadjusted method, however, has a wider confidence interval and, relatedly, a larger standard error.
+Both the direct adjustment method and inverse probability weighting have smaller standard errors and thus narrower confidence intervals.
 It has been shown mathematically that using propensity scores like this to adjust for baseline factors in a randomized trial will *always* improve precision compared to the unadjusted estimate and is equivalent to the precision gained from directly adjusting [@williamson2014variance].
 
 ```{r}
@@ -556,11 +565,12 @@ They are instead controlling the random variation in the data.
 For direct adjustment, we do this by accounting for variation in the outcome.
 For inverse probability weighting, we do this by accounting for chance imbalances in the treatment groups across variables that relate to the outcome.
 
-Causal methods can also help us address some of the violations of causal assumptions we saw in real-life randomized trials in @sec-designs. We'll explore how these methods can help us address non-adherence and loss-to-follow up, two common sources of bias in randomized trials, in @sec-longitudinal and @sec-iv-friends.
+Causal methods can also help us address some of the violations of causal assumptions we saw in real-life randomized trials in @sec-designs.
+We'll explore how these methods can help us address non-adherence and loss-to-follow up, two common sources of bias in randomized trials, in @sec-longitudinal and @sec-iv-friends.
 
 ## Entering the design phase
 
-Now, let's turn our attention to an example with real data. 
-We're going to start with propensity score methods like matching and inverse-probability weighting because they have a particular property: they allow us to model the relationship between the exposure and confounders without peaking at the relationship between the exposure and the outcome. 
+Now, let's turn our attention to an example with real data.
+We're going to start with propensity score methods like matching and inverse-probability weighting because they have a particular property: they allow us to model the relationship between the exposure and confounders without peaking at the relationship between the exposure and the outcome.
 This is sometimes called *the design phase* because it is philosophically similar to designing a randomized trial, closely related to the idea of emulating a target trial.
 Let's continue our journey to answering causal questions.

@@ -1,4 +1,4 @@
-# Fitting the outcome model {#sec-outcome-model}
+# Fitting the weighted outcome model {#sec-outcome-model}
 
 {{< include 00-setup.qmd >}}
 
