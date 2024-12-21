@@ -228,8 +228,8 @@ We don't know the other one, and consequently, we don't know the individual caus
 set.seed(11)
 data_observed <- data |>
   mutate(
-    # change the exposure to randomized, generated from 
-    # a binomial distribution with a probability of 0.5 for 
+    # change the exposure to randomized, generated from
+    # a binomial distribution with a probability of 0.5 for
     # being in either group
     exposure = case_when(
       rbinom(n(), 1, 0.5) == 1 ~ "chocolate",
@@ -430,13 +430,13 @@ data_observed_exch <- data |>
     exposure = case_when(
       # people who like chocolate more chose that 80% of the time
       prefer_chocolate ~ ifelse(
-        rbinom(n(), 1, 0.8), 
-        "chocolate", 
+        rbinom(n(), 1, 0.8),
+        "chocolate",
         "vanilla"
       ),
       # people who like vanilla more chose that 80% of the time
       !prefer_chocolate ~ ifelse(
-        rbinom(n(), 1, 0.8), 
+        rbinom(n(), 1, 0.8),
         "vanilla",
         "chocolate"
       )
@@ -447,7 +447,7 @@ data_observed_exch <- data |>
     )
   ) |>
   select(
-    id, prefer_chocolate, exposure, 
+    id, prefer_chocolate, exposure,
     observed_outcome, starts_with("y")
   )
 ```
@@ -568,12 +568,12 @@ data_observed_pos <- data |>
     prefer_chocolate = y_chocolate > y_vanilla,
     exposure = case_when(
       prefer_chocolate ~ ifelse(
-        rbinom(n(), 1, 0.8), 
-        "chocolate", 
+        rbinom(n(), 1, 0.8),
+        "chocolate",
         "vanilla"
       ),
       !prefer_chocolate ~ ifelse(
-        rbinom(n(), 1, 0.8), 
+        rbinom(n(), 1, 0.8),
         "vanilla",
         "chocolate"
       )
@@ -909,13 +909,13 @@ data_observed_interf <- data |>
       TRUE ~ "vanilla"
     ),
     observed_outcome = case_when(
-      exposure == "chocolate" & exposure_partner == "chocolate" ~ 
+      exposure == "chocolate" & exposure_partner == "chocolate" ~
         y_chocolate_chocolate,
       exposure == "chocolate" & exposure_partner == "vanilla" ~
         y_chocolate_vanilla,
-      exposure == "vanilla" & exposure_partner == "chocolate" ~ 
+      exposure == "vanilla" & exposure_partner == "chocolate" ~
         y_vanilla_chocolate,
-      exposure == "vanilla" & exposure_partner == "vanilla" ~ 
+      exposure == "vanilla" & exposure_partner == "vanilla" ~
         y_vanilla_vanilla
     )
   )
