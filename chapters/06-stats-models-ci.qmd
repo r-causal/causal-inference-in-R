@@ -393,6 +393,7 @@ In fact, you could say that when there is a linear relationship between the outc
 So, why don't we always outcome models to calculate causal effects?
 First, we may be more confident in modeling the exposure instead of the outcome (as we do in, for instance, inverse probability models).
 We'll explore this idea more in @sec-g-comp and @sec-dr.
+Relatedly, when we have a binary outcome, it may make sense to choose one other the other based on number of events, e.g., it can be more statistically efficient to use a propensity score method if the outcome is rare but the exposure is not.
 Second, it can be sometimes challenging to to get the estimate we are targeting with outcome models---an answer to a precise question---something we will probe more deeply in @sec-estimands.
 
 Relatedly, outcome models give us *conditional* coefficients.
@@ -404,20 +405,20 @@ Why?
 We are ultimately trying to determine whether we should suggest the exposure to the target population, so we want to know *on average* whether it will be beneficial.
 
 Consider a variation of @fig-satisfaction-dag1 where update frequency *does* have a causal effect but that effect varies by customer type.
-For Premium customers, daily updates *increase* satisfaction by 5 points.
-For Free customers, daily updates *decrease* satisfaction by 5 points.
+For premium customers, daily updates *increase* satisfaction by 5 points.
+For free customers, daily updates *decrease* satisfaction by 5 points.
 This means the effect of changing the update frequency is heterogeneous, depending on customer type.
 Whether it's beneficial increase the update frequency to daily for everyone depends on the distribution of premium vs. free customers.
 
--   If **50% of your customers are Premium** and **50% are Free**, the average effect of switching to daily updates would be:
+-   If **50% of your customers are premium** and **50% are free**, the average effect of switching to daily updates would be:
 
     $(0.5 * 5) + (0.5 * -5) = 0$
 
--   If **100% of your customers are Premium**, the average effect would be:
+-   If **100% of your customers are premium**, the average effect would be:
 
     $(1 * 5) + (0 * -5) = 5$
 
--   If **100% of your customers are Free**, the average effect would be:
+-   If **100% of your customers are free**, the average effect would be:
 
     $(0 * 5) + (1 * -5) = -5$
 
