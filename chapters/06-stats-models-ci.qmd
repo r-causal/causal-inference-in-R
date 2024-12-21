@@ -1,27 +1,566 @@
-# When do standard methods succeed and fail? Statistical models in causal inference  {#sec-stats-ci}
+# From question to answer: stratification and outcome models {#sec-strat-outcome}
 
 {{< include 00-setup.qmd >}}
 
 ```{r}
 #| echo: false
 # TODO: remove when first edition complete
-status("wip")
+status("polishing")
 ```
 
+Let's finally turn our attention to methods for answering causal questions, the subject of most of the rest of the book.
+Potential outcomes, counterfactuals, and DAGs allow us to establish the conditions under which we can estimate causal effects.
+Now, we need tools to estimate them.
+This chapter is a transition point, as we explore models to make causal inference more feasible.
 
-## Causal inference with `group_by()` and `summarize()`
+But let's begin with no model at all.
 
-### Stratification and non-parametric models
+## Causal inference with `group_by()` and `summarize()` {#sec-group-sum}
+
+Let's suppose we are analyzing data from a company that creates software.
+We are trying to estimate a causal effect of frequency of software updates on customer satisfaction (measured as a standardized score with a population mean of 0 and standard deviation of 1).
+The customers are organizations that have individual users, and the organization as a whole receives either weekly or daily updates.
+Update frequency is not randomized, and, as shown in @fig-satisfaction-dag1, the exposure and outcome have a mutual cause---a confounder---customer type.
+Free customers are more likely to receive weekly updates, while premium customers are more likely to receive daily updates.
+Premium customers are more likely to have higher satisfaction.
+Even though there is no relationship between the exposure and outcome, we expect there to be confounding from the open backdoor path between `updates` and `satisfaction` via `customer_type`.
+We have confounding by a **single binary confounder**.
+
+```{r}
+#| label: fig-satisfaction-dag1
+#| echo: false
+#| warning: false
+#| fig-cap: ""
+
+library(ggdag)
+
+coords1 <- list(
+  x = c(customer_type = 1, updates = 2, satisfaction = 3),
+  y = c(customer_type = 0, updates = 0, satisfaction = 0)
+)
+
+dag1 <- dagify(
+  satisfaction ~ customer_type,
+  updates ~ customer_type,
+  coords = coords1,
+  labels = c(
+    customer_type = "customer type",
+    updates = "frequency\nof updates",
+    satisfaction = "customer\nsatisfaction"
+  )
+)
+
+ggdag(dag1, use_text = FALSE, use_edges = FALSE) +
+  geom_dag_text(ggplot2::aes(label = label), nudge_y = c(-.004, -.004, -.004), color = "black") + 
+  geom_dag_edges_arc(curvature = c(0.01, 0)) +
+  theme_dag()
+```
+
+Let's simulate some data that matches this data generating process.
+In this simulation, we generate the potential outcomes for `satisfaction(weekly)` and `satisfaction(daily)`.
+Many of our simulations in this book will skip this step and simulate the observed outcomes directly; however, as we transition into *answering* causal questions, it's helpful to remember what we assumptions we need to meet in order to make inferences.
+
+```{r}
+set.seed(1)
+n <- 10000
+satisfaction1 <- tibble(
+   # Free (0) or Premium (1)
+  customer_type = rbinom(n, 1, 0.5), 
+  p_exposure = case_when(
+    # Premium customers are more likely to receive daily updates
+    customer_type == 1 ~ 0.75,  
+    # Free customers are more likely to receive weekly updates
+    customer_type == 0 ~ 0.25   
+  ),
+  # Weekly (0) vs Daily (1)
+  update_frequency = rbinom(n, 1, p_exposure),  
+  # generate the "true" average treatment effect of 0
+  # to do this, we are going to generate the potential outcomes, first
+  # the potential outcome if exposure = 0
+  # `y0` = `satisfaction(weekly)`
+  # (notice `update_frequency` is not in the equation below, only the confounder)
+  # we use rnorm(n) to add the random error term that is normally
+  # distributed with a mean of 0 and a standard deviation of 1
+  y0 = customer_type + rnorm(n),
+  # because the true effect is 0, the potential outcome if exposure = 1
+  # is identical
+  y1 = y0,  
+    # now, in practice we will only see one of these, outcome is what is
+  # observed
+  satisfaction = (1 - update_frequency) * y0 + update_frequency * y1,
+  observed_potential_outcome = case_when(
+    update_frequency == 0 ~ "y0",
+    update_frequency == 1 ~ "y1"
+  )
+) |> 
+  mutate(
+    update_frequency = factor(update_frequency, labels = c("weekly", "daily")),
+    customer_type = factor(customer_type, labels = c("free", "premium"))
+  )
+```
+
+```{r}
+satisfaction1 |>
+  select(update_frequency, customer_type, satisfaction, observed_potential_outcome)
+```
+
+Now, let's try to estimate the effect of the `update_frequency` on the `satisfaction` assuming the two exposed groups are exchangeable.
+
+```{r}
+#| message: false
+#| warning: false
+satisfaction1 |>
+  group_by(update_frequency) |>
+  summarise(avg_satisfaction = mean(satisfaction))
+```
+
+Of course, we know from the DAG and from the way we simulated the potential outcomes that the two groups are not exchangeable.
+The true difference between the update frequency groups is 0, but there is a difference in average satisfaction between them.
+As discussed in @sec-counterfactuals, though, we still have another option: exchangability within the levels of the confounders.
+Put another way, we need exchangeability within levels of a valid adjustment set.
+In this case, there is only one such set: `customer_type`.
+
+```{r}
+#| message: false
+#| warning: false
+satisfaction_strat <- satisfaction1 |>
+  group_by(customer_type, update_frequency) |>
+  summarise(avg_satisfaction = mean(satisfaction))
+
+satisfaction_strat
+```
+
+Let's do a little wrangling to get an estimate of the effect of update frequency on satisfaction within levels of customer type.
+Now, we're much closer to the right answer: within levels of customer type, there is no difference in satisfaction by update frequency.
+
+```{r}
+#| message: false
+#| warning: false
+satisfaction_strat_est <- satisfaction_strat |>
+  pivot_wider(
+    names_from = update_frequency,
+    values_from = avg_satisfaction
+  ) |>
+  summarise(estimate = daily - weekly)
+
+satisfaction_strat_est
+```
+
+We can now take the overall average, giving us an effect close to 0.
+
+```{r}
+satisfaction_strat_est |>
+  # note: we would need to weight this if the confounder groups were not equally sized
+  summarise(estimate = mean(estimate)) 
+```
+
+Now let's consider this approach with **two binary confounders**.
+Let's assume that there was a second confounder: whether or not it was business hours.
+Weekly updates have a higher chance of occurring within business hours, while daily updates have a higher chance of occurring after business hours.
+Some customers overlap well with the company's business hours, while some don't; those who don't have lower satisfaction due to unavailability of customer service during their work hours.
+
+```{r}
+#| label: fig-satisfaction-dag2
+#| echo: false
+#| warning: false
+#| fig-cap: ""
+dag2 <- dagify(
+  satisfaction ~ customer_service  + customer_type,
+  customer_service ~ business_hours,
+  updates ~ customer_type + business_hours,
+  coords = time_ordered_coords(),
+  labels = c(
+    customer_type = "customer type",
+    business_hours = "business\nhours",
+    updates = "frequency\nof updates",
+    customer_service = "customer\nservice",
+    satisfaction = "customer\nsatisfaction"
+  )
+)
+
+ggdag(dag2, use_text = FALSE) +
+  geom_dag_text(ggplot2::aes(label = label), nudge_y = c(-.004, .004, -.004, -.004, -.004), color = "black") + 
+  theme_dag()
+```
+
+Let's simulate this data:
+
+```{r}
+satisfaction2 <- tibble(
+  # Free (0) or Premium (1)
+  customer_type = rbinom(n, 1, 0.5),  
+  # Business hours (Yes: 1, No: 0)
+  business_hours = rbinom(n, 1, 0.5),  
+  p_exposure = case_when(
+    customer_type == 1 & business_hours == 1 ~ 0.75,
+    customer_type == 0 & business_hours == 1 ~ 0.9,
+    customer_type == 1 & business_hours == 0 ~ 0.2,
+    customer_type == 0 & business_hours == 0 ~ 0.1
+  ),
+  # Weekly (0) vs Daily (1)
+  update_frequency = rbinom(n, 1, p_exposure),  
+   # More likely during business hours
+  customer_service = rbinom(n, 1, prob = business_hours * 0.9 + (1 - business_hours) * 0.2), 
+  satisfaction = 70 + 10 * customer_type + 15 * customer_service + rnorm(n),  
+) |>
+  mutate(
+    customer_type = factor(customer_type, labels = c("free", "premium")),
+    business_hours = factor(business_hours, labels = c("no", "yes")),
+    update_frequency = factor(update_frequency, labels = c("weekly", "daily")),
+    customer_service = factor(customer_service, labels = c("no", "yes"))
+  )
+```
+
+We now need exchangeability within levels two confounders.
+In this case, we have two minimal adjustment sets: `customer_type + business_hours` and `customer_type + customer_service`.
+Let's look at each.
+
+Within combinations of `customer_type` and `business_hours`, the update frequency groups are very close to each other.
+
+```{r}
+#| message: false
+#| warning: false
+satisfaction2_strat <- satisfaction2 |>
+  group_by(customer_type, business_hours, update_frequency) |>
+  summarise(avg_satisfaction = mean(satisfaction))
+
+satisfaction2_strat
+```
+
+With a little more wrangling than before, we can calculate the overall estimate.
+
+```{r}
+satisfaction2_strat |>
+  ungroup() |> 
+  pivot_wider(
+    names_from = update_frequency,
+    values_from = avg_satisfaction
+  ) |>
+  summarise(estimate = mean(daily - weekly))
+```
+
+We can also achieve conditional exchangeability within levels of `customer_type` and `customer_service`.
+The answers are slightly different because of chance differences between the variables we've chosen to account for, but we get close to null for both approaches.
+
+```{r}
+#| message: false
+#| warning: false
+satisfaction2 |>
+  group_by(customer_type, customer_service, update_frequency) |>
+  summarise(avg_satisfaction = mean(satisfaction)) |> 
+  ungroup() |> 
+  pivot_wider(
+    names_from = update_frequency,
+    values_from = avg_satisfaction
+  ) |>
+  summarise(estimate = mean(daily - weekly))
+```
+
+As long as we have enough data, this approach extends nicely with many confounders, including categorical confounders.
+What about a **continuous confounder**?
+
+Let's say that instead of the binary confounders, we have one continuous confounder: number of users within the organization, as in @fig-satisfaction-dag3.
+
+```{r}
+#| label: fig-satisfaction-dag3
+#| echo: false
+#| warning: false
+#| fig-cap: ""
+
+coords3 <- list(
+  x = c(num_users = 1, updates = 2, satisfaction = 3),
+  y = c(num_users = 0, updates = 0, satisfaction = 0)
+)
+
+dag3 <- dagify(
+  satisfaction ~ num_users,
+  updates ~ num_users,
+  coords = coords3,
+  labels = c(
+    num_users = "number of\nusers",
+    updates = "frequency\nof updates",
+    satisfaction = "customer\nsatisfaction"
+  )
+)
+
+ggdag(dag3, use_text = FALSE, use_edges = FALSE) +
+  geom_dag_text(ggplot2::aes(label = label), nudge_y = c(-.004, -.004, -.004), color = "black") + 
+  geom_dag_edges_arc(curvature = c(0.01, 0)) +
+  theme_dag()
+```
+
+Organizations with more users get more updates, and they also have slightly lower satisfaction scores.
+
+```{r}
+satisfaction3 <- tibble(
+  # Number of users 
+  num_users = rnorm(n, mean = 100, sd = 50),
+   # Larger customers more likely to have daily updates
+  update_frequency = rbinom(n, 1, plogis(num_users / 100)), 
+  # with more users come less satisfaction
+  satisfaction = 70 + -0.02 * num_users
+) |>
+  mutate(
+    update_frequency = factor(update_frequency, labels = c("weekly", "daily"))
+  )
+```
+
+If we want to still use `group_by` and `summarize()`, we could bin the continuous confounder, for example using it's quintiles, and estimate the causal effect within each bin:
+
+```{r}
+#| message: false
+#| warning: false
+satisfaction3_strat <- satisfaction3 |>
+  mutate(num_users_q = ntile(num_users, 5)) |>
+  group_by(num_users_q, update_frequency) |>
+  summarise(avg_satisfaction = mean(satisfaction))
+
+satisfaction3_strat
+```
+
+Within binned levels of number of users, it seems we get about the right answer.
+Let's get the overall mean:
+
+```{r}
+#| message: false
+#| warning: false
+satisfaction3_strat |> 
+  ungroup() |> 
+  pivot_wider(
+    names_from = update_frequency,
+    values_from = avg_satisfaction
+  ) |>
+  summarise(estimate = mean(daily - weekly))
+```
+
+As opposed to binary and categorical confounders, grouping by bins for continuous confounders is not accounting for the variable completely; the coarser the bins, the more residual confounding there will be, and the finer the bins, the closer we'll get to the continuous version (but the fewer number of values we'll have per bin).
+
+The approach that we've been using with `group_by()` and `summarize()` is often called **stratification**.
+You can also think of it as a type of non-parametric approach.
+We aren't using any parameterization from a statistical model to restrict the form of the variables the way we might with, say, a linear regression.
+For continuous confounders, this is only partially true, because it's not practical to bin within all levels of the continuous variable.
+
+For simple problems or when you have lots of data, stratification can be quite powerful because you again sometimes avoid model misspecification problems.
+However, with many confounders and continuous confounders, we run into the curse of dimensionality quickly, making it impractical because we have too few observations by combination of confounder levels.
 
 ## Parametric outcome models
 
+You can think of stratification as conditional means.
+A more general extension of conditional means is multivariable linear regression.
+When we fit `lm()` with the variables in the form `outcome ~ exposure + confounder1 + confounder2 + ...`, we are fitting what we call an **outcome model**, so called because we are fitting the exposure and confounders with the outcome as the dependent variable.
+This is also sometimes called **direct adjustment**, because we are adjusting for the confounders directly in the model.
+Let's use `lm()` to calculate the effect in our example with two binary confounders:
+
+```{r}
+library(broom)
+lm(satisfaction ~ update_frequency + customer_type + business_hours, data = satisfaction2) |> 
+  tidy(conf.int = TRUE) |> 
+  filter(term == "update_frequencydaily")
+```
+
+It also works well for continuous confounders.
+We no longer need to bin it to get the correct answer:
+
+```{r}
+lm(satisfaction ~ update_frequency + num_users, data = satisfaction3) |> 
+  tidy(conf.int = TRUE) |> 
+  filter(term == "update_frequencydaily")
+```
+
+This generalization doesn't come for free, though: we've now introduced a parametric statistical model to make estimates across the regions of our data that are sparse.
+The estimate we get for `satisfaction ~ update_frequency + num_users` gives us exactly the right answer because the statistical model underlying `lm()` matches our simulation perfectly.
+For example, the relationship between `satisfaction` and `num_users` is linear, so when we fit this model, we don't suffer from the problem of dimensionality, although linear regression has its own limits in terms of number of rows and number of columns.
+In other words, we're now dependent on the correct **functional form**, the mathematical representation of the relationship between variables in a model.
+We need the correct functional form for both the exposure and the confounders.
+This requires an understanding of the functional relationship between these variables and the outcome.
+We'll also later explore ways to use data-adaptive methods like machine learning to reduce this assumption (@secsec-causal-ml).
+
+<!-- TODO: link appendix on model checks here -->
+
+When we've met the assumptions of the estimator we're using for our model, outcome regression can work very well.
+In the case of OLS, if we understand the relationships between the outcome and the variables in the regression, we get a lot of benefits.
+OLS is very efficient, statistically (meaning we'll get a small standard error).
+We'll also get nominally correct confidence intervals without needing to bootstrap (@sec-appendix-bootstrap).
+Scientists and other people who analyze data are also usually familiar with linear regression, making it easier for many to understand what you did to calculate the causal effect.
+
+In fact, you could say that when there is a linear relationship between the outcome and exposure and we meet the causal assumptions laid out in @sec-assump, *correlation is causation*.
+
+So, why don't we always outcome models to calculate causal effects?
+First, we may be more confident in modeling the exposure instead of the outcome (as we do in, for instance, inverse probability models).
+We'll explore this idea more in @sec-g-comp and @sec-dr.
+Second, it can be sometimes challenging to to get the estimate we are targeting with outcome models---an answer to a precise question---something we will probe more deeply in @sec-estimands.
+
+Relatedly, outcome models give us *conditional* coefficients.
+In other words, when describing the estimated coefficient, we often say something like "a one-unit change in the exposure results in a `coefficient` change in the outcome *holding all other variables in the model constant*. 
+In causal inference, we are often interested in *marginal* effects. 
+Mathematically, this means that we want to average the effect of interest across the distribution of factors in a particular population that we are trying to estimate a causal effect for. 
+In the case where the outcome is continuous, the effect is linear, and there are no interactions between the exposure effect and other factors about the population, the distinction between an conditional and a marginal effect is largely semantic. 
+The estimates will be identical.
+
+If there *is* an interaction in the model, that is, if the exposure has a different impact on the outcome depending on some other factor, we no longer have a single coefficient to interpret.
+We may want to estimate a marginal effect, taking into account the distribution of that factor in the population of interest.
+Why?
+We are ultimately trying to determine whether we should suggest the exposure to the target population, so we want to know *on average* whether it will be beneficial.
+
+Consider a variation of @fig-satisfaction-dag1 where update frequency *does* have a causal effect but that effect varies by customer type.
+For Premium customers, daily updates *increase* satisfaction by 5 points.
+For Free customers, daily updates *decrease* satisfaction by 5 points.
+This means the effect of changing the update frequency is heterogeneous, depending on customer type.
+Whether it's beneficial increase the update frequency to daily for everyone depends on the distribution of premium vs. free customers.
+
+-   If **50% of your customers are Premium** and **50% are Free**, the average effect of switching to daily updates would be:
+
+    $(0.5 * 5) + (0.5 * -5) = 0$
+
+-   If **100% of your customers are Premium**, the average effect would be:
+
+    $(1 * 5) + (0 * -5) = 5$
+
+-   If **100% of your customers are Free**, the average effect would be:
+
+    $(0 * 5) + (1 * -5) = -5$
+
+Marginalization tells us the average effect for the distribution of covariates in the data.
+Of course, we might want to estimate the causal effect *by* customer type; we'll discuss interaction effects in depth in @sec-interaction.
+
+::: {.callout-note}
+Conditional effects are even more complex with logistic and Cox regression models; as we'll see in @sec-non-collapse, conditional coefficients for models like these estimate answers to entirely different questions depending on the variables in the model.
+:::
+
+There are also times when we *can't* use an outcome model.
+The first is when we don't think we can meet the assumptions for unconfoundedness methods.
+In that case, we can't use inverse probability weighting and friends, either.
+We may, however, be able to use another method like instrumental variable analysis, regression discontinuity, or difference-in-differences (@sec-iv-friends and @sec-did; we'll also summarize these methods below).
+The second is when we have time-varying exposures and confounding.
+Linear regression is not able to estimate these types of effects without bias, so we'll need methods like inverse probability weighting or g-computation to calculate it correctly.
+Through most of the book, we'll analyze simple pre-post data: we have baseline data, an exposure that happens at a single outpoint, and an outcome that occurs after exposure.
+In @sec-longitidinal and other chapters, we'll cover more complex questions and data.
+
 ## Overview of estimators for causal inference
 
-## When do standard methods fail?
+As we've seen, it's possible to do causal inference with simple methods like stratification and multivariable linear regression.
+For the rest of the book, however, we will focus on other causal methods, which allow us more flexibility to answer the questions we want to answer.
 
--   list of bad things!
--   non-adherence, l2fu in RCTs too
+-   Unconfoundedness methods
+    -   Inverse probability weighting (propensity score weighting):
+    -   Matching (propensity score matching and other methods):
+    -   G-computation (also called standardization or marginal effects):
+    -   Doubly-robust methods: TMLE and augmented propensity scores. ML
 
-## Causal methods in randomized trials {#sec-ci-rct}
+While more of the book focuses on unconfoundedness methods, we later cover methods that make other assumptions (@sec-iv-friends and @sec-did).
+Here's a brief summary of when we might want to explore these methods instead of trying to achieve exchangeability:
 
--   non-adherence, l2fu in RCTs too
+-   Instrumental variables: There’s a variable (the instrument) that affects the treatment but does not directly affect the outcome except through the treatment. Because it's effectively random, we can use it to estimate a type of causal effect.
+-   Regression discontinuity: There’s a cutoff or threshold that determines who gets the treatment, and individuals just above or below the threshold are comparable. Regression discontinuity is closely related to instruments.
+-   Difference-in-differences: The treated and untreated groups would have followed the same trend over time in the absence of the treatment (they have *parallel trends*). If the two groups would have been identical sans treatment, we can use the untreated as a counterfactual for the treated.
+-   Synthetic controls: A weighted combination of untreated units can closely approximate what the treated unit’s outcome would have been without the treatment. Synthetic controls are closely related to difference-in-differences.
+
+### Causal methods in randomized trials {#sec-ci-rct}
+
+Randomized trials alleviate many of the assumptions we need to make for causal inference. When randomization has succeeded, we don't need to control for any confounders because they don't exist. However, causal methods can still be useful for randomized exposures.
+
+Let's consider a variation of @fig-satisfaction-dag2 where frequency of updates is randomized to each customer; customer type and business hours are still causes of customer satisfaction. In other words, they cause the outcome but not the exposure. To get a valid effect, can use an unadjusted regression model or a simple differences in means. As we discussed in @sec-dags, however, including causes of the outcome that are not causes of the exposure can improve statistical precision of an estimate. Let's look at three approaches: an unadjusted OLS outcome model, an adjusted OLS outcome model (direct adjustment), and an inverse probability weighted model. In @fig-panel, all three methods give us an unbiased effect.
+The effect from the propensity score is a marginal effect, while the effect from the outcome model is a conditional effect.
+Because of the way we've simulated the data, the two types of effects are identical.
+The unadjusted method, however, has a wider confidence interval and, relatedly, a larger standard error. Both the direct adjustment method and inverse probability weighting have smaller standard errors and thus narrower confidence intervals. 
+It has been shown mathematically that using propensity scores like this to adjust for baseline factors in a randomized trial will *always* improve precision compared to the unadjusted estimate and is equivalent to the precision gained from directly adjusting [@williamson2014variance].
+
+```{r}
+#| label: fig-panel
+#| code-fold: true
+#| message: false
+#| warning: false
+#| fig-cap: Three ways to estimate a causal effect in a non-randomized setting
+
+satisfaction_randomized <- tibble(
+  # Free (0) or Premium (1)
+  customer_type = rbinom(n, 1, 0.5),  
+  # Business hours (Yes: 1, No: 0)
+  business_hours = rbinom(n, 1, 0.5), 
+  # Weekly (0) vs Daily (1), now random
+  update_frequency = rbinom(n, 1, 0.5),  
+   # More likely during business hours
+  customer_service = rbinom(n, 1, prob = business_hours * 0.9 + (1 - business_hours) * 0.2), 
+  satisfaction = 70 + 10 * customer_type + 15 * customer_service + rnorm(n),  
+) |>
+  mutate(
+    customer_type = factor(customer_type, labels = c("free", "premium")),
+    business_hours = factor(business_hours, labels = c("no", "yes")),
+    update_frequency = factor(update_frequency, labels = c("weekly", "daily")),
+    customer_service = factor(customer_service, labels = c("no", "yes"))
+  )
+
+plot_estimates <- function(d) {
+  unadj_model <- lm(satisfaction ~ update_frequency, data = d) |>
+    broom::tidy(conf.int = TRUE) |>
+    dplyr::mutate(term = ifelse(term == "update_frequencydaily", "update_frequency", term)) |> 
+    dplyr::filter(term == "update_frequency") |>
+    dplyr::mutate(model = "unadjusted")
+
+  adj_model <- lm(satisfaction ~ update_frequency + business_hours + customer_type, data = d) |>
+    broom::tidy(conf.int = TRUE) |>
+    dplyr::mutate(term = ifelse(term == "update_frequencydaily", "update_frequency", term)) |> 
+    dplyr::filter(term == "update_frequency") |>
+    dplyr::mutate(model = "direct\nadjustment")
+
+  df <- d |> 
+    mutate(across(where(is.factor), as.integer)) |> 
+    mutate(update_frequency = update_frequency - 1) |> 
+    as.data.frame()
+  
+  x <- PSW::psw(
+    df,
+    "update_frequency ~ business_hours + customer_type",
+    weight = "ATE",
+    wt = TRUE,
+    out.var = "satisfaction"
+  )
+  psw_model <- tibble(
+    term = "update_frequency",
+    estimate = x$est.wt,
+    std.error = x$std.wt,
+    conf.low = x$est.wt - 1.96 * x$std.wt,
+    conf.high = x$est.wt + 1.96 * x$std.wt,
+    statistic = NA,
+    p.value = NA,
+    model = "inverse\nprobability weighting"
+  )
+
+  models <- dplyr::bind_rows(unadj_model, adj_model, psw_model) |>
+    dplyr::mutate(model = factor(model, levels = c(
+      "unadjusted", 
+      "direct\nadjustment", 
+      "inverse\nprobability weighting"
+    )))
+
+  models |>
+    dplyr::select(model, estimate, std.error, starts_with("conf")) |>
+    tidyr::pivot_longer(c(estimate, std.error), names_to = "statistic") |>
+    dplyr::mutate(
+      conf.low = ifelse(statistic == "std.error", NA, conf.low),
+      conf.high = ifelse(statistic == "std.error", NA, conf.high),
+      statistic = case_match(statistic, "estimate" ~ "estimate (95% CI)", "std.error" ~ "standard error")
+    ) |> 
+    ggplot2::ggplot(ggplot2::aes(value, forcats::fct_rev(model))) +
+    ggplot2::geom_point() +
+    ggplot2::geom_errorbarh(aes(xmin = conf.low, xmax = conf.high), height = 0) +
+    ggplot2::facet_wrap(~statistic, scales = "free_x") +
+    theme(axis.title.y = element_blank())
+}
+
+plot_estimates(satisfaction_randomized)
+```
+
+The two adjustment approaches, however, are not adjusting for confounders.
+They are instead controlling the random variation in the data.
+For direct adjustment, we do this by accounting for variation in the outcome.
+For inverse probability weighting, we do this by accounting for chance imbalances in the treatment groups across variables that relate to the outcome.
+
+Causal methods can also help us address some of the violations of causal assumptions we saw in real-life randomized trials in @sec-designs. We'll explore how these methods can help us address non-adherence and loss-to-follow up, two common sources of bias in randomized trials, in @sec-longitudinal and @sec-iv-friends.
+
+## Entering the design phase
+
+Now, let's turn our attention to an example with real data. 
+We're going to start with propensity score methods like matching and inverse-probability weighting because they have a particular property: they allow us to model the relationship between the exposure and confounders without peaking at the relationship between the exposure and the outcome. 
+This is sometimes called *the design phase* because it is philosophically similar to designing a randomized trial, closely related to the idea of emulating a target trial.
+Let's continue our journey to answering causal questions.

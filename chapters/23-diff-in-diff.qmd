@@ -1,4 +1,4 @@
-# Difference-in-difference {#sec-did}
+# Difference-in-difference {#sec-ç}
 
 {{< include 00-setup.qmd >}}
 

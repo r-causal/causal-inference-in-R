@@ -5,7 +5,7 @@
 ```{r}
 #| echo: false
 # TODO: remove when first edition complete
-status("wip")
+status("polishing")
 ```
 
 > | Two roads diverged in a yellow wood,
@@ -1065,7 +1065,7 @@ Let's consider the causal assumptions for this question and how they might have 
 -   **Consistency**: We already saw an example of the well-defined exposure problem: a "bed net" can mean many things. We decided we were comparing insecticide-treated bed nets compared to no nets, but we may need more. Does the manufacturer matter? The type of insecticide? The amount of insecticide? We need to think about the effect on the potential outcomes each of these variations might have. Interference is a real problem for bed-net research, particularly for insecticidal nets. (spillover, houses-as-units) Notably, we used households as the unit of observation, which would reduce some of the local interference. We could also consider households that are geographically dispersed from one another.
 :::
 
-## When do study designs support causal inference?
+## When do study designs support causal inference? {#sec-designs}
 
 Exchangeability, positivity, and consistency are simple assumptions, but as we've seen, they can easily be violated.
 When the assumptions for a causal method are not met, we cannot use the observed data to simulate potential outcomes and compare them.
