@@ -28,9 +28,9 @@ We have confounding by a **single binary confounder**.
 
 ```{r}
 #| label: fig-satisfaction-dag1
-#| echo: false
+#| code-fold: true
 #| warning: false
-#| fig-cap: ""
+#| fig-cap: "A causal diagram of the relationship between frequency of software updates and customer satisfaction. Frequency of updates does not cause customer satisfaction, and the relationship is confounded by their mutual cause, customer type."
 
 library(ggdag)
 
@@ -51,9 +51,10 @@ dag1 <- dagify(
 )
 
 ggdag(dag1, use_text = FALSE, use_edges = FALSE) +
-  geom_dag_text(ggplot2::aes(label = label), nudge_y = c(-.004, -.004, -.004), color = "black") +
-  geom_dag_edges_arc(curvature = c(0.01, 0)) +
-  theme_dag()
+  geom_dag_text(aes(label = label), nudge_y = c(-.05, -.05, -.05), color = "black") +
+  geom_dag_edges_arc(curvature = c(0.07, 0)) +
+  theme_dag() +
+  ylim(c(.2, -.2))
 ```
 
 Let's simulate some data that matches this data generating process.
@@ -75,33 +76,43 @@ satisfaction1 <- tibble(
   # Weekly (0) vs Daily (1)
   update_frequency = rbinom(n, 1, p_exposure),
   # generate the "true" average treatment effect of 0
-  # to do this, we are going to generate the potential outcomes, first
-  # the potential outcome if exposure = 0
+  # to do this, we are going to generate the 
+  # potential outcomes, first if exposure = 0
   # `y0` = `satisfaction(weekly)`
-  # (notice `update_frequency` is not in the equation below, only the confounder)
+  # notice `update_frequency` is not in the equation below
   # we use rnorm(n) to add the random error term that is normally
   # distributed with a mean of 0 and a standard deviation of 1
   y0 = customer_type + rnorm(n),
-  # because the true effect is 0, the potential outcome if exposure = 1
-  # is identical
+  # because the true effect is 0, the potential outcome 
+  # if exposure = 1 is identical
   y1 = y0,
-  # now, in practice we will only see one of these, outcome is what is
+  # in practice we will only see one of these
   # observed
-  satisfaction = (1 - update_frequency) * y0 + update_frequency * y1,
+  satisfaction = (1 - update_frequency) * y0 +
+    update_frequency * y1,
   observed_potential_outcome = case_when(
     update_frequency == 0 ~ "y0",
     update_frequency == 1 ~ "y1"
   )
 ) |>
   mutate(
-    update_frequency = factor(update_frequency, labels = c("weekly", "daily")),
-    customer_type = factor(customer_type, labels = c("free", "premium"))
+    update_frequency = factor(
+      update_frequency, 
+      labels = c("weekly", "daily")
+    ),
+    customer_type = factor(
+      customer_type, 
+      labels = c("free", "premium")
+    )
   )
 ```
 
 ```{r}
 satisfaction1 |>
-  select(update_frequency, customer_type, satisfaction, observed_potential_outcome)
+  select(
+    update_frequency, customer_type, 
+    satisfaction, observed_potential_outcome
+  )
 ```
 
 Now, let's try to estimate the effect of the `update_frequency` on the `satisfaction` assuming the two exposed groups are exchangeable.
@@ -125,7 +136,10 @@ In this case, there is only one such set: `customer_type`.
 #| warning: false
 satisfaction_strat <- satisfaction1 |>
   group_by(customer_type, update_frequency) |>
-  summarise(avg_satisfaction = mean(satisfaction))
+  summarise(
+    avg_satisfaction = mean(satisfaction), 
+    .groups = "drop"
+  )
 
 satisfaction_strat
 ```
@@ -150,7 +164,8 @@ We can now take the overall average, giving us an effect close to 0.
 
 ```{r}
 satisfaction_strat_est |>
-  # note: we would need to weight this if the confounder groups were not equally sized
+  # note: we would need to weight this if the confounder 
+  # groups were not equally sized
   summarise(estimate = mean(estimate))
 ```
 
@@ -161,16 +176,16 @@ Some customers overlap well with the company's business hours, while some don't;
 
 ```{r}
 #| label: fig-satisfaction-dag2
-#| echo: false
+#| code-fold: true
 #| warning: false
-#| fig-cap: ""
+#| fig-cap: "A causal diagram of the relationship between frequency of software updates and customer satisfaction. Frequency of updates does not cause customer satisfaction, and the relationship is confounded by their mutual causes, customer type and business hours. The effect of business hours on customer satisfaction is entirely mediated by availability of customer service."
 dag2 <- dagify(
   satisfaction ~ customer_service + customer_type,
   customer_service ~ business_hours,
   updates ~ customer_type + business_hours,
   coords = time_ordered_coords(),
   labels = c(
-    customer_type = "customer type",
+    customer_type = "customer\ntype",
     business_hours = "business\nhours",
     updates = "frequency\nof updates",
     customer_service = "customer\nservice",
@@ -179,7 +194,11 @@ dag2 <- dagify(
 )
 
 ggdag(dag2, use_text = FALSE) +
-  geom_dag_text(ggplot2::aes(label = label), nudge_y = c(-.004, .004, -.004, -.004, -.004), color = "black") +
+  geom_dag_text(
+    aes(label = label), 
+    nudge_y = c(-.35, -.35, .35, .35, .35), 
+    color = "black"
+  ) +
   theme_dag()
 ```
 
@@ -200,14 +219,29 @@ satisfaction2 <- tibble(
   # Weekly (0) vs Daily (1)
   update_frequency = rbinom(n, 1, p_exposure),
   # More likely during business hours
-  customer_service = rbinom(n, 1, prob = business_hours * 0.9 + (1 - business_hours) * 0.2),
-  satisfaction = 70 + 10 * customer_type + 15 * customer_service + rnorm(n),
+  customer_service_prob = business_hours * 0.9 + 
+    (1 - business_hours) * 0.2,
+  customer_service = rbinom(n, 1, prob = customer_service_prob),
+  satisfaction = 70 + 10 * customer_type +
+    15 * customer_service + rnorm(n),
 ) |>
   mutate(
-    customer_type = factor(customer_type, labels = c("free", "premium")),
-    business_hours = factor(business_hours, labels = c("no", "yes")),
-    update_frequency = factor(update_frequency, labels = c("weekly", "daily")),
-    customer_service = factor(customer_service, labels = c("no", "yes"))
+    customer_type = factor(
+      customer_type, 
+      labels = c("free", "premium")
+    ),
+    business_hours = factor(
+      business_hours, 
+      labels = c("no", "yes")
+    ),
+    update_frequency = factor(
+      update_frequency, 
+      labels = c("weekly", "daily")
+    ),
+    customer_service = factor(
+      customer_service, 
+      labels = c("no", "yes")
+    )
   )
 ```
 
@@ -222,7 +256,10 @@ Within combinations of `customer_type` and `business_hours`, the update frequenc
 #| warning: false
 satisfaction2_strat <- satisfaction2 |>
   group_by(customer_type, business_hours, update_frequency) |>
-  summarise(avg_satisfaction = mean(satisfaction))
+  summarise(
+    avg_satisfaction = mean(satisfaction),
+    .groups = "drop"
+  )
 
 satisfaction2_strat
 ```
@@ -231,7 +268,6 @@ With a little more wrangling than before, we can calculate the overall estimate.
 
 ```{r}
 satisfaction2_strat |>
-  ungroup() |>
   pivot_wider(
     names_from = update_frequency,
     values_from = avg_satisfaction
@@ -247,8 +283,10 @@ The answers are slightly different because of chance differences between the var
 #| warning: false
 satisfaction2 |>
   group_by(customer_type, customer_service, update_frequency) |>
-  summarise(avg_satisfaction = mean(satisfaction)) |>
-  ungroup() |>
+  summarise(
+    avg_satisfaction = mean(satisfaction),
+    .groups = "drop"
+  ) |>
   pivot_wider(
     names_from = update_frequency,
     values_from = avg_satisfaction
@@ -263,9 +301,9 @@ Let's say that instead of the binary confounders, we have one continuous confoun
 
 ```{r}
 #| label: fig-satisfaction-dag3
-#| echo: false
+#| code-fold: true
 #| warning: false
-#| fig-cap: ""
+#| fig-cap: "A causal diagram of the relationship between frequency of software updates and customer satisfaction. Frequency of updates does not cause customer satisfaction, and the relationship is confounded by their mutual cause, number of users per customer."
 
 coords3 <- list(
   x = c(num_users = 1, updates = 2, satisfaction = 3),
@@ -284,9 +322,10 @@ dag3 <- dagify(
 )
 
 ggdag(dag3, use_text = FALSE, use_edges = FALSE) +
-  geom_dag_text(ggplot2::aes(label = label), nudge_y = c(-.004, -.004, -.004), color = "black") +
-  geom_dag_edges_arc(curvature = c(0.01, 0)) +
-  theme_dag()
+  geom_dag_text(aes(label = label), nudge_y = c(-.05, -.05, -.05), color = "black") +
+  geom_dag_edges_arc(curvature = c(0.07, 0)) +
+  theme_dag() +
+  ylim(c(.2, -.2))
 ```
 
 Organizations with more users get more updates, and they also have slightly lower satisfaction scores.
@@ -301,7 +340,10 @@ satisfaction3 <- tibble(
   satisfaction = 70 + -0.2 * num_users
 ) |>
   mutate(
-    update_frequency = factor(update_frequency, labels = c("weekly", "daily"))
+    update_frequency = factor(
+      update_frequency, 
+      labels = c("weekly", "daily")
+    )
   )
 ```
 
@@ -313,7 +355,10 @@ If we want to still use `group_by` and `summarize()`, we could bin the continuou
 satisfaction3_strat <- satisfaction3 |>
   mutate(num_users_q = ntile(num_users, 5)) |>
   group_by(num_users_q, update_frequency) |>
-  summarise(avg_satisfaction = mean(satisfaction))
+  summarise(
+    avg_satisfaction = mean(satisfaction),
+    .groups = "drop"
+  )
 
 satisfaction3_strat
 ```
@@ -353,12 +398,10 @@ Let's use `lm()` to calculate the effect in our example with two binary confound
 
 ```{r}
 library(broom)
-library(gt)
 lm(satisfaction ~ update_frequency + customer_type + business_hours, data = satisfaction2) |>
   tidy(conf.int = TRUE) |>
   filter(term == "update_frequencydaily") |>
-  gt() |>
-  fmt_number(-term)
+  select(estimate, starts_with("conf"))
 ```
 
 It also works well for continuous confounders.
@@ -368,8 +411,7 @@ We no longer need to bin it to get the correct answer:
 lm(satisfaction ~ update_frequency + num_users, data = satisfaction3) |>
   tidy(conf.int = TRUE) |>
   filter(term == "update_frequencydaily") |>
-  gt() |>
-  fmt_number(-term)
+  select(estimate, starts_with("conf"))
 ```
 
 This generalization doesn't come for free, though: we've now introduced a parametric statistical model to make estimates across the regions of our data that are sparse.
@@ -393,7 +435,7 @@ In fact, you could say that when there is a linear relationship between the outc
 So, why don't we always outcome models to calculate causal effects?
 First, we may be more confident in modeling the exposure instead of the outcome (as we do in, for instance, inverse probability models).
 We'll explore this idea more in @sec-g-comp and @sec-dr.
-Relatedly, when we have a binary outcome, it may make sense to choose one other the other based on number of events, e.g., it can be more statistically efficient to use a propensity score method if the outcome is rare but the exposure is not.
+Relatedly, when we have a binary outcome, it may make sense to choose one over other based on number of events, e.g., it can be more statistically efficient to use a propensity score method if the outcome is rare but the exposure is not.
 Second, it can be sometimes challenging to to get the estimate we are targeting with outcome models---an answer to a precise question---something we will probe more deeply in @sec-estimands.
 
 Relatedly, outcome models give us *conditional* coefficients.
@@ -444,10 +486,10 @@ As we've seen, it's possible to do causal inference with simple methods like str
 For the rest of the book, however, we will focus on other causal methods, which allow us more flexibility to answer the questions we want to answer.
 
 -   *Unconfoundedness methods*
-    -   **Inverse probability weighting** (propensity score weighting):
-    -   **Matching** (propensity score matching and other methods):
-    -   **G-computation** (also called standardization or marginal effects):
-    -   **Doubly-robust methods**: TMLE and augmented propensity scores. ML
+    -   **Inverse probability weighting** (propensity score weighting): Using a propensity score (predicted probability of treatment), we reweight units to create a psuedo-population where exchangeability holds. Extends to time-varying treatments.
+    -   **Matching** (propensity score matching and other methods): Find treated and untreated units with similar propensity scores (or other measures of similarity) to match, creating a subpopulation where exchangeability holds.
+    -   **G-computation** (also called standardization or marginal effects): Fit an outcome model but marginalize to get a marginal effect estimate. Extends to time-varying treatments.
+    -   **Doubly-robust methods**: Fit models for both the outcome and treatment. Using doubly-robust methods, only one of these models needs to be correct for the estimate to be correct. Doubly-robust methods also allow us to use machine learning algorithms. We'll discuss **targeted learning (TMLE)** and **augmented propensity scores**.
 
 While more of the book focuses on unconfoundedness methods, we later cover methods that make other assumptions (@sec-iv-friends and @sec-did).
 Here's a brief summary of when we might want to explore these methods instead of trying to achieve exchangeability:
@@ -480,7 +522,7 @@ It has been shown mathematically that using propensity scores like this to adjus
 #| code-fold: true
 #| message: false
 #| warning: false
-#| fig-cap: Three ways to estimate a causal effect in a non-randomized setting
+#| fig-cap: "Three ways to estimate a causal effect in a randomized setting. The first effect is unadjusted. The second is an adjusted linear model (direct adjustment). The third is a inverse-probability weighted linear model. All three models give us an unbiased answer, but the two adjustment approaches give us more precise answers. Their standard errors are smaller and thus their confidence intervals are narrower."
 
 satisfaction_randomized <- tibble(
   # Free (0) or Premium (1)
@@ -490,28 +532,55 @@ satisfaction_randomized <- tibble(
   # Weekly (0) vs Daily (1), now random
   update_frequency = rbinom(n, 1, 0.5),
   # More likely during business hours
-  customer_service = rbinom(n, 1, prob = business_hours * 0.9 + (1 - business_hours) * 0.2),
-  satisfaction = 70 + 10 * customer_type + 15 * customer_service + rnorm(n),
+  customer_service_prob = business_hours *
+    0.9 + (1 - business_hours) * 0.2,
+  customer_service = rbinom(n, 1, prob = customer_service_prob),
+  satisfaction = 70 + 10 * customer_type + 
+    15 * customer_service + rnorm(n),
 ) |>
   mutate(
-    customer_type = factor(customer_type, labels = c("free", "premium")),
-    business_hours = factor(business_hours, labels = c("no", "yes")),
-    update_frequency = factor(update_frequency, labels = c("weekly", "daily")),
-    customer_service = factor(customer_service, labels = c("no", "yes"))
+    customer_type = factor(
+      customer_type, 
+      labels = c("free", "premium")
+    ),
+    business_hours = factor(
+      business_hours, 
+      labels = c("no", "yes")
+    ),
+    update_frequency = factor(
+      update_frequency, 
+      labels = c("weekly", "daily")
+    ),
+    customer_service = factor(
+      customer_service, 
+      labels = c("no", "yes")
+    )
   )
 
 plot_estimates <- function(d) {
   unadj_model <- lm(satisfaction ~ update_frequency, data = d) |>
-    broom::tidy(conf.int = TRUE) |>
-    dplyr::mutate(term = ifelse(term == "update_frequencydaily", "update_frequency", term)) |>
-    dplyr::filter(term == "update_frequency") |>
-    dplyr::mutate(model = "unadjusted")
+    tidy(conf.int = TRUE) |>
+    mutate(term = ifelse(
+      term == "update_frequencydaily",
+      "update_frequency", 
+      term
+    )) |>
+    filter(term == "update_frequency") |>
+    mutate(model = "unadjusted")
 
-  adj_model <- lm(satisfaction ~ update_frequency + business_hours + customer_type, data = d) |>
-    broom::tidy(conf.int = TRUE) |>
-    dplyr::mutate(term = ifelse(term == "update_frequencydaily", "update_frequency", term)) |>
-    dplyr::filter(term == "update_frequency") |>
-    dplyr::mutate(model = "direct\nadjustment")
+  adj_model <- lm(
+    satisfaction ~ update_frequency + business_hours +
+      customer_type, 
+    data = d
+  ) |>
+    tidy(conf.int = TRUE) |>
+    mutate(term = ifelse(
+      term == "update_frequencydaily",
+      "update_frequency", 
+      term
+    )) |>
+    filter(term == "update_frequency") |>
+    mutate(model = "direct\nadjustment")
 
   df <- d |>
     mutate(across(where(is.factor), as.integer)) |>
@@ -533,28 +602,37 @@ plot_estimates <- function(d) {
     conf.high = x$est.wt + 1.96 * x$std.wt,
     statistic = NA,
     p.value = NA,
-    model = "inverse\nprobability weighting"
+    model = "inverse\nprobability\nweighting"
   )
 
-  models <- dplyr::bind_rows(unadj_model, adj_model, psw_model) |>
-    dplyr::mutate(model = factor(model, levels = c(
+  models <- bind_rows(unadj_model, adj_model, psw_model) |>
+    mutate(model = factor(model, levels = c(
       "unadjusted",
       "direct\nadjustment",
-      "inverse\nprobability weighting"
+      "inverse\nprobability\nweighting"
     )))
 
   models |>
-    dplyr::select(model, estimate, std.error, starts_with("conf")) |>
-    tidyr::pivot_longer(c(estimate, std.error), names_to = "statistic") |>
-    dplyr::mutate(
+    select(model, estimate, std.error, starts_with("conf")) |>
+    pivot_longer(
+      c(estimate, std.error),
+      names_to = "statistic"
+    ) |>
+    mutate(
       conf.low = ifelse(statistic == "std.error", NA, conf.low),
       conf.high = ifelse(statistic == "std.error", NA, conf.high),
-      statistic = case_match(statistic, "estimate" ~ "estimate (95% CI)", "std.error" ~ "standard error")
+      statistic = case_match(
+        statistic, "estimate" ~ "estimate (95% CI)",
+        "std.error" ~ "standard error"
+      )
     ) |>
-    ggplot2::ggplot(ggplot2::aes(value, forcats::fct_rev(model))) +
-    ggplot2::geom_point() +
-    ggplot2::geom_errorbarh(aes(xmin = conf.low, xmax = conf.high), height = 0) +
-    ggplot2::facet_wrap(~statistic, scales = "free_x") +
+    ggplot(aes(value, fct_rev(model))) +
+    geom_point() +
+    geom_errorbarh(
+      aes(xmin = conf.low, xmax = conf.high),
+      height = 0
+    ) +
+    facet_wrap(~ statistic, scales = "free_x") +
     theme(axis.title.y = element_blank())
 }
 
@@ -573,5 +651,4 @@ We'll explore how these methods can help us address non-adherence and loss-to-fo
 
 Now, let's turn our attention to an example with real data.
 We're going to start with propensity score methods like matching and inverse-probability weighting because they have a particular property: they allow us to model the relationship between the exposure and confounders without peaking at the relationship between the exposure and the outcome.
-This is sometimes called *the design phase* because it is philosophically similar to designing a randomized trial, closely related to the idea of emulating a target trial.
 Let's continue our journey to answering causal questions.
