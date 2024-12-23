@@ -24,7 +24,7 @@ Meanwhile, Spike was caught in a jewelry robbery and imprisoned for three years.
 He continued his life of crime, culminating in a botched robbery that led to a 35-year to life prison sentence.
 The book's copy describes how "two men with two very different lives reveal how their paths might have very well been reversed if they had made different choices."
 
-This compelling premise implies that we are observing *counterfactuals*: two lives that follow the same trajectory until one decision (one more heist vs. pursuing a music career) diverges them: in one life, jail, and in another, success and fame.
+This compelling premise implies that we are observing **counterfactuals**: two lives that follow the same trajectory until one decision (one more heist vs. pursuing a music career) diverges them: in one life, jail, and in another, success and fame.
 The book begins by setting up all the ways Ice-T and his friend Spike were similar before this divergence (e.g., they both grew up in Los Angeles neighborhoods, were involved with gangs, and worked together to orchestrate a series of jewelry heists).
 Then something happens: Ice-T abandons criminal life, and Spike makes the opposite decision.
 What happens next for Ice-T includes fame and fortune, while Spike ends up with 35 years to life in prison.
@@ -65,7 +65,7 @@ If Spike had quit heists, would he have had fame and fortune?
 We don't know what would have happened to Ice-T had he continued partnering with Spike on heists.
 We also don't know what would have happened to Spike if he had avoided crime like Ice-T.
 We live in a single factual world where Ice-T left crime, and Spike didn't.
-Yet, we can see how the two men can be each other's proxies for those *counterfactual* outcomes.
+Yet, we can see how the two men can be each other's proxies for those counterfactual outcomes.
 In causal inference techniques, we attempt to use observed data to simulate counterfactuals in much the same way.
 Even randomized trials are limited to a single factual world, so we compare the average effects of groups with different exposures.
 
@@ -98,22 +98,22 @@ Let's assume an exposure has two levels:
 
 Under this scenario, there are two potential outcomes:
 
--   $Y(continue)$ the potential outcome if continue
+-   $Y(continue)$, the potential outcome if $X=continue$
 
--   $Y(quit)$ the potential outcome if quit
+-   $Y(quit)$, the potential outcome if $X=quit$
 
 Only *one* of these potential outcomes will be realized, the factual one corresponding to the exposure that actually occurred.
 Therefore, only one potential outcome is observable for each individual.
 These exposures are defined at a particular time (in this case, a specific moment in the 1980s, right around the time Ice-T was discovered), so only one can happen to any individual.
-In the case of a binary exposure, this leaves one potential outcome as *observable* and one *missing.* In fact, early causal inference methods were often framed as missing data problems; we need to make certain assumptions about the *missing counterfactuals*, the value of the potential outcome corresponding to the exposure(s) that did not occur.
+In the case of a binary exposure, this leaves one potential outcome as *observable* and one *missing.* In fact, early causal inference methods were often framed as missing data problems; we need to make certain assumptions about the missing counterfactuals, the value of the potential outcome corresponding to the exposure(s) that did not occur.
 
-Our causal effect of interest is often some difference in potential outcomes $Y(continue) - Y(quit)$ (say, probability of going to jail the following year).
+Our causal effect of interest is often some difference in potential outcomes, such as $Y(continue) - Y(quit)$ (say, probability of going to jail the following year).
 In the case of Ice-T and Spike, we're interested in their individual causal effects:
 
 -   $Y_{Ice-T}(continue) - Y_{Ice-T}(quit)$
 -   $Y_{Spike}(continue) - Y_{Ice-T}(quit)$
 
-Here, we're missing $Y_{Ice-T}(continue)$ and $Y_{Spike}(quit)$), so we can't calculate these values.
+Here, we're missing $Y_{Ice-T}(continue)$ and $Y_{Spike}(quit)$, so we can't calculate these values.
 In practice, we need to use observed data as proxies for the missing potential outcomes, and we usually average them over a particular population.
 To do this, though, we can't just throw some statistics at a pile of observed data; we need to meet certain *causal assumptions* that allow us to imbue observed data with the meaning of potential outcomes and their analysis with causal effects.
 
@@ -135,31 +135,11 @@ Let's consider a different example: the effect of ice cream on happiness.
 Let's suppose some happiness index exists that ranges from 1-10.
 We want to assess whether eating chocolate ice cream versus vanilla will increase happiness.
 We have 10 individuals with two potential outcomes for each.
-One is their happiness if they ate chocolate ice cream (defined as `y_chocolate` in the code below), and one is their happiness if they ate vanilla ice cream (defined as `y_vanilla` in the code below).
+One is their happiness if they ate chocolate ice cream (defined as `y_chocolate` in the code below), and one is their happiness if they ate vanilla ice cream (`y_vanilla`).
 We can define the true individual causal effect of eating chocolate ice cream (versus vanilla) on happiness for each individual as the difference between the two (@tbl-po).
 
 ```{r}
-#| label: sim-generation
-#| echo: false
-#| eval: false
-set.seed(1)
-n <- 10
-sim <- tibble(
-  id = 1:n,
-  favor_chocolate = rbinom(n, 1, 0.7),
-  y_chocolate = round(runif(n, 3, 7), 0),
-  y_vanilla = case_when(
-    favor_chocolate == 1 ~ y_chocolate - rbinom(n, 3, 0.5),
-    TRUE ~ y_chocolate + rbinom(n, 2, 0.5)
-  ),
-  y_cookiesandcreme = round(runif(n, 1, 5), 0),
-  diff = y_chocolate - y_vanilla
-)
-```
-
-```{r}
-#| results: hide
-data <- data.frame(
+data <- tibble(
   id = 1:10,
   y_chocolate = c(4, 4, 6, 5, 6, 5, 6, 7, 5, 6),
   y_vanilla = c(1, 3, 4, 5, 5, 6, 8, 6, 3, 5)
@@ -167,8 +147,6 @@ data <- data.frame(
 
 data <- data |>
   mutate(causal_effect = y_chocolate - y_vanilla)
-
-data
 ```
 
 ```{r}
@@ -200,10 +178,10 @@ data |>
   )
 ```
 
-For example, examining @tbl-po, the causal effect of eating chocolate ice cream (versus vanilla) for individual `4` is `r data |> filter(id == 4) |> pull(causal_effect)`, whereas the causal effect for individual `9` is `r data |> filter(id == 9) |> pull(causal_effect)`.
+For example, examining @tbl-po, the causal effect of eating chocolate ice cream (versus vanilla) for individual 4 is `r data |> filter(id == 4) |> pull(causal_effect)`, whereas the causal effect for individual 9 is `r data |> filter(id == 9) |> pull(causal_effect)`.
 
-The *average* potential happiness after eating chocolate is `r mean(data |> pull(y_chocolate))`, and the *average* potential happiness after eating vanilla is `r mean(data |> pull(y_vanilla))`.
-The *average* treatment effect of eating chocolate (versus vanilla) ice cream among the ten individuals in this study is `r mean(data |> pull(causal_effect))`.
+The average potential happiness after eating chocolate is `r mean(data |> pull(y_chocolate))`, and the average potential happiness after eating vanilla is `r mean(data |> pull(y_vanilla))`.
+The average treatment effect of eating chocolate (versus vanilla) ice cream among the ten individuals in this study is `r mean(data |> pull(y_chocolate))` - `r mean(data |> pull(y_vanilla))` = `r mean(data |> pull(causal_effect))`.
 
 ```{r}
 data |>
@@ -239,8 +217,7 @@ data_observed <- data |>
       exposure == "chocolate" ~ y_chocolate,
       exposure == "vanilla" ~ y_vanilla
     )
-  ) |>
-  select(id, exposure, observed_outcome, starts_with("y"))
+  )
 ```
 
 ```{r}
@@ -263,7 +240,7 @@ data_observed |>
     y_vanilla = ifelse(exposure == "vanilla", y_vanilla, NA),
     causal_effect = NA_real_
   ) |>
-  select(-observed_outcome) |>
+  select(-observed_outcome, -exposure) |>
   gt() |>
   cols_label(
     id = "ID",
@@ -339,7 +316,7 @@ Knowing a method's assumptions is essential for using it correctly, but it's als
 [^03-po-counterfactuals-2]: These *causal* assumptions are in addition to any *statistical* assumptions, such as distributional assumptions, that the estimators we use require.
 
 ::: callout-note
-These assumptions are sometimes called *identifiability conditions* since we need them to hold to identify causal estimates.
+These assumptions are sometimes called **identifiability conditions** since we need them to hold to identify causal estimates.
 Likewise, you'll sometimes see people discussing whether or not a given causal effect is "identifiable."
 :::
 
@@ -445,10 +422,6 @@ data_observed_exch <- data |>
       exposure == "chocolate" ~ y_chocolate,
       exposure == "vanilla" ~ y_vanilla
     )
-  ) |>
-  select(
-    id, prefer_chocolate, exposure,
-    observed_outcome, starts_with("y")
   )
 ```
 
@@ -500,7 +473,7 @@ data_observed_exch |>
 What can we do when exchangeability is violated?
 Throughout the book, we'll devote a lot of time to this problem.
 The heart of the solution, though, is that we can sometimes still achieve exchangeability within levels of another variable.
-This is called *conditional* exchangeability: $Y(x) \perp\!\!\!\perp X \mid Z$ In this case, we need exchangeability within levels of `prefer_chocolate`.
+This is called **conditional exchangeability**: $Y(x) \perp\!\!\!\perp X \mid Z$. In this case, we need exchangeability within levels of `prefer_chocolate`.
 
 ```{r}
 #| label: fig-po-cond-exch
@@ -541,7 +514,7 @@ We'd achieve better exchangeability as our sample size increases, but this quick
 ### Positivity
 
 The positivity assumption states that every individual has a non-zero probability of receiving each level of exposure.
-Mathematically, this means that $P(X = x) > 0 \quad \text{for all } x$ In other words, we assume that there is no one for whom one or more levels of exposure are impossible.
+Mathematically, this means that $P(X = x) > 0$ for all $x$. In other words, we assume that there is no one for whom one or more levels of exposure are impossible.
 We need this assumption because it defines the potential outcome for a given exposure level.
 If someone is never, under any circumstances, exposed to chocolate, then the potential outcome for `y(chocolate)` isn't defined for that person.
 We can't use them to provide information about this potential outcome.
@@ -550,7 +523,7 @@ In the ice cream example, everyone had the same probabilities: 50% to receive ch
 These possibilities define both potential outcomes for both groups.
 
 ::: callout-note
-Sometimes, positivity is referred to as the **probabilistic** assumption.
+Sometimes, positivity is referred to as the **probabilistic assumption**.
 :::
 
 Positivity violations come in two forms: stochastic and structural.
@@ -558,7 +531,7 @@ Stochastic violations are chance occurrences where you don't have any observatio
 In the example where 80% of participants chose the ice cream that would make them happiest, it's feasible that, given our low sample size, we might end up with people who only choose chocolate.
 Naturally, we can only calculate the effect of vanilla vs. chocolate if we have observations of vanilla.
 
-A nuance of positivity is that it needs to hold within levels of all covariates required for exchangeability: $P(X = x \mid Z = z) > 0 \quad \text{for all } x \text{ and } z$ Even if the flavors vary, we also need variability within levels of `prefer_chocolate`.
+A nuance of positivity is that it needs to hold within levels of all covariates required for exchangeability: $P(X = x \mid Z = z) > 0$ for all $x$ and $z$. Even if the flavors vary, we also need variability within levels of `prefer_chocolate`.
 That can also fail by chance.
 
 ```{r}
@@ -669,7 +642,6 @@ data_observed_struc |>
     size = 2,
     width = 0,
     height = .2,
-    alpha = .8,
     shape = 21
   ) +
   stat_summary(
@@ -682,7 +654,9 @@ data_observed_struc |>
   ) +
   stat_summary(fun = "mean", size = 2, geom = "point") +
   facet_wrap(~potential_outcome) +
-  labs(y = "Actual Exposure", color = NULL, fill = NULL)
+  labs(y = "Actual Exposure", color = NULL, fill = NULL) +
+  ggokabeito::scale_color_okabe_ito(order = 7) +
+  ggokabeito::scale_fill_okabe_ito(order = 7)
 ```
 
 There are a few things we can do to improve positivity problems.
@@ -703,15 +677,15 @@ Mathematically, this means that $Y_{obs} = (X)Y(1) + (1 - X)Y(0)$.
 In plain language, the consistency assumption says that the potential outcome of a given treatment value is equal to the value we actually observe when someone is assigned that treatment value.
 It seems almost silly when you say it.
 What else would it be?
-If you think this issue through, though, you'll see that many times, this assumption is violated nearly infinitely for any given exposure.
+If you think this issue through, though, you'll see that this assumption is violated nearly infinitely for any given exposure.
 Let's consider two common cases:
 
--   **Poorly-defined exposure**: For each exposure value, there is a difference between subjects when delivering that exposure. Put another way, multiple treatment versions exist; we assume a *well-defined exposure*.
--   **Interference**: The outcome (technically all potential outcomes, regardless of whether they are observed) for any subject depends on another subject's exposure; we assume *no interference*.
+-   **Poorly-defined exposure**: For each exposure value, there is a difference between subjects when delivering that exposure. Put another way, multiple treatment versions exist. Instead, we need a *well-defined exposure*.
+-   **Interference**: The outcome (technically all potential outcomes, regardless of whether they are observed) for any subject depends on another subject's exposure; Instead, we need *no interference*.
 
 ::: callout-tip
-Consistency is sometimes called the *stable-unit-treatment-value assumption* or **SUTVA** [@imbens2015causal].
-However, it is a distinct idea from *statistical* consistency, which is a property where an estimator moves closer to the truth as the sample size increases
+Consistency is sometimes called the  **stable-unit-treatment-value assumption** or **SUTVA** [@imbens2015causal].
+However, causal consistency is a distinct idea from *statistical* consistency, which is a property where an estimator moves closer to the truth as the sample size increases.
 :::
 
 #### Poorly-defined exposures
@@ -721,10 +695,10 @@ They occur in everything from surgeries (say if one doctor is more experienced w
 
 Suppose there were two containers of chocolate ice cream, one of which was spoiled.
 Exposure to "chocolate" could mean different things depending on where the individual's scoop came from (regular chocolate ice cream or spoiled chocolate ice cream); we are lumping them all together under a single term.
-Of course, Eating spoiled ice cream makes you miserable, regardless of how you feel about chocolate ice cream in general.
+Eating spoiled ice cream makes you miserable, regardless of how you feel about chocolate ice cream in general, so it is not the same potential outcome.
 
 ```{r}
-data <- data.frame(
+data <- tibble(
   id = 1:10,
   y_spoiled_chocolate = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
   y_chocolate = c(4, 4, 6, 5, 6, 5, 6, 7, 5, 6),
@@ -751,10 +725,6 @@ data_observed_poorly_defined <- data |>
       c("chocolate (spoiled)", "chocolate") ~ "chocolate",
       "vanilla" ~ "vanilla"
     )
-  ) |>
-  select(
-    id, exposure, observed_outcome,
-    exposure_unobserved, starts_with("y")
   )
 ```
 
@@ -768,8 +738,8 @@ data_observed_poorly_defined |>
 
 The potential outcome we think we are estimating is not the one we are observing.
 We're treating fresh chocolate ice cream and spoiled chocolate ice cream as the same exposure, but they have different effects on the potential outcomes.
-Because the exposure is random, we actually do a pretty good job of estimating the effect of `y(chocolate | spoiled_chocolate)`, but that's not what we're interested in.
-We want `y(chocolate, spoiled = FALSE)`.
+Because the exposure is random, we actually do a pretty good job of estimating the effect of `y(chocolate, spoiled = FALSE) | y(chocolate, spoiled = TRUE)`, but that's not what we're interested in.
+We just want `y(chocolate, spoiled = FALSE)`.
 
 ```{r}
 #| label: "fig-po-cons"
@@ -787,7 +757,7 @@ data_observed_poorly_defined |>
   ) |>
   mutate(
     potential_outcome = case_when(
-      potential_outcome == "spoiledchocolate" ~ "chocolate",
+      potential_outcome == "spoiled_chocolate" ~ "chocolate",
       TRUE ~ potential_outcome
     ),
     potential_outcome = paste0("y(", potential_outcome, ")")
@@ -838,7 +808,7 @@ If they differ, by how much?
 
 One way to address consistency violations, in addition to being more specific, is to investigate potential deviations within treatment levels.
 Let's say we tested the ice cream containers after the experiment and had data on the spoiled status of the ice cream in the data.
-Now, we can group it by its actual exposure.
+Now, we can group it by the actual exposure.
 
 ```{r}
 data_observed_poorly_defined |>
@@ -884,7 +854,7 @@ Let's say each individual in our ice cream study has a partner, and their potent
 In the simulation below, having a partner who receives a *different* flavor of ice cream increases their happiness by two units.
 
 ```{r}
-data <- data.frame(
+data <- tibble(
   id = 1:10,
   partner_id = c(1, 1, 2, 2, 3, 3, 4, 4, 5, 5),
   y_chocolate_chocolate = c(4, 4, 6, 5, 6, 5, 6, 7, 5, 6),
@@ -929,9 +899,9 @@ data_observed_interf |>
   summarise(avg_outcome = mean(observed_outcome))
 ```
 
-As before, the problem is that we're estimating the wrong potential outcome (@fig-const-interf).
+Similarly, the problem is that we're estimating the wrong potential outcome (@fig-const-interf).
 Interference and poorly defined exposures are different manifestations of the same assumption violation.
-The potential outcomes we are estimating are not consistent with the causal question.
+The potential outcomes we are estimating are not consistent with the causal question we're asking.
 
 ```{r}
 #| label: "fig-const-interf"
@@ -1006,7 +976,7 @@ data_observed_interf |>
 
 One of the main ways to combat interference is to change the *unit* under consideration.
 Here, each individual, each unique ID, is considered a unit, and there is interference between units (i.e., partners).
-Suppose we consider each *partner* as a unit and randomize the partners rather than the individuals.
+Suppose we consider each *partnership* as a unit and randomize the partnerships rather than the individuals.
 In that case, we solve the interference issue, as there is no interference between different partner sets.
 This type of randomization is sometimes referred to as a cluster randomized trial.
 What we decide to do within each cluster may depend on the causal question at hand.
@@ -1015,8 +985,8 @@ For example, if we want to know what would happen if both people ate chocolate i
 ```{r}
 set.seed(11)
 
-## we are now randomizing the *partners* not the individuals
-partners <- data.frame(
+## we are now randomizing the *partnerships* not the individuals
+partners <- tibble(
   partner_id = 1:5,
   exposure = case_when(
     rbinom(5, 1, 0.5) == 1 ~ "chocolate",
@@ -1026,7 +996,7 @@ partners <- data.frame(
 partners_observed <- data |>
   left_join(partners, by = "partner_id") |>
   mutate(
-    # all partners have the same exposure
+    # all partnerships have the same exposure
     exposure_partner = exposure,
     observed_outcome = case_when(
       exposure == "chocolate" & exposure_partner == "chocolate" ~
@@ -1034,8 +1004,7 @@ partners_observed <- data |>
       exposure == "vanilla" & exposure_partner == "vanilla" ~
         y_vanilla_vanilla
     )
-  ) |>
-  select(id, exposure, observed_outcome)
+  )
 ```
 
 Now, we can detect the correct causal effect.
@@ -1061,14 +1030,14 @@ In @sec-whole-game, we estimated the causal effect of mosquito nets on malaria r
 Let's consider the causal assumptions for this question and how they might have been violated in a real-life analysis.
 
 -   **Exchangeability**: We saw what can happen with this problem when an unmeasured confounder (in this case, genetic resistance to malaria) is present. Thinking about exchangeability is one of the more demanding and more common tasks in causal inference with observational data. We'll discuss this in-depth in @sec-dags, and what to do if we think (or know) we're wrong in @sec-sensitivity. We should also be concerned that we haven't measured the covariates we need well or are missing values (@sec-missingness).
--   \*\* Positivity \*\*: A positivity violation would occur if any household would *always* or *never* use a bed net. A situation like this is feasible in real life. Someone may be allergic to the material, or one type of net may be unapproved in a region. As mentioned, we also need positivity to hold within the levels of the combination confounders in the analysis. Is it possible, for instance, that someone of low economic status in cold weather (when mosquitoes are not very active) and good health would never use a bed net because it wasn't worth the expense?
--   **Consistency**: We already saw an example of the well-defined exposure problem: a "bed net" can mean many things. We decided we were comparing insecticide-treated bed nets compared to no nets, but we may need more. Does the manufacturer matter? The type of insecticide? The amount of insecticide? We need to think about the effect on the potential outcomes each of these variations might have. Interference is a real problem for bed-net research, particularly for insecticidal nets. (spillover, houses-as-units) Notably, we used households as the unit of observation, which would reduce some of the local interference. We could also consider households that are geographically dispersed from one another.
+-   **Positivity**: A positivity violation would occur if any household would *always* or *never* use a bed net. A situation like this is feasible in real life. Someone may be allergic to the material, or one type of net may be unapproved in a region. As mentioned, we also need positivity to hold within the levels of the combination confounders in the analysis. Is it possible, for instance, that someone of low economic status in cold weather (when mosquitoes are not very active) and good health would never use a bed net because it wasn't worth the expense?
+-   **Consistency**: We already saw an example of the well-defined exposure problem: a "bed net" can mean many things. We decided we were comparing insecticide-treated bed nets compared to no nets, but we may need more. Does the manufacturer matter? The type of insecticide? The amount of insecticide? We need to think about the effect on the potential outcomes each of these variations might have. Interference is a real problem for bed-net research, particularly for insecticidal nets. Notably, we used households as the unit of observation, which would reduce some of the local interference. We could also consider households that are geographically dispersed from one another.
 :::
 
 ## When do study designs support causal inference? {#sec-designs}
 
 Exchangeability, positivity, and consistency are simple assumptions, but as we've seen, they can easily be violated.
-When the assumptions for a causal method are not met, we cannot use the observed data to simulate potential outcomes and compare them.
+When the assumptions for a causal method are not met, we cannot use the observed data to simulate counterfactuals and compare them to the observed outcomes.
 However, we can address many of the potential violations through careful study design, whether before collecting data or working with "found" observational data.
 
 ### Randomized trials
@@ -1101,7 +1070,7 @@ Exposures can also be inconsistent in real trials, either by implementation (as 
 For instance, a participant might be assigned to take two pills per day but decide to only take one per day.
 Attempts to prevent interference can also fail, e.g., randomizing on the wrong unit or units interacting with one another unexpectedly.
 
-Non-randomized (observational) studies have none of these guarantees.
+Non-randomized (observational) studies have none of these guarantees, even ideal ones.
 Like a realistic randomized trial, observational studies require careful design and execution to better meet the assumptions necessary for causal inference.
 @tbl-assump-solved summarizes how well ideal randomized trials, realistic randomized trials, and observational studies each meet the exchangeability, positivity, and consistency criteria.
 
