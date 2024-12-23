@@ -766,6 +766,7 @@ If it's `NA`, we'll use the calibrated value.
 library(splines)
 library(touringplans)
 library(broom)
+
 calib_model <- lm(
   wait_minutes_actual_avg ~
     ns(wait_minutes_posted_avg, df = 4) * wait_hour +
@@ -776,7 +777,10 @@ calib_model <- lm(
 )
 
 seven_dwarves_calib <- calib_model |>
-  augment(data = seven_dwarfs_train_2018) |>
+  augment(
+    data = seven_dwarfs_train_2018 |>
+      mutate(wait_minutes_actual_avg = log1p(wait_minutes_actual_avg))
+  ) |>
   rename(wait_minutes_actual_calib = .fitted) |>
   # convert back to the original scale
   # and fill in real values where they exist
