@@ -40,7 +40,7 @@ Let's begin by diagramming this causal question (@fig-seven-diag).
 #| label: fig-seven-diag
 #| warning: false
 
-data <- data.frame(
+data <- tibble(
   labels = c("Extra Magic Hours", "Change average wait time", "Magic Kingdom guests", "before the park opens (2018)", "Magic Kingdom guests", "9am and 10am (2018)"),
   x = c(1, 2, .83, 1.4, 1.88, 2.45),
   y = c(1, 1, 0.77, 0.7, 0.77, 0.7),

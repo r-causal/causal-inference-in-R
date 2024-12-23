@@ -350,7 +350,7 @@ If these results are accurate, it implies that we have some residual confounding
 #| message: false
 coefs <- purrr::map_dbl(1:63, calculate_coef)
 
-ggplot(data.frame(coefs = coefs, x = 1:63), aes(x = x, y = coefs)) +
+ggplot(tibble(coefs = coefs, x = 1:63), aes(x = x, y = coefs)) +
   geom_hline(yintercept = 0) +
   geom_point() +
   geom_smooth(se = FALSE) +
