@@ -57,7 +57,7 @@ Proceeding through the 4 steps outlined above, we begin by revisiting the time o
 
 ```{r}
 #| label: fig-dag-magic-hours-wait-take-2
-#| echo: false
+#| code-fold: true
 #| message: false
 #| warning: false
 #| fig.cap: >
@@ -197,7 +197,7 @@ Recall, our causal question of interest is "Do posted wait times for the Seven D
 
 ```{r}
 #| label: fig-dag-avg-wait-2
-#| echo: false
+#| code-fold: true
 #| message: false
 #| warning: false
 #| fig.cap: >

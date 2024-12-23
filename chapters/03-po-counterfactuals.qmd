@@ -152,7 +152,7 @@ data <- data |>
 ```{r}
 #| label: tbl-po
 #| tbl-cap: "Potential Outcomes Simulation: The causal effect of eating chocolate (versus vanilla) ice cream on happiness. In this simulation, each individual has a known outcome for each exposure. Since we know each potential outcome, we can calculate the individual causal effects on happiness of eating chocolate versus vanilla ice cream."
-#| echo: false
+#| code-fold: true
 library(gt)
 data |>
   gt() |>
@@ -223,7 +223,7 @@ data_observed <- data |>
 ```{r}
 #| label: tbl-obs
 #| tbl-cap: "Potential Outcomes Simulation: The observed exposure is the only potential outcome we know. We don't know the missing potential outcome, and thus, we cannot calculate the individual causal effect. We need to use the observed exposure and outcome to estimate the effect of eating chocolate (versus vanilla) ice cream on happiness. Unfortunately, we can't do it at the individual level."
-#| echo: false
+#| code-fold: true
 avg_chocolate <- data_observed |>
   filter(exposure == "chocolate") |>
   pull(observed_outcome) |>

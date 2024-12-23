@@ -86,7 +86,7 @@ Recall our causal question of interest from @sec-data: **Is there a relationship
 
 ```{r}
 #| label: fig-dag-magic-hours-wait
-#| echo: false
+#| code-fold: true
 #| message: false
 #| warning: false
 #| fig.cap: >

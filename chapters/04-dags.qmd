@@ -81,7 +81,7 @@ Here, we are saying that `x` causes `y`.
 `y` "listens" to `x` [@Pearl_Glymour_Jewell_2021].
 
 ```{r}
-#| echo: false
+#| code-fold: true
 #| message: false
 #| label: fig-dag-basic
 #| fig-width: 3
@@ -100,7 +100,7 @@ A series of arrows is called a *path*.
 There are three types of paths you'll see in DAGs: forks, chains, and colliders (sometimes called inverse forks).
 
 ```{r}
-#| echo: false
+#| code-fold: true
 #| label: fig-dag-path-types
 #| fig-cap: "Three types of causal relationships: forks, chains, and colliders. The direction of the arrows and the relationships of interest dictate which type of path a series of variables is. Forks represent a mutual cause, chains represent direct causes, and colliders represent a mutual descendant."
 coords <- list(x = c(x = 0, y = 2, q = 1), y = c(x = 0, y = 0, q = 1))
@@ -204,7 +204,7 @@ The unadjusted effect is biased because it includes information about the open p
 Within levels of `q`, however, `x` and `y` are unrelated.
 
 ```{r}
-#| echo: false
+#| code-fold: true
 #| label: fig-confounder-scatter
 #| message: false
 #| fig-cap: "Two scatterplots of the relationship between `x` and `y`. With forks, the relationship is biased by `q`. When accounting for `q`, we see the true null relationship."
@@ -256,7 +256,7 @@ This null effect is the direct effect.
 Neither of these effects is due to bias, but each answers a different research question.
 
 ```{r}
-#| echo: false
+#| code-fold: true
 #| label: fig-mediator-scatter
 #| message: false
 #| fig-cap: "Two scatterplots of the relationship between `x` and `y`. With chains, whether and how we should account for `q` depends on the research question. Without doing so, we see the impact of the total effect of `x` and `y`, including the indirect effect via `q`. When accounting for `q`, we see the direct (null) effect of `x` on `y`."
@@ -305,7 +305,7 @@ Of course, that can't happen from a causal perspective, so controlling for `q` i
 We end up with a biased effect of `x` on `y`.
 
 ```{r}
-#| echo: false
+#| code-fold: true
 #| label: fig-collider-scatter
 #| message: false
 #| fig-cap: "Two scatterplots of the relationship between `x` and `y`. The unadjusted relationship between the two is unbiased. When accounting for `q`, we open a colliding backdoor path and bias the relationship between `x` and `y`."
@@ -350,7 +350,7 @@ At time point 2, `q` happens due to `x` and `y`.
 `q` happening later can't change the fact that `x` and `y` happened independently in the past.
 
 ```{r}
-#| echo: false
+#| code-fold: true
 #| label: fig-collider-time
 #| fig-cap: "A collider relationship over two points in time. At time point one, there is no relationship between `x` and `y`. Both cause `q` by time point two, but this does not change what already happened at time point one."
 
@@ -1522,7 +1522,7 @@ The saturated DAG given this ordering is:
 #| label: fig-podcast_dag_sat
 #| fig-width: 5.5
 #| fig-height: 4
-#| echo: false
+#| code-fold: true
 #| fig-cap: "A saturated version of `podcast_dag`: variables have all possible arrows going forward to other variables over time."
 podcast_dag_sat <- dagify(
   podcast ~ mood + humor + prepared,
@@ -1570,7 +1570,7 @@ Let's prune those two.
 
 ```{r}
 #| label: fig-podcast_dag_pruned
-#| echo: false
+#| code-fold: true
 #| fig-width: 5.5
 #| fig-height: 4
 #| fig-cap: "A pruned version of @fig-podcast_dag_sat: we've removed implausible arrows from the fully saturated DAGs."

@@ -52,7 +52,7 @@ Here the exposure is `x`, and the outcome is `y`.
 The true average treatment effect is 1, implying that on average seeing call-to-action A increases the number of items purchased by 1.
 
 ```{r}
-#| echo: false
+#| code-fold: true
 set.seed(928)
 ab <- tibble(
   x = rbinom(100, 1, 0.5),
@@ -963,7 +963,7 @@ In other words, the effect estimate of `exposure` on `outcome` should be the sam
 [^11-estimands-1]: If there were no relationship between `exposure` and `outcome`, the relationship between the two would be null, and that would be collapsible regardless of the presence or absence of `covariate`.
 
 ```{r}
-#| echo: false
+#| code-fold: true
 #| message: false
 #| fig-width: 4
 #| fig-height: 4
