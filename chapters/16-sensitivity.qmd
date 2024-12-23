@@ -164,7 +164,7 @@ fit_ipw_effect <- function(.fmla, .data = seven_dwarfs, .trt = "park_extra_magic
 
   # calculate ATE weights
   .df <- propensity_model |>
-    augment(type.predict = "response", newdata = .data) |>
+    augment(type.predict = "response") |>
     mutate(w_ate = wt_ate(.fitted, !!.trt_var, exposure_type = "binary"))
 
   # fit ipw model

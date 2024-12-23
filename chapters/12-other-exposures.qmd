@@ -105,7 +105,7 @@ lm(
   exposure ~ confounder_1 + confounder_2,
   data = df
 ) |>
-  augment(newdata = df) |>
+  augment() |>
   mutate(
     denominator = dnorm(exposure, .fitted, mean(.sigma, na.rm = TRUE))
   )
@@ -132,7 +132,7 @@ lm(
   exposure ~ 1,
   data = df
 ) |>
-  augment(newdata = df) |>
+  augment() |>
   transmute(
     numerator = dnorm(exposure, .fitted, mean(.sigma, na.rm = TRUE))
   )
@@ -143,7 +143,7 @@ glm(
   data = df,
   family = binomial()
 ) |>
-  augment(type.predict = "response", newdata = df) |>
+  augment(type.predict = "response") |>
   select(numerator = .fitted)
 ```
 
@@ -181,7 +181,7 @@ denominator_model <- lm(
 )
 
 denominators <- denominator_model |>
-  augment(newdata = wait_times) |>
+  augment() |>
   mutate(
     denominator = dnorm(
       wait_minutes_posted_avg,
@@ -216,7 +216,7 @@ numerator_model <- lm(
 )
 
 numerators <- numerator_model |>
-  augment(newdata = wait_times) |>
+  augment() |>
   mutate(
     numerator = dnorm(
       wait_minutes_posted_avg,
