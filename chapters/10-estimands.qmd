@@ -59,7 +59,7 @@ ab <- tibble(
   y = x + rnorm(100)
 )
 ab |>
-  summarise(
+  summarize(
     n_a = sum(x),
     n_b = sum(1 - x),
     estimate = sum(
@@ -79,7 +79,7 @@ Using a formula approach, we calculate the difference in `y` between exposure va
 
 ```{r}
 ab |>
-  summarise(
+  summarize(
     n_a = sum(x),
     n_b = sum(1 - x),
     estimate = sum(
@@ -94,13 +94,13 @@ Alternatively, we can `group_by()` `x` and `summarize()` the means of `y` for ea
 ```{r}
 ab |>
   group_by(x) |>
-  summarise(avg_y = mean(y)) |>
+  summarize(avg_y = mean(y)) |>
   pivot_wider(
     names_from = x,
     values_from = avg_y,
     names_prefix = "x_"
   ) |>
-  summarise(estimate = x_1 - x_0)
+  summarize(estimate = x_1 - x_0)
 ```
 
 Because $X$, the exposure, was randomly assigned, this estimator results in an unbiased estimate of our estimand of interest.
@@ -121,7 +121,7 @@ ab <- tibble(
 )
 
 ab |>
-  summarise(
+  summarize(
     n_a = sum(x),
     n_b = sum(1 - x),
     estimate = sum(
@@ -335,7 +335,7 @@ finite_sample_sims <- map_df(
 
 bias <- finite_sample_sims %>%
   group_by(n) %>%
-  summarise(bias = mean(bias))
+  summarize(bias = mean(bias))
 ```
 
 Let's plot our results:
@@ -742,7 +742,7 @@ finite_sample_sims <- map_df(
 
 bias <- finite_sample_sims %>%
   group_by(n, weight) %>%
-  summarise(bias = mean(bias))
+  summarize(bias = mean(bias))
 ```
 
 Let's plot our results:

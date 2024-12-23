@@ -190,7 +190,7 @@ seven_dwarfs_train_2018 <- seven_dwarfs_train |>
   filter(year(park_date) == 2018) |> # eligibility criteria
   mutate(hour = hour(wait_datetime)) |> # get hour from wait
   group_by(park_date, hour) |> # group by date
-  summarise(
+  summarize(
     wait_minutes_posted_avg = mean(wait_minutes_posted, na.rm = TRUE),
     .groups = "drop"
   ) |> # get average wait time
@@ -375,7 +375,7 @@ seven_dwarfs_train_2018 |>
   )) |>
   group_by(park_close_bin, park_temperature_high_bin, park_ticket_season) |>
   ## calculate the proportion exposed in each bin
-  summarise(prop_exposed = mean(park_extra_magic_morning), .groups = "drop") |>
+  summarize(prop_exposed = mean(park_extra_magic_morning), .groups = "drop") |>
   ggplot(aes(x = park_close_bin, y = park_temperature_high_bin, fill = prop_exposed)) +
   geom_tile() +
   scale_fill_gradient2(midpoint = 0.5) +
