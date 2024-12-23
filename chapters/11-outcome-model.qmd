@@ -58,7 +58,7 @@ seven_dwarfs_9_with_ps <-
     data = seven_dwarfs_9,
     family = binomial()
   ) |>
-  augment(type.predict = "response", newdata = seven_dwarfs_9)
+  augment(type.predict = "response", data = seven_dwarfs_9)
 seven_dwarfs_9_with_wt <- seven_dwarfs_9_with_ps |>
   mutate(w_att = wt_att(.fitted, park_extra_magic_morning))
 ```
@@ -127,7 +127,7 @@ fit_ipw <- function(.split, ...) {
 
   # calculate inverse probability weights
   .df <- propensity_model |>
-    augment(type.predict = "response", newdata = .df) |>
+    augment(type.predict = "response", data = .df) |>
     mutate(wts = wt_att(
       .fitted,
       park_extra_magic_morning,
