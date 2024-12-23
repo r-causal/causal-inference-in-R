@@ -28,6 +28,7 @@ Imports:
     here,
     janitor,
     kableExtra,
+    katex,
     labelled,
     lmw,
     lubridate,

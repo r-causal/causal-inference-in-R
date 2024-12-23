@@ -68,7 +68,7 @@ We have substantial, robust evidence in favor of bed net use, but let's consider
 -   We may also want to estimate a different effect or the effect for another population than in previous trials.
     For example, both randomized and observational studies helped us better understand that insecticide-based nets improve malaria resistance in the entire community, not just among those who use nets, so long as net usage is high enough [@howard2000; @hawley2003].
 
-As we'll see in @sec-trials-std and @sec-g-comp, the causal inference techniques that we'll discuss in this book are often beneficial even when we're able to randomize.
+As we'll see in @sec-strat-outcome and @sec-g-comp, the causal inference techniques that we'll discuss in this book are often beneficial even when we're able to randomize.
 
 When we conduct an observational study, it's still helpful to think through the randomized trial we would run were it possible.
 The trial we're trying to emulate in this causal analysis is the *target trial.* Considering the target trial helps us make our causal question more accurate.
