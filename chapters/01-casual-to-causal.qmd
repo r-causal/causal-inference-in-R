@@ -212,7 +212,7 @@ It helps us understand the population we're working with, the distribution of th
 It also helps us be sure that the data structure we're using matches the question we're trying to answer, as we'll see in [Chapter -@sec-data-causal].
 You should always do descriptive analyses of your data when conducting causal research.
 
-Finally, as we'll see in [Chapter -@sec-trials-std], there are certain circumstances where we can make causal inferences with basic statistics.
+Finally, as we'll see in [Chapter -@sec-strat-outcome], there are certain circumstances where we can make causal inferences with basic statistics.
 Be cautious about the distinction between the causal question and the descriptive component here, too: just because we're using the same calculation (e.g., a difference in means) doesn't mean that all descriptions you can generate are causal.
 Whether a descriptive analysis overlaps with a causal analysis is a function of the data and the question.
 
@@ -301,7 +301,7 @@ As with prediction and description, it's better to start with a clear, precise q
 In statistics and data science, particularly as we swim through the ocean of data of the modern world, we often end up with an answer without a question (e.g., `42`).
 This, of course, makes interpretation of the answer difficult.
 In @sec-diag, we'll discuss the structure of causal questions.
-We'll discuss philosophical and practical ways to sharpen our questions in [Chapter -@sec-counterfactuals] and [Chapter -@sec-trials-std].
+We'll discuss philosophical and practical ways to sharpen our questions in [Chapter -@sec-counterfactuals].
 
 ::: callout-note
 ## Causal inference and explanation

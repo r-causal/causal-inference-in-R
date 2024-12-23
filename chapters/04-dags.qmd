@@ -752,7 +752,7 @@ sim_data <- podcast_dag |>
 sim_data
 ```
 
-Since we have simulated this data, we know that this is a case where *standard methods will succeed* (see @sec-standard) and, therefore, can estimate the causal effect using a basic linear regression model.
+Since we have simulated this data, we know that this is a case where we can estimate the causal effect using a basic linear regression model.
 @fig-dag-sim shows a forest plot of the simulated data based on our DAG.
 Notice the model that only included the exposure resulted in a spurious effect (an estimate of -0.1 when we know the truth is 0).
 In contrast, the model that adjusted for the two variables as suggested by `ggdag_adjustment_set()` is not spurious (much closer to 0).

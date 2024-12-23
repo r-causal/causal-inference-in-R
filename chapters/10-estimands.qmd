@@ -1089,7 +1089,7 @@ We'll see an alternative method for calculating risk differences with logistic r
 
 ## What estimand does multivariable linear regression target?
 
-In @sec-standard, we discussed when standard methods like multivariable linear regression succeed and fail.
+In @sec-strat-outcome, we discussed when standard methods like multivariable linear regression succeed and fail.
 But what estimand does a regression estimator like `lm(outcome ~ exposure + confounder)` estimate?
 
 While exploring simple problems, you'll notice that the answer you get from multivariable regression is often close to the answer you get for the ATE weights.
