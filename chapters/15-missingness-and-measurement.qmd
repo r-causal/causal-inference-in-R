@@ -779,7 +779,8 @@ calib_model <- lm(
 seven_dwarves_calib <- calib_model |>
   augment(
     data = seven_dwarfs_train_2018 |>
-      mutate(wait_minutes_actual_avg = log1p(wait_minutes_actual_avg))
+      mutate(wait_minutes_actual_avg = log1p(wait_minutes_actual_avg)) |> 
+      drop_na()
   ) |>
   rename(wait_minutes_actual_calib = .fitted) |>
   # convert back to the original scale
