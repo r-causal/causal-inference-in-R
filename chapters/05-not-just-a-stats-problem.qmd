@@ -528,7 +528,8 @@ causal_quartet_time |>
   mutate(
     adjusted_effect =
       coef(
-        lm(outcome_followup ~ exposure_baseline + covariate_baseline,
+        lm(
+          outcome_followup ~ exposure_baseline + covariate_baseline,
           data = data
         )
       )[2]

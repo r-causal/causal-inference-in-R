@@ -314,9 +314,10 @@ Next, we write a function which will complete step 3: from a random sample from 
 # contrast gives exposure (default 60) and control group (default 30) settings
 # n_sample is the size of the baseline resample of .data
 simulate_process <- function(
-    fit_obj,
-    contrast = c(60, 30),
-    n_sample = 10000) {
+  fit_obj,
+  contrast = c(60, 30),
+  n_sample = 10000
+) {
   # Draw a random sample of baseline variables
   df_baseline <- fit_obj |>
     pluck(".data") |>
@@ -377,7 +378,9 @@ compute_stats <- function(sim_obj) {
       names_prefix = "x_"
     ) |>
     summarize(
-      x_60, x_30, x_60 - x_30
+      x_60,
+      x_30,
+      x_60 - x_30
     )
 }
 ```

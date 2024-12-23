@@ -76,14 +76,14 @@ satisfaction1 <- tibble(
   # Weekly (0) vs Daily (1)
   update_frequency = rbinom(n, 1, p_exposure),
   # generate the "true" average treatment effect of 0
-  # to do this, we are going to generate the 
+  # to do this, we are going to generate the
   # potential outcomes, first if exposure = 0
   # `y0` = `satisfaction(weekly)`
   # notice `update_frequency` is not in the equation below
   # we use rnorm(n) to add the random error term that is normally
   # distributed with a mean of 0 and a standard deviation of 1
   y0 = customer_type + rnorm(n),
-  # because the true effect is 0, the potential outcome 
+  # because the true effect is 0, the potential outcome
   # if exposure = 1 is identical
   y1 = y0,
   # in practice, we will only see one of these
@@ -97,11 +97,11 @@ satisfaction1 <- tibble(
 ) |>
   mutate(
     update_frequency = factor(
-      update_frequency, 
+      update_frequency,
       labels = c("weekly", "daily")
     ),
     customer_type = factor(
-      customer_type, 
+      customer_type,
       labels = c("free", "premium")
     )
   )
@@ -134,7 +134,7 @@ In this case, there is only one such set: `customer_type`.
 satisfaction_strat <- satisfaction1 |>
   group_by(customer_type, update_frequency) |>
   summarise(
-    avg_satisfaction = mean(satisfaction), 
+    avg_satisfaction = mean(satisfaction),
     .groups = "drop"
   )
 
@@ -161,7 +161,7 @@ We can now take the overall average, giving us an effect close to 0.
 
 ```{r}
 satisfaction_strat_est |>
-  # note: we would need to weight this if the confounder 
+  # note: we would need to weight this if the confounder
   # groups were not equally sized
   summarise(estimate = mean(estimate))
 ```
@@ -192,8 +192,8 @@ dag2 <- dagify(
 
 ggdag(dag2, use_text = FALSE) +
   geom_dag_text(
-    aes(label = label), 
-    nudge_y = c(-.35, -.35, .35, .35, .35), 
+    aes(label = label),
+    nudge_y = c(-.35, -.35, .35, .35, .35),
     color = "black"
   ) +
   theme_dag()
@@ -216,7 +216,7 @@ satisfaction2 <- tibble(
   # Weekly (0) vs Daily (1)
   update_frequency = rbinom(n, 1, p_exposure),
   # More likely during business hours
-  customer_service_prob = business_hours * 0.9 + 
+  customer_service_prob = business_hours * 0.9 +
     (1 - business_hours) * 0.2,
   customer_service = rbinom(n, 1, prob = customer_service_prob),
   satisfaction = 70 + 10 * customer_type +
@@ -224,19 +224,19 @@ satisfaction2 <- tibble(
 ) |>
   mutate(
     customer_type = factor(
-      customer_type, 
+      customer_type,
       labels = c("free", "premium")
     ),
     business_hours = factor(
-      business_hours, 
+      business_hours,
       labels = c("no", "yes")
     ),
     update_frequency = factor(
-      update_frequency, 
+      update_frequency,
       labels = c("weekly", "daily")
     ),
     customer_service = factor(
-      customer_service, 
+      customer_service,
       labels = c("no", "yes")
     )
   )
@@ -258,7 +258,7 @@ satisfaction2_strat <- satisfaction2 |>
     .groups = "drop"
   )
 
-satisfaction2_strat |> 
+satisfaction2_strat |>
   select(avg_satisfaction, everything())
 ```
 
@@ -339,7 +339,7 @@ satisfaction3 <- tibble(
 ) |>
   mutate(
     update_frequency = factor(
-      update_frequency, 
+      update_frequency,
       labels = c("weekly", "daily")
     )
   )
@@ -409,7 +409,7 @@ It also works well for continuous confounders, as we no longer need to bin it to
 
 ```{r}
 lm(
-  satisfaction ~ update_frequency + num_users, 
+  satisfaction ~ update_frequency + num_users,
   data = satisfaction3
 ) |>
   tidy(conf.int = TRUE) |>
@@ -537,24 +537,24 @@ satisfaction_randomized <- tibble(
   customer_service_prob = business_hours *
     0.9 + (1 - business_hours) * 0.2,
   customer_service = rbinom(n, 1, prob = customer_service_prob),
-  satisfaction = 70 + 10 * customer_type + 
+  satisfaction = 70 + 10 * customer_type +
     15 * customer_service + rnorm(n),
 ) |>
   mutate(
     customer_type = factor(
-      customer_type, 
+      customer_type,
       labels = c("free", "premium")
     ),
     business_hours = factor(
-      business_hours, 
+      business_hours,
       labels = c("no", "yes")
     ),
     update_frequency = factor(
-      update_frequency, 
+      update_frequency,
       labels = c("weekly", "daily")
     ),
     customer_service = factor(
-      customer_service, 
+      customer_service,
       labels = c("no", "yes")
     )
   )
@@ -564,7 +564,7 @@ plot_estimates <- function(d) {
     tidy(conf.int = TRUE) |>
     mutate(term = ifelse(
       term == "update_frequencydaily",
-      "update_frequency", 
+      "update_frequency",
       term
     )) |>
     filter(term == "update_frequency") |>
@@ -572,13 +572,13 @@ plot_estimates <- function(d) {
 
   adj_model <- lm(
     satisfaction ~ update_frequency + business_hours +
-      customer_type, 
+      customer_type,
     data = d
   ) |>
     tidy(conf.int = TRUE) |>
     mutate(term = ifelse(
       term == "update_frequencydaily",
-      "update_frequency", 
+      "update_frequency",
       term
     )) |>
     filter(term == "update_frequency") |>
@@ -608,11 +608,14 @@ plot_estimates <- function(d) {
   )
 
   models <- bind_rows(unadj_model, adj_model, psw_model) |>
-    mutate(model = factor(model, levels = c(
-      "unadjusted",
-      "direct\nadjustment",
-      "inverse\nprobability\nweighting"
-    )))
+    mutate(model = factor(
+      model,
+      levels = c(
+        "unadjusted",
+        "direct\nadjustment",
+        "inverse\nprobability\nweighting"
+      )
+    ))
 
   models |>
     select(model, estimate, std.error, starts_with("conf")) |>
@@ -624,7 +627,8 @@ plot_estimates <- function(d) {
       conf.low = ifelse(statistic == "std.error", NA, conf.low),
       conf.high = ifelse(statistic == "std.error", NA, conf.high),
       statistic = case_match(
-        statistic, "estimate" ~ "estimate (95% CI)",
+        statistic,
+        "estimate" ~ "estimate (95% CI)",
         "std.error" ~ "standard error"
       )
     ) |>
@@ -634,7 +638,7 @@ plot_estimates <- function(d) {
       aes(xmin = conf.low, xmax = conf.high),
       height = 0
     ) +
-    facet_wrap(~ statistic, scales = "free_x") +
+    facet_wrap(~statistic, scales = "free_x") +
     theme(axis.title.y = element_blank())
 }
 
