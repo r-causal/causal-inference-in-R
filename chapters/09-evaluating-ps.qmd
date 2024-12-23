@@ -59,7 +59,7 @@ seven_dwarfs_9_with_ps <-
     data = seven_dwarfs_9,
     family = binomial()
   ) |>
-  augment(type.predict = "response", data = seven_dwarfs_9)
+  augment(type.predict = "response", newdata = seven_dwarfs_9)
 seven_dwarfs_9_with_wt <- seven_dwarfs_9_with_ps |>
   mutate(w_ate = wt_ate(.fitted, park_extra_magic_morning))
 ```
@@ -225,7 +225,7 @@ seven_dwarfs_9_with_ps <-
     data = seven_dwarfs_9,
     family = binomial()
   ) |>
-  augment(type.predict = "response", data = seven_dwarfs_9)
+  augment(type.predict = "response", newdata = seven_dwarfs_9)
 seven_dwarfs_9_with_wt <- seven_dwarfs_9_with_ps |>
   mutate(w_ate = wt_ate(.fitted, park_extra_magic_morning))
 ```

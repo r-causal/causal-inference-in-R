@@ -184,7 +184,7 @@ seven_dwarfs_with_ps <- glm(
   data = seven_dwarfs,
   family = binomial()
 ) |>
-  augment(type.predict = "response", data = seven_dwarfs)
+  augment(type.predict = "response", newdata = seven_dwarfs)
 ```
 
 Let's examine a table of the variables of interest in this data frame.
