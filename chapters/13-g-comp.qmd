@@ -157,7 +157,7 @@ set.seed(8675309)
 
 df_sim_baseline <- seven_dwarfs_9 |>
   select(park_ticket_season, park_close, park_temperature_high) |>
-  sample_n(10000, replace = TRUE)
+  slice_sample(n = 10000, replace = TRUE)
 ```
 
 With this population in hand, we can now simulate what would happen at each subsequent time point according to the parametric models we just defined.
@@ -321,7 +321,7 @@ simulate_process <- function(
   df_baseline <- fit_obj |>
     pluck(".data") |>
     select(park_ticket_season, park_close, park_temperature_high) |>
-    sample_n(n_sample, replace = TRUE)
+    slice_sample(n = n_sample, replace = TRUE)
 
   # Simulate park_extra_magic_morning
   df_sim_time_1 <- fit_obj |>
