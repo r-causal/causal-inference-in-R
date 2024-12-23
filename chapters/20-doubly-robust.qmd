@@ -1,4 +1,4 @@
-# Doubly robust models {#sec-causal-ml}
+# Doubly robust models {#sec-dr}
 
 {{< include 00-setup.qmd >}}
 
