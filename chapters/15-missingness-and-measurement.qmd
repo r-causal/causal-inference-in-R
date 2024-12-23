@@ -776,7 +776,7 @@ calib_model <- lm(
 )
 
 seven_dwarves_calib <- calib_model |>
-  augment() |>
+  augment(newdata = seven_dwarfs_train_2018) |>
   rename(wait_minutes_actual_calib = .fitted) |>
   # convert back to the original scale
   # and fill in real values where they exist
@@ -804,7 +804,7 @@ fit_ipw_effect <- function(.fmla, .data = seven_dwarfs, .trt = "park_extra_magic
 
   # calculate ATE weights
   .df <- propensity_model |>
-    augment(type.predict = "response") |>
+    augment(type.predict = "response", newdata = .data) |>
     mutate(w_ate = wt_ate(.fitted, !!.trt_var, exposure_type = "binary"))
 
   # fit ipw model
