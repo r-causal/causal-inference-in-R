@@ -64,7 +64,7 @@ We can extract the propensity scores by pulling out the predictions on the proba
 Using the `augment()` function from the [{`broom`}](https://broom.tidymodels.org/) package, we can extract these propensity scores and add them to our original data frame.
 The argument `type.predict` is set to `"response"` to indicate that we want to extract the predicted values on the *probability* scale.
 By default, these will be on the linear logit scale.
-The `data` argument contains the original data frame.
+The `data` argument contains the original data frame; if we leave this blank, we'll only get back a data frame with the variables in the propensity score model, but we need the outcome, too.
 This code will output a new data frame consisting of all components in `df` with six additional columns corresponding to the logistic regression model that was fit.
 The `.fitted` column is the propensity score.
 

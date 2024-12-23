@@ -776,7 +776,7 @@ calib_model <- lm(
 )
 
 seven_dwarves_calib <- calib_model |>
-  augment(newdata = seven_dwarfs_train_2018) |>
+  augment(data = seven_dwarfs_train_2018) |>
   rename(wait_minutes_actual_calib = .fitted) |>
   # convert back to the original scale
   # and fill in real values where they exist

@@ -275,7 +275,7 @@ finite_sample_wts <- glm(
   data = finite_sample,
   family = binomial("probit")
 ) |>
-  augment(newdata = finite_sample, type.predict = "response") |>
+  augment(data = finite_sample, type.predict = "response") |>
   mutate(wts = wt_ate(.fitted, x))
 
 finite_sample_wts |>
@@ -309,7 +309,7 @@ sim <- function(n) {
     data = finite_sample,
     family = binomial("probit")
   ) |>
-    augment(newdata = finite_sample, type.predict = "response") |>
+    augment(data = finite_sample, type.predict = "response") |>
     mutate(wts = wt_ate(.fitted, x))
   bias <- finite_sample_wts |>
     summarize(
@@ -711,7 +711,7 @@ sim <- function(n) {
     data = finite_sample,
     family = binomial("probit")
   ) |>
-    augment(newdata = finite_sample, type.predict = "response") |>
+    augment(data = finite_sample, type.predict = "response") |>
     mutate(
       wts_ate = wt_ate(.fitted, x),
       wts_ato = wt_ato(.fitted, x)

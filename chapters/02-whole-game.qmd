@@ -421,7 +421,7 @@ In other words, if you used a bed net, the ATE weight is the probability that yo
 library(broom)
 library(propensity)
 net_data_wts <- propensity_model |>
-  augment(newdata = net_data, type.predict = "response") |>
+  augment(data = net_data, type.predict = "response") |>
   # .fitted is the value predicted by the model
   # for a given observation
   mutate(wts = wt_ate(.fitted, net))
