@@ -89,7 +89,7 @@ Likewise, the correlation between `exposure` and `covariate` is no help: they're
 
 ```{r}
 #| label: tbl-quartet_lm
-#| echo: false
+#| code-fold: true
 #| tbl-cap: "The causal quartet, with the estimated effect of `exposure` on `outcome` with and without adjustment for `covariate`. The unadjusted estimate is identical for all four datasets, as is the correlation between `exposure` and `covariate`. The adjusted estimate varies. Without background knowledge, it's not clear which is right."
 library(gt)
 effects <- causal_quartet |>
@@ -124,7 +124,7 @@ Even the reverse technique, *excluding* a variable when it's *less* than ten per
 
 ```{r}
 #| label: tbl-quartet_ten_percent
-#| echo: false
+#| code-fold: true
 #| tbl-cap: "The percent change in the coefficient for `exposure` when including `covariate` in the model."
 effects |>
   mutate(percent_change = scales::percent((ate_x - ate_xz) / ate_x)) |>
@@ -216,7 +216,7 @@ Once we compile a DAG for each dataset, we only need to query the DAG for the co
 #| label: fig-quartet-dag
 #| fig-width: 3
 #| fig-height: 3.5
-#| echo: false
+#| code-fold: true
 #| message: false
 #| warning: false
 #| layout-ncol: 2
@@ -423,7 +423,7 @@ Only control for variables that precede the outcome.
 #|   - "In a time-ordered version of the collider DAG, controlling for the covariate at follow-up induces bias."
 #|   - "Conversely, controlling for the covariate as measured at baseline does not induce bias because it is not a descendant of the outcome."
 #| layout-ncol: 2
-#| echo: false
+#| code-fold: true
 #| fig-width: 4
 #| fig-height: 3.75
 coords <- list(
@@ -521,14 +521,15 @@ Even though `covariate_baseline` is only in the adjustment set for the second da
 
 ```{r}
 #| label: tbl-quartet_time_adjusted
-#| echo: false
+#| code-fold: true
 #| tbl-cap: "The adjusted effect of `exposure_baseline` on `outcome_followup` in each dataset. The effect adjusted for `covariate_baseline` is correct for three out of four datasets."
 causal_quartet_time |>
   nest_by(dataset) |>
   mutate(
     adjusted_effect =
       coef(
-        lm(outcome_followup ~ exposure_baseline + covariate_baseline,
+        lm(
+          outcome_followup ~ exposure_baseline + covariate_baseline,
           data = data
         )
       )[2]
@@ -553,12 +554,6 @@ If it's not clear, adjust for it.
 Remember as well that it is possible to block bias induced by adjusting for a collider in certain circumstances because collider bias is just another open path.
 If we had `u1` and `u2`, we could control for `covariate` while blocking potential collider bias.
 In other words, sometimes, when we open a path, we can close it again.
-
-```{r}
-#| label: fig-m_bias_adjust
-#| echo: false
-#| fig-cap: "The DAG for dataset 4, where the covariate is a collider via M-Bias. If we know the structure, we shouldn't control for the covariate, but if we do, we can theoretically close the opened pathway via `u1` and `u2`, assuming we have them measured. In other words, thorough measurement and control of pre-exposure variables will still save the day."
-```
 :::
 
 ## Causal and Predictive Models, Revisited {#sec-causal-pred-revisit}
@@ -579,7 +574,7 @@ In the case of the collider data set, it's not even a helpful prediction tool be
 
 ```{r}
 #| label: tbl-quartet_time_predictive
-#| echo: false
+#| code-fold: true
 #| tbl-cap: "The difference in predictive metrics on `outcome` in each dataset with and without `covariate`. In each dataset, `covariate` adds information to the model, but this offers little guidance regarding the proper causal model."
 
 get_rmse <- function(data, model) {
@@ -641,7 +636,7 @@ But look again.
 
 ```{r}
 #| label: fig-quartet_confounder
-#| echo: false
+#| code-fold: true
 #| fig-cap: "The DAG for dataset 2, where `covariate` is a confounder. If you look closely, you'll realize that, from the perspective of the effect of `covariate` on the `outcome`, `exposure` is a *mediator*."
 #| fig-width: 3
 #| fig-height: 2.75
@@ -659,7 +654,7 @@ Now, we have a situation where `covariate` not only answers a different type of 
 
 ```{r}
 #| label: fig-quartet_confounder_q
-#| echo: false
+#| code-fold: true
 #| fig-cap: "A modification of the DAG for dataset 2, where `covariate` is a confounder. Now, the relationship between `covariate` and `outcome` is confounded by `q`, a variable not necessary to calculate the unbiased effect of `exposure` on `outcome`."
 #| fig-width: 3.5
 #| fig-height: 3

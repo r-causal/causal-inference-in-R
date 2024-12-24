@@ -52,7 +52,7 @@ For simplicity, we've removed the confounders from this DAG.
 ```{r}
 #| label: fig-meas-err-dag
 #| fig-cap: "A DAG showing the relationship between posted and actual wait times, with additional information about measurement. The mismeasured versions of the two wait time variables are represented as separate nodes. The mismeasured versions are caused by the true values and an unknown mechanism that worsens measurement. When conducting a causal analysis with mismeasured variables, we use them as proxies for the true values."
-#| echo: false
+#| code-fold: true
 #| message: false
 library(ggdag)
 
@@ -174,7 +174,7 @@ The extent of this error depends on how well the measured version correlates wit
 #| fig-subcap:
 #|   - "An updated DAG where the measured version of posted wait times is only caused by the true value, meaning it is perfectly measured. For the actual wait times, the three causes are the true values, whether or not TouringPlans employed the reporter, and an unknown mismeasurement mechanism."
 #|   - "A null DAG, meaning we have removed the arrow from actual wait times to posted wait times. When we look at a null DAG, we can see the mechanisms of mismeasurement are separate for the two wait time variables."
-#| echo: false
+#| code-fold: true
 #| layout-ncol: 2
 #| fig-width: 4
 #| fig-height: 4
@@ -281,7 +281,7 @@ This is called *dependent, non-differential* measurement error.
 #| fig-subcap:
 #|   - "Now, the DAG includes an arrow from `unknown` to both measured variables, meaning that the way they are mismeasured is not independent. In other words, `unknown` is now a mutual cause of the mismeasured variables---a confounder."
 #|   - "The open paths in this DAG. Because this is a null DAG, the only open pathway is a biasing one from the two mismeasured variables via `unknown`."
-#| echo: false
+#| code-fold: true
 #| layout-ncol: 2
 #| fig-width: 4
 #| fig-height: 4
@@ -327,7 +327,7 @@ Let's expand @fig-meas-err-dag-dep-1 to include an arrow from posted time to how
 ```{r}
 #| label: fig-meas-err-dag-diff
 #| fig-cap: "When the true value of posted wait times affects the measurement of both measured variables, it becomes a confounder for them. When the backdoor path is due to either the exposure or the outcome, it's classified as differential measurement error."
-#| echo: false
+#| code-fold: true
 #| fig-width: 7.5
 labels <- c(
   "actual" = "actual wait",
@@ -404,7 +404,7 @@ mismeasured_model <- lm(outcome ~ exposure * confounder)
 ```
 
 ```{r}
-#| echo: false
+#| code-fold: true
 #| label: tbl-confounder-me
 #| tbl-cap: "The coefficients of interaction terms between a confounder and the exposure. In one mode, the confounder is measured correctly. In another, it is mismeasured differentially by the outcome. In addition to not closing the backdoor path completely, this type of mismeasurement often appears as an interaction between the exposure and confounder, even when such an interaction does not exist."
 library(gt)
@@ -448,7 +448,7 @@ The unknown mechanism is random, but the mechanism related to posted wait times 
 ```{r}
 #| label: fig-missing-dag-1
 #| fig-cap: "A DAG representing the missingness structure of actual wait time. In this DAG, missingness is caused by posted wait times and an unknown mechanism that affects whether or not actual wait times are measured. Missingness in actual wait times is represented as a separate node, a missingness indicator."
-#| echo: false
+#| code-fold: true
 #| fig-width: 5
 labels <- c(
   "actual" = "actual wait",
@@ -487,7 +487,7 @@ However, in this simple DAG, conditioning on missingness does not open a backdoo
 ```{r}
 #| label: fig-missing-dag-2
 #| fig-cap: "In DAGs with missingness, we are also conditioning on the missingness indicators because we're stratifying by whether or not we have a given variable. In this DAG, even though `missing` is a collider, stratifying on it does not open a backdoor path between the exposure and outcome."
-#| echo: false
+#| code-fold: true
 #| fig-width: 4
 #| fig-height: 4
 missing_dag |>
@@ -524,7 +524,7 @@ In this case, there is no way to close the backdoor paths opened by conditioning
 #| fig-subcap:
 #|   - "Now, the DAG includes an arrow from actual wait times to the missingness indicator for actual wait times. In other words, the values of actual wait times themselves influence whether or not we've managed to measure them."
 #|   - "Conditioning on the missingness indicator now opens a backdoor path between the exposure and the outcome, and we have no means to close it."
-#| echo: false
+#| code-fold: true
 #| layout-ncol: 2
 #| fig-width: 5
 #| fig-height: 5
@@ -575,7 +575,7 @@ Each of the DAGs represents a simple but differing structure of missingness.
 ```{r}
 #| label: fig-missing-dags-sim
 #| fig-cap: "5 DAGs where `a` is `actual`, `p` is `posted`, `u` is `unknown`, and `m` is `missing`. Each DAG represents a slightly different missingness mechanism. In DAGs 1-3, the actual wait time values have missingness; in DAGs 4-5, some posted wait times are missing. The causal structure of missingness impacts what we can estimate."
-#| echo: false
+#| code-fold: true
 library(patchwork)
 
 define_dag <- function(..., tag, title) {
@@ -640,7 +640,7 @@ In DAG 4, we can calculate the mean of `actual` and the causal effect but not th
 ```{r}
 #| label: fig-recoverables
 #| fig-cap: "A forest plot of the results of three different effects for data simulated from each DAG in @fig-missing-dags-sim. In the non-missing results, we can see what the effect should be for the sample. Each simulated dataset has 365 rows with missingness in either actual or posted wait times. For each of the DAGs, we're limited in what we can estimate correctly."
-#| echo: false
+#| code-fold: true
 set.seed(123)
 posted <- rnorm(365, mean = 30, sd = 5)
 # create an effect where an hour of posted time creates 50 min of actual time
@@ -766,6 +766,7 @@ If it's `NA`, we'll use the calibrated value.
 library(splines)
 library(touringplans)
 library(broom)
+
 calib_model <- lm(
   wait_minutes_actual_avg ~
     ns(wait_minutes_posted_avg, df = 4) * wait_hour +
@@ -776,7 +777,11 @@ calib_model <- lm(
 )
 
 seven_dwarves_calib <- calib_model |>
-  augment(newdata = seven_dwarfs_train_2018) |>
+  augment(
+    data = seven_dwarfs_train_2018 |>
+      mutate(wait_minutes_actual_avg = log1p(wait_minutes_actual_avg)) |>
+      drop_na()
+  ) |>
   rename(wait_minutes_actual_calib = .fitted) |>
   # convert back to the original scale
   # and fill in real values where they exist

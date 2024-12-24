@@ -36,7 +36,7 @@ Let's consider the DAG we introduced in @fig-dag-magic.
 
 ```{r}
 #| label: fig-dag-magic-orig
-#| echo: false
+#| code-fold: true
 #| fig-cap: >
 #|   The original proposed DAG for the relationship between Extra Magic Hours
 #|   in the morning at a particular park and the average wait
@@ -94,7 +94,7 @@ Let's say, though, that we had used @fig-dag-magic-missing instead, which is mis
 
 ```{r}
 #| label: fig-dag-magic-missing
-#| echo: false
+#| code-fold: true
 #| fig-cap: >
 #|   An alternative DAG for the relationship between Extra Magic Hours
 #|   in the morning at a particular park and the average wait
@@ -147,7 +147,7 @@ The difference in these results implies that there is something off about the ca
 ```{r}
 #| label: tbl-alt-sets
 #| tbl-cap: "A table of ATE estimates from the IPW estimator. Each estimate was calculated for one of the valid adjustment sets for the DAG. The estimates are sorted by effect size in order. If the DAG is right and all the data well measured, different adjustment sets should give roughly the same answer."
-#| echo: false
+#| code-fold: true
 seven_dwarfs <- touringplans::seven_dwarfs_train_2018 |>
   filter(wait_hour == 9)
 
@@ -236,7 +236,7 @@ So, given the DAG, our adjustment set is any combination of the confounders (as 
 
 ```{r}
 #| label: fig-dag-day-i
-#| echo: false
+#| code-fold: true
 #| fig-cap: >
 #|   An expansion of the causal structure presented in @fig-dag-magic.
 #|   In this DAG, the exposure is instead whether or not there were Extra Magic Hours
@@ -345,12 +345,12 @@ If these results are accurate, it implies that we have some residual confounding
 #| label: fig-sens-i-63
 #| fig-cap: >
 #|    A scatterplot with a smoothed regression of the relationship between wait times on day `i` and whether there were Extra Magic Hours on day `i - n`, where `n` represents the number of days previous to day `i`. We expect this relationship to rapidly approach the null, but the effect hovers above null for quite some time. This lingering effect implies we have some residual confounding present.
-#| echo: false
+#| code-fold: true
 #| warning: false
 #| message: false
 coefs <- purrr::map_dbl(1:63, calculate_coef)
 
-ggplot(data.frame(coefs = coefs, x = 1:63), aes(x = x, y = coefs)) +
+ggplot(tibble(coefs = coefs, x = 1:63), aes(x = x, y = coefs)) +
   geom_hline(yintercept = 0) +
   geom_point() +
   geom_smooth(se = FALSE) +
@@ -563,7 +563,7 @@ ggdag_equivalent_dags(emm_wait_dag2)
 
 ```{r}
 #| label: fig-equiv-dag
-#| echo: false
+#| code-fold: true
 #| fig-width: 9
 #| fig-cap: >
 #|    Equivalent DAGs for the likely misspecified version of @fig-dag-magic.
@@ -591,7 +591,7 @@ ggdag_equivalent_class(emm_wait_dag2, use_text = FALSE, use_labels = TRUE)
 
 ```{r}
 #| label: fig-equiv-class
-#| echo: false
+#| code-fold: true
 #| fig-width: 5
 #| fig-cap: >
 #|    An alternative way of visualizing @fig-equiv-dag where all the equivalent
@@ -648,7 +648,7 @@ In this case, we're considering a different causal structure.
 #| label: fig-dag-extra-days
 #| fig-cap: >
 #|    An expansion of @fig-dag-magic, which now includes two new variables on their own backdoor paths: whether or not it's a holiday and/or a weekend.
-#| echo: false
+#| code-fold: true
 
 labels <- c(
   park_extra_magic_morning = "Extra Magic\nMorning",
@@ -724,7 +724,7 @@ Both Extra Magic Morning hours and posted wait times are associated with whether
 #| label: tbl-days
 #| tbl-cap: >
 #|    The descriptive associations between the two new variables, holiday and weekend, and the exposure and outcome. The average posted waiting time differs on both holidays and weekends, as do the occurrences of Extra Magic Hours. While we can't determine a confounding relationship from descriptive statistics alone, this adds to the evidence that these are confounders.
-#| echo: false
+#| code-fold: true
 tbl_data_days <- seven_dwarfs_with_days |>
   select(wait_minutes_posted_avg, park_extra_magic_morning, is_weekend, is_holiday)
 
@@ -794,7 +794,7 @@ The three key components above are described by 1) the arrow between 'Extra Magi
 
 ```{r}
 #| label: fig-dag-magic-sens
-#| echo: false
+#| code-fold: true
 #| fig-cap: >
 #|   The original proposed DAG for the relationship between Extra Magic Hours
 #|   in the morning at a particular park and the average wait
