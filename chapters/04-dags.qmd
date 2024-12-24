@@ -1237,7 +1237,7 @@ That's a good thing: you know now where there is uncertainty in your DAG.
 You can then examine the results from multiple plausible DAGs or address the uncertainty with sensitivity analyses.
 
 If you have more than one candidate DAG, check their adjustment sets.
-If two DAGs have overlapping adjustment sets, focus on those sets; then, you can move forward in a way that satisfies the plausible assumptions you have.
+If two DAGs have any adjustment sets that are identical between them, focus on those sets; then, you can move forward in a way that satisfies the plausible assumptions you have.
 
 ### Consider your question
 
