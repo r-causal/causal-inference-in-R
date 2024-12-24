@@ -1276,7 +1276,7 @@ It's tempting to visualize that relationship like this:
 #| label: fig-feedback-loop
 #| fig-width: 4.5
 #| fig-height: 3.5
-#| fig-cap: "A DAG representing the reciprocal relationship between A/C use and global temperature because of global warming. Feedback loops are useful mental shorthands to describe variables that impact each other over time compactly, but they are not true causal diagrams."
+#| fig-cap: "A conceptual diagram representing the reciprocal relationship between A/C use and global temperature because of global warming. Feedback loops are useful mental shorthands to describe variables that impact each other over time compactly, but they are not true causal diagrams."
 dagify(
   ac_use ~ global_temp,
   global_temp ~ ac_use,
