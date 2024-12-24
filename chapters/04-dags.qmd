@@ -64,13 +64,13 @@ dag_data |>
   )
 ```
 
-The type of causal diagrams we use are also called directed acyclic graphs (DAGs)[^05-dags-1].
+The type of causal diagrams we use are also called directed acyclic graphs (DAGs)[^04-dags-1].
 These graphs are directed because they include arrows going in a specific direction.
 They're acyclic because they don't go in circles; a variable can't cause itself, for instance.
 DAGs are used for various problems, but we're specifically concerned with *causal* DAGs.
 This class of DAGs is sometimes called Structural Causal Models (SCMs) because they are a model of the causal structure of a question [@hernan2021; @Pearl_Glymour_Jewell_2021].
 
-[^05-dags-1]: An essential but rarely observed detail of DAGs is that dag is also an [affectionate Australian insult](https://en.wikipedia.org/wiki/Dag_(slang)) referring to the dung-caked fur of a sheep, a *daglock*.
+[^04-dags-1]: An essential but rarely observed detail of DAGs is that dag is also an [affectionate Australian insult](https://en.wikipedia.org/wiki/Dag_(slang)) referring to the dung-caked fur of a sheep, a *daglock*.
 
 DAGs depict causal relationships between variables.
 Visually, the way they depict variables is as *edges* and *nodes*.
@@ -752,26 +752,97 @@ sim_data <- podcast_dag |>
 sim_data
 ```
 
-Since we have simulated this data, we know that this is a case where we can estimate the causal effect using a basic linear regression model.
-@fig-dag-sim shows a forest plot of the simulated data based on our DAG.
-Notice the model that only included the exposure resulted in a spurious effect (an estimate of -0.1 when we know the truth is 0).
-In contrast, the model that adjusted for the two variables as suggested by `ggdag_adjustment_set()` is not spurious (much closer to 0).
+@fig-dag-sim shows a forest plot of estimates using the simulated data based on our DAG.
+One estimate is unadjusted and the other is adjusted for `mood` and `prepared`.
+Notice the unadjusted estimate resulted in a spurious effect (an estimate of -0.1 when we know the truth is 0).
+In contrast, the estimate that adjusted for the two variables as suggested by `ggdag_adjustment_set()` is not spurious (it's much closer to 0).
 
 ```{r}
 #| label: fig-dag-sim
 #| fig-cap: "Forest plot of simulated data based on the DAG described in @fig-dag-podcast."
+#| code-fold: true
 ## Model that does not close backdoor paths
 library(broom)
 unadjusted_model <- lm(exam ~ podcast, sim_data) |>
   tidy(conf.int = TRUE) |>
   filter(term == "podcast") |>
-  mutate(formula = "podcast")
+  mutate(formula = "unadjusted")
 
 ## Model that closes backdoor paths
 adjusted_model <- lm(exam ~ podcast + mood + prepared, sim_data) |>
   tidy(conf.int = TRUE) |>
   filter(term == "podcast") |>
-  mutate(formula = "podcast + mood + prepared")
+  mutate(formula = "mood + prepared")
+
+bind_rows(
+  unadjusted_model,
+  adjusted_model
+) |>
+  ggplot(aes(x = estimate, y = formula, xmin = conf.low, xmax = conf.high)) +
+  geom_vline(xintercept = 0, linewidth = 1, color = "grey80") +
+  geom_pointrange(fatten = 3, size = 1) +
+  theme_minimal(18) +
+  labs(
+    y = NULL,
+    caption = "correct effect size: 0"
+  )
+```
+
+Of course, we know we're working with the true DAG.
+Let's say that, not knowing the true DAG (@fig-dag-podcast), we drew @fig-dag-podcast-wrong.
+
+```{r}
+#| label: fig-dag-podcast-wrong
+#| fig-cap: "Proposed DAG to answer the question: Does listening to a comedy podcast the morning before an exam improve graduate students' test scores? This time, we proposed the wrong DAG."
+#| fig-width: 4
+#| fig-height: 4
+#| warning: false
+podcast_dag_wrong <- dagify(
+  podcast ~ humor + prepared,
+  exam ~ prepared,
+  coords = time_ordered_coords(
+    list(
+      # time point 1
+      c("prepared", "humor"),
+      # time point 2
+      "podcast",
+      # time point 3
+      "exam"
+    )
+  ),
+  exposure = "podcast",
+  outcome = "exam",
+  labels = c(
+    podcast = "podcast",
+    exam = "exam score",
+    humor = "humor",
+    prepared = "prepared"
+  )
+)
+ggdag(podcast_dag_wrong, use_labels = "label", text = FALSE) +
+  theme_dag()
+```
+
+Since the DAG is wrong, it doesn't help us get the right answer.
+It says we only need to adjust for `prepared`, but we are missing a causal pathway that is confounding the relationship.
+Now, neither estimate is right.
+
+```{r}
+#| label: fig-dag-sim-wrong
+#| fig-cap: "Forest plot of simulated data based on the DAG described in @fig-dag-podcast. However, we've analyzed it using the adjustment set from @fig-dag-podcast-wrong, giving us the wrong answer."
+#| code-fold: true
+## Model that does not close backdoor paths
+library(broom)
+unadjusted_model <- lm(exam ~ podcast, sim_data) |>
+  tidy(conf.int = TRUE) |>
+  filter(term == "podcast") |>
+  mutate(formula = "unadjusted")
+
+## Model that closes backdoor paths
+adjusted_model <- lm(exam ~ podcast + prepared, sim_data) |>
+  tidy(conf.int = TRUE) |>
+  filter(term == "podcast") |>
+  mutate(formula = "prepared")
 
 bind_rows(
   unadjusted_model,
