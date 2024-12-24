@@ -169,7 +169,7 @@ causal_quartet |>
 
 Standardizing numeric variables to have a mean of 0 and standard deviation of 1, as implemented in `scale()`, is a common technique in statistics.
 It's useful for a variety of reasons, but we chose to scale the variables here to emphasize the identical correlation between `covariate` and `exposure` in each dataset.
-If we didn't scale the variables, the correlation would be the same, but the plots would look different because their standard deviation are different.
+If we didn't scale the variables, the correlation would be the same, but the plots would look different because their standard deviations are different.
 The beta coefficient in an OLS model is calculated with information about the covariance and the standard deviation of the variable, so scaling it makes the coefficient identical to the Pearson's correlation.
 
 @fig-causal_quartet_covariate_unscaled shows the unscaled relationship between `covariate` and `exposure`.
