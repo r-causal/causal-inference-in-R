@@ -5,7 +5,7 @@
 ```{r}
 #| echo: false
 # TODO: remove when first edition complete
-status("polishing")
+status("complete")
 ```
 
 Let's finally turn our attention to methods for answering causal questions, the subject of most of the rest of the book.
@@ -381,17 +381,17 @@ As opposed to binary and categorical confounders, grouping by bins for continuou
 The approach we've been using with `group_by()` and `summarize()` is often called **stratification**.
 You can also think of it as a type of non-parametric approach.
 We aren't using any parameterization from a statistical model to restrict the form of the variables the way we might with, say, a linear regression.
-(This is only partially true for continuous confounders because it's not practical to bin within all levels of the continuous variable).
+(This is only partially true for continuous confounders because it's not practical to stratify by all values of the continuous variable).
 
 Stratification can be powerful for simple problems or when you have lots of data because you can sometimes avoid model misspecification problems.
-However, with many confounders, we quickly encounter the curse of dimensionality, making it impractical because we have too few observations by combinations of confounder levels.
+However, with many confounders (especially continuous ones), we quickly encounter the curse of dimensionality, making it impractical because we have too few observations by combinations of confounder levels.
 
 ## Parametric outcome models
 
 You can think of stratification as calculating conditional means.
 A more general extension of conditional means is multivariable linear regression.
 When we fit `lm()` with the variables in the form `outcome ~ exposure + confounder1 + confounder2 + ...`, we are fitting what we call an **outcome model**, so called because we fit the exposure and confounders with the outcome as the dependent variable.
-This is also sometimes called **direct adjustment** because we adjust for the confounders directly in the model.
+This is also sometimes called **direct adjustment** or **regression adjustment** because we adjust for the confounders directly in the regression model.
 Let's use `lm()` to calculate the effect in our example with two binary confounders:
 
 ```{r}
@@ -428,7 +428,7 @@ We'll also later explore ways to use data-adaptive methods like machine learning
 <!-- TODO: link appendix on model checks here -->
 
 Outcome regression can work very well when we meet the assumptions of the estimator we're using for our model.
-OLS can be very beneficial if we understand the relationships between the outcome and the variables in the regression.
+OLS, for instance, can be very beneficial if we understand the relationships between the outcome and the variables in the regression, and we believe the assumptions of the model, particularly linearity.
 It's very efficient, statistically (meaning we'll get a small standard error).
 We'll also get nominally correct confidence intervals without needing to bootstrap (@sec-appendix-bootstrap).
 Scientists and other people who analyze data are also usually familiar with linear regression, making it easier for many to understand what you did to calculate the causal effect. In fact, you could say that when there is a linear relationship between the outcome and exposure, and we meet the causal assumptions laid out in @sec-assump, *correlation is causation*.
@@ -440,7 +440,7 @@ Relatedly, when we have a binary outcome, it may make sense to choose one over a
 For example, using a propensity score method can be more statistically efficient if the outcome is rare but the exposure is not.
 Second, it can sometimes be challenging to get the estimate we are targeting with outcome models---an answer to a precise question---something we will probe more deeply in @sec-estimands.
 
-Relatedly, outcome models give us *conditional* coefficients.
+Relatedly, outcome models give us **conditional effects**.
 In other words, when describing the estimated coefficient, we often say something like "a one-unit change in the exposure results in a `coefficient` change in the outcome *holding all other variables in the model constant*". In causal inference, we are often interested in **marginal effects**. Mathematically, this means that we want to average the effect of interest across the distribution of factors in a particular population for which we are trying to estimate a causal effect. In the case where the outcome is continuous, the effect is linear, and there are no interactions between the exposure effect and other factors about the population, the distinction between a conditional and a marginal effect is largely semantic. The estimates will be identical.
 
 If there *is* an interaction in the model, that is, if the exposure has a different impact on the outcome depending on some other factor, we no longer have a single coefficient to interpret.
@@ -486,6 +486,7 @@ In @sec-longitudinal and other chapters, we'll cover more complex questions and 
 
 As we've seen, it's possible to do causal inference with simple methods like stratification and multivariable linear regression.
 For the rest of the book, however, we will focus on other causal methods, which allow us more flexibility in answering the questions we want to ask.
+Here's a brief summary of some of the unconfoundedness methods we'll cover and what they do.
 
 -   *Unconfoundedness methods*
     -   **Inverse probability weighting** (propensity score weighting): Using a propensity score (predicted probability of treatment), we reweight units to create a pseudo-population where exchangeability holds. Extends to time-varying treatments.

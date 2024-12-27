@@ -13,7 +13,7 @@ By its end, we hope to help you:
 
 This book is for both academic researchers and data scientists.
 Although the questions may differ between these settings, many techniques are the same: causal inference is as helpful for asking questions about cancer as it is about clicks.
-We use a mix of examples from medicine, economics, and tech to demonstrate that you need a clear causal question and a willingness to be transparent about your assumptions.
+We use a mix of examples from medicine, economics, tech, and other domains to demonstrate that you need a clear causal question and a willingness to be transparent about your assumptions.
 
 You'll learn a lot in this book, but ironically, you won't learn much about conducting randomized trials, one of the best tools for causal inferences.
 Randomized trials, and their cousins, A/B tests (standard in the tech world), are compelling because they alleviate many of the assumptions we need to make for valid inferences.

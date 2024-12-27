@@ -5,7 +5,7 @@
 ```{r}
 #| echo: false
 # TODO: remove when first edition complete
-status("polishing")
+status("complete")
 ```
 
 > | Two roads diverged in a yellow wood,
@@ -85,7 +85,7 @@ In any case, we must rely on statistical techniques to help construct these unob
 
 ## Potential outcomes
 
-Factual outcomes and counterfactual outcomes are two realizations of *potential outcomes*.
+Factual outcomes and counterfactual outcomes are two realizations of **potential outcomes**.
 Before some cause occurs, the potential outcomes are all the things that could happen depending on what you are exposed to.
 Let's say that the cause we are interested in is a particular moment in the 1980s when one decides to either quit doing jewel heists or continue.
 The outcome we're interested in is whether or not the individual goes to jail.
@@ -107,7 +107,7 @@ Therefore, only one potential outcome is observable for each individual.
 These exposures are defined at a particular time (in this case, a specific moment in the 1980s, right around the time Ice-T was discovered), so only one can happen to any individual.
 In the case of a binary exposure, this leaves one potential outcome as *observable* and one *missing.* In fact, early causal inference methods were often framed as missing data problems; we need to make certain assumptions about the missing counterfactuals, the value of the potential outcome corresponding to the exposure(s) that did not occur.
 
-Our causal effect of interest is often some difference in potential outcomes, such as $Y(continue) - Y(quit)$ (say, probability of going to jail the following year).
+Our causal effect of interest is often some difference in potential outcomes, such as $Y(continue) - Y(quit)$ (say, the difference in the probabilities of going to jail the following year if you continue heists vs. quitting heists).
 In the case of Ice-T and Spike, we're interested in their individual causal effects:
 
 -   $Y_{Ice-T}(continue) - Y_{Ice-T}(quit)$
@@ -115,7 +115,7 @@ In the case of Ice-T and Spike, we're interested in their individual causal effe
 
 Here, we're missing $Y_{Ice-T}(continue)$ and $Y_{Spike}(quit)$, so we can't calculate these values.
 In practice, we need to use observed data as proxies for the missing potential outcomes, and we usually average them over a particular population.
-To do this, though, we can't just throw some statistics at a pile of observed data; we need to meet certain *causal assumptions* that allow us to imbue observed data with the meaning of potential outcomes and their analysis with causal effects.
+To do this, though, we can't just throw some statistics at a pile of observed data; we need to meet certain **causal assumptions** that allow us to imbue observed data with the meaning of potential outcomes and their analysis with causal effects.
 
 ::: callout-note
 ## Counterfactuals as potential outcomes
@@ -308,8 +308,8 @@ Here are some other things people incorrectly compare:
 -   Horses and donkeys (Hindi)
 :::
 
-For the first three-fourths or so of the book, we'll deal with so-called *unconfoundedness* methods.
-These methods all assume[^03-po-counterfactuals-2] three things: exchangeability, positivity, and consistency.
+For the first three-fourths or so of the book, we'll deal with so-called **unconfoundedness** methods.
+These methods all assume[^03-po-counterfactuals-2] three things: **exchangeability**, **positivity**, and **consistency**.
 We'll focus on these three assumptions for now, but other methods, such as instrumental variable analysis (@sec-iv-friends) and difference-in-differences (@sec-did), make other causal assumptions.
 Knowing a method's assumptions is essential for using it correctly, but it's also worth considering if another method's assumptions are more feasible for the problem you are trying to solve.
 

@@ -15,7 +15,7 @@ Of course, we use statistics to answer causal questions.
 It's necessary to answer most questions, even if the statistics are basic (as they often are in randomized designs).
 However, statistics alone do not allow us to address all of the assumptions of causal inference.
 
-In 1973, Francis Anscombe introduced a set of four datasets called *Anscombe's Quartet*.
+In 1973, Francis Anscombe introduced a set of four datasets called **Anscombe's Quartet**.
 These data illustrated an important lesson: summary statistics alone cannot help you understand data; you must also visualize your data.
 In the plots in @fig-anscombe, each data set has remarkably similar summary statistics, including means and correlations that are nearly identical.
 
@@ -32,7 +32,7 @@ anscombe_quartet |>
   facet_wrap(~dataset)
 ```
 
-The Datasaurus Dozen is a modern take on Anscombe's Quartet.
+The **Datasaurus Dozen** is a modern take on Anscombe's Quartet.
 The mean, standard deviation, and correlation are nearly identical in each dataset, but the visualizations are very different.
 
 ```{r}
@@ -56,9 +56,9 @@ datasaurus_dozen |>
 ```
 
 In causal inference, however, even visualization is insufficient to untangle causal effects.
-As we visualized in DAGs in @sec-dags, background knowledge is required to infer causation from correlation [@onthei1999].
+As saw in @sec-counterfactuals and @sec-dags, unverifiable assumptions based on background knowledge is required to infer causation from correlation [@onthei1999].
 
-Inspired by Anscombe's quartet, the *causal quartet* has many of the same properties of Anscombe's quartet and the Datasaurus Dozen: the numerical summaries of the variables in the dataset are the same [@dagostinomcgowan2023].
+Inspired by Anscombe's quartet, the **Causal Quartet** has many of the same properties of Anscombe's quartet and the Datasaurus Dozen: the numerical summaries of the variables in the dataset are the same [@dagostinomcgowan2023].
 Unlike these data, the causal quartet also *look* the same as each other.
 The difference is the causal structure that generated each dataset.
 @fig-causal_quartet_hidden shows four datasets where the observational relationship between `exposure` and `outcome` is virtually identical.
@@ -151,7 +151,7 @@ causal_quartet |>
 ```{r}
 #| label: fig-causal_quartet_covariate
 #| message: false
-#| fig-cap: "The correlation is the same in each dataset, but the visual relationship is not. However, the differences in the plots are not enough information to determine whether `covariate` is a confounder, mediator, or collider."
+#| fig-cap: "The scaled relationship between `exposure` and `covariate`. We still do not have enough information to determine whether `covariate` is a confounder, mediator, or collider."
 causal_quartet |>
   # hide the dataset names
   mutate(dataset = as.integer(factor(dataset))) |>
@@ -504,8 +504,6 @@ d_coll |>
 ```
 
 ::: callout-warning
-## Don't adjust for the future
-
 The time-ordering heuristic relies on a simple rule: don't adjust for the future.
 :::
 
@@ -628,7 +626,7 @@ In @fig-quartet_confounder, we see that `covariate` is a confounder.
 If this DAG represents the complete causal structure for `outcome`, the model `outcome ~ exposure + covariate` will give an unbiased estimate of the effect on `outcome` for `exposure`, assuming we've met other assumptions of the modeling process.
 The adjustment set for `covariate`'s effect on `outcome` is empty, and `exposure` is not a collider, so controlling for it does not induce bias[^06-not-just-a-stats-problem-4].
 But look again.
-`exposure` is a mediator for `covariate`'s effect on `outcome`; some of the total effect is mediated through `outcome`, while there is also a direct effect of `covariate` on `outcome`. **Both estimates are unbiased, but they are different *types* of estimates**. The effect of `exposure` on `outcome` is the *total effect* of that relationship, while the effect of `covariate` on `outcome` is the *direct effect*.
+`exposure` is a mediator for `covariate`'s effect on `outcome`; some of the total effect is mediated through `outcome`, while there is also a direct effect of `covariate` on `outcome`. Both estimates are unbiased, but they are different *types* of estimates. The effect of `exposure` on `outcome` is the *total effect* of that relationship, while the effect of `covariate` on `outcome` is the *direct effect*.
 
 [^06-not-just-a-stats-problem-4]: Additionally, OLS produces a *collapsible* effect.
     Other effects, like the odds and hazards ratios, are *non-collapsible*, meaning that the conditional odds or hazards ratio might differ from its marginal version, even when there is no confounding.
