@@ -111,7 +111,7 @@ Our causal effect of interest is often some difference in potential outcomes, su
 In the case of Ice-T and Spike, we're interested in their individual causal effects:
 
 -   $Y_{Ice-T}(continue) - Y_{Ice-T}(quit)$
--   $Y_{Spike}(continue) - Y_{Ice-T}(quit)$
+-   $Y_{Spike}(continue) - Y_{Spike}(quit)$
 
 Here, we're missing $Y_{Ice-T}(continue)$ and $Y_{Spike}(quit)$, so we can't calculate these values.
 In practice, we need to use observed data as proxies for the missing potential outcomes, and we usually average them over a particular population.
