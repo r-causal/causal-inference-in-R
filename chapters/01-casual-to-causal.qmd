@@ -386,7 +386,7 @@ Unfortunately, this is not always the case; causal effects needn't predict parti
 There is no way to know using data alone, the topic of @sec-quartets.
 
 Let's look at the causal perspective first because it's a bit simpler.
-Consider a causally unbiased model for an exposure which only includes variables related to the outcome *and* the exposure.
+Consider a causally unbiased model for an exposure that only includes variables related to the outcome *and* the exposure.
 In other words, this model provides us with the correct answer for the exposure of interest but doesn't include other predictors of the outcome (which can sometimes be a good idea, as discussed in @sec-strat-outcome).
 If an outcome has many causes, a model that accurately describes the relationship with a single exposure likely won't predict the outcome very well.
 Likewise, if a true causal effect of the exposure on the outcome is small, it will bring little predictive value.
