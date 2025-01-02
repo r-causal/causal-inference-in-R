@@ -57,8 +57,26 @@ rankings |>
   ggplot(aes(x = rank, y = root_word, fill = rating)) +
   geom_col(position = position_fill(reverse = TRUE)) +
   scale_fill_viridis_d(direction = -1) +
-  labs(y = "root word") +
-  theme(axis.ticks = element_blank(), panel.grid = element_blank())
+  labs(
+    title = "Causal strength of root words",
+    subtitle = glue::glue(
+      "Root words were ranked as: ",
+      '<span style="color:#FDE725FF">**None**</span>, ',
+      '<span style="color:#35B779FF">**Weak**</span>, ',
+      '<span style="color:#31688EFF">**Moderate**</span>, ',
+      'or <span style="color:#440154FF">**Strong**</span>'
+    ),
+    x = NULL,
+    y = NULL
+  ) +
+  scale_x_continuous(labels = scales::percent) +
+  theme(
+    axis.ticks = element_blank(),
+    panel.grid.major = element_blank(),
+    plot.title.position = "plot",
+    plot.subtitle = ggtext::element_markdown(),
+    legend.position = "none"
+  )
 ```
 
 Instead of clear questions with obvious assumptions and goals, we end up with "Schrödinger's causal inference":
@@ -67,7 +85,7 @@ Instead of clear questions with obvious assumptions and goals, we end up with "S
 >
 > --- @haber_causal_language
 
-This approach is one instance to *casual* inference: making inferences without doing the necessary work to understand causal questions and deal with the assumptions arround answering them.
+This approach is one instance of *casual* inference: making inferences without doing the necessary work to understand causal questions and deal with the assumptions around answering them.
 
 ## Description, prediction, and explanation
 
@@ -89,7 +107,7 @@ Descriptive analyses are usually based on statistical summaries such as measures
 The goal of applying more advanced techniques like regression is different in descriptive analyses than in either predictive or causal studies.
 "Adjusting" for a variable in descriptive analyses means that we are removing its associational effect (and thus changing our question), *not* that we are controlling for confounding.
 
-In epidemiology, a valuable concept for descriptive analyses is "person, place, and time" -- who has what disease, where, and when.
+In epidemiology, a valuable concept for descriptive analyses is "person, place, and time"---who has what disease, where, and when.
 This concept is also a good template for descriptive analyses in other fields.
 Usually, we want to be clear about what population we're trying to describe, so we need to be as specific as possible.
 For human health, describing the people involved, the location, and the period are all critical.
@@ -157,12 +175,17 @@ ggplot(
   facet_wrap(vars(country), scales = "free_y") +
   scale_y_continuous(labels = scales::label_comma(), n.breaks = 4) +
   labs(
-    x = "Week",
-    y = "Deaths",
-    title = "<span style = 'color:#D55E00;'>2020 deaths</span> compared to <span style = 'color:#4682b4;'>expected deaths</span>",
-    subtitle = "Number of deaths per week from all causes  vs. recent years"
+    x = NULL,
+    y = NULL,
+    title = "<span style = 'color:#D55E00;'>**2020 deaths**</span> compared to <span style = 'color:#4682b4;'>**expected deaths**</span>",
+    subtitle = "Number of deaths per week from all causes vs. recent years"
   ) +
-  theme(text = element_text(size = 18), plot.title = ggtext::element_markdown())
+  theme(
+    text = element_text(size = 18),
+    axis.text.x = element_blank(),
+    plot.title = ggtext::element_markdown(),
+    plot.title.position = "plot"
+  )
 ```
 
 Here are some other great examples of descriptive analyses.
@@ -298,7 +321,7 @@ Importantly, our goal is to answer this question clearly and precisely.
 In practice, this means using techniques like study design (e.g., a randomized trial) or statistical methods (like propensity scores) to calculate an unbiased effect of the exposure on the outcome.
 
 As with prediction and description, it's better to start with a clear, precise question to get a clear, precise answer.
-In statistics and data science, particularly as we swim through the ocean of data of the modern world, we often end up with an answer without a question (e.g., `42`).
+In statistics and data science, particularly as we swim through the ocean of data of the modern world, we often end up with an answer without a question (e.g., [`42`](https://en.wikipedia.org/wiki/42_(number)#The_Hitchhiker's_Guide_to_the_Galaxy)).
 This, of course, makes interpretation of the answer difficult.
 In @sec-diag, we'll discuss the structure of causal questions.
 We'll discuss philosophical and practical ways to sharpen our questions in [Chapter -@sec-counterfactuals].
@@ -363,9 +386,9 @@ Unfortunately, this is not always the case; causal effects needn't predict parti
 There is no way to know using data alone, the topic of @sec-quartets.
 
 Let's look at the causal perspective first because it's a bit simpler.
-Consider a causally unbiased model for an exposure but only includes variables related to the outcome *and* the exposure.
+Consider a causally unbiased model for an exposure that only includes variables related to the outcome *and* the exposure.
 In other words, this model provides us with the correct answer for the exposure of interest but doesn't include other predictors of the outcome (which can sometimes be a good idea, as discussed in @sec-strat-outcome).
-If an outcome has many causes, a model that accurately describes the relationship with the exposure likely won't predict the outcome very well.
+If an outcome has many causes, a model that accurately describes the relationship with a single exposure likely won't predict the outcome very well.
 Likewise, if a true causal effect of the exposure on the outcome is small, it will bring little predictive value.
 In other words, the predictive ability of a model, whether high or small, can't help us distinguish if the model is giving us the correct answer.
 Of course, low predictive power might also indicate that a causal effect isn't much use from an applied perspective, although that depends on several statistical factors.
@@ -397,7 +420,7 @@ Other variables, too, which are invalid from a causal perspective, either by bei
 Thus, predictive accuracy is not a good measure of causality.
 
 A closely related idea is the *Table Two Fallacy*, so-called because, in health research papers, descriptive analyses are often presented in Table 1, and regression models are often presented in Table 2 [@Westreich2013].
-The Table Two Fallacy is when a researcher presents confounders and other non-effect variables, particularly when they interpret those coefficients as if they, too, were causal.
+The Table Two Fallacy is when a researcher presents confounders and other non-exposure variables, particularly when they interpret those coefficients as if they, too, were causal.
 The problem is that in some situations, the model to estimate an unbiased effect of one variable may not be the same model to estimate an unbiased effect of another variable.
 In other words, we can't interpret the effects of confounders as causal because they might *themselves* be confounded by another variable unrelated to the original exposure.
 
@@ -406,7 +429,7 @@ A predictive model gains some of its predictive power from the causal structure 
 However, the same model in the same data with different goals will have different usefulness depending on those goals.
 <!-- TODO: uncomment this when section is written -- We'll dive more deeply into this topic in @sec-causal-pred-revisit. -->
 
-## Diagraming a causal claim {#sec-diag}
+## Diagramming a causal claim {#sec-diag}
 
 Each analysis task, whether descriptive, predictive, or inferential, should start with a clear, precise question.
 Let's diagram them to understand better the structure of causal questions (to which we'll return our focus).
