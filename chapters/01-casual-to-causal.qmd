@@ -386,9 +386,9 @@ Unfortunately, this is not always the case; causal effects needn't predict parti
 There is no way to know using data alone, the topic of @sec-quartets.
 
 Let's look at the causal perspective first because it's a bit simpler.
-Consider a causally unbiased model for an exposure but only includes variables related to the outcome *and* the exposure.
+Consider a causally unbiased model for an exposure which only includes variables related to the outcome *and* the exposure.
 In other words, this model provides us with the correct answer for the exposure of interest but doesn't include other predictors of the outcome (which can sometimes be a good idea, as discussed in @sec-strat-outcome).
-If an outcome has many causes, a model that accurately describes the relationship with the exposure likely won't predict the outcome very well.
+If an outcome has many causes, a model that accurately describes the relationship with a single exposure likely won't predict the outcome very well.
 Likewise, if a true causal effect of the exposure on the outcome is small, it will bring little predictive value.
 In other words, the predictive ability of a model, whether high or small, can't help us distinguish if the model is giving us the correct answer.
 Of course, low predictive power might also indicate that a causal effect isn't much use from an applied perspective, although that depends on several statistical factors.
@@ -420,7 +420,7 @@ Other variables, too, which are invalid from a causal perspective, either by bei
 Thus, predictive accuracy is not a good measure of causality.
 
 A closely related idea is the *Table Two Fallacy*, so-called because, in health research papers, descriptive analyses are often presented in Table 1, and regression models are often presented in Table 2 [@Westreich2013].
-The Table Two Fallacy is when a researcher presents confounders and other non-effect variables, particularly when they interpret those coefficients as if they, too, were causal.
+The Table Two Fallacy is when a researcher presents confounders and other non-exposure variables, particularly when they interpret those coefficients as if they, too, were causal.
 The problem is that in some situations, the model to estimate an unbiased effect of one variable may not be the same model to estimate an unbiased effect of another variable.
 In other words, we can't interpret the effects of confounders as causal because they might *themselves* be confounded by another variable unrelated to the original exposure.
 
@@ -429,7 +429,7 @@ A predictive model gains some of its predictive power from the causal structure 
 However, the same model in the same data with different goals will have different usefulness depending on those goals.
 <!-- TODO: uncomment this when section is written -- We'll dive more deeply into this topic in @sec-causal-pred-revisit. -->
 
-## Diagraming a causal claim {#sec-diag}
+## Diagramming a causal claim {#sec-diag}
 
 Each analysis task, whether descriptive, predictive, or inferential, should start with a clear, precise question.
 Let's diagram them to understand better the structure of causal questions (to which we'll return our focus).
