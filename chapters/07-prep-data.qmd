@@ -27,13 +27,13 @@ attractions_metadata
 ```
 
 Additionally, this package contains a dataset with raw metadata about the parks, with observations recorded daily.
-This metadata includes information like the Walt Disney World ticket season on a particular day (whether it is high season---think Christmas---or low season---think right when school started), what the historic temperatures were in the park on that day, and whether there was a special event, such as Extra Magic Hours in the park on that day (did the park open early to guests staying in the Walt Disney World resorts?).
+The metadata includes information like the Walt Disney World ticket season on a particular day (whether it is peak season---think Christmas---value season---think right when school started---or regular season), what the historic temperatures were in the park on that day, and whether there was a special event, such as Extra Magic Hours (where the park opens early to guests staying in the Walt Disney World resorts) in the park on that day.
 
 ```{r}
 parks_metadata_raw
 ```
 
-Each year, some days are selected for Extra Magic Mornings.
+Each year, some days are selected for Extra Magic Hours in the mornings.
 
 ```{r}
 parks_metadata_raw |>
@@ -67,7 +67,9 @@ seven_dwarfs_train |>
   count(park_date, sort = TRUE)
 ```
 
-Here's our causal question:
+## Asking a causal question
+
+Here's our causal question that we're hoping to answer with these datasets:
 
 **Is there a relationship between whether there were Extra Magic Hours in the morning at Magic Kingdom and the average posted wait time for the Seven Dwarfs Mine Train the same day between 9 AM and 10 AM in 2018?**
 
@@ -90,9 +92,10 @@ We are interested in examining whether Extra Magic Hours in the morning ("Extra 
 @fig-dag-magic is a proposed DAG for this question.
 We assume that Extra Magic Morning is decided based on the time the park closes, the ticket season, and the historic high temperature.
 Likewise, these three variables are also causes of the average posted wait time.
-Of course, this is a greatly simplified DAG.
+This is a greatly simplified DAG, of course.
 Moreover, *someone* at Disney knew the assignment mechanism for deciding Extra Magic Hours for 2018, so if we were working there, we'd want to find out as much as we could about that process.
-For the example's sake, though, we'll keep it simple.
+We imagine that the actually causal processes for both the exposure and outcome are more complex than this.
+For example's sake, though, we'll keep it simple.
 
 ```{r}
 #| label: fig-dag-magic
@@ -148,7 +151,7 @@ Here, our observations are *days*.
 @tbl-tt-7dwarfs maps each element of the causal question to elements of the target trial protocol.
 
 | Protocol Step               | Description                                                                                                                | Target Trial                                                                                                                            | Emulation                                                                                                                                                                              |
-|-----------------|-----------------|-----------------|---------------------|
+|------------------|------------------|------------------|--------------------|
 | Eligibility criteria        | Which days should be included in the study?                                                                                | Days must be from 2018.                                                                                                                 | Same as target trial.                                                                                                                                                                  |
 | Exposure definition         | When eligible, what precise exposure will days under study receive?                                                        | Exposed: Magic Kingdom had Extra Magic Hours in the morning. Otherwise, unexposed.                                                      | Same as target trial.                                                                                                                                                                  |
 | Assignment procedures       | How will eligible days be assigned to an exposure?                                                                         | Days are randomized with a 50% probability of having Extra Magic Hours in the morning. The assignment is non-blinded.                   | Days are assigned the exposure consistent with their data, e.g., whether or not there were Extra Magic Hours that morning. Randomization is emulated using adjustment for confounding. |
@@ -179,8 +182,7 @@ In a target trial emulation, we often need to apply those actions ourselves to t
 
 We need to manipulate both the `seven_dwarfs_train` dataset and the `parks_metadata_raw` dataset to answer our causal question.
 Let's start with the `seven_dwarfs_train` data set.
-The Seven Dwarfs Mine Train ride is an attraction at Walt Disney World's Magic Kingdom.
-The `seven_dwarfs_train` dataset in the {touringplans} package contains information about the date a particular wait time was recorded (`park_date`), the time of the wait time (`wait_datetime`), the actual wait time (`wait_minutes_actual`), and the posted wait time (`wait_minutes_posted`).
+The `seven_dwarfs_train` dataset in the `{touringplans}` package contains information about the date a particular wait time was recorded (`park_date`), the time of the wait time (`wait_datetime`), the actual wait time (`wait_minutes_actual`), and the posted wait time (`wait_minutes_posted`).
 
 Let's take a look at this dataset.
 The range of the dates looks reasonable, as do the posted wait times.
@@ -191,8 +193,7 @@ seven_dwarfs_train |>
   reframe(
     across(
       c(park_date, starts_with("wait_minutes")),
-      range,
-      na.rm = TRUE
+      \(.x) range(.x, na.rm = TRUE)
     )
   )
 ```
@@ -204,7 +205,7 @@ seven_dwarfs_train <- seven_dwarfs_train |>
   filter(wait_minutes_actual >= 0 | is.na(wait_minutes_actual))
 ```
 
-The distribution of the wait times is quite wide, with actual times appearing smaller on average than posted times.
+The distribution of the wait times is quite wide, with actual times appearing shorter on average than posted times.
 
 ```{r}
 #| warning: false
@@ -232,7 +233,7 @@ seven_dwarfs_train |>
 ::: callout-note
 Doing this kind of data checking is essential to understand the limits and potential issues in the data.
 R has many great tools for quickly summarizing data sets, such as `skimr::skim()` and `pointblank::scan_data()`.
-We also recommend using a data validation tool like pointblank to write down and test your expectations about how the data should be.
+We also recommend using a data validation tool like `{pointblank}` to write down and test your expectations about the data.
 :::
 
 We need this dataset to calculate our outcome, defined as the average posted wait time between 9 AM and 10 AM.
@@ -277,13 +278,13 @@ seven_dwarfs_9 <- seven_dwarfs_train |>
 seven_dwarfs_9
 ```
 
+## Working with multiple data sources
+
 Now that we have our outcome settled, we need to get our exposure variable and any other park-specific variables about the day in question that we may adjust for.
 Examining @fig-dag-magic, we see that we have three open backdoor paths.
 We can close them with the three confounders on each path: the ticket season, the time the park closed, and the historic high temperature.
 These are in the `parks_metadata_raw` dataset.
 This data will require extra cleaning since the names are in the original format.
-
-## Working with multiple data sources
 
 Frequently, we find ourselves merging data from multiple sources when attempting to answer causal questions to ensure we have the outcome, exposure, and confounders joined together.
 Let's clean this data up and join it to the outcome data.
@@ -302,11 +303,14 @@ parks_metadata <- parks_metadata_raw |>
   ## exposure definition, assignment procedure,
   ## and analysis plan: select the ID, exposure, and confounders
   select(
+    # id
     park_date = date,
+    # exposure
+    park_extra_magic_morning = mkemhmorn,
+    # confounders
     park_ticket_season = wdw_ticket_season,
     park_temperature_high = wdwmaxtemp,
-    park_close = mkclose,
-    park_extra_magic_morning = mkemhmorn
+    park_close = mkclose
   ) |>
   ## eligibility criteria: days in 2018
   filter(year(park_date) == 2018)
@@ -357,43 +361,52 @@ ticket_season_by_month |>
   arrange(n, park_ticket_season)
 ```
 
-There were many more regular ticket days in the summer and more peak ticket days in March, May, and December.
+There were many more regular ticket days in the summer and more peak ticket days in March, May, and December (@fig-ticket-season).
 
 ```{r}
+#| label: fig-ticket-season
+#| fig-cap: "Ticket season by month. The proportion of days of each ticket prices varies across the year. There were many more regular ticket days in the summer and more peak ticket days in March, May, and December. Additionally, there were no peak tickets in August or September or value tickets in June, July, or December."
 ticket_season_by_month |>
   ggplot(aes(month, n, fill = park_ticket_season)) +
-  geom_col(position = "fill") +
+  geom_col(position = "fill", alpha = .8) +
   labs(
     y = "proportion of days",
     x = NULL,
     fill = "ticket season"
-  )
+  ) + 
+  theme(panel.grid.major.x = element_blank())
 ```
 
-Throughout much of the year, the Magic Kingdom was open until 10 PM, 11 PM, or midnight, although there was considerable variety, including one day that ended at 4:30 PM.
+Throughout much of the year, the Magic Kingdom was open until 22:00, 21:00, or midnight, although there was considerable variety, including one day that ended at 16:30.
 
 ```{r}
 parks_metadata |>
   count(park_close, sort = TRUE)
 ```
 
-The
+The close time varies across the year, with earlier times happening more often in the late fall and winter (@fig-close-time).
+Some early times don't happen in the summer, and some late times don't happen in late fall.
 
 ```{r}
+#| label: fig-close-time
+#| fig-cap: "Close time for the Magic Kingdom park by month. The close time varies across the year. Earlier close times occur more often in the late fall and winter. There are months where some close times don't occur in any days, sich as early times in the summer and late times in the late fall."
 parks_metadata |>
   count_by_month(park_close) |>
   ggplot(aes(month, n, fill = ordered(park_close))) +
-  geom_col(position = "fill") +
+  geom_col(position = "fill", alpha = .85) +
   labs(
     y = "proportion of days",
     x = NULL,
     fill = "close time"
-  )
+  ) + 
+  theme(panel.grid.major.x = element_blank())
 ```
 
-Disney World is in Florida, so it never gets particularly cold, but it gets hot in the summer.
+Disney World is in Florida, so it never gets particularly cold, but it gets hot in the summer (@fig-high-temp).
 
 ```{r}
+#| label: fig-high-temp
+#| fig-cap: "Historic high temperature in farenheit for Walt Disney World by month. Being in a warm climate, the park never gets particularly cold, but the temperature does vary quite a bit throughout the year, with very hot summers."
 parks_metadata |>
   mutate(
     month = month(
@@ -465,18 +478,26 @@ Days with Extra Magic Mornings were also slightly cooler, but not by much.
 #| tbl-cap: A descriptive table of Extra Magic Morning in the touringplans dataset. This table shows the distributions of these variables in the observed population.
 library(gtsummary)
 library(labelled)
-seven_dwarfs_9 <- seven_dwarfs_9 |>
-  mutate(park_close = as.character(park_close)) |>
+seven_dwarfs_9 |>
   set_variable_labels(
     park_ticket_season = "Ticket Season",
     park_close = "Close Time",
     park_temperature_high = "Historic High Temperature"
-  )
-seven_dwarfs_9 |>
-  mutate(park_extra_magic_morning = factor(park_extra_magic_morning, labels = c("No Extra Magic Hours", "Extra Magic Hours"))) |>
+  ) |> 
+  mutate(
+    park_close = as.character(park_close),
+    park_extra_magic_morning = factor(
+      park_extra_magic_morning, 
+      labels = c("No Extra Magic Hours", "Extra Magic Hours")
+    )
+  ) |>
   tbl_summary(
     by = park_extra_magic_morning,
-    include = c(park_ticket_season, park_close, park_temperature_high)
+    include = c(
+      park_ticket_season,
+      park_close, 
+      park_temperature_high
+    )
   ) |>
   # add an overall column to the table
   add_overall(last = TRUE)
@@ -507,7 +528,7 @@ seven_dwarfs_train |>
   select(starts_with("wait_minutes"))
 ```
 
-All said and done, though, we're only missing posted wait times for 8 days, about 2% of the year.
+All said and done, though, we're only missing posted wait times for 8 days in addition to the 3 days with no records, about 3% of the year total.
 This amount of missingness isn't likely to significantly impact our results.
 For this first analysis, we will ignore the missing values in the posted wait times.
 We have a lot more missingness in the actual wait times, a topic we'll revisit in @sec-missingness.
@@ -516,7 +537,7 @@ Since we're not using this outcome yet, we'll set that aside, too.
 ## Exploring causal assumptions
 
 As we've seen in @sec-assump and @sec-quartets, data can't solve the problem of the unverifiable assumptions we need to make to do causal inference.
-However, it can still provide information.
+However, it can still provide valuable information.
 
 Exchangeability is a tough assumption to check.
 In many cases, a confounder will be associated with both the exposure and the outcome.
@@ -527,13 +548,26 @@ One way we can check for consistency is to use data for multiple versions of tre
 For instance, if our question had instead been about "Extra Magic Hours" rather than "Extra Magic Hours in the morning", we might have a consistency violation.
 Extra Magic Hours also happen in the evening, and it's plausible that that would have a different effect than those in the morning.
 We could explore the data by separating the two Extra Magic Hours types into separate exposures.
+We won't calculate this since we're already being specific, but the idea is the same as any other type of stratification.
+Here, we're grouping by the values of the `exposure` as we have them assigned and the `exposure_type`, a variable that tells us more details about the exposure (say, "morning" or "evening" for the exposure "Extra Magic Hours").
+
+```{r}
+#| eval: false
+dataset |> 
+  group_by(exposure, exposure_type) |> 
+  summarize(...)
+```
+
 There are also harder-to-measure ways that Extra Magic Mornings might be different from one another; we might not be able to check these without a lot of detective work.
 We won't probe this assumption further since we've already clarified that we're using Extra Magic Mornings.
-In practice, you want to be cautious about such a decision; be an expert in your exposure.
+In practice, you want to be cautious about such a decision; be an expert in your exposure and its potential manifestations.
 
+Let's dig into positivity.
 The positivity assumption requires that there are exposed and unexposed subjects within each level and combination of the variables used to achieve exchangeability.
 We can explore this by visualizing the distribution of each of our proposed confounders stratified by the exposure.
-The only way we can tell the difference between stochastic and structural positivity is through background knowledge.
+This well help us understand if we are missing exposed or unexposed days for a given level.
+The only way we can tell the difference between stochastic and structural positivity, however, is through background knowledge.
+For instance, it might just be coincidence that Extra Magic Hours didn't happen on a day with a given close time (stochastic violation), but there may be days that are ineligible for Extra Magic Hours given the confounders (structural violation).
 
 ### Single variable checks for positivity violations
 
@@ -542,7 +576,7 @@ Both exposure levels span the majority of the covariate space, but none of the d
 
 ```{r}
 #| label: fig-close
-#| fig-cap: "Distribution of Magic Kingdom park closing time by whether the date had extra magic hours in the morning"
+#| fig-cap: "Distribution of Magic Kingdom park closing time by whether the date had Extra Magic Hours in the morning. Some close times did not have days with Extra Magic Hours, a potential positivity violation."
 ggplot(
   seven_dwarfs_9,
   aes(
@@ -551,11 +585,12 @@ ggplot(
     fill = factor(park_extra_magic_morning)
   )
 ) +
-  geom_bar(position = "fill") +
+  geom_bar(position = "fill", alpha = .8) +
   labs(
     fill = "Extra Magic Morning",
     x = "Time of Park Close"
-  )
+  ) +
+  theme(panel.grid.major.x = element_blank())
 ```
 
 As we know, only one day ended at 16:30, but there were 28 that ended at 21:00, none of which had Extra Magic Mornings.
@@ -563,6 +598,7 @@ That makes it difficult to make inferences about this region of the covariate sp
 We'll explore both in detail later on.
 
 ```{r}
+#| message: false
 library(hms)
 seven_dwarfs_9 |>
   count(park_close, park_extra_magic_morning) |>
@@ -575,12 +611,12 @@ seven_dwarfs_9 |>
 ```
 
 We can use a mirrored histogram to examine the distribution of historic high temperatures at Magic Kingdom by whether the date had Extra Magic Hours in the morning.
-To create one, we'll use the {halfmoon} package's `geom_mirror_histogram()`.
+To create one, we'll use the `{halfmoon}` package's `geom_mirror_histogram()`.
 Examining @fig-temp, very few days in the exposed group have maximum temperatures less than 60 degrees.
 
 ```{r}
 #| label: fig-temp
-#| fig-cap: "Distribution of historic temperature high at Magic Kingdom by whether the date had extra magic hours in the morning"
+#| fig-cap: "Distribution of historic  high temperature at Magic Kingdom by whether the date had Extra Magic Hours in the morning. Only 1 day with Extra Magic Hours had an historic high temperature of less than 60 degress Fahrenheit."
 library(halfmoon)
 ggplot(
   seven_dwarfs_9,
@@ -590,11 +626,11 @@ ggplot(
     fill = factor(park_extra_magic_morning)
   )
 ) +
-  geom_mirror_histogram(bins = 20) +
+  geom_mirror_histogram(bins = 20, alpha = .8) +
   scale_y_continuous(labels = abs) +
   labs(
     fill = "Extra Magic Morning",
-    x = "Historic maximum temperature (degrees F)"
+    x = "Historic high temperature (F)"
   )
 ```
 
@@ -608,12 +644,12 @@ seven_dwarfs_9 |>
   count(park_extra_magic_morning)
 ```
 
-Finally, let's look at the distribution of ticket season by whether there were extra magic hours in the morning.
+Finally, let's look at the distribution of ticket season by whether there were Extra Magic Hours in the morning.
 Examining @fig-ticket, we do not see any positivity violations.
 
 ```{r}
 #| label: fig-ticket
-#| fig-cap: "Distribution of historic temperature high at Magic Kingdom by whether the date had extra magic hours in the morning"
+#| fig-cap: "Distribution of ticket season by whether the date had Extra Magic Hours in the morning. As days with and without Extra Magic Hours happen across all three levels, there don't appear to be positivity violations."
 ggplot(
   seven_dwarfs_9,
   aes(
@@ -622,18 +658,19 @@ ggplot(
     fill = factor(park_extra_magic_morning)
   )
 ) +
-  geom_bar(position = "dodge") +
+  geom_bar(position = "dodge", alpha = .8) +
   labs(
     fill = "Extra Magic Morning",
     x = "Magic Kingdom Ticket Season"
-  )
+  ) +
+  theme(panel.grid.major.x = element_blank())
 ```
 
 ### Multiple variable checks for positivity violations
 
 Among the three confounders, we see some potential evidence of positivity violations.
 We can examine this more closely because we have so few variables here.
-Let's start by discretizing the `park_temperature_high` variable a bit (we will cut it into tertiles).
+Let's start by discretizing the `park_temperature_high` variable, cutting it into tertiles.
 
 ```{r}
 #| label: fig-positivity
@@ -641,16 +678,26 @@ Let's start by discretizing the `park_temperature_high` variable a bit (we will 
 #| fig-width: 9
 prop_exposed <- seven_dwarfs_9 |>
   ## cut park_temperature_high into tertiles
-  mutate(park_temperature_high_bin = cut(park_temperature_high, breaks = 3)) |>
+  mutate(park_temperature_high_bin = cut(
+      park_temperature_high,
+      breaks = 3
+  )) |>
   ## bin park close time
   mutate(park_close_bin = case_when(
     hour(park_close) < 19 & hour(park_close) > 12 ~ "(1) early",
     hour(park_close) >= 19 & hour(park_close) < 24 ~ "(2) standard",
     hour(park_close) >= 24 | hour(park_close) < 12 ~ "(3) late"
   )) |>
-  group_by(park_close_bin, park_temperature_high_bin, park_ticket_season) |>
+  group_by(
+    park_close_bin,
+    park_temperature_high_bin,
+    park_ticket_season
+  ) |>
   ## calculate the proportion exposed in each bin
-  summarize(prop_exposed = mean(park_extra_magic_morning), .groups = "drop") |>
+  summarize(
+    prop_exposed = mean(park_extra_magic_morning), 
+    .groups = "drop"
+  ) |>
   complete(
     park_close_bin,
     park_temperature_high_bin,
@@ -659,28 +706,36 @@ prop_exposed <- seven_dwarfs_9 |>
   )
 
 prop_exposed |>
-  ggplot(aes(x = park_close_bin, y = park_temperature_high_bin, fill = prop_exposed)) +
+  ggplot(
+    aes(
+      x = park_close_bin, 
+      y = park_temperature_high_bin, 
+      fill = prop_exposed
+    )
+  ) +
   geom_tile() +
   scale_fill_viridis_c(begin = .1, end = .9) +
-  facet_wrap(~park_ticket_season) +
+  facet_wrap(~ park_ticket_season) +
   labs(
-    y = "Historic Maximum Temperature (F)",
+    y = "Historic High Temperature (F)",
     x = "Magic Kingdom Park Close Time",
-    fill = "Proportion of Days Exposed"
-  )
+    fill = "Proportion of\nDays Exposed"
+  ) +
+  theme(panel.grid = element_blank())
 ```
 
 @fig-positivity shows an interesting potential violation.
 100% of days with lower temperatures (historic highs between 51 and 65 degrees) that are in the peak ticket season have Extra Magic Hours in the morning.
 This actually makes sense if we think a bit about this data set.
 The only days with cold temperatures in Florida that would also be considered a "peak" time to visit Walt Disney World would be over Christmas and New Year.
-During this time, there historically were always extra magic hours.
+During this time, there historically were always Extra Magic Hours.
 
 We also have nine combinations that were never exposed.
 
 ```{r}
 #| label: tbl-positivity-check
 #| tbl-cap: "Among binned combinations of confounders, 10 were either always exposed or never exposed. These represent potential positivity violations."
+#| code-fold: true
 library(gt)
 prop_exposed |>
   filter(prop_exposed %in% c(1, 0)) |>
