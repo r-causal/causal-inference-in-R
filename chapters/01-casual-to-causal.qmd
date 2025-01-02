@@ -85,7 +85,7 @@ Instead of clear questions with obvious assumptions and goals, we end up with "S
 >
 > --- @haber_causal_language
 
-This approach is one instance to *casual* inference: making inferences without doing the necessary work to understand causal questions and deal with the assumptions arround answering them.
+This approach is one instance of *casual* inference: making inferences without doing the necessary work to understand causal questions and deal with the assumptions around answering them.
 
 ## Description, prediction, and explanation
 
@@ -107,7 +107,7 @@ Descriptive analyses are usually based on statistical summaries such as measures
 The goal of applying more advanced techniques like regression is different in descriptive analyses than in either predictive or causal studies.
 "Adjusting" for a variable in descriptive analyses means that we are removing its associational effect (and thus changing our question), *not* that we are controlling for confounding.
 
-In epidemiology, a valuable concept for descriptive analyses is "person, place, and time" -- who has what disease, where, and when.
+In epidemiology, a valuable concept for descriptive analyses is "person, place, and time" --- who has what disease, where, and when.
 This concept is also a good template for descriptive analyses in other fields.
 Usually, we want to be clear about what population we're trying to describe, so we need to be as specific as possible.
 For human health, describing the people involved, the location, and the period are all critical.
