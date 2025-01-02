@@ -175,12 +175,17 @@ ggplot(
   facet_wrap(vars(country), scales = "free_y") +
   scale_y_continuous(labels = scales::label_comma(), n.breaks = 4) +
   labs(
-    x = "Week",
-    y = "Deaths",
+    x = NULL,
+    y = NULL,
     title = "<span style = 'color:#D55E00;'>2020 deaths</span> compared to <span style = 'color:#4682b4;'>expected deaths</span>",
-    subtitle = "Number of deaths per week from all causes  vs. recent years"
+    subtitle = "Number of deaths per week from all causes vs. recent years"
   ) +
-  theme(text = element_text(size = 18), plot.title = ggtext::element_markdown())
+  theme(
+    text = element_text(size = 18),
+    axis.text.x=element_blank(),
+    plot.title = ggtext::element_markdown(),
+    plot.title.position = "plot"
+  )
 ```
 
 Here are some other great examples of descriptive analyses.
