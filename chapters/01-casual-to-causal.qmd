@@ -57,8 +57,26 @@ rankings |>
   ggplot(aes(x = rank, y = root_word, fill = rating)) +
   geom_col(position = position_fill(reverse = TRUE)) +
   scale_fill_viridis_d(direction = -1) +
-  labs(y = "root word") +
-  theme(axis.ticks = element_blank(), panel.grid = element_blank())
+  labs(
+    title = "Causal strength of root words",
+    subtitle = glue::glue(
+      'Root words were ranked as: ',
+      '<span style="color:#FDE725FF">**None**</span>, ', 
+      '<span style="color:#35B779FF">**Weak**</span>, ', 
+      '<span style="color:#31688EFF">**Moderate**</span>, ', 
+      'or <span style="color:#440154FF">**Strong**</span>'
+    ),
+    x = NULL,
+    y = NULL
+  ) +
+  scale_x_continuous(labels = scales::percent) +
+  theme(
+    axis.ticks = element_blank(),
+    panel.grid = element_blank(),
+    plot.title.position = "plot",
+    plot.subtitle = ggtext::element_markdown(),
+    legend.position = "none"
+  )
 ```
 
 Instead of clear questions with obvious assumptions and goals, we end up with "Schrödinger's causal inference":
