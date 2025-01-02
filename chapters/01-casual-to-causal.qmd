@@ -60,10 +60,10 @@ rankings |>
   labs(
     title = "Causal strength of root words",
     subtitle = glue::glue(
-      'Root words were ranked as: ',
-      '<span style="color:#FDE725FF">**None**</span>, ', 
-      '<span style="color:#35B779FF">**Weak**</span>, ', 
-      '<span style="color:#31688EFF">**Moderate**</span>, ', 
+      "Root words were ranked as: ",
+      '<span style="color:#FDE725FF">**None**</span>, ',
+      '<span style="color:#35B779FF">**Weak**</span>, ',
+      '<span style="color:#31688EFF">**Moderate**</span>, ',
       'or <span style="color:#440154FF">**Strong**</span>'
     ),
     x = NULL,
