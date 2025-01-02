@@ -321,7 +321,7 @@ Importantly, our goal is to answer this question clearly and precisely.
 In practice, this means using techniques like study design (e.g., a randomized trial) or statistical methods (like propensity scores) to calculate an unbiased effect of the exposure on the outcome.
 
 As with prediction and description, it's better to start with a clear, precise question to get a clear, precise answer.
-In statistics and data science, particularly as we swim through the ocean of data of the modern world, we often end up with an answer without a question (e.g., `42`).
+In statistics and data science, particularly as we swim through the ocean of data of the modern world, we often end up with an answer without a question (e.g., [`42`](https://en.wikipedia.org/wiki/42_(number)#The_Hitchhiker's_Guide_to_the_Galaxy)).
 This, of course, makes interpretation of the answer difficult.
 In @sec-diag, we'll discuss the structure of causal questions.
 We'll discuss philosophical and practical ways to sharpen our questions in [Chapter -@sec-counterfactuals].
