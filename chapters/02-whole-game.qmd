@@ -40,7 +40,7 @@ Herodotus, the 5th century BC Greek author of *The Histories*, observed Egyptian
 
 Many modern nets are also treated with insecticide, dating back to Russian soldiers in World War II [@nevill1996], although some people still use them as fishing nets [@gettleman2015].
 
-It's easy to imagine a randomized trial that deals with this question: participants in a study are randomly assigned to use a bed net (Group A) or not (Group B), and we follow them over time to see if there is a difference in malaria risk between groups.
+It's easy to imagine a randomized trial that deals with this question: participants in a study are randomly assigned to use a bed net or not, and we follow them over time to see if there is a difference in malaria risk between groups.
 Randomization is often the best way to estimate a causal effect of an intervention because it reduces the number of assumptions we need to make for that estimate to be valid (we will discuss these assumptions in @sec-assump).
 In particular, randomization addresses confounding very well, accounting for confounders about which we may not even know.
 
@@ -89,7 +89,7 @@ As we saw in @sec-causal-question, we need to clarify some key areas:
     Whether a person died of malaria?
 
 -   **Risk among whom?**
-    What is the population to whom we're trying to apply this knowledge?
+    What population are we trying to apply this knowledge to?
     Who is it practical to include in our study?
     Who might we need to exclude?
 
@@ -161,7 +161,8 @@ net_data |>
 ```{r}
 #| echo = FALSE
 means <- net_data |>
-  summarize(malaria_risk = mean(malaria_risk), .by = net) |>
+  group_by(net) |> 
+  summarize(malaria_risk = mean(malaria_risk)) |>
   pull(malaria_risk)
 ```
 
@@ -170,7 +171,8 @@ The mean difference in malaria risk is about `r round(means[[1]] - means[[2]], d
 
 ```{r}
 net_data |>
-  summarize(malaria_risk = mean(malaria_risk), .by = net)
+  group_by(net) |> 
+  summarize(malaria_risk = mean(malaria_risk))
 ```
 
 And that's what we see with simple linear regression, as well, as we would expect.
@@ -184,11 +186,11 @@ net_data |>
 
 ## Draw our assumptions using a causal diagram
 
-If we attempt to interpret the above simple estimates as-is, a problem that we face is that other factors may be responsible for the effect we're seeing.
+If we attempt to interpret the above simple estimates as causal estimates, a problem that we face is that other factors may be responsible for the effect we're seeing.
 In this example, we'll focus on confounding: a common cause of net usage and malaria will bias the effect we see unless we account for it somehow.
 One of the best ways to determine which variables we need to account for is to use a causal diagram.
 These diagrams, also called **causal directed acyclic graphs (DAGs)**, visualize the assumptions that we're making about the causal relationships between the exposure, outcome, and other variables we think might be related.
-Importantly, DAG construction is not a data-driven approach; rather, we arrive at our presumed DAG through expert background knowledge regarding the exposure and outcome in question.
+Importantly, DAG construction is not a data-driven approach; rather, we arrive at our proposed DAG through expert background knowledge regarding the structure of the causal question.
 
 Here's the DAG that we're proposing for this question.
 
@@ -289,8 +291,8 @@ In real life, setting up a DAG is a challenge requiring deep thought, domain exp
 
 The chief problem we're dealing with is that, when we analyze the data we're working with, we see the impact of net usage on malaria risk *and of all these other relationships*.
 In DAG terminology, we have more than one open causal pathway.
-If this DAG is correct, we have *eight* causal pathways which will present themselves in the data as associations between bed net use and malaria risk.
-Specifically, the DAG reveals a path between net usage and malaria risk alongside seven other *confounding* pathways.
+If this DAG is correct, we have *eight* causal pathways: the path between net usage and malaria risk and seven other *confounding* pathways.
+The association between bed net use and malaria risk is a mixture of all of these pathways.
 
 ```{r}
 #| label: fig-net-data-confounding
@@ -410,7 +412,7 @@ In this example, we'll focus on weighting.
 In particular, we'll compute the inverse probability weight for the **average treatment effect (ATE)**.
 The ATE represents a particular causal question: what if *everyone* in the study used bed nets vs. what if *no one* in the study used bed nets?
 
-To calculate the ATE, we'll use the {[broom](https://broom.tidymodels.org/)} and {[propensity](https://github.com/r-causal/propensity)} packages.
+To calculate the ATE, we'll use the `{broom}` and `{propensity}` packages.
 broom's `augment()` function extracts prediction-related information from the model and joins it to the data.
 propensity's `wt_ate()` function calculates the inverse probability weight given the propensity score and exposure.
 
@@ -565,7 +567,7 @@ The nominal coverage of the confidence intervals will thus be wrong (they aren't
 We've got several ways to address this problem, which we'll discuss in detail in @sec-outcome-model, including the bootstrap, robust standard errors, and manually accounting for the estimation procedure with empirical sandwich estimators.
 For this example, we'll use the bootstrap, a flexible tool that calculates distributions of parameters using re-sampling.
 The bootstrap is a useful tool for many causal models where closed-form solutions to problems (particularly standard errors) don't exist or when we want to avoid parametric assumptions inherent to many such solutions; see @sec-appendix-bootstrap for a description of what the bootstrap is and how it works.
-We'll use the {[rsample](https://rsample.tidymodels.org/)} package from the tidymodels ecosystem to work with bootstrap samples.
+We'll use the `{rsample}` package from the tidymodels ecosystem to work with bootstrap samples.
 
 Because the bootstrap is so flexible, we need to think carefully about the sources of uncertainty in the statistic we're calculating.
 It might be tempting to write a function like this to fit the statistic we're interested in (the point estimate for `netTRUE`):
@@ -709,7 +711,7 @@ There are many potential sources of bias in any study and many sensitivity analy
 Let's start with a broad sensitivity analysis; then, we'll ask questions about specific unmeasured confounders.
 When we have less information about unmeasured confounders, we can use tipping point analysis to ask how much confounding it would take to tip my estimate to the null.
 In other words, what would the strength of the unmeasured confounder have to be to explain our results away?
-The {[tipr](https://github.com/r-causal/tipr)} package is a toolkit for conducting sensitivity analyses.
+The `{tipr}` package is a toolkit for conducting sensitivity analyses.
 Let's examine the tipping point for an unknown, normally-distributed confounder.
 The `tip_coef()` function takes an estimate (a beta coefficient from a regression model, or the upper or lower bound of the coefficient).
 It further requires either the 1) scaled differences in means of the confounder between exposure groups or 2) effect of the confounder on the outcome.
