@@ -381,7 +381,7 @@ data_observed <- data |>
     exposure = ifelse(
       rbinom(n(), 1, 0.5) == 1, "chocolate", "vanilla"
     ),
-    exposure = mixup(exposure),
+    exposure = mix_up(exposure),
     observed_outcome = case_when(
       exposure == "chocolate" ~ y_chocolate,
       exposure == "vanilla" ~ y_vanilla
