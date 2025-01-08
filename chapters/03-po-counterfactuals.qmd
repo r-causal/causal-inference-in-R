@@ -209,7 +209,7 @@ data_observed <- data |>
     # change the exposure to randomized, generated from
     # a binomial distribution with a probability of 0.5 for
     # being in either group
-    exposure = if_else(
+    exposure = ifelse(
       rbinom(n(), 1, 0.5) == 1, "chocolate", "vanilla"
     ),
     observed_outcome = case_when(
@@ -372,15 +372,16 @@ We've exchanged the groups by flipping their assignments, but we can still detec
 ```{r}
 set.seed(11)
 
+mix_up <- function(flavor) {
+  ifelse(flavor == "chocolate", "vanilla", "chocolate")
+}
+
 data_observed <- data |>
   mutate(
-    exposure = if_else(
+    exposure = ifelse(
       rbinom(n(), 1, 0.5) == 1, "chocolate", "vanilla"
     ),
-    # mix up the labels
-    exposure = if_else(
-      exposure == "chocolate", "vanilla", "chocolate"
-    ),
+    exposure = mixup(exposure),
     observed_outcome = case_when(
       exposure == "chocolate" ~ y_chocolate,
       exposure == "vanilla" ~ y_vanilla
@@ -403,13 +404,13 @@ data_observed_exch <- data |>
     prefer_chocolate = y_chocolate > y_vanilla,
     exposure = case_when(
       # people who like chocolate more chose that 80% of the time
-      prefer_chocolate ~ if_else(
+      prefer_chocolate ~ ifelse(
         rbinom(n(), 1, 0.8) == 1,
         "chocolate",
         "vanilla"
       ),
       # people who like vanilla more chose that 80% of the time
-      !prefer_chocolate ~ if_else(
+      !prefer_chocolate ~ ifelse(
         rbinom(n(), 1, 0.8) == 1,
         "vanilla",
         "chocolate"
@@ -477,7 +478,7 @@ This is called **conditional exchangeability**: $Y(x) \perp\!\!\!\perp X \mid Z$
 #| fig-cap: "The average potential outcomes by observed exposure group in the presence of confounding. We can still achieve *conditional* exchangeability within levels of the confounder. Here, we also start to see the limits of our sample size, as the potential outcomes, which would be valid in higher numbers, start to fail."
 #| code-fold: true
 data_observed_exch |>
-  mutate(prefer_chocolate = if_else(
+  mutate(prefer_chocolate = ifelse(
     prefer_chocolate,
     "prefers\nchocolate",
     "prefers\nvanilla"
@@ -537,12 +538,12 @@ data_observed_pos <- data |>
   mutate(
     prefer_chocolate = y_chocolate > y_vanilla,
     exposure = case_when(
-      prefer_chocolate ~ if_else(
+      prefer_chocolate ~ ifelse(
         rbinom(n(), 1, 0.8) == 1,
         "chocolate",
         "vanilla"
       ),
-      !prefer_chocolate ~ if_else(
+      !prefer_chocolate ~ ifelse(
         rbinom(n(), 1, 0.8) == 1,
         "vanilla",
         "chocolate"
@@ -572,7 +573,7 @@ In this case, let's say that anyone with an allergy to vanilla who is assigned v
 set.seed(11)
 data_observed_struc <- data |>
   mutate(
-    exposure = if_else(
+    exposure = ifelse(
       rbinom(n(), 1, 0.5) == 1,
       "chocolate",
       "vanilla"
@@ -585,8 +586,8 @@ data_observed_struc <- data_observed_struc |>
     # 30% chance of allergy
     allergy = rbinom(n(), 1, 0.3) == 1,
     # in which case `y_vanilla` is impossible
-    exposure = if_else(allergy, "chocolate", exposure),
-    y_vanilla = if_else(allergy, NA, y_vanilla),
+    exposure = ifelse(allergy, "chocolate", exposure),
+    y_vanilla = ifelse(allergy, NA, y_vanilla),
     observed_outcome = case_when(
       # those with allergies always take chocolate
       allergy ~ y_chocolate,
@@ -868,10 +869,10 @@ data <- tibble(
 set.seed(37)
 data_observed_interf <- data |>
   mutate(
-    exposure = if_else(
+    exposure = ifelse(
       rbinom(n(), 1, 0.5) == 1, "chocolate", "vanilla"
     ),
-    exposure_partner = if_else(
+    exposure_partner = ifelse(
       rbinom(n(), 1, 0.5) == 1, "chocolate", "vanilla"
     ),
     observed_outcome = case_when(
@@ -984,7 +985,7 @@ set.seed(11)
 ## we are now randomizing the *partnerships* not the individuals
 partners <- tibble(
   partner_id = 1:5,
-  exposure = if_else(
+  exposure = ifelse(
     rbinom(5, 1, 0.5) == 1, "chocolate", "vanilla"
   )
 )
