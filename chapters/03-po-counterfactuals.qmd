@@ -67,7 +67,7 @@ We also don't know what would have happened to Spike if he had avoided crime lik
 We live in a single factual world where Ice-T left crime, and Spike didn't.
 Yet, we can see how the two men can be each other's proxies for those counterfactual outcomes.
 In causal inference techniques, we attempt to use observed data to simulate counterfactuals in much the same way.
-Even randomized trials are limited to a single factual world, so we compare the average effects of groups with different exposures.
+Even randomized trials are limited to a single factual world, so we compare the average effects of similar groups with different exposures.
 
 Nevertheless, there are several issues that we can immediately see, highlighting the difficulty in drawing such inferences.
 First, while the book implies that the two individuals were similar before the decisions that diverged their fates, we can guess how they might have differed.
@@ -192,7 +192,7 @@ data |>
   )
 ```
 
-In reality, we cannot observe both potential outcomes at any given moment; each individual in our study can only eat one flavor of ice cream at the moment of study[^03-po-counterfactuals-1].
+In reality, we cannot observe both potential outcomes at any given moment; each individual in our study can only eat one flavor of ice cream at the time the study is conducted[^03-po-counterfactuals-1].
 Suppose we randomly gave one flavor or the other to each participant.
 Now, what we *observe* is shown in @tbl-obs. We only know one potential outcome (the one related to the exposure the participant received).
 We don't know the other one, and consequently, we don't know the individual causal effect.
@@ -209,9 +209,8 @@ data_observed <- data |>
     # change the exposure to randomized, generated from
     # a binomial distribution with a probability of 0.5 for
     # being in either group
-    exposure = case_when(
-      rbinom(n(), 1, 0.5) == 1 ~ "chocolate",
-      TRUE ~ "vanilla"
+    exposure = if_else(
+      rbinom(n(), 1, 0.5) == 1, "chocolate", "vanilla"
     ),
     observed_outcome = case_when(
       exposure == "chocolate" ~ y_chocolate,
@@ -299,7 +298,7 @@ The phrase "apples-to-apples" comes from the saying "comparing apples to oranges
 
 That's only one way to say it.
 [There are a lot of variations worldwide](https://en.wikipedia.org/wiki/Apples_and_oranges).
-Here are some other things people incorrectly compare:
+Here are some other things people should not try to compare:
 
 -   Cheese and chalk (UK English)
 -   Apples and pears (German)
@@ -311,7 +310,7 @@ Here are some other things people incorrectly compare:
 For the first three-fourths or so of the book, we'll deal with so-called **unconfoundedness** methods.
 These methods all assume[^03-po-counterfactuals-2] three things: **exchangeability**, **positivity**, and **consistency**.
 We'll focus on these three assumptions for now, but other methods, such as instrumental variable analysis (@sec-iv-friends) and difference-in-differences (@sec-did), make other causal assumptions.
-Knowing a method's assumptions is essential for using it correctly, but it's also worth considering if another method's assumptions are more feasible for the problem you are trying to solve.
+Knowing a method's assumptions is essential for using it correctly, but it's also worth considering if another method's assumptions are more tenable for the problem you are trying to solve.
 
 [^03-po-counterfactuals-2]: These *causal* assumptions are in addition to any *statistical* assumptions, such as distributional assumptions, that the estimators we use require.
 
@@ -373,17 +372,15 @@ We've exchanged the groups by flipping their assignments, but we can still detec
 ```{r}
 set.seed(11)
 
-mix_up <- function(flavor) {
-  ifelse(flavor == "chocolate", "vanilla", "chocolate")
-}
-
 data_observed <- data |>
   mutate(
-    exposure = case_when(
-      rbinom(n(), 1, 0.5) == 1 ~ "chocolate",
-      TRUE ~ "vanilla"
+    exposure = if_else(
+      rbinom(n(), 1, 0.5) == 1, "chocolate", "vanilla"
     ),
-    exposure = mix_up(exposure),
+    # mix up the labels
+    exposure = if_else(
+      exposure == "chocolate", "vanilla", "chocolate"
+    ),
     observed_outcome = case_when(
       exposure == "chocolate" ~ y_chocolate,
       exposure == "vanilla" ~ y_vanilla
@@ -406,14 +403,14 @@ data_observed_exch <- data |>
     prefer_chocolate = y_chocolate > y_vanilla,
     exposure = case_when(
       # people who like chocolate more chose that 80% of the time
-      prefer_chocolate ~ ifelse(
-        rbinom(n(), 1, 0.8),
+      prefer_chocolate ~ if_else(
+        rbinom(n(), 1, 0.8) == 1,
         "chocolate",
         "vanilla"
       ),
       # people who like vanilla more chose that 80% of the time
-      !prefer_chocolate ~ ifelse(
-        rbinom(n(), 1, 0.8),
+      !prefer_chocolate ~ if_else(
+        rbinom(n(), 1, 0.8) == 1,
         "vanilla",
         "chocolate"
       )
@@ -437,7 +434,7 @@ Why does this happen?
 We'll explore this problem more deeply in @sec-dags and beyond, but from an assumptions perspective, exchangeability no longer holds.
 The potential outcomes are no longer the same on average for the two exposure groups.
 The average values for `y(chocolate)` are still pretty close, but `y(vanilla)` is quite different by group.
-The vanilla group no longer serves as a good proxy for this potential outcome for the chocolate group, and we get a biased result.
+The vanilla group no longer serves as a good proxy for the potential outcome for the chocolate group, and we get a biased result.
 What we see here is actually the potential outcomes for `y(flavor, preference)`.
 This is always true because there are individuals for whom the individual causal effect is not 0.
 What's changed is that the potential outcomes are no longer independent of which `flavor` a person has: their preference influences both the choice of flavor and the potential outcome.
@@ -480,7 +477,7 @@ This is called **conditional exchangeability**: $Y(x) \perp\!\!\!\perp X \mid Z$
 #| fig-cap: "The average potential outcomes by observed exposure group in the presence of confounding. We can still achieve *conditional* exchangeability within levels of the confounder. Here, we also start to see the limits of our sample size, as the potential outcomes, which would be valid in higher numbers, start to fail."
 #| code-fold: true
 data_observed_exch |>
-  mutate(prefer_chocolate = ifelse(
+  mutate(prefer_chocolate = if_else(
     prefer_chocolate,
     "prefers\nchocolate",
     "prefers\nvanilla"
@@ -540,13 +537,13 @@ data_observed_pos <- data |>
   mutate(
     prefer_chocolate = y_chocolate > y_vanilla,
     exposure = case_when(
-      prefer_chocolate ~ ifelse(
-        rbinom(n(), 1, 0.8),
+      prefer_chocolate ~ if_else(
+        rbinom(n(), 1, 0.8) == 1,
         "chocolate",
         "vanilla"
       ),
-      !prefer_chocolate ~ ifelse(
-        rbinom(n(), 1, 0.8),
+      !prefer_chocolate ~ if_else(
+        rbinom(n(), 1, 0.8) == 1,
         "vanilla",
         "chocolate"
       )
@@ -575,9 +572,10 @@ In this case, let's say that anyone with an allergy to vanilla who is assigned v
 set.seed(11)
 data_observed_struc <- data |>
   mutate(
-    exposure = case_when(
-      rbinom(n(), 1, 0.5) == 1 ~ "chocolate",
-      TRUE ~ "vanilla"
+    exposure = if_else(
+      rbinom(n(), 1, 0.5) == 1,
+      "chocolate",
+      "vanilla"
     )
   )
 
@@ -587,8 +585,8 @@ data_observed_struc <- data_observed_struc |>
     # 30% chance of allergy
     allergy = rbinom(n(), 1, 0.3) == 1,
     # in which case `y_vanilla` is impossible
-    exposure = ifelse(allergy, "chocolate", exposure),
-    y_vanilla = ifelse(allergy, NA, y_vanilla),
+    exposure = if_else(allergy, "chocolate", exposure),
+    y_vanilla = if_else(allergy, NA, y_vanilla),
     observed_outcome = case_when(
       # those with allergies always take chocolate
       allergy ~ y_chocolate,
@@ -677,7 +675,7 @@ Mathematically, this means that $Y_{obs} = (X)Y(1) + (1 - X)Y(0)$.
 In plain language, the consistency assumption says that the potential outcome of a given treatment value is equal to the value we actually observe when someone is assigned that treatment value.
 It seems almost silly when you say it.
 What else would it be?
-If you think this issue through, though, you'll see that this assumption is violated nearly infinitely for any given exposure.
+If you think this issue through, though, you'll see that this assumption can be violated easily for any given exposure.
 Let's consider two common cases:
 
 -   **Poorly-defined exposure**: For each exposure value, there is a difference between subjects when delivering that exposure. Put another way, multiple treatment versions exist. Instead, we need a *well-defined exposure*.
@@ -712,7 +710,7 @@ data_observed_poorly_defined <- data |>
     exposure_unobserved = case_when(
       rbinom(n(), 1, 0.25) == 1 ~ "chocolate (spoiled)",
       rbinom(n(), 1, 0.25) == 1 ~ "chocolate",
-      TRUE ~ "vanilla"
+      .default = "vanilla"
     ),
     observed_outcome = case_match(
       exposure_unobserved,
@@ -870,13 +868,11 @@ data <- tibble(
 set.seed(37)
 data_observed_interf <- data |>
   mutate(
-    exposure = case_when(
-      rbinom(n(), 1, 0.5) == 1 ~ "chocolate",
-      TRUE ~ "vanilla"
+    exposure = if_else(
+      rbinom(n(), 1, 0.5) == 1, "chocolate", "vanilla"
     ),
-    exposure_partner = case_when(
-      rbinom(n(), 1, 0.5) == 1 ~ "chocolate",
-      TRUE ~ "vanilla"
+    exposure_partner = if_else(
+      rbinom(n(), 1, 0.5) == 1, "chocolate", "vanilla"
     ),
     observed_outcome = case_when(
       exposure == "chocolate" & exposure_partner == "chocolate" ~
@@ -988,9 +984,8 @@ set.seed(11)
 ## we are now randomizing the *partnerships* not the individuals
 partners <- tibble(
   partner_id = 1:5,
-  exposure = case_when(
-    rbinom(5, 1, 0.5) == 1 ~ "chocolate",
-    TRUE ~ "vanilla"
+  exposure = if_else(
+    rbinom(5, 1, 0.5) == 1, "chocolate", "vanilla"
   )
 )
 partners_observed <- data |>
@@ -1084,7 +1079,7 @@ Like a realistic randomized trial, observational studies require careful design 
 : Assumptions solved by study design. `r emo::ji("smile")` indicates it is solved by default, `r emo::ji("shrug")` indicates that it is *solvable* but not solved by default. {#tbl-assump-solved}
 
 The design of a causal analysis requires a clear causal question.
-We then can map this question to a *protocol*, consisting of the following seven elements, as defined by @hernan2016using:
+We then can map this question to a *protocol*, consisting of the following seven elements which comprise the target trial framework, as defined by @hernan2016using:
 
 -   **Eligibility criteria**: Who or what should be included in the study?
 -   **Exposure definition**: When eligible, what precise exposure will units under study receive?
