@@ -80,7 +80,7 @@ edges_with_aes <- function(..., edge_color = "grey85", shadow = TRUE) {
     },
     geom_dag_edges_link(
       aes(edge_color = path),
-      data = \(.x) mutate(.x, path = ifelse(is.na(to), NA, path))
+      data = \(.x) mutate(.x, path = if_else(is.na(to), NA, path))
     )
   )
 }
@@ -259,7 +259,7 @@ y <- case_when(
   x == "e" ~ 5 + rnorm(n),
 )
 
-x_measured <- ifelse(
+x_measured <- if_else(
   x %in% c("c", "d"),
   sample(c("c", "d"), size = n, replace = TRUE),
   x
@@ -394,7 +394,7 @@ outcome <- exposure + confounder + rnorm(n)
 true_model <- lm(outcome ~ exposure * confounder)
 
 # mismeasure confounder
-confounder <- ifelse(
+confounder <- if_else(
   outcome > 0,
   confounder,
   confounder + 10 * rnorm(n)
@@ -650,9 +650,9 @@ actual <- coef * posted + rnorm(365, mean = 0, sd = 2)
 posted_60 <- posted / 60
 missing_dag_1 <- rbinom(365, 1, .3) |>
   as.logical()
-missing_dag_2 <- ifelse(posted_60 > .50, rbinom(365, 1, .95), 0) |>
+missing_dag_2 <- if_else(posted_60 > .50, rbinom(365, 1, .95), 0) |>
   as.logical()
-missing_dag_3 <- ifelse(actual > 22, rbinom(365, 1, .99), 0) |>
+missing_dag_3 <- if_else(actual > 22, rbinom(365, 1, .99), 0) |>
   as.logical()
 # the same structure, but it's `posted` that gets the resulting missingness
 missing_dag_4 <- missing_dag_2
@@ -702,7 +702,7 @@ dag_stats <- bind_rows(
 
 dag_stats |>
   mutate(
-    true_value = ifelse(dag == "No missingness", "True value", "Observed value"),
+    true_value = if_else(dag == "No missingness", "True value", "Observed value"),
     dag = factor(dag, levels = c(paste("DAG", 5:1), "No missingness")),
     stat = factor(
       stat,

@@ -402,7 +402,7 @@ seven_dwarfs_sim2 <- seven_dwarfs_train_2018 |>
   mutate(
     u = rnorm(n(), mean = 10, sd = 3),
     wait_minutes_posted_avg = wait_minutes_posted_avg + u,
-    park_extra_magic_morning = ifelse(
+    park_extra_magic_morning = if_else(
       u > 10,
       rbinom(1, 1, .1),
       park_extra_magic_morning
@@ -809,7 +809,7 @@ curvatures[5] <- 0.3
 emm_wait_dag |>
   tidy_dagitty() |>
   node_status() |>
-  mutate(linetype = ifelse(name == "park_temperature_high", "dashed", "solid")) |>
+  mutate(linetype = if_else(name == "park_temperature_high", "dashed", "solid")) |>
   ggplot(
     aes(x, y, xend = xend, yend = yend, color = status, edge_linetype = linetype)
   ) +
