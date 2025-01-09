@@ -563,7 +563,7 @@ satisfaction_randomized <- tibble(
 plot_estimates <- function(d) {
   unadj_model <- lm(satisfaction ~ update_frequency, data = d) |>
     tidy(conf.int = TRUE) |>
-    mutate(term = ifelse(
+    mutate(term = if_else(
       term == "update_frequencydaily",
       "update_frequency",
       term
@@ -577,7 +577,7 @@ plot_estimates <- function(d) {
     data = d
   ) |>
     tidy(conf.int = TRUE) |>
-    mutate(term = ifelse(
+    mutate(term = if_else(
       term == "update_frequencydaily",
       "update_frequency",
       term
@@ -625,8 +625,8 @@ plot_estimates <- function(d) {
       names_to = "statistic"
     ) |>
     mutate(
-      conf.low = ifelse(statistic == "std.error", NA, conf.low),
-      conf.high = ifelse(statistic == "std.error", NA, conf.high),
+      conf.low = if_else(statistic == "std.error", NA, conf.low),
+      conf.high = if_else(statistic == "std.error", NA, conf.high),
       statistic = case_match(
         statistic,
         "estimate" ~ "estimate (95% CI)",

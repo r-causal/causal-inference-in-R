@@ -286,7 +286,7 @@ d_mbias <- dagify(
 
 p_coll <- d_coll |>
   tidy_dagitty() |>
-  mutate(covariate = ifelse(label == "c", "covariate", NA_character_)) |>
+  mutate(covariate = if_else(label == "c", "covariate", NA_character_)) |>
   ggplot(
     aes(x = x, y = y, xend = xend, yend = yend)
   ) +
@@ -307,7 +307,7 @@ p_coll <- d_coll |>
 
 p_conf <- d_conf |>
   tidy_dagitty() |>
-  mutate(covariate = ifelse(label == "c", "covariate", NA_character_)) |>
+  mutate(covariate = if_else(label == "c", "covariate", NA_character_)) |>
   ggplot(
     aes(x = x, y = y, xend = xend, yend = yend)
   ) +
@@ -327,7 +327,7 @@ p_conf <- d_conf |>
 
 p_med <- d_med |>
   tidy_dagitty() |>
-  mutate(covariate = ifelse(label == "c", "covariate", NA_character_)) |>
+  mutate(covariate = if_else(label == "c", "covariate", NA_character_)) |>
   ggplot(
     aes(x = x, y = y, xend = xend, yend = yend)
   ) +
@@ -348,7 +348,7 @@ p_med <- d_med |>
 
 p_m_bias <- d_mbias |>
   tidy_dagitty() |>
-  mutate(covariate = ifelse(label == "c", "covariate", NA_character_)) |>
+  mutate(covariate = if_else(label == "c", "covariate", NA_character_)) |>
   ggplot(
     aes(x = x, y = y, xend = xend, yend = yend)
   ) +
@@ -460,7 +460,7 @@ d_coll <- dagify(
 
 d_coll |>
   tidy_dagitty() |>
-  mutate(covariate = ifelse(name == "Z_3", "covariate\n(follow-up)", NA_character_)) |>
+  mutate(covariate = if_else(name == "Z_3", "covariate\n(follow-up)", NA_character_)) |>
   ggplot(
     aes(x = x, y = y, xend = xend, yend = yend)
   ) +
@@ -482,7 +482,7 @@ d_coll |>
 
 d_coll |>
   tidy_dagitty() |>
-  mutate(covariate = ifelse(name == "Z_2", "covariate\n(baseline)", NA_character_)) |>
+  mutate(covariate = if_else(name == "Z_2", "covariate\n(baseline)", NA_character_)) |>
   ggplot(
     aes(x = x, y = y, xend = xend, yend = yend)
   ) +
@@ -673,7 +673,7 @@ d_conf2 <- dagify(
 
 p_conf2 <- d_conf2 |>
   tidy_dagitty() |>
-  mutate(covariate = ifelse(name == "Q", "covariate", NA_character_)) |>
+  mutate(covariate = if_else(name == "Q", "covariate", NA_character_)) |>
   ggplot(
     aes(x = x, y = y, xend = xend, yend = yend)
   ) +

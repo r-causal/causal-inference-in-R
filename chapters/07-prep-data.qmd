@@ -269,7 +269,7 @@ seven_dwarfs_9 <- seven_dwarfs_train |>
       wait_minutes_posted_avg,
       wait_minutes_actual_avg
     ),
-    \(.x) ifelse(is.nan(.x), NA, .x)
+    \(.x) if_else(is.nan(.x), NA, .x)
   )) |>
   # outcome definition:
   # only keep the average wait time between 9 and 10

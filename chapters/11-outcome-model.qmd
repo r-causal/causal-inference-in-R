@@ -260,8 +260,8 @@ library(PSW)
 
 seven_dwarfs_9 <- seven_dwarfs_9 |>
   mutate(
-    park_ticket_season_regular = ifelse(park_ticket_season == "regular", 1, 0),
-    park_ticket_season_value = ifelse(park_ticket_season == "value", 1, 0)
+    park_ticket_season_regular = if_else(park_ticket_season == "regular", 1, 0),
+    park_ticket_season_value = if_else(park_ticket_season == "value", 1, 0)
   )
 psw(
   data = seven_dwarfs_9,
