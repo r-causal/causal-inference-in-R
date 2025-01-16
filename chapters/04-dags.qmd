@@ -74,8 +74,7 @@ This class of DAGs is sometimes called **Structural Causal Models (SCMs)** becau
 
 [^04-dags-1]: An essential but rarely observed detail of DAGs is that dag is also an [affectionate Australian insult](https://en.wikipedia.org/wiki/Dag_(slang)) referring to the dung-caked fur of a sheep, a *daglock*.
 
-DAGs depict causal relationships between variables.
-Visually, the way they depict variables is as **edges** and **nodes**.
+DAGs visually depict causal relationships between variables through the use of **edges** and **nodes**.
 Edges are the arrows going from one variable to another, sometimes called arcs or just arrows.
 Nodes are the variables themselves, sometimes called vertices, points, or just variables.
 In @fig-dag-basic, there are two nodes, `x` and `y`, and one edge going from `x` to `y`.
