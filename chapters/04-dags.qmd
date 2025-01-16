@@ -59,8 +59,10 @@ dag_data |>
   ggplot(aes(year, pct)) +
   geom_line(color = "#0072B2", linewidth = .9) +
   scale_y_continuous(
-    name = "percent of papers",
     labels = scales::label_percent()
+  ) +
+  theme(
+    axis.title = element_blank()
   )
 ```
 
