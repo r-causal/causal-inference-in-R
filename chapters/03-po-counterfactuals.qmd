@@ -78,7 +78,7 @@ Ice-T decided to leave his life of crime, but that wasn't the only factor in his
 Did Spike have Ice-T's musical talent?
 Can we conclude that his life would have turned out exactly like Ice-T's if he had made the same choices?
 If we want to truly estimate the causal effect of Ice-T's decision to leave criminal life on his future outcomes, we would need to observe his ultimate course both before and after making the decision.
-Similarly, Spike might be different from Ice-T in hard-to-measure ways, which makes him a poorer poxy for Ice-T's counterfactuals than he first seems.
+Similarly, Spike might be different from Ice-T in hard-to-measure ways, which makes him a poorer proxy for Ice-T's counterfactuals than he first seems.
 Instead of relying on a single individual, we often rely on many.
 We could conduct an experiment in which we randomize many individuals to leave criminal life (or not) and see how this impacts their outcomes on average (of course, this randomized trial presents some ethical issues, which is why observational data like Ice-T and Spike's are interesting).
 In any case, we must rely on statistical techniques to help construct these unobservable counterfactuals from observed data.
