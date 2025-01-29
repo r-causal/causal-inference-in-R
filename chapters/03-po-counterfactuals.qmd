@@ -331,28 +331,151 @@ When this assumption holds, we can treat the vanilla group as the proxy for the 
 ```{r}
 #| label: fig-po
 #| fig-cap: "The average potential outcomes by observed exposure group. Under exchangeability, the exposure groups have nothing to do with the potential outcomes. Had the vanilla group received chocolate, their potential outcomes would have been about the same on average as the chocolate group, and vice versa. Exchangeability allows us to use each group as a counterfactual for the other."
+#| message: false
 #| code-fold: true
-data_observed |>
-  select(starts_with("y"), exposure) |>
+plot_data <- data_observed |> 
+  select(starts_with("y"), exposure) |> 
+  mutate(id = row_number()) |> 
   pivot_longer(
     starts_with("y"),
     names_prefix = "y_",
     names_to = "potential_outcome",
     values_to = "happiness"
-  ) |>
-  mutate(potential_outcome = paste0("y(", potential_outcome, ")")) |>
-  ggplot(aes(happiness, exposure, color = exposure)) +
-  geom_jitter(width = 0, height = .2, alpha = .5, color = "grey50") +
-  stat_summary(fun = "mean", size = 2.5, geom = "point") +
+  ) |> 
+  mutate(
+    observed = if_else(exposure == potential_outcome, "observed", "unobserved"),
+    potential_outcome = paste0("potential outcome: y(", potential_outcome, ")"),
+    exposure = if_else(exposure == "vanilla", "actually ate\nvanilla", "actually ate\nchocolate")
+  )
+
+avg_labels <- plot_data |> 
+  group_by(potential_outcome, exposure, observed) |> 
+  summarize(
+    happiness = mean(happiness),
+    .groups = "drop"
+  ) |> 
+  filter(exposure == "actually ate\nvanilla") |> 
+  mutate(
+    exposure_lbl = str_replace_all(exposure, "actually ate\n", ""),
+    po_lbl = str_replace_all(potential_outcome, "potential outcome: ", ""),
+    label = glue::glue(
+      "average {po_lbl} for the {exposure_lbl} group ({observed})"
+    ) |> str_wrap(19)
+  )
+
+id1 <- plot_data |>
+  filter(id == 1) |> 
+  mutate(label = glue::glue("potential outcome for ID 1 ({observed})") |> str_wrap(19))
+
+exchangeability_annotation <- tibble(
+  x = 5.43, xend = 5.33, 
+  y = 1, yend = 2,
+  potential_outcome = "potential outcome: y(chocolate)",
+  label = "For exchangeability to hold, we need these averages to be about the same" |> str_wrap(19)
+)
+
+plot_data |> 
+  ggplot(aes(happiness, exposure, color = observed, shape = observed)) + 
+  geom_dotplot(aes(fill = observed), alpha = .5, color = "grey50", stackratio = 1.5, dotsize = 1, show.legend = FALSE) + 
+  stat_summary(
+    fun = "mean", 
+    size = 2.5, 
+    geom = "point",
+    position = position_nudge(y = 0.028)
+  ) + 
   stat_summary(
     fun = "mean",
     geom = "text",
     aes(label = round(after_stat(x), 1)),
-    vjust = -0.6,
-    color = "black"
+    vjust = 1.8,
+    show.legend = FALSE
+  ) + 
+  
+  # Annotation for individual ID 1's observed potential outcome
+  geom_curve(
+    data = id1,
+    aes(
+      x = happiness - 1.5, xend = happiness - .4, y = 2.25, yend = 2.025
+    ),
+    curvature = 0.2,
+    arrow = arrow(length = unit(0.02, "npc")),
+    inherit.aes = FALSE,
+    color = "grey60"
   ) +
-  facet_wrap(~potential_outcome) +
-  labs(y = "actual exposure", color = "actual\nexposure")
+  geom_label(
+    data = id1,
+    aes(
+      label = label
+    ),
+    nudge_y = .4,
+    nudge_x = -4,
+    hjust = "left",
+    color = "grey40",
+    size = 3.000001, 
+    label.size = NA
+  ) +
+  
+  # Annotation for vanilla group's average potential outcome
+  geom_curve(
+    data = avg_labels,
+    aes(
+      x = happiness + 1, xend = happiness - .1, y = 2.3, yend = 2.08
+    ),
+    curvature = 0.6,
+    arrow = arrow(length = unit(0.02, "npc")),
+    inherit.aes = FALSE,
+    color = "grey60"
+  ) +
+  geom_label(
+    data = avg_labels,
+    aes(
+      label = label
+    ),
+    nudge_y = .3,
+    nudge_x = 1.2,
+    hjust = "left",
+    color = "grey40",
+    size = 3.000001, 
+    label.size = NA
+  ) +
+  
+  # Annotation for exchangeability between groups
+  geom_curve(
+    data = exchangeability_annotation,
+    aes(x = x, xend = xend + .2, y = y + .1, yend = yend - .2),
+    curvature = .1,
+    arrow = arrow(length = unit(0.02, "npc"), ends = "both"),
+    inherit.aes = FALSE,
+    color = "grey60"
+  ) +
+  geom_label(
+    data = exchangeability_annotation,
+    aes(x = x + .05, y = 1.44, label = label),
+    inherit.aes = FALSE,
+    hjust = "left",
+    nudge_x = 0.5,
+    color = "grey40",
+    size = 3.000001, 
+    label.size = NA
+  ) +
+  
+  facet_wrap(~potential_outcome) + 
+  labs(
+    y = "actual exposure", 
+    color = NULL,
+    shape = NULL,
+    fill = NULL
+  ) + 
+  theme(
+    panel.grid.major.y = element_blank(),
+    panel.border = element_rect(color = "grey40", fill = NA, linewidth = 0.8),
+    axis.title.y = element_blank()
+  ) +
+  coord_cartesian(clip = "off") + 
+  scale_shape_manual(values = c(19, 21)) +
+  scale_fill_manual(values = c(observed = "grey40", unobserved = "white")) +
+  scale_x_continuous(breaks = seq(0, 12, by = 2.5), limits = c(NA, 12)) 
+
 ```
 
 ::: callout-note
@@ -445,6 +568,7 @@ As we see in @fig-po-confounding, our groups are no longer exchangeable; they do
 #| label: "fig-po-confounding"
 #| fig-cap: "The average potential outcomes by observed exposure group in the presence of confounding. The groups are no longer exchangeable because the flavor assignment is no longer independent of the potential outcomes."
 #| code-fold: true
+#| message: false 
 data_observed_exch |>
   select(starts_with("y"), exposure) |>
   pivot_longer(
@@ -452,20 +576,43 @@ data_observed_exch |>
     names_prefix = "y_",
     names_to = "potential_outcome",
     values_to = "happiness"
+  ) |> 
+  mutate(
+    observed = if_else(exposure == potential_outcome, "observed", "unobserved"),
+    potential_outcome = paste0("potential outcome: y(", potential_outcome, ")"),
+    exposure = if_else(exposure == "vanilla", "actually ate\nvanilla", "actually ate\nchocolate")
   ) |>
-  mutate(potential_outcome = paste0("y(", potential_outcome, ")")) |>
-  ggplot(aes(happiness, exposure, color = exposure)) +
-  geom_jitter(width = 0, height = .2, alpha = .5, color = "grey50") +
-  stat_summary(fun = "mean", size = 2.5, geom = "point") +
+  ggplot(aes(happiness, exposure, color = observed, shape = observed)) +
+  geom_dotplot(aes(fill = observed), alpha = .5, color = "grey50", stackratio = 1.5, dotsize = 1, show.legend = FALSE) + 
+  stat_summary(
+    fun = "mean", 
+    size = 2.5, 
+    geom = "point",
+    position = position_nudge(y = 0.033)
+  ) +
   stat_summary(
     fun = "mean",
     geom = "text",
     aes(label = round(after_stat(x), 1)),
-    vjust = -0.6,
-    color = "black"
-  ) +
-  facet_wrap(~potential_outcome) +
-  labs(y = "actual exposure", color = "actual\nexposure")
+    vjust = 1.8,
+    show.legend = FALSE
+  ) + 
+  facet_wrap(~potential_outcome) + 
+  theme(
+    panel.grid.major.y = element_blank(),
+    panel.border = element_rect(color = "grey40", fill = NA, linewidth = 0.8),
+    axis.title.y = element_blank()
+  ) + 
+  labs(
+    y = "actual exposure", 
+    color = NULL,
+    shape = NULL,
+    fill = NULL
+  ) + 
+  coord_cartesian(clip = "off") + 
+  scale_shape_manual(values = c(19, 21)) +
+  scale_fill_manual(values = c(observed = "grey40", unobserved = "white")) +
+  scale_x_continuous(breaks = seq(0, 12, by = 2.5), limits = c(NA, 12)) 
 ```
 
 What can we do when exchangeability is violated?
@@ -477,6 +624,7 @@ This is called **conditional exchangeability**: $Y(x) \perp\!\!\!\perp X \mid Z$
 #| label: fig-po-cond-exch
 #| fig-cap: "The average potential outcomes by observed exposure group in the presence of confounding. We can still achieve *conditional* exchangeability within levels of the confounder. Here, we also start to see the limits of our sample size, as the potential outcomes, which would be valid in higher numbers, start to fail."
 #| code-fold: true
+#| message: false
 data_observed_exch |>
   mutate(prefer_chocolate = if_else(
     prefer_chocolate,
@@ -488,20 +636,43 @@ data_observed_exch |>
     names_prefix = "y_",
     names_to = "potential_outcome",
     values_to = "happiness"
+  ) |> 
+  mutate(
+    observed = if_else(exposure == potential_outcome, "observed", "unobserved"),
+    potential_outcome = paste0("potential outcome: y(", potential_outcome, ")"),
+    exposure = if_else(exposure == "vanilla", "actually ate\nvanilla", "actually ate\nchocolate")
   ) |>
-  mutate(potential_outcome = paste0("y(", potential_outcome, ")")) |>
-  ggplot(aes(happiness, exposure, color = exposure)) +
-  geom_jitter(width = 0, height = .2, alpha = .5, color = "grey50") +
-  stat_summary(fun = "mean", size = 2.5, geom = "point") +
+  ggplot(aes(happiness, exposure, color = observed, shape = observed)) +
+  geom_dotplot(aes(fill = observed), alpha = .5, color = "grey50", stackratio = 1.5, dotsize = 1, show.legend = FALSE) + 
+  stat_summary(
+    fun = "mean", 
+    size = 2.5, 
+    geom = "point",
+    position = position_nudge(y = 0.056)
+  ) +
   stat_summary(
     fun = "mean",
     geom = "text",
     aes(label = round(after_stat(x), 1)),
-    vjust = -0.6,
-    color = "black"
-  ) +
-  facet_grid(prefer_chocolate ~ potential_outcome) +
-  labs(y = "actual exposure", color = "actual\nexposure")
+    vjust = 1.8,
+    show.legend = FALSE
+  ) + 
+  facet_grid(prefer_chocolate ~ potential_outcome) + 
+  theme(
+    panel.grid.major.y = element_blank(),
+    panel.border = element_rect(color = "grey40", fill = NA, linewidth = 0.8),
+    axis.title.y = element_blank()
+  ) + 
+  labs(
+    y = "actual exposure", 
+    color = NULL,
+    shape = NULL,
+    fill = NULL
+  ) + 
+  coord_cartesian(clip = "off") + 
+  scale_shape_manual(values = c(19, 21)) +
+  scale_fill_manual(values = c(observed = "grey40", unobserved = "white")) +
+  scale_x_continuous(breaks = seq(0, 12, by = 2.5), limits = c(NA, 12))
 ```
 
 ::: callout-warning
@@ -612,50 +783,112 @@ For those with a vanilla allergy, `y_vanilla` is not defined, as in @fig-po-pos.
 #| fig-cap: "Potential outcomes in the presence of a structural positivity violation. When potential outcomes can't occur, they are not defined. Those who have an allergy to vanilla do not have a counterpart `y(vanilla)`."
 #| code-fold: true
 #| warning: false
-data_observed_struc |>
-  mutate(is_missing_y_vanilla = is.na(y_vanilla)) |>
-  select(starts_with("y"), exposure, is_missing_y_vanilla) |>
+# Explicitly calculate stacking positions
+# because `geom_dotplot()` isn't working well with a y axis
+# and color aes
+stacked_data <- data_observed_struc |> 
+  mutate(is_missing_y_vanilla = is.na(y_vanilla)) |> 
+  select(starts_with("y"), exposure, is_missing_y_vanilla) |> 
   pivot_longer(
     starts_with("y"),
     names_prefix = "y_",
     names_to = "potential_outcome",
     values_to = "happiness"
-  ) |>
+  ) |> 
   mutate(
-    potential_outcome = paste0("y(", potential_outcome, ")")
-  ) |>
-  ggplot(aes(happiness, exposure)) +
-  geom_jitter(
-    data = \(.x) filter(.x, !is_missing_y_vanilla),
-    width = 0,
-    height = .2,
-    alpha = .5,
-    color = "grey50"
-  ) +
-  geom_jitter(
-    data = \(.x) filter(.x, is_missing_y_vanilla),
+    observed = if_else(exposure == potential_outcome, "observed", "unobserved"),
+    potential_outcome = paste0("potential outcome: y(", potential_outcome, ")"),
+    exposure = if_else(exposure == "vanilla", "actually\nate vanilla", "actually\nate chocolate")
+  ) |> 
+  drop_na() |> 
+  group_by(exposure, potential_outcome, happiness) |> 
+  mutate(
+    # Assign stacking positions explicitly
+    stack_position = row_number() - 1 
+  ) |> 
+  ungroup()
+
+# Pre-calculate mean summaries
+summary_data <- stacked_data |> 
+  group_by(exposure, potential_outcome, observed) |> 
+  summarize(
+    mean_happiness = mean(happiness, na.rm = TRUE),
+    .groups = "drop"
+  ) |> 
+  mutate(y_numeric = as.numeric(as.factor(exposure)))
+
+ggplot(stacked_data, aes(x = happiness, y = exposure, fill = is_missing_y_vanilla, color = is_missing_y_vanilla, shape = observed)) +
+  geom_point(
+    data = stacked_data |> filter(observed == "observed"),
     aes(
-      color = "missing y(vanilla) counterpart",
-      fill = "missing y(vanilla) counterpart"
+      y = as.numeric(as.factor(exposure)) + stack_position * 0.1
     ),
-    size = 2,
-    width = 0,
-    height = .2,
-    shape = 21
+    size = 3,
+    shape = 21,
+    alpha = 0.8
   ) +
-  stat_summary(
-    fun = "mean",
-    geom = "text",
-    aes(label = round(after_stat(x), 1)),
-    vjust = -0.6,
-    color = "black",
-    size = 3
+  geom_point(
+    data = stacked_data |> filter(observed == "unobserved"),
+    aes(
+      x = happiness,
+      y = as.numeric(as.factor(exposure)) + stack_position * 0.1
+    ),
+    size = 3,
+    shape = 21,
+    fill = "white", 
+    color = "grey70",
+    alpha = 0.8,
+    inherit.aes = FALSE
   ) +
-  stat_summary(fun = "mean", size = 2, geom = "point") +
-  facet_wrap(~potential_outcome) +
-  labs(y = "Actual Exposure", color = NULL, fill = NULL) +
-  ggokabeito::scale_color_okabe_ito(order = 7) +
-  ggokabeito::scale_fill_okabe_ito(order = 7)
+  geom_point(
+    data = summary_data |> filter(observed == "observed"),
+    aes(x = mean_happiness, y = y_numeric),
+    size = 3,
+    shape = 21,
+    fill = "grey30",
+    color = "grey30",
+    inherit.aes = FALSE
+  ) +
+  geom_point(
+    data = summary_data |> filter(observed == "unobserved"),
+    aes(x = mean_happiness, y = y_numeric),
+    size = 3,
+    shape = 21,
+    fill = "white",
+    color = "grey30",
+    inherit.aes = FALSE
+  ) +
+  geom_text(
+    data = summary_data,
+    aes(x = mean_happiness, y = y_numeric, label = round(mean_happiness, 1)),
+    vjust = 2,
+    inherit.aes = FALSE
+  ) +
+  facet_wrap(~ potential_outcome) +
+  scale_y_continuous(
+    breaks = 1:2,
+    labels = c("actually ate\nchocolate", "actually ate\nvanilla"),
+    limits = c(.5, 2.5)
+  ) +
+  theme(
+    panel.grid.major.y = element_blank(),
+    panel.border = element_rect(color = "grey40", fill = NA, linewidth = 0.8),
+    axis.title.y = element_blank(),
+    legend.title = element_blank()
+  ) +
+  coord_cartesian(clip = "off") +
+  scale_fill_manual(
+    values = c("TRUE" = ggokabeito::palette_okabe_ito(7)),
+    labels = c("TRUE" = "missing y(vanilla) counterpart"),
+    na.value = "grey80"
+  ) +
+  scale_color_manual(
+    values = c("TRUE" = ggokabeito::palette_okabe_ito(7)),
+    labels = c("TRUE" = "missing y(vanilla) counterpart"),
+    na.value = "grey80"
+  ) +
+  scale_shape_manual(values = c(19, 21)) +
+  scale_x_continuous(breaks = seq(0, 12, by = 2.5), limits = c(NA, 12))
 ```
 
 There are a few things we can do to improve positivity problems.
