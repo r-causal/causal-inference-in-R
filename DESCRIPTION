@@ -42,6 +42,7 @@ Imports:
     skimr,
     smd,
     survey,
+    tidysmd (>= 0.2.0.9000),
     tidyverse,
     timeDate,
     tipr (>= 1.0.1),
@@ -55,12 +56,13 @@ Suggests:
 Remotes: 
     gadenbuie/grkstyle,
     hadley/emo,
-    LucyMcGowan/tipr,
     LucyMcGowan/touringplans,
-    malcolmbarrett/causalworkshop,
-    malcolmbarrett/ggdag,
-    malcolmbarrett/halfmoon,
-    malcolmbarrett/propensity
+    r-causal/causalworkshop,
+    r-causal/ggdag,
+    r-causal/halfmoon,
+    r-causal/propensity,
+    r-causal/tidysmd,
+    r-causal/tipr
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
