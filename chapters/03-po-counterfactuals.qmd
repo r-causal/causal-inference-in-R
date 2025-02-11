@@ -539,7 +539,7 @@ Let's say, instead, we allowed each participant to select their own ice cream fl
 80% of the time, participants chose the flavor that made them happiest---their preference.
 
 ```{r}
-set.seed(11)
+set.seed(113)
 data_observed_exch <- data |>
   mutate(
     prefer_chocolate = y_chocolate > y_vanilla,
