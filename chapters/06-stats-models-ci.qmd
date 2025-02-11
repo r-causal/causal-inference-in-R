@@ -331,7 +331,7 @@ Organizations with more users get more updates and have slightly lower satisfact
 ```{r}
 satisfaction3 <- tibble(
   # Number of users
-  num_users = rnorm(n, mean = 100, sd = 50),
+  num_users = runif(n, min = 1, max = 500),
   # Larger customers more likely to have daily updates
   update_frequency = rbinom(n, 1, plogis(num_users / 100)),
   # with more users come less satisfaction
