@@ -554,6 +554,17 @@ lm(
   select(estimate, starts_with("conf"))
 ```
 
+Beautiful! Now, this model was fit *exactly* as the data were generated, and again we end up with the exact right answer. Often in the real world, we do not know what the data generating mechanism is, but we can still fit flexible parametric models. A great way to do this is through natrual cubic splines. 
+
+```{r}
+lm(
+  satisfaction ~ update_frequency + splines::ns(num_users, 3),
+  data = satisfaction4
+) |>
+  tidy(conf.int = TRUE) |>
+  filter(term == "update_frequencydaily") |>
+  select(estimate, starts_with("conf"))
+```
 
 
 :::
