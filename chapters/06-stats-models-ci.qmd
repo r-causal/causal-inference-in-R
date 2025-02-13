@@ -565,7 +565,7 @@ lm(
   filter(term == "update_frequencydaily") |>
   select(estimate, starts_with("conf"))
 ```
-We can also use our original non-parametric method, if we stratify this into 20 bins, we also get better estimate.
+We can also use our original non-parametric method, if we stratify this into 20 bins, we also get a less biased estimate (i.e. it is very close to the true value, 0).
 
 ```{r}
 satisfaction4_strat <- satisfaction4 |>
