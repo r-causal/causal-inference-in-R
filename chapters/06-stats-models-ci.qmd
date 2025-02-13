@@ -544,7 +544,8 @@ lm(
   select(estimate, starts_with("conf"))
 ```
 
-Now our estimates are far off from the truth (which should be zero); the truth is not even contained in the confidence interval. What went wrong? Our parametric model assumed that the functional form of the relationship between the number of users and satisfaction was linear, but we generated it non-linearly. There is a solution that still allows for the use of a parameteric model - if we knew the true functional form, we could use that. Let's see how that looks.
+
+Our estimates are far from the truth (which should be zero); the truth is not even contained in the confidence interval. What went wrong? Our parametric model assumed that the functional form of the relationship between the number of users and satisfaction was linear, but we generated it non-linearly. There is a solution that still allows for the use of a parametric model; if we knew the true functional form, we could use that. Let's see how that looks.
 
 ```{r}
 lm(
@@ -556,7 +557,7 @@ lm(
   select(estimate, starts_with("conf"))
 ```
 
-Beautiful! Now, this model was fit *exactly* as the data were generated, and again we end up with the exact right answer. Often in the real world, we do not know what the data generating mechanism is, but we can still fit flexible parametric models. A great way to do this is through natrual cubic splines.
+Beautiful! Now, this model was fit *exactly* as the data were generated, and again, we ended up with the exact right answer. In the real world, we often do not know the data-generating mechanism, but we can still fit flexible parametric models. A great way to do this is through natural cubic splines.
 
 ```{r}
 lm(
