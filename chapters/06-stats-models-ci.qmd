@@ -408,7 +408,8 @@ update_bins <- function(bins) {
     )
 }
 
-map_dfr(3:20, update_bins) |>
+map(3:20, update_bins) |>
+  bind_rows() |>
   ggplot(aes(x = bins, y = abs(estimate))) +
   geom_point() +
   geom_line() +
@@ -451,7 +452,7 @@ satisfaction3 |>
   summarise(estimate = mean(daily - weekly))
 ```
 
-The estimate is `NA` because some of our bins didn't have anyone in one of the exposure groups, making their difference inestimable. Now this analysis violates our *positivity* assumption. Here, this is a stochastic violation, it has to do with our sample size, `r scales::comma(n)`, and number of bins, in this case 30. By chance, we ended up with at least one of the 30 bins without anyone in one of the exposure groups, making our causal effect inestimable. This non-parametric method, while flexible, has limitations due to the sample size. Parametric models are useful because they allow us to extrapolate under certain assumptions, which makes them more efficient (assuming the assumptions are true, let's learn more in @sec-parametric). 
+The estimate is `NA` because some of our bins didn't have anyone in one of the exposure groups, making their difference inestimable. Now, this analysis violates our *positivity* assumption. This is a stochastic violation; it has to do with our sample size, `r scales::comma(n)`, and the number of bins, 30. By chance, we ended up with at least one of the 30 bins without anyone in one of the exposure groups, making our causal effect inestimable. This non-parametric method, while flexible, has limitations due to the sample size. Parametric models are useful because they allow us to extrapolate under certain assumptions, which makes them more efficient (assuming our assumptions are true, let's learn more in @sec-parametric). 
 
 
 :::
