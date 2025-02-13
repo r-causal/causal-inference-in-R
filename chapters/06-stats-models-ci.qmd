@@ -385,6 +385,29 @@ As opposed to binary and categorical confounders, grouping by bins for continuou
 
 ## What would happen if we change the number of bins?
 
+Let's see what happens if we increase the number of bins. 
+
+```{r}
+update_bins <- function(bins) {
+  satisfaction3 |>
+  mutate(num_users_q = ntile(num_users, bins)) |>
+  group_by(num_users_q, update_frequency) |>
+  summarise(
+    avg_satisfaction = mean(satisfaction),
+    .groups = "drop"
+  ) |>
+  ungroup() |>
+  pivot_wider(
+    names_from = update_frequency,
+    values_from = avg_satisfaction
+  ) |>
+  summarise(
+    bins = bins,
+    estimate = mean(daily - weekly)
+    )
+}
+```
+
 
 :::
 
