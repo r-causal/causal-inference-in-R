@@ -486,7 +486,8 @@ In the code above, we assume that:
 -   a graduate student's mood, sense of humor, and how prepared they feel for the exam could influence whether they listened to a podcast the morning of the test
 -   their mood and how prepared they are also influence their exam score
 
-Notice we *do not* see podcast in the exam equation; this means that we are constructing this DAG under the null assumption that there is *no* causal relationship between listening to the podcast and the exam score.
+Notice we *do not* see podcast in the exam equation; this means that we assume that there is *no* causal relationship between podcast and the exam score. 
+This is sometimes called a **null DAG**.
 
 There are some other useful arguments you'll often find yourself supplying to `dagify()`:
 
