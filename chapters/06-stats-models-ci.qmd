@@ -509,6 +509,32 @@ Modeling this well requires an understanding of the nature of the relationship b
 ## Functional form in parametric models
 
 In the text we simulated the relationship between the outcome and the confounders to be linear, that is, it exactly met the assumptions underlying `lm()`, so we got the right answer when we fit our parameteric model. What would happen if our simulation did not match the assumptions underlying `lm()`? Let's take a look.
+
+```{r}
+set.seed(1)
+satisfaction4 <- tibble(
+  # Number of users
+  num_users = runif(n, 1, 500),
+  # Larger customers more likely to have daily updates
+  update_frequency = rbinom(n, 1, plogis(num_users / 100)),
+  # non-linear relationship between satisfaction and number of users
+  satisfaction = 70 - 0.0001 * (num_users-250)^2 - 0.0001 * (num_users - 250)^3
+) |>
+  mutate(
+    satisfaction = as.numeric(scale(satisfaction)),
+    update_frequency = factor(
+      update_frequency,
+      labels = c("weekly", "daily")
+    )
+  )
+ggplot(satisfaction4, aes(x = num_users, y = satisfaction)) +
+  geom_point()
+```
+
+In the figure above we see that now there is a non-linear relationship between our confounder, number of users, and our outcome, satisfaction
+
+
+
 :::
 
 We'll also later explore ways to use data-adaptive methods like machine learning to reduce this assumption (@sec-causal-ml).
