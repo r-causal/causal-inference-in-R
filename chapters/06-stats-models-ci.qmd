@@ -624,15 +624,15 @@ Whether increasing the update frequency to daily for everyone is beneficial depe
 
 -   If 50% of the customers are premium and 50% are free, the average effect of switching to daily updates would be:
 
-  $(0.5 * 5) + (0.5 * -5) = 0$
+    $(0.5 * 5) + (0.5 * -5) = 0$
 
 -   If 100% of the customers are premium, the average effect would be:
 
-  $(1 * 5) + (0 * -5) = 5$
+    $(1 * 5) + (0 * -5) = 5$
 
 -   If 100% of the customers are free, the average effect would be:
 
-  $(0 * 5) + (1 * -5) = -5$
+    $(0 * 5) + (1 * -5) = -5$
 
 Marginalization tells us the average effect for the distribution of covariates in the data.
 Of course, we might want to estimate the causal effect *by* customer type; we'll discuss interaction effects in depth in @sec-interaction.
