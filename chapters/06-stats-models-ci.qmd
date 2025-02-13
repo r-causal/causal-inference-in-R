@@ -415,7 +415,7 @@ map_dfr(3:20, update_bins) |>
   labs(y = "Bias", x = "Number of bins")
 ```
 
-For example, looking at the output below we 
+For example, looking at the output below we see that the estimate is much closer to the truth (0) when we have 20 bins compared to 5. 
 
 ```{r}
 satisfaction3 |>
@@ -432,6 +432,25 @@ satisfaction3 |>
   ) |>
   summarise(estimate = mean(daily - weekly))
 ```
+
+As with many good things, however, there is a limit to the utility of increasing the number of bins. For example, let's see what happens if we try to have 30 bins. The estimate is `NA` because some of our bins didn't have anyone in one of the exposure groups, making their difference inestimable. Now this analysis violates our *positivity* assumption. Here, this is a stochastic violation, it has to do with our sample size, `r scales::comma(n)`, and number of bins, in this case 30. By chance, we ended up with at least one of the 30 bins without anyone in one of the exposure groups, making our causal effect inestimable.
+
+```{r}
+satisfaction3 |>
+  mutate(num_users_q = ntile(num_users, 30)) |>
+  group_by(num_users_q, update_frequency) |>
+  summarise(
+    avg_satisfaction = mean(satisfaction),
+    .groups = "drop"
+  ) |>
+  ungroup() |>
+  pivot_wider(
+    names_from = update_frequency,
+    values_from = avg_satisfaction
+  ) |>
+  summarise(estimate = mean(daily - weekly))
+```
+
 
 :::
 
