@@ -433,7 +433,7 @@ satisfaction3 |>
   summarise(estimate = mean(daily - weekly))
 ```
 
-As with many good things, however, there is a limit to the utility of increasing the number of bins. For example, let's see what happens if we try to have 30 bins. The estimate is `NA` because some of our bins didn't have anyone in one of the exposure groups, making their difference inestimable. Now this analysis violates our *positivity* assumption. Here, this is a stochastic violation, it has to do with our sample size, `r scales::comma(n)`, and number of bins, in this case 30. By chance, we ended up with at least one of the 30 bins without anyone in one of the exposure groups, making our causal effect inestimable.
+As with many good things, however, there is a limit to the utility of increasing the number of bins. For example, let's see what happens if we try to have 30 bins. The estimate is `NA` because some of our bins didn't have anyone in one of the exposure groups, making their difference inestimable. Now this analysis violates our *positivity* assumption. Here, this is a stochastic violation, it has to do with our sample size, `r scales::comma(n)`, and number of bins, in this case 30. By chance, we ended up with at least one of the 30 bins without anyone in one of the exposure groups, making our causal effect inestimable. This non-parametric method, while flexible, has limitations due to the sample size. Parametric models are useful because they allow us to extrapolate under certain assumptions, which makes them more efficient (assuming the assumptions are true, let's learn more in @sec-parametric). 
 
 ```{r}
 satisfaction3 |>
@@ -464,7 +464,7 @@ We aren't using any parameterization from a statistical model to restrict the fo
 Stratification can be powerful for simple problems or when you have lots of data because you can sometimes avoid model misspecification problems.
 However, with many confounders (especially continuous ones), we quickly encounter the curse of dimensionality, making it impractical because we have too few observations by combinations of confounder levels.
 
-## Parametric outcome models
+## Parametric outcome models {#sec-parametric}
 
 You can think of stratification as calculating conditional means.
 A more general extension of conditional means is multivariable linear regression.
