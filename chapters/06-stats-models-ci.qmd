@@ -379,12 +379,21 @@ satisfaction3_strat |>
   summarise(estimate = mean(daily - weekly))
 ```
 
-As opposed to binary and categorical confounders, grouping by bins for continuous confounders does not completely account for the variable; the coarser the bins, the more residual confounding there will be, and the finer the bins, the closer we'll get to the continuous version (but the fewer values we'll have per bin).
+As opposed to binary and categorical confounders, grouping by bins for continuous confounders does not completely account for the variable; the coarser the bins, the more residual confounding there will be, and the finer the bins, the closer we'll get to the continuous version (but the fewer values we'll have per bin, see @tip-bins).
+
+::: {#tip-bins .callout-tip}
+
+## What would happen if we change the number of bins?
+
+
+:::
 
 The approach we've been using with `group_by()` and `summarize()` is often called **stratification**.
 You can also think of it as a type of non-parametric approach.
 We aren't using any parameterization from a statistical model to restrict the form of the variables the way we might with, say, a linear regression.
 (This is only partially true for continuous confounders because it's not practical to stratify by all values of the continuous variable).
+
+
 
 Stratification can be powerful for simple problems or when you have lots of data because you can sometimes avoid model misspecification problems.
 However, with many confounders (especially continuous ones), we quickly encounter the curse of dimensionality, making it impractical because we have too few observations by combinations of confounder levels.
