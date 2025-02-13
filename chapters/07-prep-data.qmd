@@ -389,7 +389,7 @@ Some early times don't happen in the summer, and some late times don't happen in
 
 ```{r}
 #| label: fig-close-time
-#| fig-cap: "Close time for the Magic Kingdom park by month. The close time varies across the year. Earlier close times occur more often in the late fall and winter. There are months where some close times don't occur in any days, sich as early times in the summer and late times in the late fall."
+#| fig-cap: "Close time for the Magic Kingdom park by month. The close time varies across the year. Earlier close times occur more often in the late fall and winter. There are months where some close times don't occur in any days, such as early times in the summer and late times in the late fall."
 parks_metadata |>
   count_by_month(park_close) |>
   ggplot(aes(month, n, fill = ordered(park_close))) +
