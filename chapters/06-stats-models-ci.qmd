@@ -512,7 +512,7 @@ Modeling this well requires an understanding of the nature of the relationship b
 In the text we simulated the relationship between the outcome and the confounders to be linear, that is, it exactly met the assumptions underlying `lm()`, so we got the right answer when we fit our parameteric model. What would happen if our simulation did not match the assumptions underlying `lm()`? Let's take a look.
 
 ```{r}
-set.seed(1)
+set.seed(11)
 satisfaction4 <- tibble(
   # Number of users
   num_users = runif(n, 1, 500),
