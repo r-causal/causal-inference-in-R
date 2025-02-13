@@ -388,6 +388,7 @@ As opposed to binary and categorical confounders, grouping by bins for continuou
 Let's see what happens if we increase the number of bins. 
 
 ```{r}
+#| code-fold: true
 update_bins <- function(bins) {
   satisfaction3 |>
   mutate(num_users_q = ntile(num_users, bins)) |>
@@ -406,6 +407,12 @@ update_bins <- function(bins) {
     estimate = mean(daily - weekly)
     )
 }
+
+map_dfr(3:20, update_bins) |>
+  ggplot(aes(x = bins, y = abs(estimate))) +
+  geom_point() +
+  geom_line() +
+  labs(y = "Bias", x = "Number of bins")
 ```
 
 
