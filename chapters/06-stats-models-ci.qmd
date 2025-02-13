@@ -518,7 +518,7 @@ satisfaction4 <- tibble(
   # Larger customers more likely to have daily updates
   update_frequency = rbinom(n, 1, plogis(num_users / 100)),
   # non-linear relationship between satisfaction and number of users
-  satisfaction = 70 - 0.0001 * (num_users-250)^2 - 0.0001 * (num_users - 250)^3
+  satisfaction = 70 - 0.001 * (num_users-300)^2 - 0.001 * (num_users - 300)^3
 ) |>
   mutate(
     satisfaction = as.numeric(scale(satisfaction)),
@@ -531,7 +531,28 @@ ggplot(satisfaction4, aes(x = num_users, y = satisfaction)) +
   geom_point()
 ```
 
-In the figure above we see that now there is a non-linear relationship between our confounder, number of users, and our outcome, satisfaction
+In the figure above we see that now there is a non-linear relationship between our confounder, number of users, and our outcome, satisfaction. Let's see what happens if we fit an (incorrect) parameteric model to these data.
+
+```{r}
+lm(
+  satisfaction ~ update_frequency + num_users,
+  data = satisfaction4
+) |>
+  tidy(conf.int = TRUE) |>
+  filter(term == "update_frequencydaily") |>
+  select(estimate, starts_with("conf"))
+```
+Now our estimates are far off from the truth (which should be zero); the truth is not even contained in the confidence interval. What went wrong? Our parametric model assumed that the functional form of the relationship between the number of users and satisfaction was linear, but we generated it non-linearly. There is a solution that still allows for the use of a parameteric model - if we knew the true functional form, we could use that. Let's see how that looks.
+
+```{r}
+lm(
+  satisfaction ~ update_frequency + poly(num_users, 3),
+  data = satisfaction4
+) |>
+  tidy(conf.int = TRUE) |>
+  filter(term == "update_frequencydaily") |>
+  select(estimate, starts_with("conf"))
+```
 
 
 
