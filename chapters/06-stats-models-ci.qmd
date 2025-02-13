@@ -385,7 +385,7 @@ As opposed to binary and categorical confounders, grouping by bins for continuou
 
 ## What would happen if we change the number of bins?
 
-Let's see what happens if we increase the number of bins. We've changed the number of bins from 5 in the example in the text to range from 3 to 20. Notice as we increase the number of bins the bias decreases. 
+Let's see what happens if we increase the number of bins. In the figure below, we've changed the number of bins from 5 in the example in the text to range from 3 to 20. Notice as we increase the number of bins the bias decreases. 
 
 ```{r}
 #| code-fold: true
@@ -433,7 +433,7 @@ satisfaction3 |>
   summarise(estimate = mean(daily - weekly))
 ```
 
-As with many good things, however, there is a limit to the utility of increasing the number of bins. For example, let's see what happens if we try to have 30 bins. The estimate is `NA` because some of our bins didn't have anyone in one of the exposure groups, making their difference inestimable. Now this analysis violates our *positivity* assumption. Here, this is a stochastic violation, it has to do with our sample size, `r scales::comma(n)`, and number of bins, in this case 30. By chance, we ended up with at least one of the 30 bins without anyone in one of the exposure groups, making our causal effect inestimable. This non-parametric method, while flexible, has limitations due to the sample size. Parametric models are useful because they allow us to extrapolate under certain assumptions, which makes them more efficient (assuming the assumptions are true, let's learn more in @sec-parametric). 
+As with many good things, however, there is a limit to the utility of increasing the number of bins. For example, let's see what happens if we try to have 30 bins. 
 
 ```{r}
 satisfaction3 |>
@@ -450,6 +450,8 @@ satisfaction3 |>
   ) |>
   summarise(estimate = mean(daily - weekly))
 ```
+
+The estimate is `NA` because some of our bins didn't have anyone in one of the exposure groups, making their difference inestimable. Now this analysis violates our *positivity* assumption. Here, this is a stochastic violation, it has to do with our sample size, `r scales::comma(n)`, and number of bins, in this case 30. By chance, we ended up with at least one of the 30 bins without anyone in one of the exposure groups, making our causal effect inestimable. This non-parametric method, while flexible, has limitations due to the sample size. Parametric models are useful because they allow us to extrapolate under certain assumptions, which makes them more efficient (assuming the assumptions are true, let's learn more in @sec-parametric). 
 
 
 :::
@@ -498,9 +500,17 @@ lm(
 This generalization doesn't come for free, though: we've now introduced a parametric statistical model to make estimates across the sparse regions of our data.
 The estimate we get for `satisfaction ~ update_frequency + num_users` gives us exactly the right answer because the statistical model underlying `lm()` perfectly matches our simulation.
 For example, the relationship between `satisfaction` and `num_users` is linear, so when we fit this model, we don't suffer from the problem of dimensionality (although linear regression has its own limits in terms of the number of rows and columns).
-In other words, we're now dependent on the correct **functional form**, the mathematical representation of the relationship between variables in a model.
+In other words, we're now dependent on the correct **functional form**, the mathematical representation of the relationship between variables in a model (See @tip-functional-form for more details).
 We need the correct functional form for both the exposure and the confounders.
 Modeling this well requires an understanding of the nature of the relationship between these variables and the outcome.
+
+::: {#tip-functional-form .callout-warning}
+
+## Functional form in parametric models
+
+In the text we simulated the relationship between the outcome and the confounders to be linear, that is, it exactly met the assumptions underlying `lm()`, so we got the right answer when we fit our parameteric model. What would happen if our simulation did not match the assumptions underlying `lm()`? Let's take a look.
+:::
+
 We'll also later explore ways to use data-adaptive methods like machine learning to reduce this assumption (@sec-causal-ml).
 
 <!-- TODO: link appendix on model checks here -->
