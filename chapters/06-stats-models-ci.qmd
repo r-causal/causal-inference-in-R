@@ -554,7 +554,7 @@ lm(
   select(estimate, starts_with("conf"))
 ```
 
-Beautiful! Now, this model was fit *exactly* as the data were generated, and again we end up with the exact right answer. Often in the real world, we do not know what the data generating mechanism is, but we can still fit flexible parametric models. A great way to do this is through natrual cubic splines. 
+Beautiful! Now, this model was fit *exactly* as the data were generated, and again we end up with the exact right answer. Often in the real world, we do not know what the data generating mechanism is, but we can still fit flexible parametric models. A great way to do this is through natrual cubic splines.
 
 ```{r}
 lm(
@@ -564,6 +564,25 @@ lm(
   tidy(conf.int = TRUE) |>
   filter(term == "update_frequencydaily") |>
   select(estimate, starts_with("conf"))
+```
+We can also use our original non-parametric method, if we stratify this into 20 bins, we also get better estimate.
+
+```{r}
+satisfaction4_strat <- satisfaction4 |>
+  mutate(num_users_q = ntile(num_users, 20)) |>
+  group_by(num_users_q, update_frequency) |>
+  summarise(
+    avg_satisfaction = mean(satisfaction),
+    .groups = "drop"
+  )
+
+satisfaction4_strat |>
+  ungroup() |>
+  pivot_wider(
+    names_from = update_frequency,
+    values_from = avg_satisfaction
+  ) |>
+  summarise(estimate = mean(daily - weekly))
 ```
 
 
