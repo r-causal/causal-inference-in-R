@@ -96,6 +96,7 @@ satisfaction1 <- tibble(
   )
 ) |>
   mutate(
+    satisfaction = as.numeric(scale(satisfaction)),
     update_frequency = factor(
       update_frequency,
       labels = c("weekly", "daily")
@@ -223,6 +224,7 @@ satisfaction2 <- tibble(
     15 * customer_service + rnorm(n),
 ) |>
   mutate(
+    satisfaction = as.numeric(scale(satisfaction)),
     customer_type = factor(
       customer_type,
       labels = c("free", "premium")
@@ -335,9 +337,10 @@ satisfaction3 <- tibble(
   # Larger customers more likely to have daily updates
   update_frequency = rbinom(n, 1, plogis(num_users / 100)),
   # with more users come less satisfaction
-  satisfaction = 70 + -0.2 * num_users
+  satisfaction = 70 + -0.2 * num_users + rnorm(n)
 ) |>
   mutate(
+    satisfaction = as.numeric(scale(satisfaction)),
     update_frequency = factor(
       update_frequency,
       labels = c("weekly", "daily")
@@ -542,6 +545,7 @@ satisfaction_randomized <- tibble(
     15 * customer_service + rnorm(n),
 ) |>
   mutate(
+    satisfaction = as.numeric(scale(satisfaction)),
     customer_type = factor(
       customer_type,
       labels = c("free", "premium")
