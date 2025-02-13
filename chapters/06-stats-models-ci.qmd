@@ -656,10 +656,10 @@ For the rest of the book, however, we will focus on other causal methods, which 
 Here's a brief summary of some of the unconfoundedness methods we'll cover and what they do.
 
 -   *Unconfoundedness methods*
--   **Inverse probability weighting** (propensity score weighting): Using a propensity score (predicted probability of treatment), we reweight units to create a pseudo-population where exchangeability holds. Extends to time-varying treatments.
--   **Matching** (propensity score matching and other methods): Find treated and untreated units with similar propensity scores (or other measures of similarity) to match, creating a subpopulation where exchangeability holds.
--   **G-computation** (also called standardization or marginal effects): Fit an outcome model but marginalize to get a marginal effect estimate. Extends to time-varying treatments.
--   **Doubly robust methods**: Fit models for both the outcome and treatment. Using doubly robust methods, only one of these models needs to be correct for the estimate to be correct. Doubly robust methods also allow us to use machine learning algorithms. We'll discuss **targeted learning (TMLE)** and **augmented propensity scores**.
+    -   **Inverse probability weighting** (propensity score weighting): Using a propensity score (predicted probability of treatment), we reweight units to create a pseudo-population where exchangeability holds. Extends to time-varying treatments.
+    -   **Matching** (propensity score matching and other methods): Find treated and untreated units with similar propensity scores (or other measures of similarity) to match, creating a subpopulation where exchangeability holds.
+    -   **G-computation** (also called standardization or marginal effects): Fit an outcome model but marginalize to get a marginal effect estimate. Extends to time-varying treatments.
+    -   **Doubly robust methods**: Fit models for both the outcome and treatment. Using doubly robust methods, only one of these models needs to be correct for the estimate to be correct. Doubly robust methods also allow us to use machine learning algorithms. We'll discuss **targeted learning (TMLE)** and **augmented propensity scores**.
 
 While the book focuses primarily on unconfoundedness methods, we later cover methods that make other assumptions (@sec-iv-friends and @sec-did).
 Here's a brief summary of when we might want to explore these methods instead of trying to achieve exchangeability:
