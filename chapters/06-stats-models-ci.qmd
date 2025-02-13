@@ -96,6 +96,7 @@ satisfaction1 <- tibble(
   )
 ) |>
   mutate(
+    satisfaction = as.numeric(scale(satisfaction)),
     update_frequency = factor(
       update_frequency,
       labels = c("weekly", "daily")
@@ -223,6 +224,7 @@ satisfaction2 <- tibble(
     15 * customer_service + rnorm(n),
 ) |>
   mutate(
+    satisfaction = as.numeric(scale(satisfaction)),
     customer_type = factor(
       customer_type,
       labels = c("free", "premium")
@@ -331,13 +333,14 @@ Organizations with more users get more updates and have slightly lower satisfact
 ```{r}
 satisfaction3 <- tibble(
   # Number of users
-  num_users = rnorm(n, mean = 100, sd = 50),
+  num_users = runif(n, min = 1, max = 500),
   # Larger customers more likely to have daily updates
   update_frequency = rbinom(n, 1, plogis(num_users / 100)),
   # with more users come less satisfaction
-  satisfaction = 70 + -0.2 * num_users
+  satisfaction = 70 + -0.2 * num_users + rnorm(n)
 ) |>
   mutate(
+    satisfaction = as.numeric(scale(satisfaction)),
     update_frequency = factor(
       update_frequency,
       labels = c("weekly", "daily")
@@ -376,17 +379,95 @@ satisfaction3_strat |>
   summarise(estimate = mean(daily - weekly))
 ```
 
-As opposed to binary and categorical confounders, grouping by bins for continuous confounders does not completely account for the variable; the coarser the bins, the more residual confounding there will be, and the finer the bins, the closer we'll get to the continuous version (but the fewer values we'll have per bin).
+As opposed to binary and categorical confounders, grouping by bins for continuous confounders does not completely account for the variable; the coarser the bins, the more residual confounding there will be, and the finer the bins, the closer we'll get to the continuous version (but the fewer values we'll have per bin, see @tip-bins).
+
+::: {#tip-bins .callout-tip}
+
+## What would happen if we change the number of bins?
+
+Let's see what happens if we increase the number of bins. In the figure below, we've changed the number of bins from 5 in the example in the text to range from 3 to 20. Notice as we increase the number of bins the bias decreases. 
+
+```{r}
+#| code-fold: true
+update_bins <- function(bins) {
+  satisfaction3 |>
+    mutate(num_users_q = ntile(num_users, bins)) |>
+    group_by(num_users_q, update_frequency) |>
+    summarise(
+      avg_satisfaction = mean(satisfaction),
+      .groups = "drop"
+    ) |>
+    ungroup() |>
+    pivot_wider(
+      names_from = update_frequency,
+      values_from = avg_satisfaction
+    ) |>
+    summarise(
+      bins = bins,
+      estimate = mean(daily - weekly)
+    )
+}
+
+map(3:20, update_bins) |>
+  bind_rows() |>
+  ggplot(aes(x = bins, y = abs(estimate))) +
+  geom_point() +
+  geom_line() +
+  labs(y = "Bias", x = "Number of bins")
+```
+
+For example, looking at the output below we see that the estimate is much closer to the truth (0) when we have 20 bins compared to 5. 
+
+```{r}
+satisfaction3 |>
+  mutate(num_users_q = ntile(num_users, 20)) |>
+  group_by(num_users_q, update_frequency) |>
+  summarise(
+    avg_satisfaction = mean(satisfaction),
+    .groups = "drop"
+  ) |>
+  ungroup() |>
+  pivot_wider(
+    names_from = update_frequency,
+    values_from = avg_satisfaction
+  ) |>
+  summarise(estimate = mean(daily - weekly))
+```
+
+As with many good things, however, there is a limit to the utility of increasing the number of bins. For example, let's see what happens if we try to have 30 bins. 
+
+```{r}
+satisfaction3 |>
+  mutate(num_users_q = ntile(num_users, 30)) |>
+  group_by(num_users_q, update_frequency) |>
+  summarise(
+    avg_satisfaction = mean(satisfaction),
+    .groups = "drop"
+  ) |>
+  ungroup() |>
+  pivot_wider(
+    names_from = update_frequency,
+    values_from = avg_satisfaction
+  ) |>
+  summarise(estimate = mean(daily - weekly))
+```
+
+The estimate is `NA` because some of our bins didn't have anyone in one of the exposure groups, making their difference inestimable. Now, this analysis violates our *positivity* assumption. This is a stochastic violation; it has to do with our sample size, `r scales::comma(n)`, and the number of bins, 30. By chance, we ended up with at least one of the 30 bins without anyone in one of the exposure groups, making our causal effect inestimable. This non-parametric method, while flexible, has limitations due to the sample size. Parametric models are useful because they allow us to extrapolate under certain assumptions, which makes them more efficient (assuming our assumptions are true, let's learn more in @sec-parametric). 
+
+
+:::
 
 The approach we've been using with `group_by()` and `summarize()` is often called **stratification**.
 You can also think of it as a type of non-parametric approach.
 We aren't using any parameterization from a statistical model to restrict the form of the variables the way we might with, say, a linear regression.
 (This is only partially true for continuous confounders because it's not practical to stratify by all values of the continuous variable).
 
+
+
 Stratification can be powerful for simple problems or when you have lots of data because you can sometimes avoid model misspecification problems.
 However, with many confounders (especially continuous ones), we quickly encounter the curse of dimensionality, making it impractical because we have too few observations by combinations of confounder levels.
 
-## Parametric outcome models
+## Parametric outcome models {#sec-parametric}
 
 You can think of stratification as calculating conditional means.
 A more general extension of conditional means is multivariable linear regression.
@@ -420,9 +501,96 @@ lm(
 This generalization doesn't come for free, though: we've now introduced a parametric statistical model to make estimates across the sparse regions of our data.
 The estimate we get for `satisfaction ~ update_frequency + num_users` gives us exactly the right answer because the statistical model underlying `lm()` perfectly matches our simulation.
 For example, the relationship between `satisfaction` and `num_users` is linear, so when we fit this model, we don't suffer from the problem of dimensionality (although linear regression has its own limits in terms of the number of rows and columns).
-In other words, we're now dependent on the correct **functional form**, the mathematical representation of the relationship between variables in a model.
+In other words, we're now dependent on the correct **functional form**, the mathematical representation of the relationship between variables in a model (See @tip-functional-form for more details).
 We need the correct functional form for both the exposure and the confounders.
 Modeling this well requires an understanding of the nature of the relationship between these variables and the outcome.
+
+::: {#tip-functional-form .callout-warning}
+
+## Functional form in parametric models
+
+In the text we simulated the relationship between the outcome and the confounders to be linear, that is, it exactly met the assumptions underlying `lm()`, so we got the right answer when we fit our parameteric model. What would happen if our simulation did not match the assumptions underlying `lm()`? Let's take a look.
+
+```{r}
+set.seed(11)
+satisfaction4 <- tibble(
+  # Number of users
+  num_users = runif(n, 1, 500),
+  # Larger customers more likely to have daily updates
+  update_frequency = rbinom(n, 1, plogis(num_users / 100)),
+  # non-linear relationship between satisfaction and number of users
+  satisfaction = 70 - 0.001 * (num_users-300)^2 - 0.001 * (num_users - 300)^3
+) |>
+  mutate(
+    satisfaction = as.numeric(scale(satisfaction)),
+    update_frequency = factor(
+      update_frequency,
+      labels = c("weekly", "daily")
+    )
+  )
+ggplot(satisfaction4, aes(x = num_users, y = satisfaction)) +
+  geom_line()
+```
+
+In the figure above we see that now there is a non-linear relationship between our confounder, number of users, and our outcome, satisfaction. Let's see what happens if we fit an (incorrect) parameteric model to these data.
+
+```{r}
+lm(
+  satisfaction ~ update_frequency + num_users,
+  data = satisfaction4
+) |>
+  tidy(conf.int = TRUE) |>
+  filter(term == "update_frequencydaily") |>
+  select(estimate, starts_with("conf"))
+```
+
+
+Our estimates are far from the truth (which should be zero); the truth is not even contained in the confidence interval. What went wrong? Our parametric model assumed that the functional form of the relationship between the number of users and satisfaction was linear, but we generated it non-linearly. There is a solution that still allows for the use of a parametric model; if we knew the true functional form, we could use that. Let's see how that looks.
+
+```{r}
+lm(
+  satisfaction ~ update_frequency + poly(num_users, 3),
+  data = satisfaction4
+) |>
+  tidy(conf.int = TRUE) |>
+  filter(term == "update_frequencydaily") |>
+  select(estimate, starts_with("conf"))
+```
+
+Beautiful! Now, this model was fit *exactly* as the data were generated, and again, we ended up with the exact right answer. In the real world, we often do not know the data-generating mechanism, but we can still fit flexible parametric models. A great way to do this is through natural cubic splines.
+
+```{r}
+lm(
+  satisfaction ~ update_frequency + splines::ns(num_users, 3),
+  data = satisfaction4
+) |>
+  tidy(conf.int = TRUE) |>
+  filter(term == "update_frequencydaily") |>
+  select(estimate, starts_with("conf"))
+```
+We can also use our original non-parametric method; if we stratify this into 20 bins, we also get a less biased estimate (i.e., it is very close to the true value, 0).
+
+```{r}
+satisfaction4_strat <- satisfaction4 |>
+  mutate(num_users_q = ntile(num_users, 20)) |>
+  group_by(num_users_q, update_frequency) |>
+  summarise(
+    avg_satisfaction = mean(satisfaction),
+    .groups = "drop"
+  )
+
+satisfaction4_strat |>
+  ungroup() |>
+  pivot_wider(
+    names_from = update_frequency,
+    values_from = avg_satisfaction
+  ) |>
+  summarise(estimate = mean(daily - weekly))
+```
+
+
+:::
+
 We'll also later explore ways to use data-adaptive methods like machine learning to reduce this assumption (@sec-causal-ml).
 
 <!-- TODO: link appendix on model checks here -->
@@ -542,6 +710,7 @@ satisfaction_randomized <- tibble(
     15 * customer_service + rnorm(n),
 ) |>
   mutate(
+    satisfaction = as.numeric(scale(satisfaction)),
     customer_type = factor(
       customer_type,
       labels = c("free", "premium")
@@ -570,7 +739,7 @@ plot_estimates <- function(d) {
     )) |>
     filter(term == "update_frequency") |>
     mutate(model = "unadjusted")
-
+  
   adj_model <- lm(
     satisfaction ~ update_frequency + business_hours +
       customer_type,
@@ -584,12 +753,12 @@ plot_estimates <- function(d) {
     )) |>
     filter(term == "update_frequency") |>
     mutate(model = "direct\nadjustment")
-
+  
   df <- d |>
     mutate(across(where(is.factor), as.integer)) |>
     mutate(update_frequency = update_frequency - 1) |>
     as.data.frame()
-
+  
   x <- PSW::psw(
     df,
     "update_frequency ~ business_hours + customer_type",
@@ -607,7 +776,7 @@ plot_estimates <- function(d) {
     p.value = NA,
     model = "inverse\nprobability\nweighting"
   )
-
+  
   models <- bind_rows(unadj_model, adj_model, psw_model) |>
     mutate(model = factor(
       model,
@@ -617,7 +786,7 @@ plot_estimates <- function(d) {
         "inverse\nprobability\nweighting"
       )
     ))
-
+  
   models |>
     select(model, estimate, std.error, starts_with("conf")) |>
     pivot_longer(
