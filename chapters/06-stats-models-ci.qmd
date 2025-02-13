@@ -542,7 +542,7 @@ lm(
   filter(term == "update_frequencydaily") |>
   select(estimate, starts_with("conf"))
 ```
-Now our estimates are far off from the truth (which should be zero); the truth is not even contained in the confidence interval. What went wrong? Our parametric model assumed that the functional form of the relationship between the number of users and satisfaction was linear, but we generated it non-linearly. There is a solution that still allows for the use of a parameteric model - if we knew the true functional form, we could use that. Let's see how that looks.
+Our estimates are far from the truth (which should be zero); the truth is not even contained in the confidence interval. What went wrong? Our parametric model assumed that the functional form of the relationship between the number of users and satisfaction was linear, but we generated it non-linearly. There is a solution that still allows for the use of a parametric model; if we knew the true functional form, we could use that. Let's see how that looks.
 
 ```{r}
 lm(
