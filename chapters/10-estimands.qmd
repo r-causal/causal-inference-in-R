@@ -374,6 +374,7 @@ Even though we are not doing a survey analysis, the same techniques are helpful 
 #| message: false
 #| warning: false
 library(survey)
+library(halfmoon)
 seven_dwarfs_svy <- svydesign(
   ids = ~1,
   data = seven_dwarfs_wts,
@@ -384,6 +385,7 @@ tbl_svysummary(
   by = park_extra_magic_morning,
   include = c(park_ticket_season, park_close, park_temperature_high)
 ) |>
+  add_ess_header() |>
   add_overall(last = TRUE)
 ```
 
@@ -471,6 +473,7 @@ tbl_svysummary(
   by = park_extra_magic_morning,
   include = c(park_ticket_season, park_close, park_temperature_high)
 ) |>
+  add_ess_header() |>
   add_overall(last = TRUE)
 ```
 
@@ -551,6 +554,7 @@ tbl_svysummary(
   by = park_extra_magic_morning,
   include = c(park_ticket_season, park_close, park_temperature_high)
 ) |>
+  add_ess_header() |>
   add_overall(last = TRUE)
 ```
 
@@ -630,6 +634,7 @@ tbl_svysummary(
   by = park_extra_magic_morning,
   include = c(park_ticket_season, park_close, park_temperature_high)
 ) |>
+  add_ess_header() |>
   add_overall(last = TRUE)
 ```
 
@@ -776,6 +781,7 @@ tbl_svysummary(
   by = park_extra_magic_morning,
   include = c(park_ticket_season, park_close, park_temperature_high)
 ) |>
+  add_ess_header() |>
   add_overall(last = TRUE)
 ```
 
