@@ -52,12 +52,13 @@ We will use the ATT weights so the analysis matches that for matching above.
 #| warning: false
 library(propensity)
 
-seven_dwarfs_9_with_ps <-
-  glm(
+propensity_model <- glm(
     park_extra_magic_morning ~ park_ticket_season + park_close + park_temperature_high,
     data = seven_dwarfs_9,
     family = binomial()
-  ) |>
+  )
+
+seven_dwarfs_9_with_ps <- propensity_model |>
   augment(type.predict = "response", data = seven_dwarfs_9)
 seven_dwarfs_9_with_wt <- seven_dwarfs_9_with_ps |>
   mutate(w_att = wt_att(.fitted, park_extra_magic_morning))
@@ -249,25 +250,19 @@ svyglm(wait_minutes_posted_avg ~ park_extra_magic_morning, des) |>
 
 ### Sandwich estimator that takes into account the propensity score model
 
-The correct sandwich estimator will also take into account the propensity score model.
-The `{PSW}` will allow us to do this.
-This package has some quirks, for example it doesn't work well with categorical variables, so we need to create dummy variables for `park_ticket_season` to pass into the model.
-*Actually, the code below isn't working because it seems there is a bug in the package. Stay tuned!*
+The correct sandwich estimator will also take into account the uncertainty in estimating the propensity score model.
+`ipw()` will allow us to do this.
+To do so, we need to provide both the propensity score model and the outcome model.
 
 ```{r}
-#| eval: false
-library(PSW)
-
-seven_dwarfs_9 <- seven_dwarfs_9 |>
-  mutate(
-    park_ticket_season_regular = if_else(park_ticket_season == "regular", 1, 0),
-    park_ticket_season_value = if_else(park_ticket_season == "value", 1, 0)
-  )
-psw(
-  data = seven_dwarfs_9,
-  form.ps = "park_extra_magic_morning ~ park_ticket_season_regular + park_ticket_season_value + park_close + park_temperature_high",
-  weight = "ATT",
-  wt = TRUE,
-  out.var = "wait_minutes_posted_avg"
-)
+results <- ipw(propensity_model, weighted_mod)
+results
 ```
+
+We can also collect the results in a data frame.
+
+```{r}
+results |> 
+  as.data.frame()
+```
+
