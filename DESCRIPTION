@@ -10,7 +10,7 @@ Authors@R: c(
            comment = c(ORCID = "0000-0002-9500-8907"))
   )
 Description: Causal Inference in R.
-License: MIT + file LICENSE
+License: CC BY-NC 4.0
 Depends: 
     R (>= 4.1.0)
 Imports: 
