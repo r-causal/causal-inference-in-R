@@ -93,7 +93,7 @@ In @fig-dag-avg-wait, we're assuming that our primary confounders are when the p
 This is the only minimal adjustment set in the DAG, as well.
 The confounders precede the exposure and outcome, and (by definition) the exposure precedes the outcome.
 The average posted wait time is, in theory, a manipulable exposure because the park could post a time different from what they expect.
-The adjustment set
+
 
 The model is similar to the binary exposure case, but we need to use linear regression, as the posted time is a continuous variable.
 Since we're not using probabilities, we'll calculate denominators for our weights from a normal density.
