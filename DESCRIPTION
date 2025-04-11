@@ -33,6 +33,7 @@ Imports:
     lmw,
     lubridate,
     MatchIt,
+    mice,
     patchwork,
     propensity (>= 0.0.0.9000),
     PSW,
