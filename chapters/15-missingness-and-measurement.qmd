@@ -1,4 +1,4 @@
-# Missingness and measurement {#sec-missingness}
+# Missingness and measurement error {#sec-missingness}
 
 {{< include 00-setup.qmd >}}
 
