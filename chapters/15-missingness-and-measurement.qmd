@@ -764,6 +764,61 @@ First, we'll fit a model to predict `wait_minutes_actual_avg` using `wait_minute
 When fitting regression calibration models, it is crucial to include all variables that will be in subsequent models in the same form they will be there (for example, if we have a confounder in our final model that is fit using a spline, we need this same confounder, fit using a spline, in our calibration model).
 
 
+<!-- TODO: should we include the confounders in this model? They're also in the later model. Not quite analagous to multiple imputation but closer to the idea of including predictors of censoring in censoring weights even if they're confounders in the later models. We also don't care if we induce a relationship between them and outcome because the coefficients themselves don't matter -->
+
+```{r}
+library(splines)
+library(touringplans)
+library(broom)
+
+calib_model <- lm(
+  wait_minutes_actual_avg ~
+    ns(wait_minutes_posted_avg, df = 4) * wait_hour +
+    park_temperature_high + park_close + park_ticket_season,
+  data = seven_dwarfs_train_2018)
+
+seven_dwarves_calib <- calib_model |>
+  augment(newdata = seven_dwarfs_train_2018) |>
+  rename(wait_minutes_posted_calib = .fitted)
+```
+
+
+```{r}
+#| echo: false
+library(propensity)
+fit_ipw_effect <- function(.fmla, .data = seven_dwarfs, .trt = "park_extra_magic_morning", .outcome_fmla = wait_minutes_posted_calib ~ park_extra_magic_morning) {
+  .trt_var <- rlang::ensym(.trt)
+  
+  # fit propensity score model
+  propensity_model <- glm(
+    .fmla,
+    data = .data,
+    family = binomial()
+  )
+  
+  # calculate ATE weights
+  .df <- propensity_model |>
+    augment(type.predict = "response", data = .data) |>
+    mutate(w_ate = wt_ate(.fitted, !!.trt_var, exposure_type = "binary"))
+  
+  # fit ipw model
+  lm(.outcome_fmla, data = .df, weights = w_ate) |>
+    tidy() |>
+    filter(term == .trt) |>
+    pull(estimate)
+}
+
+effect_calib <- fit_ipw_effect(
+  park_extra_magic_morning ~ park_temperature_high +
+    park_close + park_ticket_season,
+  .outcome_fmla = wait_minutes_posted_calib ~ park_extra_magic_morning,
+  .data = seven_dwarves_calib |> filter(wait_hour == 9)
+) |>
+  round(2)
+```
+
+
+
 ::: callout-tip
 The effects of missingness on results and the impact of complete case analyses and multiple imputation can be deeply unintuitive.
 When you add measurement error and other types of bias, it can be nearly impossible to reason about.
