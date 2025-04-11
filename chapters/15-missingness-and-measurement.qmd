@@ -937,6 +937,37 @@ Then we can collect our imputed datasets into a list using the `complete` functi
 seven_dwarfs_mi_data <- complete(seven_dwarfs_mi, action = "all")
 ```
 
+
+Finally, let's write a functcion to fit the IPW effect across these datasets. We want to preserve the treatment effect as well as the standard error for applying Rubin's Rules.
+
+```{r}
+fit_ipw_effect <- function(.fmla, .data = seven_dwarfs, .trt = "park_extra_magic_morning", .outcome_fmla = wait_minutes_posted_calib ~ park_extra_magic_morning) {
+  .trt_var <- rlang::ensym(.trt)
+  
+  # fit propensity score model
+  propensity_model <- glm(
+    .fmla,
+    data = .data,
+    family = binomial()
+  )
+  
+  # calculate ATE weights
+  .df <- propensity_model |>
+    augment(type.predict = "response", data = .data) |>
+    mutate(w_ate = wt_ate(.fitted, !!.trt_var, exposure_type = "binary"))
+  
+  # fit outcome model
+  outcome_model <- lm(.outcome_fmla, data = .df, weights = w_ate) 
+  
+  # fit ipw effect
+  ipw_output <- ipw(propensity_model, outcome_model, .df)
+  return(c(estimate = ipw_output$estimates$estimate,
+           std.err = ipw_output$estimates$std.err))
+}
+```
+
+
+
 ::: callout-tip
 The effects of missingness on results and the impact of complete case analyses and multiple imputation can be deeply unintuitive.
 When you add measurement error and other types of bias, it can be nearly impossible to reason about.
