@@ -221,7 +221,7 @@ Here are some questions to ask to gain diagnostic insights we gain from @fig-mir
 1.  Look for lack of overlap as a potential positivity problem.
     But too much overlap may indicate a poor model <!-- (TODO: not necessarily. depends on the relative covariate distributions in the two groups). -->
 
-2.  Avg treatment effect among treated is easier to estimate with precision (because of higher counts) than in the control group.
+2.  Avg treatment effect among treated is easier to estimate with precision (because of higher counts in the control group) than in the control group.
 
 3.  A single outlier in either group concerning range could be a problem and warrant data inspection <!-- (TODO: do this here?) *look at the model coefs here*. -->
 
