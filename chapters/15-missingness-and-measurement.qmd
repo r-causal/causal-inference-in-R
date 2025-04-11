@@ -764,8 +764,6 @@ First, we'll fit a model to predict `wait_minutes_actual_avg` using `wait_minute
 When fitting regression calibration models, it is crucial to include all variables that will be in subsequent models in the same form they will be there (for example, if we have a confounder in our final model that is fit using a spline, we need this same confounder, fit using a spline, in our calibration model).
 
 
-<!-- TODO: should we include the confounders in this model? They're also in the later model. Not quite analagous to multiple imputation but closer to the idea of including predictors of censoring in censoring weights even if they're confounders in the later models. We also don't care if we induce a relationship between them and outcome because the coefficients themselves don't matter -->
-
 ```{r}
 library(splines)
 library(touringplans)
