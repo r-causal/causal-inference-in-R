@@ -752,9 +752,6 @@ When this is the case, you can use a simple approach called *regression calibrat
 This technique's name refers to the fact that you're recalibrating the variable that you've observed more of, given the subset of values you have for the well-measured version.
 But other than that, it's just a prediction model that includes the version of the variable you have more observations of and other variables you find essential to the measurement process.
 
-
-<!-- TODO: we need a transition here to talk about how this is actually deterministic imputation maybe switch this to actual regression calib and then transition to deterministic assum actual is correct fill in with posted (actually validation subset)--->
-
 As we know, the actual wait times have a lot of missingness.
 What if we considered posted wait times a proxy for actual wait times?
 In this case, we could redo the analysis of Extra Magic Morning's effect on the calibrated version of actual wait times. 
@@ -814,7 +811,45 @@ effect_calib <- fit_ipw_effect(
 ) |>
   round(2)
 ```
+Fitting this model with the IPW estimator results in an effect of `r effect_calib`, marginally attenuated compared to the value we saw when using the uncalibrated `wait_minutes_posted_avg` in [Chapter -@sec-outcome-model].
 
+Another approach could be to *impute* the values. Where `wait_minutes_actual_avg` is available, we'll use that. If it's `NA`, we'll use the calibrated value. In practice, this uses the same calibration model as above, but instead of giving the calibrated values to all observations, we only impute them for the observations that were missing the validation set. This method is sometimes called *regression imputation* or *deterministic imputation*. It is deterministic in the sense that we are just giving every observation with missing data a single predicted value and treating it as fixed rather than adding any variability (we'll see a *stocastic* imptuation method next, where we introduce some variability).
+
+```{r}
+seven_dwarves_reg_impute <- calib_model |>
+  augment(newdata = seven_dwarfs_train_2018) |>
+  rename(wait_minutes_actual_impute = .fitted) |>
+  # fill in real values where they exist
+  mutate(
+    wait_minutes_actual_impute = coalesce(
+      wait_minutes_actual_avg,
+      wait_minutes_actual_impute
+    )
+  )
+```
+
+```{r}
+#| echo: false
+
+effect_reg_impute <- fit_ipw_effect(
+  park_extra_magic_morning ~ park_temperature_high +
+    park_close + park_ticket_season,
+  .outcome_fmla = wait_minutes_actual_impute ~ park_extra_magic_morning,
+  .data = seven_dwarves_reg_impute |> filter(wait_hour == 9)
+) |>
+  round(2)
+```
+
+Fitting this model with the IPW estimator results in an effect of `r effect_reg_impute`.
+
+::: callout-warning
+The regression calibration model introduces uncertainty into the estimates of calibrated variables.
+Be sure to include the fitting of this model in your bootstrap to get the correct standard errors when performing regression calibration or imputation.
+:::
+
+## Multiple Imputation {#sec-imputation}
+
+Regression calibration provides a straightforward way to address measurement error and missingness by predicting values with a single model and plugging those predictions into the analysis. However, this plug-in approach is generally inefficient. If we correctly estimate uncertainty (for example, by bootstrapping both the calibration and outcome models) we often end up with wide confidence intervals, reflecting the fact that we've relied on a single imputed value.
 
 
 ::: callout-tip
