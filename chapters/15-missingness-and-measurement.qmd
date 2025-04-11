@@ -813,7 +813,7 @@ effect_calib <- fit_ipw_effect(
 ```
 Fitting this model with the IPW estimator results in an effect of `r effect_calib`, marginally attenuated compared to the value we saw when using the uncalibrated `wait_minutes_posted_avg` in [Chapter -@sec-outcome-model].
 
-Another approach could be to *impute* the values. Where `wait_minutes_actual_avg` is available, we'll use that. If it's `NA`, we'll use the calibrated value. In practice, this uses the same calibration model as above, but instead of giving the calibrated values to all observations, we only impute them for the observations that were missing the validation set. This method is sometimes called *regression imputation* or *deterministic imputation*. It is deterministic in the sense that we are just giving every observation with missing data a single predicted value and treating it as fixed rather than adding any variability (we'll see a *stocastic* imptuation method next, where we introduce some variability).
+Another approach could be to **impute** the values. Where `wait_minutes_actual_avg` is available, we'll use that. If it's `NA`, we'll use the calibrated value. In practice, this uses the same calibration model as above, but instead of giving the calibrated values to all observations, we only impute them for the observations missing in the validation set. This method is sometimes called *regression imputation* or *deterministic imputation*. It is deterministic in the sense that we are just giving every observation with missing data a single predicted value and treating it as fixed rather than adding any variability (we'll see a *stocastic* imptuation method next, where we introduce some variability).
 
 ```{r}
 seven_dwarves_reg_impute <- calib_model |>
