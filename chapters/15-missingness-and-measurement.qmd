@@ -662,16 +662,16 @@ fit_stats <- function(dag, actual, posted_60, missing_by = NULL, missing_for = "
   if (!is.null(missing_by) & missing_for == "actual") {
     actual[missing_by] <- NA
   }
-
+  
   if (!is.null(missing_by) & missing_for == "posted") {
     posted_60[missing_by] <- NA
   }
-
+  
   t_actual <- t.test(actual)
   t_posted <- t.test(posted_60 * 60)
   mdl <- lm(actual ~ posted_60)
   mdl_confints <- confint(mdl)
-
+  
   tibble(
     dag = dag,
     mean_actual_estimate = as.numeric(t_actual$estimate),
@@ -747,20 +747,19 @@ In [Chapter -@sec-sensitivity], we'll also discuss sensitivity analyses for miss
 
 ## Regression Calibration
 
-Sometimes, you have a well-measured version of a variable for a subset of observations and a version with more measurement error for a more significant proportion of the dataset.
+Sometimes, you have a well-measured version of a variable for a subset of observations and a version with more measurement error for a more significant proportion of the dataset. Sometimes people call this a **validation set**.
 When this is the case, you can use a simple approach called *regression calibration* to predict the value of the well-measured version for more observations in the dataset.
 This technique's name refers to the fact that you're recalibrating the variable that you've observed more of, given the subset of values you have for the well-measured version.
 But other than that, it's just a prediction model that includes the version of the variable you have more observations of and other variables you find essential to the measurement process.
 
 As we know, the actual wait times have a lot of missingness.
 What if we considered posted wait times a proxy for actual wait times?
-In this case, we could redo the analysis of Extra Magic Morning's effect on the calibrated version of actual wait times.
+In this case, we could redo the analysis of Extra Magic Morning's effect on the calibrated version of actual wait times. 
 
-First, we'll fit a model to predict `wait_minutes_actual_avg` using `wait_minutes_posted_avg`.
-Where `wait_minutes_actual_avg` is available, we'll use that.
-If it's `NA`, we'll use the calibrated value.
+First, we'll fit a model to predict `wait_minutes_actual_avg` using `wait_minutes_posted_avg`. Then, instead of using `wait_minutes_posted_avg` we'll use the calibrated value from that model in it's place.
 
-<!-- TODO: should we include the confounders in this model? They're also in the later model. Not quite analagous to multiple imputation but closer to the idea of including predictors of censoring in censoring weights even if they're confounders in the later models. We also don't care if we induce a relationship between them and outcome because the coefficients themselves don't matter -->
+When fitting regression calibration models, it is crucial to include all variables that will be in subsequent models in the same form they will be there (for example, if we have a confounder in our final model that is fit using a spline, we need this same confounder, fit using a spline, in our calibration model).
+
 
 ```{r}
 library(splines)
@@ -771,47 +770,32 @@ calib_model <- lm(
   wait_minutes_actual_avg ~
     ns(wait_minutes_posted_avg, df = 4) * wait_hour +
     park_temperature_high + park_close + park_ticket_season,
-  # use log of `wait_minutes_actual_avg`
-  data = seven_dwarfs_train_2018 |>
-    mutate(wait_minutes_actual_avg = log1p(wait_minutes_actual_avg))
-)
+  data = seven_dwarfs_train_2018)
 
 seven_dwarves_calib <- calib_model |>
-  augment(
-    data = seven_dwarfs_train_2018 |>
-      mutate(wait_minutes_actual_avg = log1p(wait_minutes_actual_avg)) |>
-      drop_na()
-  ) |>
-  rename(wait_minutes_actual_calib = .fitted) |>
-  # convert back to the original scale
-  # and fill in real values where they exist
-  mutate(
-    wait_minutes_actual_calib = exp(wait_minutes_actual_calib) - 1,
-    wait_minutes_actual_calib = coalesce(
-      wait_minutes_actual_avg,
-      wait_minutes_actual_calib
-    )
-  )
+  augment(newdata = seven_dwarfs_train_2018) |>
+  rename(wait_minutes_posted_calib = .fitted)
 ```
+
 
 ```{r}
 #| echo: false
 library(propensity)
-fit_ipw_effect <- function(.fmla, .data = seven_dwarfs, .trt = "park_extra_magic_morning", .outcome_fmla = wait_minutes_posted_avg ~ park_extra_magic_morning) {
+fit_ipw_effect <- function(.fmla, .data = seven_dwarfs, .trt = "park_extra_magic_morning", .outcome_fmla = wait_minutes_posted_calib ~ park_extra_magic_morning) {
   .trt_var <- rlang::ensym(.trt)
-
+  
   # fit propensity score model
   propensity_model <- glm(
     .fmla,
     data = .data,
     family = binomial()
   )
-
+  
   # calculate ATE weights
   .df <- propensity_model |>
     augment(type.predict = "response", data = .data) |>
     mutate(w_ate = wt_ate(.fitted, !!.trt_var, exposure_type = "binary"))
-
+  
   # fit ipw model
   lm(.outcome_fmla, data = .df, weights = w_ate) |>
     tidy() |>
@@ -822,24 +806,199 @@ fit_ipw_effect <- function(.fmla, .data = seven_dwarfs, .trt = "park_extra_magic
 effect_calib <- fit_ipw_effect(
   park_extra_magic_morning ~ park_temperature_high +
     park_close + park_ticket_season,
-  .outcome_fmla = wait_minutes_actual_calib ~ park_extra_magic_morning,
+  .outcome_fmla = wait_minutes_posted_calib ~ park_extra_magic_morning,
   .data = seven_dwarves_calib |> filter(wait_hour == 9)
 ) |>
   round(2)
 ```
+Fitting this model with the IPW estimator results in an effect of `r effect_calib`, marginally attenuated compared to the value we saw when using the uncalibrated `wait_minutes_posted_avg` in [Chapter -@sec-outcome-model].
 
-Fitting this model with the IPW estimator results in an effect of `r effect_calib`, considerably attenuated compared to the values of `wait_minutes_posted_avg`.
+Another approach could be to **impute** the values. Where `wait_minutes_actual_avg` is available, we'll use that. If it's `NA`, we'll use the calibrated value. In practice, this uses the same calibration model as above, but instead of giving the calibrated values to all observations, we only impute them for the observations missing in the validation set. This method is sometimes called *regression imputation* or *deterministic imputation*. It is deterministic in the sense that we are just giving every observation with missing data a single predicted value and treating it as fixed rather than adding any variability (we'll see a *stocastic* imptuation method next, where we introduce some variability).
+
+```{r}
+seven_dwarves_reg_impute <- calib_model |>
+  augment(newdata = seven_dwarfs_train_2018) |>
+  rename(wait_minutes_actual_impute = .fitted) |>
+  # fill in real values where they exist
+  mutate(
+    wait_minutes_actual_impute = coalesce(
+      wait_minutes_actual_avg,
+      wait_minutes_actual_impute
+    )
+  )
+```
+
+```{r}
+#| echo: false
+
+effect_reg_impute <- fit_ipw_effect(
+  park_extra_magic_morning ~ park_temperature_high +
+    park_close + park_ticket_season,
+  .outcome_fmla = wait_minutes_actual_impute ~ park_extra_magic_morning,
+  .data = seven_dwarves_reg_impute |> filter(wait_hour == 9)
+) |>
+  round(2)
+```
+
+Fitting this model with the IPW estimator results in an effect of `r effect_reg_impute`.
 
 ::: callout-warning
 The regression calibration model introduces uncertainty into the estimates of calibrated variables.
-Be sure to include the fitting of this model in your bootstrap to get the correct standard errors.
+Be sure to include the fitting of this model in your bootstrap to get the correct standard errors when performing regression calibration or imputation.
 :::
 
 ## Multiple Imputation {#sec-imputation}
 
-## Combining MICE and IPW
+Regression calibration provides a straightforward way to address measurement error and missingness by predicting values with a single model and plugging those predictions into the analysis. However, this plug-in approach is generally inefficient. If we correctly estimate uncertainty (for example, by bootstrapping both the calibration and outcome models), we often end up with wide confidence intervals, reflecting the fact that we've relied on a single imputed value.
 
-<!-- For the end of the chapter -->
+Multiple imputation (MI) is an often more efficient alternative. Instead of producing one "best guess" for the missing value, MI draws predicted values from a distribution, capturing the uncertainty inherent in the missing data. This process allows for better estimates of both summary statistics (like the mean of the imputed variable) and downstream conditional effects (like treatment effects when the imputed variable appears in the outcome model). Through this process, we will generate multiple imputed datasets. The default is often 5, but if a large portion of your data is missing, more imputations may be necessary to achieve stable results. A common rule of thumb is that the number of imputations should roughly match the percentage of incomplete cases.
+
+There are a few critical modeling considerations when using MI in causal analyses:
+
+1. Your imputation model *must include all variables* that appear in your final outcome model and your propensity score model. This includes variables that confound the treatment–outcome relationship *as well as the outcome itself*. Leaving out key variables, especially the outcome, can lead to biased estimates. [@d2024behind]
+2. As with regression calibration, *use the same functional forms in your imputation model as you'll use later*. If a variable is modeled with splines or interactions downstream, those need to be mirrored in the imputation step.
+
+In a typical causal analysis, we proceed as follows:
+
+1. Impute multiple complete datasets using an imputation model that includes the outcome and all covariates.
+2. Estimate the treatment effect within each dataset:
+    * Fit the propensity score model.
+    * Compute inverse probability weights.
+    * Fit the weighted outcome model.
+3. Pool the estimates using Rubin's rules (see @tip-rubin) to obtain an overall treatment effect and valid standard errors.
+
+
+::: {#tip-rubin .callout-tip}
+
+### Rubin's Rules
+
+After performing the analysis separately on each of the $m$ imputed datasets:
+
+Let:
+
+- $\hat{Q}_i$: the estimate from the $i$-th imputed dataset  
+- $U_i$: the variance of $\hat{Q}_i$  
+- $\bar{Q} = \frac{1}{m} \sum_{i=1}^m \hat{Q}_i$: the pooled estimate  
+- $\bar{U} = \frac{1}{m} \sum_{i=1}^m U_i$: the average within-imputation variance  
+- $B = \frac{1}{m - 1} \sum_{i=1}^m (\hat{Q}_i - \bar{Q})^2$: the between-imputation variance
+
+Then the total variance is:
+
+$$T = \bar{U} + \left(1 + \frac{1}{m}\right) B$$
+
+The standard error of the pooled estimate is $\sqrt{T}$ and this can be used to construct confidence intervals or perform hypothesis testing.
+
+:::
+
+
+This approach accounts for uncertainty in both the imputation and the treatment effect estimation steps. It is particularly helpful when missingness affects variables involved in the treatment assignment or outcome processes, cases where complete-case analysis or single imputation can yield biased or inefficient estimates.
+
+In practice, multiple imputation is often implemented using the MICE (Multivariate Imputation by Chained Equations) algorithm, which iteratively imputes each variable with missing values using models conditional on the others. In R, we often use the `{mice}` package to implement the imputation.
+
+Let's use the same example as above, but rather than just performing a single regression imputation, we will perform the stochastic (multiple) imputation 5 times. First, we need to impute our data. 
+
+```{r}
+#| message: false
+#| warning: false
+library(mice)
+
+seven_dwarfs_to_impute_data <- seven_dwarfs_train_2018 |>
+  mutate(park_ticket_season = as.factor(park_ticket_season)) |>
+  select(
+    park_date,
+    wait_minutes_actual_avg,
+    wait_minutes_posted_avg,
+    wait_hour,
+    park_temperature_high,
+    park_close,
+    park_ticket_season,
+    park_extra_magic_morning
+  )
+
+predictor_matrix <- make.predictorMatrix(seven_dwarfs_to_impute_data)
+
+# remove park date from imputation models
+predictor_matrix[, 1] <- 0
+
+# Impute data
+seven_dwarfs_mi <- mice(
+  seven_dwarfs_to_impute_data,
+  m = 5, # we are doing 5 imputations
+  predictorMatrix = predictor_matrix,
+  method = "pmm",  # predictive mean matching
+  seed = 1,
+  print = FALSE
+)
+```
+
+Then we can collect our imputed datasets into a list using the `complete` function:
+
+```{r}
+seven_dwarfs_mi_data <- complete(seven_dwarfs_mi, action = "all")
+```
+
+
+Finally, let's write a functcion to fit the IPW effect across these datasets. We want to preserve the treatment effect as well as the standard error for applying Rubin's Rules.
+
+```{r}
+fit_ipw_effect <- function(.fmla, .data = seven_dwarfs, .trt = "park_extra_magic_morning", .outcome_fmla = wait_minutes_posted_calib ~ park_extra_magic_morning) {
+  .trt_var <- rlang::ensym(.trt)
+  
+  # fit propensity score model
+  propensity_model <- glm(
+    .fmla,
+    data = .data,
+    family = binomial()
+  )
+  
+  # calculate ATE weights
+  .df <- propensity_model |>
+    augment(type.predict = "response", data = .data) |>
+    mutate(w_ate = wt_ate(.fitted, !!.trt_var, exposure_type = "binary"))
+  
+  # fit outcome model
+  outcome_model <- lm(.outcome_fmla, data = .df, weights = w_ate) 
+  
+  # fit ipw effect
+  ipw_output <- ipw(propensity_model, outcome_model, .df)
+  return(c(estimate = ipw_output$estimates$estimate,
+           std.err = ipw_output$estimates$std.err))
+}
+```
+
+```{r}
+effect_mi_all <- map(seven_dwarfs_mi_data, ~fit_ipw_effect(
+  park_extra_magic_morning ~ park_temperature_high +
+    park_close + park_ticket_season,
+  .outcome_fmla = wait_minutes_actual_avg ~ park_extra_magic_morning,
+  .data = .x |> filter(wait_hour == 9)
+)) |>
+  bind_rows()
+```
+
+Now we have a data frame with the estimated effect within each imputed dataset along with the standard error.
+
+```{r}
+effect_mi_all
+```
+
+To get the final effect, we are going to average the `estimate` column and to get the appropriate standard errors, we will apply Rubin's Rules (see @tip-rubin for details).
+
+```{r}
+effect_mi_all |>
+  summarise(
+    effect_mi = mean(estimate),      # pooled estimate
+    u_bar = mean(std.err^2),         # average within-imputation variance
+    b = var(estimate),               # between-imputation variance
+    t_var = u_bar + (1 + 1/n()) * b, # total variance
+    se_mi = sqrt(t_var)              # pooled standard error
+  ) |>
+  select(effect_mi, se_mi)
+```
+
+Again, this effect is attenuated compared to what we saw in [Chapter -@sec-outcome-model] (although the standard error is quite large, so the differences may not be meaningful).
+
+
 
 ::: callout-tip
 The effects of missingness on results and the impact of complete case analyses and multiple imputation can be deeply unintuitive.
