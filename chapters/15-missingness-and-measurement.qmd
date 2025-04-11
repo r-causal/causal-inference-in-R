@@ -890,6 +890,53 @@ The standard error of the pooled estimate is $\sqrt{T}$ and this can be used to 
 
 :::
 
+
+This approach accounts for uncertainty in both the imputation and the treatment effect estimation steps. It is particularly helpful when missingness affects variables involved in the treatment assignment or outcome processes, cases where complete-case analysis or single imputation can yield biased or inefficient estimates.
+
+In practice, multiple imputation is often implemented using the MICE (Multivariate Imputation by Chained Equations) algorithm, which iteratively imputes each variable with missing values using models conditional on the others. In R, we often use the `{mice}` package to implement the imputation.
+
+Let's use the same example as above, but rather than just performing a single regression imputation, we will perform the stochastic (multiple) imputation 5 times. First, we need to impute our data. 
+
+```{r}
+#| message: false
+#| warning: false
+library(mice)
+
+seven_dwarfs_to_impute_data <- seven_dwarfs_train_2018 |>
+  mutate(park_ticket_season = as.factor(park_ticket_season)) |>
+  select(
+    park_date,
+    wait_minutes_actual_avg,
+    wait_minutes_posted_avg,
+    wait_hour,
+    park_temperature_high,
+    park_close,
+    park_ticket_season,
+    park_extra_magic_morning
+  )
+
+predictor_matrix <- make.predictorMatrix(seven_dwarfs_to_impute_data)
+
+# remove park date from imputation models
+predictor_matrix[, 1] <- 0
+
+# Impute data
+seven_dwarfs_mi <- mice(
+  seven_dwarfs_to_impute_data,
+  m = 5, # we are doing 5 imputations
+  predictorMatrix = predictor_matrix,
+  method = "pmm",  # predictive mean matching
+  seed = 1,
+  print = FALSE
+)
+```
+
+Then we can collect our imputed datasets into a list using the `complete` function:
+
+```{r}
+seven_dwarfs_mi_data <- complete(seven_dwarfs_mi, action = "all")
+```
+
 ::: callout-tip
 The effects of missingness on results and the impact of complete case analyses and multiple imputation can be deeply unintuitive.
 When you add measurement error and other types of bias, it can be nearly impossible to reason about.
