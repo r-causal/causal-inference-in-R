@@ -747,7 +747,7 @@ In [Chapter -@sec-sensitivity], we'll also discuss sensitivity analyses for miss
 
 ## Regression Calibration
 
-Sometimes, you have a well-measured version of a variable for a subset of observations and a version with more measurement error for a more significant proportion of the dataset. (sometimes people call this a *validation set*).
+Sometimes, you have a well-measured version of a variable for a subset of observations and a version with more measurement error for a more significant proportion of the dataset. Sometimes people call this a **validation set**.
 When this is the case, you can use a simple approach called *regression calibration* to predict the value of the well-measured version for more observations in the dataset.
 This technique's name refers to the fact that you're recalibrating the variable that you've observed more of, given the subset of values you have for the well-measured version.
 But other than that, it's just a prediction model that includes the version of the variable you have more observations of and other variables you find essential to the measurement process.
