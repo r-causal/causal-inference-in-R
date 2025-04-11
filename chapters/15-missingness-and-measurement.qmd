@@ -856,7 +856,7 @@ Multiple imputation (MI) is an often more efficient alternative. Instead of prod
 There are a few critical modeling considerations when using MI in causal analyses:
 
 1. Your imputation model *must include all variables* that appear in your final outcome model and your propensity score model. This includes variables that confound the treatment–outcome relationship *as well as the outcome itself*. Leaving out key variables, especially the outcome, can lead to biased estimates. [@d2024behind]
-2. As with regression calibration, **use the same functional forms in your imputation model as you'll use later**. If a variable is modeled with splines or interactions downstream, those need to be mirrored in the imputation step.
+2. As with regression calibration, *use the same functional forms in your imputation model as you'll use later*. If a variable is modeled with splines or interactions downstream, those need to be mirrored in the imputation step.
 
 In a typical causal analysis, we proceed as follows:
 
