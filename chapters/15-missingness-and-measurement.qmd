@@ -868,6 +868,28 @@ In a typical causal analysis, we proceed as follows:
 3. Pool the estimates using Rubin's rules (see @tip-rubin) to obtain an overall treatment effect and valid standard errors.
 
 
+::: {#tip-rubin .callout-tip}
+
+### Rubin's Rules
+
+After performing the analysis separately on each of the $m$ imputed datasets:
+
+Let:
+
+- $\hat{Q}_i$: the estimate from the $i$-th imputed dataset  
+- $U_i$: the variance of $\hat{Q}_i$  
+- $\bar{Q} = \frac{1}{m} \sum_{i=1}^m \hat{Q}_i$: the pooled estimate  
+- $\bar{U} = \frac{1}{m} \sum_{i=1}^m U_i$: the average within-imputation variance  
+- $B = \frac{1}{m - 1} \sum_{i=1}^m (\hat{Q}_i - \bar{Q})^2$: the between-imputation variance
+
+Then the total variance is:
+
+$$T = \bar{U} + \left(1 + \frac{1}{m}\right) B$$
+
+The standard error of the pooled estimate is $\sqrt{T}$ and this can be used to construct confidence intervals or perform hypothesis testing.
+
+:::
+
 ::: callout-tip
 The effects of missingness on results and the impact of complete case analyses and multiple imputation can be deeply unintuitive.
 When you add measurement error and other types of bias, it can be nearly impossible to reason about.
