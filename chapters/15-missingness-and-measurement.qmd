@@ -966,6 +966,38 @@ fit_ipw_effect <- function(.fmla, .data = seven_dwarfs, .trt = "park_extra_magic
 }
 ```
 
+```{r}
+effect_mi_all <- map(seven_dwarfs_mi_data, ~fit_ipw_effect(
+  park_extra_magic_morning ~ park_temperature_high +
+    park_close + park_ticket_season,
+  .outcome_fmla = wait_minutes_actual_avg ~ park_extra_magic_morning,
+  .data = .x |> filter(wait_hour == 9)
+)) |>
+  bind_rows()
+```
+
+Now we have a data frame with the estimated effect within each imputed dataset along with the standard error.
+
+```{r}
+effect_mi_all
+```
+
+To get the final effect, we are going to average the `estimate` column and to get the appropriate standard errors, we will apply Rubin's Rules (see @tip-rubin for details).
+
+```{r}
+effect_mi_all |>
+  summarise(
+    effect_mi = mean(estimate),      # pooled estimate
+    u_bar = mean(std.err^2),         # average within-imputation variance
+    b = var(estimate),               # between-imputation variance
+    t_var = u_bar + (1 + 1/n()) * b, # total variance
+    se_mi = sqrt(t_var)              # pooled standard error
+  ) |>
+  select(effect_mi, se_mi)
+```
+
+Again, this effect is attenuated compared to what we saw in [Chapter -@sec-outcome-model] (although the standard error is quite large, so the differences may not be meaningful).
+
 
 
 ::: callout-tip
