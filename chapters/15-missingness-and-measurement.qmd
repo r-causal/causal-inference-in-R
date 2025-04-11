@@ -851,6 +851,22 @@ Be sure to include the fitting of this model in your bootstrap to get the correc
 
 Regression calibration provides a straightforward way to address measurement error and missingness by predicting values with a single model and plugging those predictions into the analysis. However, this plug-in approach is generally inefficient. If we correctly estimate uncertainty (for example, by bootstrapping both the calibration and outcome models) we often end up with wide confidence intervals, reflecting the fact that we've relied on a single imputed value.
 
+Multiple imputation (MI) is an often more efficient alternative. Instead of producing one "best guess" for the missing value, MI draws predicted values from a distribution, capturing the uncertainty inherent in the missing data. This process allows for better estimates of both summary statistics (like the mean of the imputed variable) and downstream conditional effects (like treatment effects when the imputed variable appears in the outcome model). Through this process, we will generate multiple imputed datasets. The default is often 5, but if a large portion of your data is missing, more imputations may be necessary to achieve stable results. A common rule of thumb is that the number of imputations should roughly match the percentage of incomplete cases.
+
+There are a few critical modeling considerations when using MI in causal analyses:
+
+1. Your imputation model **must include all variables** that appear in your final outcome model and your propensity score model. This includes variables that confound the treatment–outcome relationship **as well as the outcome itself**. Leaving out key variables, especially the outcome, can lead to biased estimates. [@d2024behind]
+2. As with regression calibration, **use the same functional forms in your imputation model as you'll use later**. If a variable is modeled with splines or interactions downstream, those need to be mirrored in the imputation step.
+
+In a typical causal analysis, we proceed as follows:
+
+1. Impute multiple complete datasets using an imputation model that includes the outcome and all covariates.
+2. Estimate the treatment effect within each dataset:
+    * Fit the propensity score model.
+    * Compute inverse probability weights.
+    * Fit the weighted outcome model.
+3. Pool the estimates using Rubin's rules (see @tip-rubin) to obtain an overall treatment effect and valid standard errors.
+
 
 ::: callout-tip
 The effects of missingness on results and the impact of complete case analyses and multiple imputation can be deeply unintuitive.
