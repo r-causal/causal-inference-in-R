@@ -662,16 +662,16 @@ fit_stats <- function(dag, actual, posted_60, missing_by = NULL, missing_for = "
   if (!is.null(missing_by) & missing_for == "actual") {
     actual[missing_by] <- NA
   }
-
+  
   if (!is.null(missing_by) & missing_for == "posted") {
     posted_60[missing_by] <- NA
   }
-
+  
   t_actual <- t.test(actual)
   t_posted <- t.test(posted_60 * 60)
   mdl <- lm(actual ~ posted_60)
   mdl_confints <- confint(mdl)
-
+  
   tibble(
     dag = dag,
     mean_actual_estimate = as.numeric(t_actual$estimate),
@@ -747,99 +747,24 @@ In [Chapter -@sec-sensitivity], we'll also discuss sensitivity analyses for miss
 
 ## Regression Calibration
 
-Sometimes, you have a well-measured version of a variable for a subset of observations and a version with more measurement error for a more significant proportion of the dataset.
+Sometimes, you have a well-measured version of a variable for a subset of observations and a version with more measurement error for a more significant proportion of the dataset. (sometimes people call this a *validation set*).
 When this is the case, you can use a simple approach called *regression calibration* to predict the value of the well-measured version for more observations in the dataset.
 This technique's name refers to the fact that you're recalibrating the variable that you've observed more of, given the subset of values you have for the well-measured version.
 But other than that, it's just a prediction model that includes the version of the variable you have more observations of and other variables you find essential to the measurement process.
 
+
+<!-- TODO: we need a transition here to talk about how this is actually deterministic imputation maybe switch this to actual regression calib and then transition to deterministic assum actual is correct fill in with posted (actually validation subset)--->
+
 As we know, the actual wait times have a lot of missingness.
 What if we considered posted wait times a proxy for actual wait times?
-In this case, we could redo the analysis of Extra Magic Morning's effect on the calibrated version of actual wait times.
+In this case, we could redo the analysis of Extra Magic Morning's effect on the calibrated version of actual wait times. 
 
-First, we'll fit a model to predict `wait_minutes_actual_avg` using `wait_minutes_posted_avg`.
-Where `wait_minutes_actual_avg` is available, we'll use that.
-If it's `NA`, we'll use the calibrated value.
+First, we'll fit a model to predict `wait_minutes_actual_avg` using `wait_minutes_posted_avg`. Then, instead of using `wait_minutes_posted_avg` we'll use the calibrated value from that model in it's place.
+<!-- Where `wait_minutes_actual_avg` is available, we'll use that. -->
+<!-- If it's `NA`, we'll use the calibrated value. -->
 
-<!-- TODO: should we include the confounders in this model? They're also in the later model. Not quite analagous to multiple imputation but closer to the idea of including predictors of censoring in censoring weights even if they're confounders in the later models. We also don't care if we induce a relationship between them and outcome because the coefficients themselves don't matter -->
+When fitting regression calibration models, it is crucial to include all variables that will be in subsequent models in the same form they will be there (for example, if we have a confounder in our final model that is fit using a spline, we need this same confounder, fit using a spline, in our calibration model).
 
-```{r}
-library(splines)
-library(touringplans)
-library(broom)
-
-calib_model <- lm(
-  wait_minutes_actual_avg ~
-    ns(wait_minutes_posted_avg, df = 4) * wait_hour +
-    park_temperature_high + park_close + park_ticket_season,
-  # use log of `wait_minutes_actual_avg`
-  data = seven_dwarfs_train_2018 |>
-    mutate(wait_minutes_actual_avg = log1p(wait_minutes_actual_avg))
-)
-
-seven_dwarves_calib <- calib_model |>
-  augment(
-    data = seven_dwarfs_train_2018 |>
-      mutate(wait_minutes_actual_avg = log1p(wait_minutes_actual_avg)) |>
-      drop_na()
-  ) |>
-  rename(wait_minutes_actual_calib = .fitted) |>
-  # convert back to the original scale
-  # and fill in real values where they exist
-  mutate(
-    wait_minutes_actual_calib = exp(wait_minutes_actual_calib) - 1,
-    wait_minutes_actual_calib = coalesce(
-      wait_minutes_actual_avg,
-      wait_minutes_actual_calib
-    )
-  )
-```
-
-```{r}
-#| echo: false
-library(propensity)
-fit_ipw_effect <- function(.fmla, .data = seven_dwarfs, .trt = "park_extra_magic_morning", .outcome_fmla = wait_minutes_posted_avg ~ park_extra_magic_morning) {
-  .trt_var <- rlang::ensym(.trt)
-
-  # fit propensity score model
-  propensity_model <- glm(
-    .fmla,
-    data = .data,
-    family = binomial()
-  )
-
-  # calculate ATE weights
-  .df <- propensity_model |>
-    augment(type.predict = "response", data = .data) |>
-    mutate(w_ate = wt_ate(.fitted, !!.trt_var, exposure_type = "binary"))
-
-  # fit ipw model
-  lm(.outcome_fmla, data = .df, weights = w_ate) |>
-    tidy() |>
-    filter(term == .trt) |>
-    pull(estimate)
-}
-
-effect_calib <- fit_ipw_effect(
-  park_extra_magic_morning ~ park_temperature_high +
-    park_close + park_ticket_season,
-  .outcome_fmla = wait_minutes_actual_calib ~ park_extra_magic_morning,
-  .data = seven_dwarves_calib |> filter(wait_hour == 9)
-) |>
-  round(2)
-```
-
-Fitting this model with the IPW estimator results in an effect of `r effect_calib`, considerably attenuated compared to the values of `wait_minutes_posted_avg`.
-
-::: callout-warning
-The regression calibration model introduces uncertainty into the estimates of calibrated variables.
-Be sure to include the fitting of this model in your bootstrap to get the correct standard errors.
-:::
-
-## Multiple Imputation {#sec-imputation}
-
-## Combining MICE and IPW
-
-<!-- For the end of the chapter -->
 
 ::: callout-tip
 The effects of missingness on results and the impact of complete case analyses and multiple imputation can be deeply unintuitive.
