@@ -48,7 +48,8 @@ Imports:
     timeDate,
     tipr (>= 1.0.1),
     touringplans (>= 0.0.1),
-    visdat
+    visdatuse,
+    WeightIt
 Suggests: 
     downlit,
     grkstyle (>= 0.0.3),
