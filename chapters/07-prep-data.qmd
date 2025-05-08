@@ -534,7 +534,7 @@ For this first analysis, we will ignore the missing values in the posted wait ti
 We have a lot more missingness in the actual wait times, a topic we'll revisit in @sec-missingness.
 Since we're not using this outcome yet, we'll set that aside, too.
 
-## Exploring causal assumptions
+## Exploring causal assumptions {#sec-explore-assump}
 
 As we've seen in @sec-assump and @sec-quartets, data can't solve the problem of the unverifiable assumptions we need to make to do causal inference.
 However, it can still provide valuable information.

@@ -860,7 +860,7 @@ Below is a table summarizing the estimands and methods for estimating them (incl
 |          |                                  |                                                                                                                                                            |                                               | `propensity::wt_ato()` |
 +----------+----------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------+-----------------------------------------------+------------------------+
 
-## Risk ratio, risk difference, and odds ratio
+## Risk ratio, risk difference, and odds ratio {#sec-binary}
 
 In the example we've taken up, the outcome, posted wait times, is continuous.
 Using linear regression, the ATE and friends are calculated as a difference in means.
