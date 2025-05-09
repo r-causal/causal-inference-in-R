@@ -120,7 +120,7 @@ A logistic regression with exposure as the predicted value and the confounders a
 
 Below is pseudo-code for using `glm()` to fit a propensity score model using logistic regression.
 The first argument is the model, with the exposure on the left side and the confounders on the right.
-The `data` argument takes the data frame, and the `family = binomial()` argument denotes that the model should be fit using logistic regression (as opposed to a different generalized linear model, although other links are sometimes used in propensity score).
+The `data` argument takes the data frame, and the `family = binomial()` argument denotes that the model should be fit using logistic regression (as opposed to a different generalized linear model, although other links are sometimes used in propensity score modeling).
 You've likely fit models like this before, but the key details are that we are predicting the probability of exposure (instead of something around the outcome; we'll get to that!) and that the predictors are the confounders determined from the DAG. 
 As we saw in @sec-ci-rct, if we had any predictors of the outcome that weren't related to the exposure, we'd probably want to include those, too, for precision's sake.
 
