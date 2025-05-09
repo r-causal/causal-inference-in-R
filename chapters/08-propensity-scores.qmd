@@ -136,10 +136,10 @@ glm(
 ```
 
 We can extract the propensity scores by pulling out the predictions on the probability scale using `predict()` or `fitted()`. However,
-using the `augment()` function from the [{`broom`}](https://broom.tidymodels.org/) package, we can extract these propensity scores and add them to our original data frame, so we'll use that approach.
+using the `augment()` function from the [{`broom`}](https://broom.tidymodels.org/) package, we can extract these propensity scores and add them to our original data frame in one step, so we'll use that approach.
 The predictions will be on the *linear logit* scale by default.
 Setting the argument `type.predict` to `"response"` indicates that we want to extract the predicted values on the *probability* scale.
-The `data` argument contains the original data frame; if we leave this blank, we'll only get back a data frame with the variables in the propensity score model. However, we need the outcome, too, so it's handy to predict the whole data frame, even though there are no new days in the data set.
+The `data` argument contains the original data frame; if we leave this blank, we'll only get back a data frame with the variables in the propensity score model. However, we need the outcome, too, so it's handy to use the whole data frame, even though there are no new days in the data set.
 This code will output a new data frame consisting of all components in `df` with six additional columns corresponding to the logistic regression model that was fit.
 The `.fitted` column is the propensity score.
 A convenient detail about broom is that the columns returned from its functions are consistent across models in R, so the code in this chapter will work for many types of broom output.
@@ -505,7 +505,7 @@ For example, if observation 1 had a very high likelihood of being exposed given 
 Likewise, if observation 2 had a very high likelihood of being exposed given their pre-exposure covariates ($p = 0.9$), and they *were* exposed, their weight would be 1.1 ($w_2 = 1 / 0.9$).
 Intuitively, we give more weight to observations that, based on their measured confounders, appear to have helpful information for constructing a counterfactual---we would have predicted that they were exposed, but by chance, they were not, or vice versa. 
 
-The `{propensity}` package calculates a variety of propensity score weights that follow the pattern `wt_estimand()`. To calculate the ATE, we use `wt_ate()`, which we provide the fitted propensity score and the observed exposure values. 
+The `{propensity}` package calculates a variety of propensity score weights with functions named to follow the pattern `wt_estimand()`. To calculate the ATE, we use `wt_ate()`, which we provide the fitted propensity score and the observed exposure values. 
 
 ```{r}
 library(propensity)
