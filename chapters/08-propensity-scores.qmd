@@ -49,7 +49,7 @@ dag <- dagify(
   tidy_dagitty() |>
   node_status()
 
-dag_plot <- dag |> 
+dag_plot <- dag |>
   ggplot(
     aes(x, y, xend = xend, yend = yend, color = status)
   ) +
@@ -59,46 +59,47 @@ dag_plot <- dag |>
   theme(legend.position = "none") +
   coord_cartesian(clip = "off")
 
-dag_plot + 
+dag_plot +
   geom_dag_edges_arc(curvature = c(rep(0, 5), .3, 0)) +
   geom_dag_label_repel(seed = 1630)
 ```
 
 Now that we've done some exploratory analysis of these data, how should we go about trying to answer this question? We know from @sec-dags that we have three backdoor paths to close. In each path there is one variable, resulting in three confounders: the historic high temperature on the day, the time the park closed, and the ticket season: value, regular, or peak. 
 
-We also know that we have several ways we can close these paths. Stratification isn't a good solution here because of the curse of dimensionality; we had better use a statistical model. But which relationship should we model? Consider @fig-dag-close-paths.
+We also know that we have several ways we can close these paths. Stratification isn't a good solution here because of the curse of dimensionality; we had better use a statistical model. But which relationship should we model? Consider @fig-dag-close-paths-1, @fig-dag-close-paths-2, and @fig-dag-close-paths-3.
 
 ```{r}
 #| label: fig-dag-close-paths
 #| layout-ncol: 3
-#| fig-cap: 
+#| code-fold: true
+#| fig-cap:
 #|   - "Shall we close the paths going into the exposure?"
 #|   - "Or the paths going into the outcome?"
 #|   - "Or both?"
-dag_plot + 
+dag_plot +
   geom_dag_edges_arc(curvature = c(rep(0, 5), .3, 0), edge_color = "grey80") +
   geom_dag_edges_arc(
-    data = \(.x) filter(.x, to == "x"), 
-    curvature = c(0, 0, 0), 
+    data = \(.x) filter(.x, to == "x"),
+    curvature = c(0, 0, 0),
     edge_width = 1.1
   )
 
-dag_plot + 
+dag_plot +
   geom_dag_edges_arc(curvature = c(rep(0, 5), .3, 0), edge_color = "grey80") +
   geom_dag_edges_arc(
-    data = \(.x) filter(.x, name != "x", to == "y"), 
-    curvature = c(0, 0, .3), 
+    data = \(.x) filter(.x, name != "x", to == "y"),
+    curvature = c(0, 0, .3),
     edge_width = 1.1
   )
 
-dag_plot + 
+dag_plot +
   geom_dag_edges_link(
     data = \(.x) filter(.x, name == "x", to == "y"),
     edge_color = "grey80"
-  ) + 
+  ) +
   geom_dag_edges_arc(
     data = \(.x) filter(.x, name != "x"),
-    curvature = c(rep(0, 5), .3), 
+    curvature = c(rep(0, 5), .3),
     edge_width = 1.1
   )
 ```
@@ -166,14 +167,14 @@ We'll add the propensity scores to the data frame via `augment()`.
 library(broom)
 library(touringplans)
 
-seven_dwarfs_9 <- seven_dwarfs_train_2018 |> 
+seven_dwarfs_9 <- seven_dwarfs_train_2018 |>
   filter(wait_hour == 9)
 
 ps_mod <- glm(
-    park_extra_magic_morning ~ park_ticket_season + park_close + park_temperature_high,
-    data = seven_dwarfs_9,
-    family = binomial()
-  )
+  park_extra_magic_morning ~ park_ticket_season + park_close + park_temperature_high,
+  data = seven_dwarfs_9,
+  family = binomial()
+)
 
 seven_dwarfs_9_with_ps <- ps_mod |>
   augment(type.predict = "response", data = seven_dwarfs_9)
@@ -193,17 +194,25 @@ On January 5th, there was likewise a low probability (18.4%), but this day *did*
 library(gt)
 seven_dwarfs_9_with_ps |>
   select(
-    .fitted,
     park_date,
     park_extra_magic_morning,
+    .fitted,
     park_ticket_season,
     park_close,
     park_temperature_high
   ) |>
   head() |>
-  gt() |> 
-  fmt_number(decimals = 3) |> 
-  fmt_integer(park_extra_magic_morning)
+  gt() |>
+  fmt_number(decimals = 3) |>
+  fmt_integer(park_extra_magic_morning) |>
+  cols_label(
+    .fitted = "P(EMM)",
+    park_date = "Date",
+    park_extra_magic_morning = "Extra Magic Mornings",
+    park_ticket_season = "Ticket Season",
+    park_close = "Close time",
+    park_temperature_high = "Historic Temp."
+  )
 ```
 
 ### Causal assumptions, revisited
@@ -238,7 +247,7 @@ For positivity and exchangeability, we're looking for two things: **overlap** an
 
 ```{r}
 #| label: fig-sim-ps
-#| fig-cap: "TODO"
+#| fig-cap: "Simulated distributions of propensity scores. Two qualities we look for in mirrored histograms are overlap and balance, related to positivity and exchangeability, respectively."
 #| code-fold: true
 library(patchwork)
 
@@ -299,7 +308,7 @@ plots_balance$moderate <- plots_balance$moderate +
 @fig-mirrored-ps, then, gives us a perspective on these assumptions reduced to a single dimension (the propensity score). We definitely see both overlap and balance problems. Clearly, the distribution is different between the groups, both in terms of shape and number of days. Let's also look at the range of the propensity score by group. 
 
 ```{r}
-seven_dwarfs_9_with_ps |> 
+seven_dwarfs_9_with_ps |>
   group_by(park_extra_magic_morning) |>
   reframe(range = range(.fitted))
 ```
@@ -307,7 +316,7 @@ seven_dwarfs_9_with_ps |>
 It seems that the range is pretty close between groups. One helpful way to look at the tails is to check the number of *unexposed* observations below the lowest probability for the *exposed* group and the number of *exposed* observations above the highest probability for the *unexposed* group. 
 
 ```{r}
-seven_dwarfs_9_with_ps |> 
+seven_dwarfs_9_with_ps |>
   mutate(
     support = case_when(
       park_extra_magic_morning == 0 & .fitted < min(.fitted[park_extra_magic_morning == 1]) ~ "unexp_below",
@@ -322,7 +331,7 @@ seven_dwarfs_9_with_ps |>
 However, looking at @fig-mirrored-ps, we see some areas of sparsity, implying there are some combinations have positivity violations. For instance, there are many more days without Extra Magic Mornings with a probability below 10%.
 
 ```{r}
-seven_dwarfs_9_with_ps |> 
+seven_dwarfs_9_with_ps |>
   count(park_extra_magic_morning, low_prob = .fitted <= .1)
 ```
 
@@ -331,22 +340,22 @@ We're likely seeing a combination of structural positivity (some days will never
 ```{r}
 #| label: fig-random-days-ps
 #| code-fold: true
-#| fig-cap: "TODO"
+#| fig-cap: "A simulation of randomizing Extra Magic Mornigs. Here, there is no relationship between the covariates and the exposure except chance. Because of the small sample size and lower proportion of exposed days, we need to be cautious about interpreting the results of these distributions."
 set.seed(2025)
-seven_dwarfs_9 |> 
-  mutate(randomized_emm = rbinom(n(), 1, .17)) |> 
+seven_dwarfs_9 |>
+  mutate(randomized_emm = rbinom(n(), 1, .17)) |>
   glm(
     randomized_emm ~ park_ticket_season + park_close + park_temperature_high,
     data = _,
     family = binomial()
   ) |>
-  augment(type.predict = "response") |> 
+  augment(type.predict = "response") |>
   ggplot(
     aes(.fitted, fill = factor(randomized_emm))
   ) +
-    geom_mirror_histogram(bins = 50) +
-    scale_y_continuous(labels = abs) +
-    labs(x = "propensity score", fill = "extra magic morning")
+  geom_mirror_histogram(bins = 50) +
+  scale_y_continuous(labels = abs) +
+  labs(x = "propensity score", fill = "extra magic morning")
 ```
 
 What can we do about these problems? Although we need good domain knowledge to base our assumptions on (and perhaps better exclusion criteria for days that are structurally unable to receive Extra Magic Hours), using the information in the propensity score can help with both exchangeability and, with some methods, positivity.
@@ -393,7 +402,7 @@ We can use the `get_matches` function to create a data frame with the original v
 Notice here our sample size has been reduced from the original 354 days to 120.
 
 ```{r}
-matched_data <- get_matches(matchit_obj) |> 
+matched_data <- get_matches(matchit_obj) |>
   as_tibble()
 
 matched_data
@@ -435,7 +444,7 @@ We might also want to know which days *weren't* matched. Since we kept all the d
 
 ```{r}
 seven_dwarfs_9_with_ps |>
-  anti_join(matched_data, by = "park_date") |> 
+  anti_join(matched_data, by = "park_date") |>
   select(park_date, park_extra_magic_morning, .fitted)
 ```
 
@@ -445,13 +454,13 @@ We need to be cautious about adding extra matches when data are limited, however
 
 ```{r}
 matchit(
-    park_extra_magic_morning ~ park_ticket_season + park_close + park_temperature_high,
-    data = seven_dwarfs_9_with_ps,
-    distance = ps_logit_scale,
-    ratio = 4
-) |> 
+  park_extra_magic_morning ~ park_ticket_season + park_close + park_temperature_high,
+  data = seven_dwarfs_9_with_ps,
+  distance = ps_logit_scale,
+  ratio = 4
+) |>
   get_matches() |>
-  as_tibble() |> 
+  as_tibble() |>
   filter(subclass == 1) |>
   select(park_date, park_extra_magic_morning, .fitted)
 ```
@@ -460,17 +469,17 @@ We can control the the quality of the match by asking `matchit()` to only match 
 
 ```{r}
 mtchs <- matchit(
-    park_extra_magic_morning ~ park_ticket_season + park_close + park_temperature_high,
-    data = seven_dwarfs_9_with_ps,
-    distance = ps_logit_scale,
-    ratio = 2,
-    caliper = 0.2
+  park_extra_magic_morning ~ park_ticket_season + park_close + park_temperature_high,
+  data = seven_dwarfs_9_with_ps,
+  distance = ps_logit_scale,
+  ratio = 2,
+  caliper = 0.2
 )
 
 mtchs |>
-  get_matches() |> 
-  group_by(subclass) |> 
-  summarise(n = n()) |> 
+  get_matches() |>
+  group_by(subclass) |>
+  summarise(n = n()) |>
   filter(n < 3)
 ```
 
@@ -507,6 +516,7 @@ seven_dwarfs_9_with_wt <- seven_dwarfs_9_with_ps |>
 #| label: tbl-df-wt
 #| tbl-cap: >
 #|   The first six observations in the `seven_dwarfs_9_with_wt` dataset, including their propensity scores in the `.fitted` column and weight in the `w_ate` column.
+#| code-fold: true
 seven_dwarfs_9_with_wt |>
   select(
     park_date,
@@ -518,19 +528,28 @@ seven_dwarfs_9_with_wt |>
     w_ate
   ) |>
   head() |>
-  gt()
+  gt() |>
+  cols_label(
+    .fitted = "P(EMM)",
+    park_date = "Date",
+    park_extra_magic_morning = "Extra Magic Mornings",
+    park_ticket_season = "Ticket Season",
+    park_close = "Close time",
+    park_temperature_high = "Historic Temp.",
+    w_ate = "ATE Weights"
+  )
 ```
 
 ::: {.callout-note}
 ## WeightIt
 
-If you like the feel of MatchIt, it has a cousin package called WeightIt with the same design principles and many useful features. We'll focus on propensity, but WeightIt is easy to use if you are familiar with MatchIt.
+If you like the feel of MatchIt, it has a cousin package called `{WeightIt}` with the same design principles and many useful features. We'll focus on propensity, but WeightIt is easy to use if you are familiar with MatchIt.
 
 ```{r}
 wt_it <- WeightIt::weightit(
-    park_extra_magic_morning ~ park_ticket_season + park_close + park_temperature_high,
-    data = seven_dwarfs_9_with_ps,
-    ps = ".fitted"
+  park_extra_magic_morning ~ park_ticket_season + park_close + park_temperature_high,
+  data = seven_dwarfs_9_with_ps,
+  ps = ".fitted"
 )
 
 wt_it
@@ -540,18 +559,27 @@ head(wt_it$weights)
 
 :::
 
-A day that had a very low predicted probability of Extra Magic Hours in the morning will receive a high weight if it did, in fact, have them. The minimum of ATE weights is 1, but the maximum is unbounded. The closer the probability of receiving the observed exposure is to 0, the higher the weight will be. That means we need to be cautious about **extreme weights**. Extreme weights are weights that are adding undue information to the resulting outcome model. Extreme weights tend to *destabilize* our estimate, resulting in worse precision and potentially worse bias.
+A day that had a very low predicted probability of Extra Magic Hours in the morning will receive a high weight if it did, in fact, have them. The minimum of ATE weights is 1, but the maximum is unbounded. The closer the probability of receiving the observed exposure is to 0, the higher the weight will be. That means we need to be cautious about **extreme weights**. Extreme weights are weights that are adding undue information to the resulting outcome model. Extreme weights tend to *destabilize* our estimate, resulting in worse precision and potentially worse bias. @fig-wts-distr shows the distribution of the ATE weights.
 
 ```{r}
+#| label: fig-wts-distr
+#| fig-cap: "The distribution of Average Treatment Effect weights. ATE weights have a lower bound of 1 and no upper bound. Here, we see a spike near one but many weights much higher in the right tail."
+#| message: false
 seven_dwarfs_9_with_wt |>
-  ggplot(aes(w_ate)) + 
+  ggplot(aes(w_ate)) +
   geom_histogram() +
-  scale_x_log10()
+  scale_x_log10() +
+  xlab("ATE Weights")
 ```
 
+Indeed, we have several days with weights over 10 (@tbl-extreme-wts). April 27th, for instance, is being treated like almost twenty days! It might be a good counterfactual for days without Extra Magic Hours, but a weight that high is going to add more variance than it is going to reduce bias.
+
 ```{r}
+#| label: tbl-extreme-wts
+#| tbl-cap: "Days with ATE weights over 10. These days are being upweighted in our population because of their low probabilities of occurring, but the higher weights get, the more instability we introduce."
+#| code-fold: true
 seven_dwarfs_9_with_wt |>
-  filter(w_ate > 10) |> 
+  filter(w_ate > 10) |>
   select(
     park_date,
     park_extra_magic_morning,
@@ -561,16 +589,28 @@ seven_dwarfs_9_with_wt |>
     .fitted,
     w_ate
   ) |>
-  gt()
+  gt() |>
+  cols_label(
+    .fitted = "P(EMM)",
+    park_date = "Date",
+    park_extra_magic_morning = "Extra Magic Mornings",
+    park_ticket_season = "Ticket Season",
+    park_close = "Close time",
+    park_temperature_high = "Historic Temp.",
+    w_ate = "ATE Weights"
+  )
 ```
 
 We can mitigate some of the instability of extreme weights by using a stabilization factor: the proportions of the exposed and unexposed. Instead of inverting the probability of the received exposure, we use the proportion in the numerator. This has an interesting effect on the weights. First, it improves the variance by making the spread of the weights smaller. Second, it creates weights that have a mean of 1. In other words, the psuedo-population is approximately the same size as the original population.
 
 ```{r}
+#| label: fig-stbl-wts
+#| fig-cap: "The distribution of stabilized ATE weights. Their distribution is much more restricted than the unstabilized weights, and they average to a weight of 1."
+#| message: false
 seven_dwarfs_9_with_wt <- seven_dwarfs_9_with_ps |>
   mutate(stbl_wts = wt_ate(.fitted, park_extra_magic_morning, stabilize = TRUE))
 
-seven_dwarfs_9_with_wt |> 
+seven_dwarfs_9_with_wt |>
   summarize(
     mean = mean(stbl_wts),
     min = min(stbl_wts),
@@ -580,9 +620,10 @@ seven_dwarfs_9_with_wt |>
   )
 
 seven_dwarfs_9_with_wt |>
-  ggplot(aes(stbl_wts)) + 
+  ggplot(aes(stbl_wts)) +
   geom_histogram() +
-  scale_x_log10()
+  scale_x_log10() +
+  xlab("Stabilized ATE Weights")
 ```
 
 Another set of techniques that are used to address extreme weights (and poor overlap) are **trimming** and **truncation**. Trimming is when we set an acceptable range of the propensity score and drop the observations that fall outside of that range from the analysis. When trimming, you should then re-fit the propensity score model to improve the fit and calibration. Truncation is when, instead of dropping observations, we *truncate* any value outside of the acceptable range to the minimum or maximum of the range. Truncating is also sometimes called **Winsorizing**. Note that sometimes, authors use "trim" and "truncate" interchangeably or even with the opposite meanings, so be clear about what you mean and make sure you understand what other analysts mean.
@@ -590,9 +631,9 @@ Another set of techniques that are used to address extreme weights (and poor ove
 propensity provides helper functions for managing these processes. `ps_trim()` will trim the observations and `ps_trunc()` will truncate them. `ps_refit()` will refit the propensity score on only the non-trimmed observations. There are a few things to note here. First, we're using an adaptive method to decide the best range to trim the scores at; this approach optimizes the variance of the resulting observations. Second, we're using `ps_refit()` on the trimmed propensity scores to recalculate the propensity score without the trimmed observations. Third, in `ps_trunc()`, we're truncating propensity scores to *under* the 1st percentile *to* the 1st percentile. Researchers will commonly truncate to the 1st and 99th percentiles, but since the highest propensity score we have is about 0.50, these won't produce extreme weights, so we leave them alone.
 
 ```{r}
-seven_dwarfs_9_with_wt <- seven_dwarfs_9_with_wt |> 
+seven_dwarfs_9_with_wt <- seven_dwarfs_9_with_wt |>
   mutate(
-    trimmed_ps = ps_trim(.fitted, method = "adaptive") |> 
+    trimmed_ps = ps_trim(.fitted, method = "adaptive") |>
       ps_refit(ps_mod),
     trunc_ps = ps_trunc(.fitted, method = "pctl", lower = .01, upper = 1)
   )
@@ -601,14 +642,18 @@ seven_dwarfs_9_with_wt <- seven_dwarfs_9_with_wt |>
 Trimming and truncating are doing different things to our sample. In trimming, we have fewer observations after trimming. We can see which observations were trimmed with `is_unit_trimmed()`. Only observations in the lower range of the original propensity score were trimmed. Their values for `trimmed_ps` are `NA` because the were not included in the model when we used `ps_refit()`.
 
 ```{r}
-seven_dwarfs_9_with_wt |> 
-  filter(is_unit_trimmed(trimmed_ps)) |> 
+seven_dwarfs_9_with_wt |>
+  filter(is_unit_trimmed(trimmed_ps)) |>
   select(park_date, park_extra_magic_morning, .fitted, trimmed_ps)
 ```
 
-You can see the overlap in this subset is slightly improved.
+You can see the overlap in this subset is slightly improved (@fig-dist-ps-trimmed).
 
 ```{r}
+#| label: fig-dist-ps-trimmed
+#| fig-cap: "The distribution of propensity scores by exposure group after trimming. Trimming improved the overlap."
+#| message: false
+#| warning: false
 ggplot(
   seven_dwarfs_9_with_wt,
   aes(trimmed_ps, fill = factor(park_extra_magic_morning))
@@ -621,13 +666,18 @@ ggplot(
 In truncation, we are not removing observations but forcing some observations to be within the acceptable range. All the observations that were truncated (which we found with `is_unit_truncated()`) now have the same value in `trunc_ps`, equal to the 1st percentile of `.fitted`.
 
 ```{r}
-seven_dwarfs_9_with_wt |> 
-  filter(is_unit_truncated(trunc_ps)) |> 
+seven_dwarfs_9_with_wt |>
+  filter(is_unit_truncated(trunc_ps)) |>
   select(park_date, park_extra_magic_morning, .fitted, trunc_ps)
 ```
-You can see how the truncation on the left side of the plot forces overlap. Truncation, then, doesn't discard units (improving the sample size over trimming) but this forced change of propensity scores can be unintuitive.
+
+You can see how the truncation on the left side of the plot forces overlap (@fig-dist-ps-trunc). Truncation, then, doesn't discard units (improving the sample size over trimming) but this forced change of propensity scores can be unintuitive.
 
 ```{r}
+#| label: fig-dist-ps-trunc
+#| fig-cap: "The distribution of propensity scores by exposure group after truncating Truncation improved the overlap, as well."
+#| message: false
+#| warning: false
 ggplot(
   seven_dwarfs_9_with_wt,
   aes(trunc_ps, fill = factor(park_extra_magic_morning))
@@ -637,20 +687,25 @@ ggplot(
   labs(x = "propensity score", fill = "extra magic morning")
 ```
 
-We can then use trimmed or truncated weights to calculate weights. In fact, we can combine these approaches with stabilized weights. Let's calculate stabilized weights on the truncated propensity scores. 
+We can then use trimmed or truncated weights to calculate weights. In fact, we can combine these approaches with stabilized weights. Let's calculate stabilized weights on the truncated propensity scores. (We can also use this with matching and a caliper, but we won't show that here.) @fig-sbl-trunc-wts shows the distribution of weights after truncating and stabilizing.
 
 ```{r}
-seven_dwarfs_9_with_wt <- seven_dwarfs_9_with_wt |> 
+#| label: fig-sbl-trunc-wts
+#| fig-cap: "The distribution of stabilized weights where the propensity score was truncated to the 1st percentile. The extreme weights we saw before are slightly improved."
+#| message: false
+#| warning: false
+seven_dwarfs_9_with_wt <- seven_dwarfs_9_with_wt |>
   mutate(trunc_stbl_wt = wt_ate(
-    trunc_ps, 
-    park_extra_magic_morning, 
+    trunc_ps,
+    park_extra_magic_morning,
     stabilize = TRUE
   ))
 
 seven_dwarfs_9_with_wt |>
-  ggplot(aes(trunc_stbl_wt)) + 
+  ggplot(aes(trunc_stbl_wt)) +
   geom_histogram() +
-  scale_x_log10()
+  scale_x_log10() +
+  xlab("Truncated and Stabilized ATE Weights")
 ```
 
 With truncation and trimming, as in using a caliper, we may be changing the population about who we are making inferences. As with calipers, we'll investigate this further in @sec-estimands.
@@ -658,8 +713,8 @@ With truncation and trimming, as in using a caliper, we may be changing the popu
 You may have noticed that extreme weights are often a positivity problem. The days that were trimmed, for instance, were mostly days without Extra Magic Hours that had a low predicted probability of receiving them. Once we've fit the propensity score, one thing we can do is probe the trimmed or truncated results to better understand why we need to modify them in the first place. Here, it seems the trimmed observations were all warm days in the value ticket season with later closing hours. Perhaps these days are structurally unable to receive Extra Magic Hours per Disney's requirements. We'd want to figure out if that was the case, as we may want modify our exclusion criteria rather than dynamically removing observations based on their propensity score. 
 
 ```{r}
-seven_dwarfs_9_with_wt |> 
-  filter(is_unit_trimmed(trimmed_ps)) |> 
+seven_dwarfs_9_with_wt |>
+  filter(is_unit_trimmed(trimmed_ps)) |>
   select(
     park_ticket_season,
     park_close,
