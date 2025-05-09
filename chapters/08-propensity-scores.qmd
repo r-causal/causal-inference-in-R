@@ -114,7 +114,7 @@ In our case, though, these probabilities are not known. What if we could find th
 
 ## Building propensity score models {#sec-building-models}
 
-There are many ways to estimate the propensity score; for binary exposures, people typically use logistic regression, although other approaches are used.
+There are many ways to estimate the propensity score; for binary exposures, people typically use logistic regression, although other approaches are used, as well.
 While estimates from logistic regression can be hairy to interpret from a causal perspective (we'll cover this in more detail in @sec-binary), it excels at predicting well-calibrated probabilities. 
 A logistic regression with the exposure as the predicted value and the confounders as the covariates, then, serves as a good place to start with a propensity score.
 
@@ -136,13 +136,13 @@ glm(
 ```
 
 We can extract the propensity scores by pulling out the predictions on the probability scale using `predict()` or `fitted()`. However,
-using the `augment()` function from the [{`broom`}](https://broom.tidymodels.org/) package, we can extract these propensity scores and add them to our original data frame, so we'll use this approach.
-By default, the predictionbs will be on the linear logit scale.
+using the `augment()` function from the [{`broom`}](https://broom.tidymodels.org/) package, we can extract these propensity scores and add them to our original data frame, so we'll use that approach.
+By default, the predictions will be on the *linear logit* scale.
 Setting the argument `type.predict` to `"response"` indicates that we want to extract the predicted values on the *probability* scale.
 The `data` argument contains the original data frame; if we leave this blank, we'll only get back a data frame with the variables in the propensity score model, but we need the outcome, too, so it's handy to predict on the whole data frame, even though there's no new days in the data set.
 This code will output a new data frame consisting of all components in `df` with six additional columns corresponding to the logistic regression model that was fit.
 The `.fitted` column is the propensity score.
-A convenient detail about broom is that the columns returned from its functions are consistent across models in R.
+A convenient detail about broom is that the columns returned from its functions are consistent across models in R, so the code in this chapter will work for many types of broom output.
 
 ```{r}
 #| eval: false
@@ -171,7 +171,8 @@ seven_dwarfs_9 <- seven_dwarfs_train_2018 |>
   filter(wait_hour == 9)
 
 ps_mod <- glm(
-  park_extra_magic_morning ~ park_ticket_season + park_close + park_temperature_high,
+  park_extra_magic_morning ~ park_ticket_season + park_close +
+    park_temperature_high,
   data = seven_dwarfs_9,
   family = binomial()
 )
@@ -191,6 +192,7 @@ On January 5th, there was likewise a low probability (18.4%), but this day *did*
 #| label: tbl-df-ps
 #| tbl-cap: >
 #|   The first six observations in the `seven_dwarfs_9_with_ps` dataset, including their propensity scores in the `.fitted` column.
+#| code-fold: true
 library(gt)
 seven_dwarfs_9_with_ps |>
   select(
@@ -217,7 +219,7 @@ seven_dwarfs_9_with_ps |>
 
 ### Causal assumptions, revisited
 
-We can examine the distribution of propensity scores by exposure group.
+It's useful to visualize the distribution of propensity scores by exposure group.
 A nice way to visualize this is via mirrored histograms.
 We'll use the `{halfmoon}` package's `geom_mirror_histogram()` to create one.
 The code below creates two histograms of the propensity scores, one on the "top" for the exposed group (the dates with Extra Magic Hours in the morning) and one on the "bottom" for the unexposed group.
@@ -319,8 +321,10 @@ It seems that the range is pretty close between groups. One helpful way to look 
 seven_dwarfs_9_with_ps |>
   mutate(
     support = case_when(
-      park_extra_magic_morning == 0 & .fitted < min(.fitted[park_extra_magic_morning == 1]) ~ "unexp_below",
-      park_extra_magic_morning == 1 & .fitted > max(.fitted[park_extra_magic_morning == 0]) ~ "exp_above",
+      park_extra_magic_morning == 0 &
+        .fitted < min(.fitted[park_extra_magic_morning == 1]) ~ "unexp_below",
+      park_extra_magic_morning == 1 & 
+        .fitted > max(.fitted[park_extra_magic_morning == 0]) ~ "exp_above",
       .default = "inside_support",
       .ptype = factor(levels = c("unexp_below", "inside_support", "exp_above"))
     )
@@ -398,7 +402,7 @@ matchit_obj <- matchit(
 
 matchit_obj
 ```
-We can use the `get_matches` function to create a data frame with the original variables that only consists of those who were matched.
+We can use the `get_matches()` function to create a data frame with the original variables that only consists of those who were matched.
 Notice here our sample size has been reduced from the original 354 days to 120.
 
 ```{r}
@@ -626,7 +630,7 @@ seven_dwarfs_9_with_wt |>
   xlab("Stabilized ATE Weights")
 ```
 
-Another set of techniques that are used to address extreme weights (and poor overlap) are **trimming** and **truncation**. Trimming is when we set an acceptable range of the propensity score and drop the observations that fall outside of that range from the analysis. When trimming, you should then re-fit the propensity score model to improve the fit and calibration. Truncation is when, instead of dropping observations, we *truncate* any value outside of the acceptable range to the minimum or maximum of the range. Truncating is also sometimes called **Winsorizing**. Note that sometimes, authors use "trim" and "truncate" interchangeably or even with the opposite meanings, so be clear about what you mean and make sure you understand what other analysts mean.
+Another set of techniques that are used to address extreme weights (and poor overlap) are **trimming** and **truncation**. Trimming is when we set an acceptable range of the propensity score and drop the observations that fall outside of that range from the analysis. When trimming, you should then re-fit the propensity score model to improve the fit and calibration. Truncation is when, instead of dropping observations, we *truncate* any value outside of the acceptable range to the minimum or maximum of the range. Truncating is also sometimes called **Winsorizing**. Note that sometimes, authors use "trim" and "truncate" interchangeably or even with the opposite meanings, so be clear about what you mean and make sure you understand what other analysts mean, too.
 
 propensity provides helper functions for managing these processes. `ps_trim()` will trim the observations and `ps_trunc()` will truncate them. `ps_refit()` will refit the propensity score on only the non-trimmed observations. There are a few things to note here. First, we're using an adaptive method to decide the best range to trim the scores at; this approach optimizes the variance of the resulting observations. Second, we're using `ps_refit()` on the trimmed propensity scores to recalculate the propensity score without the trimmed observations. Third, in `ps_trunc()`, we're truncating propensity scores to *under* the 1st percentile *to* the 1st percentile. Researchers will commonly truncate to the 1st and 99th percentiles, but since the highest propensity score we have is about 0.50, these won't produce extreme weights, so we leave them alone.
 
@@ -639,7 +643,7 @@ seven_dwarfs_9_with_wt <- seven_dwarfs_9_with_wt |>
   )
 ```
 
-Trimming and truncating are doing different things to our sample. In trimming, we have fewer observations after trimming. We can see which observations were trimmed with `is_unit_trimmed()`. Only observations in the lower range of the original propensity score were trimmed. Their values for `trimmed_ps` are `NA` because the were not included in the model when we used `ps_refit()`.
+Trimming and truncating are doing different things to our sample. In trimming, we have fewer observations afterwards. We can see which observations were trimmed with `is_unit_trimmed()`. Only observations in the lower range of the original propensity score were trimmed. Their values for `trimmed_ps` are `NA` because the were not included in the model when we used `ps_refit()`.
 
 ```{r}
 seven_dwarfs_9_with_wt |>
@@ -687,7 +691,7 @@ ggplot(
   labs(x = "propensity score", fill = "extra magic morning")
 ```
 
-We can then use trimmed or truncated weights to calculate weights. In fact, we can combine these approaches with stabilized weights. Let's calculate stabilized weights on the truncated propensity scores. (We can also use this with matching and a caliper, but we won't show that here.) @fig-sbl-trunc-wts shows the distribution of weights after truncating and stabilizing.
+We can then use trimmed or truncated weights to calculate weights. In fact, we can combine these approaches with stabilized weights. Let's calculate stabilized weights on the truncated propensity scores. (We can also use truncated or trimmed weights with matching and a caliper, but we won't show that here.) @fig-sbl-trunc-wts shows the distribution of weights after truncating and stabilizing.
 
 ```{r}
 #| label: fig-sbl-trunc-wts
