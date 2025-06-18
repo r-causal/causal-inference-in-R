@@ -478,7 +478,7 @@ The exact way non-collapsibility behaves also depends on whether the data-genera
 Instead of worrying about which version of the odds ratio is right, we recommend focusing on confounders, which are necessary for unbiased estimates, and predictors of the outcome, which are helpful for variance reduction.
 
 Much ink has been spilled about the odds ratio versus the risk ratio and the relative versus absolute scale.
-We suggest that, for binary otucomes, you present all three measures (the odds ratio, the risk ratio, and the risk difference) together with the baseline probability of the outcome.
+We suggest that, for binary outcomes, you present all three measures (the odds ratio, the risk ratio, and the risk difference) together with the baseline probability of the outcome.
 Each offers a different perspective on the causal effect.
 Be careful to interpret them with regard to the treatment group that you've included in your estimate.
 For example, the average risk difference calculated with ATT weights is the average risk difference among the treated.
