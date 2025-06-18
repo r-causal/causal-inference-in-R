@@ -1088,7 +1088,7 @@ In @fig-ato-love, all three covariates have an SMD of 0 when weighted by ATO wei
 
 ```{r}
 #| label: fig-ato-love
-#| fig-cap: "TODO"
+#| fig-cap: "A Love plot of ticket season, park close time, and historic high temperature in the original dataset and with ATO weights. The ATO weights balance perfectly on the mean for all confounders."
 seven_dwarfs_wts |>
   mutate(park_close = as.numeric(park_close)) |>
   tidy_smd(
