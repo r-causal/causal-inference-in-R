@@ -266,3 +266,240 @@ results |>
   as.data.frame()
 ```
 
+## Binary outcomes: Risk ratio, risk difference, and odds ratio {#sec-binary}
+
+In the example we've taken up, the outcome, posted wait times, is continuous.
+Using weighted linear regression, the ATE and friends are calculated as a difference in means.
+A difference in means is a valuable effect to estimate, but it's not the only one.
+Let's say we use ATT weights and weight an outcome regression to calculate the relative change in posted wait time.
+The relative change is still a treatment effect among the treated, but it's on a relative scale.
+The important part is that the weights allow us to average over the covariates of the treated for whichever specific estimand we're trying to estimate.
+Sometimes, when people say something like "the average treatment effect," they are talking about a difference in mean outcomes among the whole sample, so it's good to be specific.
+
+<!-- TODO: add example where we discretize outcome and show in code what to do -->
+
+For binary outcomes, we have three standard options: the risk ratio, risk difference, and odds ratio.
+In the case of a binary outcome, we calculate average probabilities for each treatment group.
+Let's call these `p_untreated` and `p_treated`.
+When we're working with these probabilities, calculating the risk difference and risk ratio is simple:
+
+-   **Risk difference**: `p_treated - p_untreated`
+-   **Risk ratio**: `p_treated / p_untreated`
+
+::: callout-note
+By "risk", we mean the risk of an outcome.
+That assumes the outcome is negative, like developing a disease.
+Sometimes, you'll hear these described as the "response ratio" or "response difference".
+A more general way to think about these is as the difference in or ratio of the probabilities of the outcome.
+:::
+
+The odds for a probability is calculated as `p / (1 - p)`, so the odds ratio is:
+
+-   **Odds ratio**: `(p_treated / (1 - p_treated)) /  (p_untreated / (1 - p_untreated))`
+
+When outcomes are rare, `(1 - p)` approaches 1, and odds ratios approximate risk ratios.
+The rarer the outcome, the closer the approximation.
+
+One feature of the logistic regression model is that the coefficients are log-odds ratios, so exponentiating them produces odds ratios.
+However, when using logistic regression, you can also work with predicted probabilities to calculate risk differences and ratios, as we'll see in [Chapter -@sec-g-comp].
+
+Just like with continuous outcomes, we can target each of these estimands for a different subset of the population, e.g., the risk ratio among the untreated, the odds ratio among the evenly matchable, and so on.
+
+These options also extend to categorical outcomes.
+There are different ways of organizing them depending on the nature of the categorical variables.
+An effect that's commonly estimated for non-ordinal categorical variables is a series of odds ratios with one level of the outcome serving as the reference level (e.g., an OR for 1 vs. 2 and 1 vs. 3 and so on).
+Multinomial regression models, such as `nnet::multinom()`, can produce these log-odds ratios as coefficients, an extension of logistic regression.
+For ordinal outcomes, ordinal logistic regression like `MASS::polr()` calculates a series of log-odds ratios that compare each previous value of the outcome.
+Like logistic regression, you are not limited to odds ratios with these extensions, as you can work with the predicted probabilities of each category to calculate the effect you're interested in.
+
+::: callout-note
+Case-control studies are a typical design in epidemiology where participants are sampled by outcome status [@schlesselman1982case].
+Cases with the outcome are recruited, and controls are sampled from the population from which the cases come.
+These types of studies are used when outcomes are rare.
+They can also be faster and cheaper than studies that follow people from the time of exposure.
+
+Because of how sampling happens in case-control studies, you don't have baseline risk because you don't have all the individuals who did not have the outcome.
+Interestingly, you can still recover the odds ratio.
+When outcomes are rare, odds ratios approximate risk ratios.
+You cannot, however, calculate the risk difference.
+:::
+
+### Absolute and relative measures
+
+Absolute measures, such as risk differences, and relative measures, such as the risk and odds ratios, offer different perspectives on the treatment effect.
+Depending on the baseline probability of the outcome, absolute and relative measures might lead you to different conclusions.
+
+Consider a rare outcome with a baseline probability of 0.0001, a rate of 1 event per 10,000 observations.
+That's the probability for the unexposed.
+Let's say the exposed have a probability of the outcome of 0.0008.
+That's 8 times greater than the unexposed, a substantial relative effect.
+But it's only 0.0007 on the absolute scale.
+
+Now, consider a more common outcome with a baseline probability of 0.20.
+The exposed group has a probability of the outcome of 0.40.
+Now, the relative risk is 2, while the risk difference is 0.20.
+Although the relative effect is much smaller, it creates more outcome events because the outcome is more prevalent.
+
+The effect of smoking on health is an excellent example of this.
+As we know, smoking drastically increases the relative risk of lung cancer.
+But lung cancer is a pretty rare disease.
+Smoking also increases the risk of heart disease, although the relative effect is not nearly as high as lung cancer.
+However, heart disease is much more prevalent.
+More people die of smoking-related heart disease than they do of lung cancer because of the absolute change in risk.
+Both the absolute and relative perspectives are valid.
+
+::: callout-note
+## The number needed to treat
+
+Another perspective on the difference in probabilities is the number needed to treat (NNT) measure.
+It's simply the inverse of the risk difference, and it represents the number of exposed individuals needed to prevent or create one outcome.
+
+Consider a product for sale with a baseline purchase probability of 5%, which means that 5 in 100 people will buy this product.
+A marketing team creates an ad, and those who see the ad have a probability of 7% to buy the product.
+The absolute difference in probabilities of buying the product is 0.02, and so `1 / 0.02 = 50` people need to see the ad to increase the number of purchases by one.
+
+The NNT is an imperfect measure because of its simplicity, but it offers another perspective on what the treatment effect actually means in practice.
+:::
+
+### Non-collapsibility {#sec-non-collapse}
+
+Odds ratios are convenient because of their connection to logistic regression.
+They also have a peculiar quality: they are *non-collapsible*.
+Non-collapsibility means that, when you compare odds ratios in the whole sample (marginal) versus among subgroups (conditional), the marginal odds ratio is not a weighted average of the conditional odds ratio [@Didelez2022; @Greenland2021; @Greenland2021a].
+This is not a property that, for instance, the risk ratio has.
+Let's look at an example.
+
+Say we have an `outcome`, an `exposure`, and a `covariate`.
+`exposure` causes `outcome`, as does `covariate`[^10-estimands-3].
+But `covariate` does not cause `exposure`; it's *not* a confounder.
+In other words, the effect estimate of `exposure` on `outcome` should be the same whether or not we account for `covariate`.
+
+[^10-estimands-3]: If there were no relationship between `exposure` and `outcome`, the relationship between the two would be null, and the odds ratio would be collapsible regardless of the presence or absence of `covariate`.
+
+```{r}
+#| label: fig-dag-nc
+#| code-fold: true
+#| message: false
+#| fig-width: 4
+#| fig-height: 4
+#| fig-align: "center"
+#| fig-cap: "A DAG showing the causal relationship between `outcome`, `exposure`, and `covariate`. `exposure` and `covariate` both cause `outcome`, but there is no relationship between `exposure` and `covariate`. In a logistic regression, the odds ratio for exposure will be non-collapsible over strata of covariate."
+library(ggdag)
+dagify(
+  outcome ~ exposure + covariate,
+  coords = time_ordered_coords()
+) |>
+  ggdag(use_text = FALSE) +
+  geom_dag_text_repel(aes(label = name), box.padding = 1.8, direction = "x") +
+  theme_dag()
+```
+
+Let's simulate this.
+
+```{r}
+set.seed(123)
+n <- 10000
+
+exposure <- rbinom(n, 1, 0.5)
+covariate <- rbinom(n, 1, 0.5)
+outcome <- rbinom(n, 1, plogis(-0.5 + exposure + 2 * covariate))
+```
+
+```{r}
+#| echo: false
+odds_ratio <- function(tbl) {
+  or <- (tbl[2, 2] * tbl[1, 1]) / (tbl[1, 2] * tbl[2, 1])
+  round(or, digits = 2)
+}
+
+risk_ratio <- function(tbl) {
+  risk_exposed <- tbl[2, 2] / (tbl[2, 2] + tbl[2, 1])
+  risk_unexposed <- tbl[1, 2] / (tbl[1, 2] + tbl[1, 1])
+  round(risk_exposed / risk_unexposed, digits = 2)
+}
+
+marginal_table <- table(exposure, outcome)
+marginal_or <- odds_ratio(marginal_table)
+marginal_rr <- risk_ratio(marginal_table)
+conditional_tables <- table(exposure, outcome, covariate)
+conditional_or_0 <- odds_ratio(conditional_tables[, , 1])
+conditional_or_1 <- odds_ratio(conditional_tables[, , 2])
+conditional_rr_0 <- risk_ratio(conditional_tables[, , 1])
+conditional_rr_1 <- risk_ratio(conditional_tables[, , 2])
+```
+
+First, let's look at the relationship between `exposure` and `outcome` among everyone.
+
+```{r}
+table(exposure, outcome)
+```
+
+We can calculate the odds ratio using this frequency table: ((`r marginal_table[2, 2]` \* `r marginal_table[1, 1]`) / (`r marginal_table[1, 2]` \* `r marginal_table[2, 1]`)) = `r marginal_or`.
+
+This odds ratio is the same result we get with logistic regression when we exponentiate the results.
+
+```{r}
+glm(outcome ~ exposure, family = binomial()) |>
+  broom::tidy(exponentiate = TRUE)
+```
+
+This is a little off from the simulation model coefficient of `exp(1)`.
+We get closer when we add in `covariate`.
+
+```{r}
+glm(outcome ~ exposure + covariate, family = binomial()) |>
+  broom::tidy(exponentiate = TRUE)
+```
+
+`covariate` is not a confounder, so by rights, it shouldn't impact the effect estimate for `exposure`.
+Let's look at the conditional odds ratios by `covariate`.
+
+```{r}
+table(exposure, outcome, covariate)
+```
+
+The odds ratio for those with `covariate = 0` is `r conditional_or_0`.
+For those with `covariate = 1`, it's `r conditional_or_1`.
+The marginal odds ratio, `r marginal_or`, is smaller than both of these!
+
+The marginal risk ratio is `r marginal_rr`.
+The risk ratio for those with `covariate = 0` is `r conditional_rr_0`.
+For those with `covariate = 1`, it's `r conditional_rr_1`.
+In this case, the marginal risk ratio is a weighted average collapsible over the strata of `covariate` [@Huitfeldt2019].
+
+It's tempting to think you need to include `covariate` since the odds ratio changes when you add it in, and it's closer to the model coefficient from the simulation.
+An important detail here is that non-collapsibility is *not* bias.
+Some authors describe it as omitted variable bias, but the marginal and conditional odds ratios are both correct because `covariate` is not a confounder.
+They are simply different estimands.
+The conditional odds ratio is the OR conditional on `covariate`.
+To meaningfully compare it to other odds ratios, those also need to condition on `covariate`.
+Non-collapsibility is a numerical property of odds; rather than creating bias, it creates a slightly more nuanced interpretation.
+The exact way non-collapsibility behaves also depends on whether the data-generating mechanism occurs on the additive or multiplicative scale; on the multiplicative scale (as in our simulation), removing a variable strongly related to the outcome changes the effect estimate, while on the additive scale, adding a variable strongly related to the outcome changes the effect, albeit on a smaller scale [@Whitcomb2021].
+Instead of worrying about which version of the odds ratio is right, we recommend focusing on confounders, which are necessary for unbiased estimates, and predictors of the outcome, which are helpful for variance reduction.
+
+Much ink has been spilled about the odds ratio versus the risk ratio and the relative versus absolute scale.
+We suggest that, for binary outcomes, you present all three measures (the odds ratio, the risk ratio, and the risk difference) together with the baseline probability of the outcome.
+Each offers a different perspective on the causal effect.
+Be careful to interpret them with regard to the treatment group that you've included in your estimate.
+For example, the average risk difference calculated with ATT weights is the average risk difference among the treated.
+
+::: callout-note
+## The linear probability model
+
+The linear probability model is another common way to estimate treatment effects for binary outcomes.
+The linear probability model is standard in econometrics and other fields.
+It's just OLS, although researchers often use a robust standard error because of heterogeneity in the variance of the residuals.
+The result is the risk difference, a collapsible measure.
+
+```{r}
+lm(outcome ~ exposure)
+```
+
+<!-- TODO: add where to get robust variance (estimatr, marginaleffects) -->
+
+The linear probability model is a handy way to model the relationship on the additive scale.
+However, it comes with a significant hiccup: logistic regression is bounded by 0 and 1, while OLS is not.
+That means that individual predictions may be less than 0 or more than 1, impossible values for probabilities.
+
+We'll see an alternative method for calculating risk differences with logistic regression in [Chapter -@sec-g-comp].
+:::

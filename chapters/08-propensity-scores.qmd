@@ -374,7 +374,7 @@ This section will focus on **matching** and **weighting**.
 
 Matching and weighting are two different ways of creating populations with better confounder balance. In matching, we create a *sub*-population by selecting a subgroup of observations where we hope exchangeability holds. In weighting, we re-weight the observations to create a *pseudo*-population where we hope exchangeability holds.
 
-## Matching
+## Matching {#sec-matching}
 
 Matching is an intuitive way to create a population where we can make apples-to-apples comparisons. 
 Imagine that we start with an exposed observation. In an infinite population, we could handpick an unexposed observation, the only difference being the exposure status. 
@@ -489,7 +489,7 @@ mtchs |>
 
 One important point is that by setting a caliper, we may be changing the population about whom we are making inferences depending on which and how many observations are dropped. We'll revisit this in @sec-estimands.
 
-## Weighting
+## Weighting {#sec-weighting}
 
 One way to think about matching is as a crude weight: In the final sample, everyone who was matched gets a weight of 1, and everyone who was not matched gets a weight of 0.
 Another approach is to allow this weight to be smooth, applying a weight to allow, on average, the covariates of interest to be balanced in a weighted pseudo-population.
