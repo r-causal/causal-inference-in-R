@@ -46,11 +46,13 @@ We also recommend *The Book of Why* @pearl2018why for more on causal diagrams.
 
 ## Acknowledgements
 
-This book isn't just the product of Malcolm, Lucy, and Travis - thanks so much to those of you in the R community who have contributed to this book!
+This book isn't just the product of Malcolm, Lucy, and Travis; thanks so much to those of you in the R community who have contributed to this book!
 
 ```{r}
 #| eval: false
 #| echo: false
+# Code from R4DS to get contributors from GitHub:
+# https://github.com/hadley/r4ds/blob/8412c218688ca2dde954009cdf72e49c3e98ea0a/intro.qmd#L253-L313
 library(tidyverse)
 contribs_all_json <- gh::gh("/repos/:owner/:repo/contributors",
   owner = "r-causal",
@@ -67,7 +69,7 @@ contribs_new <- contribs_all |> anti_join(contribs_old, by = "login")
 
 # Get info for new contributors
 needed_json <- map(
-  contribs_new$login, 
+  contribs_new$login,
   ~ gh::gh("/users/:username", username = .x),
   .progress = TRUE
 )
@@ -80,11 +82,12 @@ info_new <- tibble(
 info_old <- contribs_old |> select(login, name, blog)
 info_all <- bind_rows(info_old, info_new)
 
-contribs_all <- contribs_all |> 
-  left_join(info_all, by = "login") |> 
+contribs_all <- contribs_all |>
+  left_join(info_all, by = "login") |>
   mutate(login_lowercase = str_to_lower(login)) |>
   arrange(login_lowercase) |>
   select(-login_lowercase)
+
 write_csv(contribs_all, "contributors.csv")
 ```
 
@@ -94,8 +97,8 @@ write_csv(contribs_all, "contributors.csv")
 #| message: false
 library(dplyr)
 contributors <- readr::read_csv("contributors.csv")
-contributors <- contributors |> 
-  filter(!login %in% c("malcolmbarrett", "LucyMcGowan", "tgerke")) |> 
+contributors <- contributors |>
+  filter(!login %in% c("malcolmbarrett", "LucyMcGowan", "tgerke")) |>
   mutate(
     login = paste0("\\@", login),
     desc = ifelse(is.na(name), login, paste0(name, " (", login, ")"))
