@@ -13,22 +13,31 @@ contribs_all <- tibble(
   n = contribs_all_json |> map_int("contributions")
 )
 
-contribs_old <- read_csv("contributors.csv", col_types = list())
-contribs_new <- contribs_all |> anti_join(contribs_old, by = "login")
+if (file.exists("contributors.csv")) {
+  contribs_old <- read_csv("contributors.csv", col_types = list())
+  contribs_new <- contribs_all |> anti_join(contribs_old, by = "login")
+} else {
+  contribs_old <- tibble(login = character(), name = character())
+  contribs_new <- contribs_all
+}
 
 # Get info for new contributors
-needed_json <- map(
-  contribs_new$login,
-  ~ gh::gh("/users/:username", username = .x),
-  .progress = TRUE
-)
-info_new <- tibble(
-  login = contribs_new$login,
-  name = map_chr(needed_json, "name", .default = NA)
-)
-
-info_old <- contribs_old |> select(login, name)
-info_all <- bind_rows(info_old, info_new)
+if (nrow(contribs_new) > 0) {
+  needed_json <- map(
+    contribs_new$login,
+    ~ gh::gh("/users/:username", username = .x),
+    .progress = TRUE
+  )
+  info_new <- tibble(
+    login = contribs_new$login,
+    name = map_chr(needed_json, "name", .default = NA)
+  )
+  
+  info_old <- contribs_old |> select(login, name)
+  info_all <- bind_rows(info_old, info_new)
+} else {
+  info_all <- contribs_old |> select(login, name)
+}
 
 contribs_all <- contribs_all |>
   left_join(info_all, by = "login") |>

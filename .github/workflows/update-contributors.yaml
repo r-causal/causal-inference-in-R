@@ -33,14 +33,28 @@ jobs:
         env:
           GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          echo "Current contributors.csv:"
+          cat contributors.csv
+          echo ""
           Rscript R/update-contributors.R
+          echo ""
+          echo "Updated contributors.csv:"
+          cat contributors.csv
       
       - name: Check for changes
         id: check_changes
         run: |
+          echo "Git status:"
+          git status
+          echo ""
+          echo "Git diff:"
+          git diff contributors.csv
+          echo ""
           if git diff --quiet contributors.csv; then
+            echo "No changes detected in contributors.csv"
             echo "changed=false" >> $GITHUB_OUTPUT
           else
+            echo "Changes detected in contributors.csv"
             echo "changed=true" >> $GITHUB_OUTPUT
             echo "diff<<EOF" >> $GITHUB_OUTPUT
             git diff contributors.csv >> $GITHUB_OUTPUT
