@@ -44,6 +44,31 @@ The first book is focused on epidemiology.
 The latter two are focused on econometrics.
 We also recommend *The Book of Why* @pearl2018why for more on causal diagrams.
 
+## Acknowledgements
+
+This book isn't just the product of Malcolm, Lucy, and Travis; thanks so much to those of you in the R community who have contributed to this book!
+
+<!-- Contributors are automatically updated monthly via GitHub Actions -->
+<!-- To manually update: Rscript R/update-contributors.R -->
+
+```{r}
+#| results: asis
+#| echo: false
+#| message: false
+library(dplyr)
+contributors <- readr::read_csv("contributors.csv")
+contributors <- contributors |>
+  filter(!login %in% c("malcolmbarrett", "LucyMcGowan", "tgerke")) |>
+  mutate(
+    login = paste0("\\@", login),
+    desc = ifelse(is.na(name), login, paste0(name, " (", login, ")"))
+  )
+
+cat("This book is currently being written in the open and ",nrow(contributors), " people contributed via pull requests (so far)! Huge thanks to everyone who has contributed improvements via GitHub pull requests (in alphabetical order by username): ", sep = "")
+cat(paste0(contributors$desc, collapse = ", "))
+cat(".\n")
+```
+
 ## Conventions
 
 ### Modern R Features
