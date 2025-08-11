@@ -3,7 +3,8 @@
 library(tidyverse)
 library(gh)
 
-contribs_all_json <- gh::gh("/repos/:owner/:repo/contributors",
+contribs_all_json <- gh::gh(
+  "/repos/:owner/:repo/contributors",
   owner = "r-causal",
   repo = "causal-inference-in-R",
   .limit = Inf
@@ -32,7 +33,7 @@ if (nrow(contribs_new) > 0) {
     login = contribs_new$login,
     name = map_chr(needed_json, "name", .default = NA)
   )
-  
+
   info_old <- contribs_old |> select(login, name)
   info_all <- bind_rows(info_old, info_new)
 } else {

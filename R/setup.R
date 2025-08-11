@@ -48,12 +48,16 @@ geom_dag_label_repel <- function(..., seed = 10) {
 est_ci <- function(.df, rsample = FALSE) {
   if (!is.data.frame(.df) && is.numeric(.df)) {
     return(
-      glue::glue("{round(.df[[1]], digits = 1)} (95% CI {round(.df[[2]], digits = 1)}, {round(.df[[3]], digits = 1)})")
+      glue::glue(
+        "{round(.df[[1]], digits = 1)} (95% CI {round(.df[[2]], digits = 1)}, {round(.df[[3]], digits = 1)})"
+      )
     )
   }
 
   if (rsample) {
-    glue::glue("{round(.df$.estimate, digits = 1)} (95% CI {round(.df$.lower, digits = 1)}, {round(.df$.upper, digits = 1)})")
+    glue::glue(
+      "{round(.df$.estimate, digits = 1)} (95% CI {round(.df$.lower, digits = 1)}, {round(.df$.upper, digits = 1)})"
+    )
   } else {
     glue::glue("{.df$estimate} (95% CI {.df$conf.low}, {.df$conf.high})")
   }

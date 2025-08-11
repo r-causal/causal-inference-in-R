@@ -67,12 +67,33 @@ geom_dag_label_repel_internal <- function(..., seed = 10) {
 }
 
 # apply to quick functions as well
-assignInNamespace("geom_dag_label_repel", geom_dag_label_repel_internal, ns = "ggdag")
+assignInNamespace(
+  "geom_dag_label_repel",
+  geom_dag_label_repel_internal,
+  ns = "ggdag"
+)
 
 # override some other clumsy internals in ggdag until addressed
 
-assignInNamespace("scale_color_hue", ggplot2::scale_color_discrete, ns = "ggplot2")
-assignInNamespace("scale_edge_colour_hue", \(...) ggraph::scale_edge_colour_manual(..., values = ggokabeito::palette_okabe_ito()), ns = "ggraph")
+assignInNamespace(
+  "scale_color_hue",
+  ggplot2::scale_color_discrete,
+  ns = "ggplot2"
+)
+assignInNamespace(
+  "scale_edge_colour_hue",
+  \(...) {
+    ggraph::scale_edge_colour_manual(
+      ...,
+      values = ggokabeito::palette_okabe_ito()
+    )
+  },
+  ns = "ggraph"
+)
 
 # force ggraph to respect palette
-assignInNamespace("scale_edge_color_discrete", ggokabeito::scale_edge_color_okabe_ito, ns = "ggraph")
+assignInNamespace(
+  "scale_edge_color_discrete",
+  ggokabeito::scale_edge_color_okabe_ito,
+  ns = "ggraph"
+)
