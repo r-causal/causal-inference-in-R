@@ -1,6 +1,12 @@
 # Causal estimands {#sec-estimands}
 
-{{< include 00-setup.qmd >}}
+```{r}
+#| include: false
+source(here::here("R/ggdag-mask.R"))
+source(here::here("R/setup.R"))
+library(tidyverse)
+```
+
 
 ```{r}
 #| echo: false
@@ -1379,3 +1385,4 @@ So, if your collaborators want to use OLS but you want to think critically about
 If you end up with negative weights and other strange properties, though, it might be better to use another approach, depending on your estimand.
 
 We'll discuss another way to use a multivariable outcome model like this to target different estimands in [Chapter -@sec-g-comp].
+
