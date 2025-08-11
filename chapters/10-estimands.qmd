@@ -20,7 +20,7 @@ You can think of the **estimand** as a glossy picture of a beautiful cake we are
 #| label: fig-cake-est
 #| echo: false
 #| fig-cap: "The estimand, estimator, and estimate are all important parts of the statistical estimation process. The estimand is like the perfect cake in the cookbook. The estimator is like the recipe we use to make that cake. The estimate is the cake we pull out of the oven... sometimes to our great dismay."
-knitr::include_graphics("images/cake_est.png")
+knitr::include_graphics(here::here("chapters/images/cake_est.png"))
 ```
 
 So far, we have primarily focused on the average treatment effect, the effect of the exposure of interest averaged across the whole population.
@@ -102,7 +102,7 @@ estimate <- ab |>
         y * (1 - x) / n_b
     )
   ) |>
-  pull(estimate) 
+  pull(estimate)
 ```
 
 What do we mean by unbiased, though?
@@ -530,28 +530,28 @@ df <- tibble(ps = ps) |>
 plot_df <- bind_rows(
   df |> select(ps, starts_with("h_")) |>
     pivot_longer(
-      -ps, 
-      names_to = "estimand", 
-      names_prefix = "h_", 
+      -ps,
+      names_to = "estimand",
+      names_prefix = "h_",
       values_to = "value"
     ) |>
     mutate(panel = "tilting"),
-  
-  df |> 
+
+  df |>
     select(ps, starts_with("w0_")) |>
     pivot_longer(
-      -ps, 
-      names_to = "estimand", 
+      -ps,
+      names_to = "estimand",
       names_prefix = "w0_",
       values_to = "value"
     ) |>
     mutate(panel = "control"),
-  df |> 
+  df |>
     select(ps, starts_with("w1_")) |>
     pivot_longer(
-      -ps, 
+      -ps,
       names_to = "estimand",
-      names_prefix = "w1_", 
+      names_prefix = "w1_",
       values_to = "value"
     ) |>
     mutate(panel = "treated")
@@ -569,8 +569,8 @@ plot_df <- bind_rows(
   )
 
 plot_weight_properties <- function(plot_df, estimand_type) {
-  plot_df |> 
-    filter(estimand == estimand_type) |> 
+  plot_df |>
+    filter(estimand == estimand_type) |>
     ggplot(aes(ps, value)) +
     geom_line() +
     facet_wrap(~panel, ncol = 1, scales = "free_y") +
@@ -1139,7 +1139,7 @@ In matching, we control the level of overlap we find acceptable with a caliper.
 #| label: fig-match-plots
 #| layout-ncol: 2
 #| fig-cap: "A toy example of who gets matched based on the estimand. The x-axis represents the propensity score, and each text label represents a jittered point by treatment status. The vertical black lines represent the range that we're interested in matching over. Grey text indicates a dropped point (without a match)."
-#| fig-subcap: 
+#| fig-subcap:
 #|   - "The ATE. No one gets dropped, and matches are based on the entire population."
 #|   - "The ATT. We're matching on the range of the treated, so since one control doesn't have a corresponding treated, it gets dropped."
 #|   - "The ATU. Since we're now matching on the range of the untreated, one treated without a corresponding control gets dropped."
@@ -1158,7 +1158,7 @@ limiter <- expand_limits(x = c(min(p$x), max(p$x)))
 expander <- ggdag::expand_plot(expansion(c(0.08, 0.08), c(0.08, 0.08)))
 
 p_ate <- ggplot(p, aes(x = x, y = y, color = col)) +
-  geom_text(aes(label = col), position = "jitter") + 
+  geom_text(aes(label = col), position = "jitter") +
   theme(
     legend.position = "none",
     axis.text = element_blank(),
@@ -1166,13 +1166,13 @@ p_ate <- ggplot(p, aes(x = x, y = y, color = col)) +
   ) +
   scale_color_manual(values = c("cornflower blue", "orange")) +
   labs(x = "", y = "") +
-  limiter + 
+  limiter +
   expander
 
 p_att <- p |>
   mutate(color = ifelse(x > 0.8, "grey", col)) |>
   ggplot(aes(x = x, y = y, color = color)) +
-  geom_text(aes(label = col), position = "jitter") + 
+  geom_text(aes(label = col), position = "jitter") +
   theme(
     legend.position = "none",
     axis.text = element_blank(),
@@ -1181,15 +1181,15 @@ p_att <- p |>
   scale_color_manual(
     values = c("cornflower blue", "grey", "orange")
   ) +
-  labs(x = "", y = "") + 
+  labs(x = "", y = "") +
   geom_vline(xintercept = c(0, 0.8)) +
-  limiter + 
+  limiter +
   expander
 
 p_atu <- p |>
   mutate(color = ifelse(x < 0.1, "grey", col)) |>
   ggplot(aes(x = x, y = y, color = color)) +
-  geom_text(aes(label = col), position = "jitter") + 
+  geom_text(aes(label = col), position = "jitter") +
   theme(
     legend.position = "none",
     axis.text = element_blank(),
@@ -1198,7 +1198,7 @@ p_atu <- p |>
   scale_color_manual(
     values = c("cornflower blue", "grey", "orange")
   ) +
-  labs(x = "", y = "") + 
+  labs(x = "", y = "") +
   geom_vline(xintercept = c(0.115, 1)) +
   expander +
   limiter
@@ -1206,7 +1206,7 @@ p_atu <- p |>
 p_atm <- p |>
   mutate(color = ifelse(x < 0.1 | x > 0.8, "grey", col)) |>
   ggplot(aes(x = x, y = y, color = color)) +
-  geom_text(aes(label = col), position = "jitter") + 
+  geom_text(aes(label = col), position = "jitter") +
   theme(
     legend.position = "none",
     axis.text = element_blank(),
@@ -1215,9 +1215,9 @@ p_atm <- p |>
   scale_color_manual(
     values = c("cornflower blue", "grey", "orange")
   ) +
-  labs(x = "", y = "") + 
-  geom_vline(xintercept = c(0.115, 0.8)) + 
-  limiter + 
+  labs(x = "", y = "") +
+  geom_vline(xintercept = c(0.115, 0.8)) +
+  limiter +
   expander
 
 
@@ -1288,6 +1288,23 @@ Below is a table summarizing the estimands and methods for estimating them (incl
 |          |                                  |                                                                                                                                                      |                                      | `wt_ato()`       |
 +----------+----------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------+------------------+
 
+### Effective Sample Size
+
+As discussed in @sec-eval-ps-model, effective sample size (ESS) is a way to understand how efficient various estimates are. It measures how many independent observations would give the same variance as your weighted sample. ESS is useful both as a general check on the efficiency of your chosen method and estimation process, as well as a tool for choosing between methods when multiple approaches address your research question.
+
+When you have more than one set of weights or matching schemes that addresses your research question, comparing the ESS of each can help you decide which to use. All else being equal, pick the one with the highest ESS. `ess()` and `plot_ess()` in `{halfmoon}` can help with this. In @fig-ess, we see that the ATE and ATU weights have a much lower ESS than the other weights, which are all relatively similar, with the ATO weights having the highest ESS.
+
+```{r}
+#| label: fig-ess
+#| fig-cap: "A plot of the effective sample size (ESS) for each set of weights. The ESS is the number of observations that would give the same variance as the weighted sample. The bars are relative to the original sample size in percent."
+#| fig-width: 5
+library(halfmoon)
+seven_dwarfs_wts |>
+  plot_ess(.wts = starts_with("w_"))
+```
+
+The fundamental tension in looking at balance vs. precision is a bias-variance trade-off. The observed sample size is the highest, but it also has the worst balance and may not address our research question. The ATO has the best balance and the highest ESS, but it addresses a particular sort of research question that may not suit our needs. Had we randomized the exposure, we would have had the best balance and the highest ESS, at least on average and with a high enough (actual) sample size. However, in observational data, we often have to make trade-offs between bias and variance. While weighting reduces our effective sample size, it's often a necessary trade-off: without it, we'd get a precisely-estimated wrong answer!
+
 ## What estimand does multivariable linear regression target?
 
 In @sec-strat-outcome, we discussed when standard methods like multivariable linear regression succeed and fail.
@@ -1304,7 +1321,7 @@ The default is for the ATE, but we can also target other estimands.
 ```{r}
 library(lmw)
 implied_weights <- lmw(
-  ~ park_extra_magic_morning + park_ticket_season + park_close + 
+  ~ park_extra_magic_morning + park_ticket_season + park_close +
       park_temperature_high,
   data = seven_dwarfs_with_ps,
   treat = "park_extra_magic_morning"
@@ -1345,7 +1362,7 @@ So, even though we've targeted the ATE, we may not have done so very precisely; 
 
 ```{r}
 implied_weights_int <- lmw(
-  ~ park_extra_magic_morning * 
+  ~ park_extra_magic_morning *
     (park_ticket_season + park_close + park_temperature_high),
   data = seven_dwarfs_with_ps,
   treat = "park_extra_magic_morning"
