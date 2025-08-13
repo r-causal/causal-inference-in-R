@@ -59,8 +59,10 @@ dag_data |>
   ggplot(aes(year, pct)) +
   geom_line(color = "#0072B2", linewidth = .9) +
   scale_y_continuous(
-    name = "percent of papers",
     labels = scales::label_percent()
+  ) +
+  theme(
+    axis.title = element_blank()
   )
 ```
 
@@ -72,8 +74,7 @@ This class of DAGs is sometimes called **Structural Causal Models (SCMs)** becau
 
 [^04-dags-1]: An essential but rarely observed detail of DAGs is that dag is also an [affectionate Australian insult](https://en.wikipedia.org/wiki/Dag_(slang)) referring to the dung-caked fur of a sheep, a *daglock*.
 
-DAGs depict causal relationships between variables.
-Visually, the way they depict variables is as **edges** and **nodes**.
+DAGs visually depict causal relationships between variables through the use of **edges** and **nodes**.
 Edges are the arrows going from one variable to another, sometimes called arcs or just arrows.
 Nodes are the variables themselves, sometimes called vertices, points, or just variables.
 In @fig-dag-basic, there are two nodes, `x` and `y`, and one edge going from `x` to `y`.
@@ -428,7 +429,7 @@ That's a matter for the modeling stage.
 
 There are several ways we use interactions in causal inference.
 In one extreme, they are simply a matter of functional form: interaction terms are included in models but marginalized to get an overall causal effect.
-Conversely, we're interested in **joint causal effects**, where the two variables interacting are both causal.
+Conversely, we could be interested in **joint causal effects**, where the two variables interacting are both causal.
 In between, we can use interaction terms to identify **heterogeneous causal effects**, which vary by a second variable that is not assumed to be causal.
 As with many tools in causal inference, we use the same statistical technique in many ways to answer different questions.
 We'll revisit this topic in detail in [Chapter -@sec-interaction].
@@ -485,7 +486,8 @@ In the code above, we assume that:
 -   a graduate student's mood, sense of humor, and how prepared they feel for the exam could influence whether they listened to a podcast the morning of the test
 -   their mood and how prepared they are also influence their exam score
 
-Notice we *do not* see podcast in the exam equation; this means that we assume that there is *no* causal relationship between podcast and the exam score.
+Notice we *do not* see podcast in the exam equation; this means that we assume that there is *no* causal relationship between podcast and the exam score. 
+This is sometimes called a **null DAG**.
 
 There are some other useful arguments you'll often find yourself supplying to `dagify()`:
 
@@ -619,7 +621,7 @@ podcast_dag |>
 ```
 
 ::: callout-tip
-`dagify()` returns a `dagitty()` object, but underneath the hood, ggdag converts `dagitty` objects to tidy DAGs, a structure that holds both the `dagitty` object and a `dataframe` about the DAG.
+`dagify()` returns a `dagitty()` object, but underneath the hood, ggdag converts `dagitty` objects to tidy DAGs, a structure that holds both the `dagitty` object and a `data.frame` about the DAG.
 This is handy if you want to manipulate the DAG programmatically.
 
 ```{r}
@@ -639,7 +641,7 @@ podcast_dag_tidy |>
   filter(set == 2, path == "open path")
 ```
 
-Tidy DAGs are not pure data frames, but you can retrieve either the `dataframe` or `dagitty` object to work with them directly using `pull_dag_data()` or `pull_dag()`.
+Tidy DAGs are not pure data frames, but you can retrieve either the `data.frame` or `dagitty` object to work with them directly using `pull_dag_data()` or `pull_dag()`.
 `pull_dag()` can be useful when you want to work with dagitty functions:
 
 ```{r}
