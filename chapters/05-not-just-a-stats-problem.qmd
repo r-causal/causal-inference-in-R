@@ -228,61 +228,13 @@ Once we compile a DAG for each dataset, we only need to query the DAG for the co
 #|   - "The DAG for dataset 4, where `covariate` (c) is a collider via M-Bias. Although `covariate` happens before both `outcome` (o) and `exposure` (e), it's still a collider. We should *not* adjust for `covariate`, particularly since we can't control for the bias via `u1` and `u2`, which are unmeasured."
 library(ggdag)
 
-coords <- list(
-  x = c(X = 1, Z = 3, Y = 2),
-  y = c(X = 1, Z = 1.1, Y = 1)
-)
+d_coll <- quartet_collider(x = "e", y = "o", z = "c")
 
-d_coll <- dagify(
-  Z ~ X + Y,
-  Y ~ X,
-  exposure = "X",
-  outcome = "Y",
-  labels = c(X = "e", Y = "o", Z = "c"),
-  coords = coords
-)
-coords <- list(
-  x = c(X = 2, Z = 1, Y = 3),
-  y = c(X = 1, Z = 1.1, Y = 1)
-)
+d_conf <- quartet_confounder(x = "e", y = "o", z = "c")
 
-d_conf <- dagify(
-  X ~ Z,
-  Y ~ X + Z,
-  exposure = "X",
-  outcome = "Y",
-  labels = c(X = "e", Y = "o", Z = "c"),
-  coords = coords
-)
+d_med <- quartet_mediator(x = "e", y = "o", z = "c")
 
-coords <- list(
-  x = c(X = 1, Z = 2, Y = 3),
-  y = c(X = 1, Z = 1.1, Y = 1)
-)
-
-d_med <- dagify(
-  Z ~ X,
-  Y ~ Z,
-  exposure = "X",
-  outcome = "Y",
-  labels = c(X = "e", Y = "o", Z = "c"),
-  coords = coords
-)
-
-coords <- list(
-  x = c(u1 = 1, u2 = 2, X = 3, Z = 3, Y = 5),
-  y = c(u1 = 2, u2 = 4, X = 1, Z = 2, Y = 2)
-)
-
-d_mbias <- dagify(
-  Z ~ u1 + u2,
-  X ~ u1,
-  Y ~ X + u2,
-  exposure = "X",
-  outcome = "Y",
-  labels = c(X = "e", Y = "o", Z = "c"),
-  coords = coords
-)
+d_mbias <- quartet_m_bias(x = "e", y = "o", z = "c", u1 = "u1", u2 = "u2")
 
 p_coll <- d_coll |>
   tidy_dagitty() |>
@@ -355,10 +307,6 @@ p_m_bias <- d_mbias |>
   geom_dag_point(aes(color = covariate)) +
   geom_dag_edges(edge_color = "grey70") +
   geom_dag_text(aes(label = label)) +
-  geom_dag_text(
-    aes(label = name),
-    data = \(.df) filter(.df, name %in% c("u1", "u2"))
-  ) +
   theme_dag() +
   coord_cartesian(clip = "off") +
   ggtitle("(4) M-bias") +
@@ -426,41 +374,15 @@ Only control for variables that precede the outcome.
 #| code-fold: true
 #| fig-width: 4
 #| fig-height: 3.75
-coords <- list(
-  x = c(
-    X_0 = 1, X_1 = 2, Z_1 = 2, Y_1 = 1.9, X_2 = 3, Y_2 = 2.9, Z_2 = 3,
-    X_3 = 4, Y_3 = 3.9, Z_3 = 4
-  ),
-  y = c(
-    X_0 = 1, Y_0 = 1.05,
-    X_1 = 1, Z_1 = 1.1, Y_1 = 1.05,
-    X_2 = 1, Z_2 = 1.1, Y_2 = 1.05,
-    X_3 = 1, Z_3 = 1.1, Y_3 = 1.05
-  )
-)
-d_coll <- dagify(
-  Y_2 ~ X_1,
-  Y_3 ~ X_2,
-  X_2 ~ X_1,
-  Z_2 ~ X_1 + Y_2,
-  Z_3 ~ X_2 + Y_3 + Z_2,
-  exposure = "X_2",
-  outcome = "Y_3",
-  labels = c(
-    X_0 = "e0",
-    X_1 = "e1",
-    X_2 = "e2",
-    Y_2 = "o1",
-    Y_3 = "o2",
-    Z_2 = "c1",
-    Z_3 = "c2"
-  ),
-  coords = coords
+d_coll <- quartet_time_collider(
+  x0 = "e0", x1 = "e1", x2 = "e2", x3 = "e3",
+  y1 = "o1", y2 = "o2", y3 = "o3",
+  z1 = "c1", z2 = "c2", z3 = "c3"
 )
 
 d_coll |>
   tidy_dagitty() |>
-  mutate(covariate = if_else(name == "Z_3", "covariate\n(follow-up)", NA_character_)) |>
+  mutate(covariate = if_else(label == "c3", "covariate\n(follow-up)", NA_character_)) |>
   ggplot(
     aes(x = x, y = y, xend = xend, yend = yend)
   ) +
@@ -482,7 +404,7 @@ d_coll |>
 
 d_coll |>
   tidy_dagitty() |>
-  mutate(covariate = if_else(name == "Z_2", "covariate\n(baseline)", NA_character_)) |>
+  mutate(covariate = if_else(label == "c2", "covariate\n(baseline)", NA_character_)) |>
   ggplot(
     aes(x = x, y = y, xend = xend, yend = yend)
   ) +
@@ -688,7 +610,7 @@ p_conf2 <- d_conf2 |>
     keywidth = unit(1.4, "mm"),
     override.aes = list(size = 3.4, shape = 15)
   )) +
-  scale_color_discrete(breaks = "confounder", na.value = "grey70")
+  scale_color_discrete(breaks = "covariate", na.value = "grey70")
 
 p_conf2
 ```
