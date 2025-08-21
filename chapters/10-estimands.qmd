@@ -1300,7 +1300,7 @@ When you have more than one set of weights or matching schemes that addresses yo
 #| fig-width: 5
 library(halfmoon)
 seven_dwarfs_wts |>
-  plot_ess(.wts = starts_with("w_"))
+  plot_ess(.weights = starts_with("w_"))
 ```
 
 The fundamental tension in looking at balance vs. precision is a bias-variance trade-off. The observed sample size is the highest, but it also has the worst balance and may not address our research question. The ATO has the best balance and the highest ESS, but it addresses a particular sort of research question that may not suit our needs. Had we randomized the exposure, we would have had the best balance and the highest ESS, at least on average and with a high enough (actual) sample size. However, in observational data, we often have to make trade-offs between bias and variance. While weighting reduces our effective sample size, it's often a necessary trade-off: without it, we'd get a precisely-estimated wrong answer!
