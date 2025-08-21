@@ -44,6 +44,25 @@ The first book is focused on epidemiology.
 The latter two are focused on econometrics.
 We also recommend *The Book of Why* @pearl2018why for more on causal diagrams.
 
+## Installation
+
+This book uses several packages that are under active development. To install the required development versions, use:
+
+```{r}
+#| eval: false
+# install.packages("pak")
+pak::pak(c(
+  "r-causal/causalworkshop",
+  "r-causal/ggdag",
+  "r-causal/halfmoon",
+  "r-causal/propensity",
+  "r-causal/tipr",
+  "LucyMcGowan/touringplans"
+))
+```
+
+These development versions include the latest features and bug fixes used throughout the book.
+
 ## Conventions
 
 ### Modern R Features
