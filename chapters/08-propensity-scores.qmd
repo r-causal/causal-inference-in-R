@@ -207,7 +207,7 @@ Our model AUC is 0.65:
 check_model_auc(
   seven_dwarfs_9_with_ps,
   .exposure = park_extra_magic_morning,
-  .estimate = .fitted
+  .fitted = .fitted
 )
 ```
 

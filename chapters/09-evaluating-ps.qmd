@@ -40,9 +40,12 @@ seven_dwarfs_9_with_wt <- seven_dwarfs_9_with_ps |>
   )
 ```
 
-Once we have weights, we can use them in `geom_mirror_histogram()`'s `weight` argument to visualize the weighted distributions of the propensity score.
+Once we have weights, we can use them in `geom_mirror_histogram()`'s `weight` argument to visualize the weighted distributions of the propensity score, as shown in @fig-ps-weighted-histogram.
 
 ```{r}
+#| label: fig-ps-weighted-histogram
+#| fig-cap: "Weighted propensity score distributions for days with Extra Magic Morning hours compared to those without."
+#| message: false
 ggplot(
   seven_dwarfs_9_with_wt,
   aes(.fitted, group = park_extra_magic_morning)
@@ -58,9 +61,11 @@ ggplot(
 ```
 
 
-We also might want to look at the weighted and unweighted distributions side-by-side. We can speed up the data wrangling and plot code with `plot_mirror_distributions()`.
+We also might want to look at the weighted and unweighted distributions side-by-side, as shown in @fig-ps-weighted-unweighted-comparison. We can speed up the data wrangling and plot code with `plot_mirror_distributions()`.
 
 ```{r}
+#| label: fig-ps-weighted-unweighted-comparison
+#| fig-cap: "Weighted and unweighted propensity score distributions for days with and without Extra Magic Morning hours."
 seven_dwarfs_9_with_wt |>
   plot_mirror_distributions(
     .exposure = park_extra_magic_morning,
@@ -142,7 +147,7 @@ ggplot(
   labs(x = "ATE weight", fill = "Extra Magic Morning")
 ```
 
-If we find the ESS is too small, we have a few options. First, we could use a different set of weights with better variation, which we'll discuss in @sec-estimands as well as @sec-wts-balancing. Second, we could trim or truncate the ATE weights. For instance, if we truncate the propensity scores to the lower and upper percentiles then re-calculate the weights, we get a small improvement to our ESS The hope here is that the small modification to the distribution of the weights provides a good balance between making sure we are targeting the right estimand (the average treatment effect) while improving the precision. The more we trim and truncate, though, the more likely we are to be answering questions about a different population than the total population.
+If we find the ESS is too small, we have a few options. First, we could use a different set of weights with better variation, which we'll discuss in @sec-estimands as well as @sec-wts-balancing. Second, we could trim or truncate the ATE weights. For instance, if we truncate the propensity scores to the lower and upper percentiles then re-calculate the weights, we get a small improvement to our ESS. The hope here is that the small modification to the distribution of the weights provides a good balance between making sure we are targeting the right estimand (the average treatment effect) while improving the precision. The more we trim and truncate, though, the more likely we are to be answering questions about a different population than the total population.
 
 ```{r}
 seven_dwarfs_9_with_wt |>
@@ -240,13 +245,14 @@ We see above that the observed variance ratio for peak ticket season is `r vrs |
 
 It can be helpful to visualize standardized mean differences and variance ratios.
 To do so, we like to use a *Love Plot* (named for Thomas Love, as he was one of the first to popularize them).
-The `{halfmoon}` package has a function `geom_love` that simplifies this implementation.
-In fig-TODO, we visualize the absolute SMDs: the closer to 0, the better the balance between exposure groups. 
-After weighting, the differences between groups is greatly reduced. 
-Some people suggest a cut-off of 0.1 as a measure of good balance (an SMD of 0.1 corresponds to a correlation of TODO for a continuous variable); this is only a rule-of-thumb, and ideally we would get the SMDs much closer to 0.
+The `{halfmoon}` package has a function `geom_love()` that simplifies this implementation.
+In @fig-love-smd, we visualize the absolute SMDs: the closer to 0, the better the balance between exposure groups.
+After weighting, the differences between groups is greatly reduced.
+Some people suggest a cut-off of 0.1 as a measure of good balance (an SMD of 0.1 corresponds to a correlation of 0.05 for a continuous variable and 7.7% non-overlap between the distributions of the continuous covariate in the two groups @TODO-CITE); this is only a rule-of-thumb, and ideally we would get the SMDs much closer to 0.
 
 ```{r}
-#| label: fig-TODO
+#| label: fig-love-smd
+#| fig-cap: "Love plot showing absolute standardized mean differences before and after weighting."
 ggplot(
   data = smds,
   aes(
@@ -259,10 +265,11 @@ ggplot(
   geom_love()
 ```
 
-The variance ratios, on the other hand, don't show as good of improvement; while most of the ratios are reduced towards 1, one of them is made slightly worse, and several are still not close to 1. 
+The variance ratios, on the other hand, don't show as good of improvement; while most of the ratios are reduced towards 1, one of them is made slightly worse, and several are still not close to 1, as shown in @fig-love-vr.
 
 ```{r}
-#| label: fig-TODO2
+#| label: fig-love-vr
+#| fig-cap: "Love plot showing variance ratios before and after weighting."
 ggplot(
   data = vrs,
   aes(
@@ -276,11 +283,13 @@ ggplot(
 ```
 
 ::: {.callout-note}
-`plot_balance()` is a helper function to quickly plot the output of `check_balance()`, which you may find helpful for iterating.
+`plot_balance()` is a helper function to quickly plot the output of `check_balance()`, which you may find helpful for iterating, as shown in @fig-balance-helper.
 
 ```{r}
-balance_metrics |> 
-  filter(metric %in% c("smd", "vr")) |> 
+#| label: fig-balance-helper
+#| fig-cap: "Balance metrics using the `plot_balance()` helper function."
+balance_metrics |>
+  filter(metric %in% c("smd", "vr")) |>
   plot_balance(facet_scales = "free_x")
 ```
 
@@ -292,7 +301,7 @@ As mentioned above, one issue with the standardized mean differences is they onl
 It can be helpful to visualize the whole distribution to ensure that there is not residual imbalance in the tails.
 Let's first use a boxplot.
 As an example, let's use the `park_temperature_high` variable.
-When we make boxplots, we prefer to always jitter the points on top to make sure we aren't masking and data anomolies; we use `geom_jitter` to accomplish this.
+When we make boxplots, we prefer to always jitter the points on top to make sure we aren't masking and data anomolies; we use `geom_jitter()` to accomplish this.
 First, we will make the unweighted boxplot.
 In @fig-boxplot, we can see the imbalance in the middle of the distributions, but we also see differences in the ends, particularly among lower temperatures.
 SMDs can't tell us if this is improved.
@@ -310,11 +319,11 @@ ggplot(
 ) +
   geom_jitter(width = .12, height = 0, alpha = .5) +
   geom_boxplot(
-    outlier.color = NA, 
-    fill = NA, 
-    width = .3, 
+    outlier.color = NA,
+    fill = NA,
+    width = .3,
     color = "black"
-  ) +  
+  ) +
   labs(
     color = "Extra magic morning",
     y = "Historic temperature high",
@@ -322,8 +331,8 @@ ggplot(
   )
 ```
 
-Now let's look at a weighted version. 
-In @fig-weighted-boxplot, we see the improvement in the middle of the distribution we detected with SMDs. 
+Now let's look at a weighted version.
+In @fig-weighted-boxplot, we see the improvement in the middle of the distribution we detected with SMDs.
 The tails of the distribution, while improved, still show some imbalance.
 
 ```{r}
@@ -341,9 +350,9 @@ ggplot(
 ) +
   geom_jitter(width = .12, height = 0, alpha = .5) +
   geom_boxplot(
-    outlier.color = NA, 
-    fill = NA, 
-    width = .3, 
+    outlier.color = NA,
+    fill = NA,
+    width = .3,
     color = "black"
   ) +
   labs(
@@ -368,7 +377,7 @@ Many other geoms in ggplot2 accept a `weight` argument that can be useful for vi
 - `geom_smooth()`
 - `geom_violin()`
 
-## The empirical cumulative distribution function 
+## The empirical cumulative distribution function
 
 Examining the empirical cumulative distribution function (eCDF) for the confounder stratified by each exposure group is also very useful.
 The unweighted eCDF can be visualized using `geom_ecdf()` from halfmoon.
@@ -426,25 +435,17 @@ Let's try refitting our propensity score model using a natural spline.
 We can use the function `splines::ns()` for this.
 
 ::: callout-note
-## Natural splines for flexible modeling
+## Natural splines
 
-Natural splines are a type of smoothing function that allow us to model non-linear relationships between variables. Unlike polynomial terms (like $x^2$ or $x^3$), which can become extreme at the boundaries of the data, natural splines constrain the function to be linear beyond the boundary knots. This makes them particularly well-suited for propensity score modeling.
-
-In our example, we use `splines::ns(park_temperature_high, df = 5)`, which creates a natural spline with 5 degrees of freedom. This allows the relationship between temperature and the probability of Extra Magic Morning to vary smoothly across different temperature ranges—capturing patterns like threshold effects or plateaus that a simple linear term would miss.
-
-Natural splines are especially useful when:
-- The relationship between a continuous confounder and exposure appears non-linear
-- You want flexibility without the instability that high-degree polynomials can introduce
-- You need to avoid extreme predictions at the edges of your data
-
-The `df` parameter controls the flexibility: higher values allow more complex curves, but too many degrees of freedom can lead to overfitting.
+Natural splines, also called restricted cubic splines, are a type of smoothing function that allow us to model non-linear relationships between variables. Unlike polynomial terms (like $x^2$ or $x^3$), which can become extreme at the boundaries of the data, natural splines constrain the function to be linear beyond the boundary knots. This makes them particularly well-suited for propensity score modeling.
 :::
 
 ```{r}
 seven_dwarfs_9_with_ps <-
   glm(
     park_extra_magic_morning ~ park_ticket_season + park_close +
-      splines::ns(park_temperature_high, df = 5), # refit model with a spline
+       # refit model with a spline
+      splines::ns(park_temperature_high, df = 5),
     data = seven_dwarfs_9,
     family = binomial()
   ) |>
@@ -457,7 +458,7 @@ Now let's see how that impacts the weighted eCDF plot
 
 ```{r}
 #| label: fig-weighted-ecdf-2
-#| fig.cap: "Weighted eCDF examining the difference in distribution for historic high temperature among days that had extra magic morning hours (purple) compared to those that did not (green) after incorporating the propensity score weight where historic high temperature was modeled flexibly with a spline."
+#| fig.cap: "Weighted eCDF examining the difference in distribution for historic high temperature among days that had extra magic morning hours compared to those that did not after incorporating the propensity score weight where historic high temperature was modeled flexibly with a spline."
 
 ggplot(
   seven_dwarfs_9_with_wt,
@@ -467,28 +468,176 @@ ggplot(
   )
 ) +
   geom_ecdf(aes(weights = w_ate)) +
-  scale_color_manual(
-    "Extra Magic Morning",
-    values = c("#5154B8", "#5DB854"),
-    labels = c("Yes", "No")
-  ) +
   labs(
+    color = "Extra Magic Morning",
     x = "Historic temperature high",
     y = "Proportion <= x"
   )
 ```
 
-Now in @fig-weighted-ecdf-2 the lines appear to overlap across the whole space.
+Now in @fig-weighted-ecdf-2 the lines appear to overlap better across the whole space.
+
+## Kolmogorov-Smirnov (KS) statistics
+
+A single-number summary of the eCDF is the Kolmogorov-Smirnov (KS) statistic[^09-evaluating-ps-1]. The KS statistic is the maximum vertical distance between the two eCDF curves. We can calculate it using `check_balance()`:
+
+[^09-evaluating-ps-1]: The KS statistic is also the test statistic for the two-sample Kolmogorov-Smirnov test, which tests whether two samples come from the same distribution. However, in the context of balance assessment, we focus on the magnitude of the statistic rather than hypothesis testing.
+
+```{r}
+balance_metrics |>
+  filter(metric == "ks")
+```
+
+To better understand what the KS statistic represents, let's visualize it on the unweighted and weighted eCDF plots. @fig-ks-statistic shows the maximum distance between the two curves as a red line connecting the two points where this maximum occurs. Note that the KS statistic that we see before and after weighting are not for the same points in the distribution; after weighting, the maximum vertical distance is both smaller and more towards the center of the distribution.
+
+```{r}
+#| label: fig-ks-statistic
+#| fig-cap: "eCDF showing the KS statistic before and after weighting. The red line and points mark where the maximum vertical distance occurs. The KS statistic decreases substantially after weighting, indicating improved distributional balance."
+#| code-fold: true
+
+# Calculate unweighted ECDFs
+ecdf_0 <- seven_dwarfs_9_with_wt |>
+  filter(park_extra_magic_morning == 0) |>
+  pull(park_temperature_high) |>
+  ecdf()
+
+ecdf_1 <- seven_dwarfs_9_with_wt |>
+  filter(park_extra_magic_morning == 1) |>
+  pull(park_temperature_high) |>
+  ecdf()
+
+# Find unweighted KS point
+all_temps <- sort(unique(seven_dwarfs_9_with_wt$park_temperature_high))
+distances <- abs(ecdf_0(all_temps) - ecdf_1(all_temps))
+max_idx <- which.max(distances)
+
+ks_unweighted <- tibble(
+  x = all_temps[max_idx],
+  y0 = ecdf_0(all_temps[max_idx]),
+  y1 = ecdf_1(all_temps[max_idx]),
+  ks = distances[max_idx],
+  weight_status = "Unweighted"
+)
+
+# Calculate weighted ECDFs manually
+wt_data_0 <- seven_dwarfs_9_with_wt |>
+  filter(park_extra_magic_morning == 0) |>
+  arrange(park_temperature_high)
+
+wt_data_1 <- seven_dwarfs_9_with_wt |>
+  filter(park_extra_magic_morning == 1) |>
+  arrange(park_temperature_high)
+
+# For each unique temp value, calculate weighted cumulative proportion
+wecdf_0 <- tibble(temp = all_temps) |>
+  mutate(
+    ecdf_val = map_dbl(temp, \(t) {
+      sum(wt_data_0$w_ate[wt_data_0$park_temperature_high <= t]) /
+        sum(wt_data_0$w_ate)
+    })
+  )
+
+wecdf_1 <- tibble(temp = all_temps) |>
+  mutate(
+    ecdf_val = map_dbl(temp, \(t) {
+      sum(wt_data_1$w_ate[wt_data_1$park_temperature_high <= t]) /
+        sum(wt_data_1$w_ate)
+    })
+  )
+
+# Find weighted KS point
+wt_distances <- abs(wecdf_0$ecdf_val - wecdf_1$ecdf_val)
+wt_max_idx <- which.max(wt_distances)
+
+ks_weighted <- tibble(
+  x = all_temps[wt_max_idx],
+  y0 = wecdf_0$ecdf_val[wt_max_idx],
+  y1 = wecdf_1$ecdf_val[wt_max_idx],
+  ks = wt_distances[wt_max_idx],
+  weight_status = "Weighted"
+)
+
+ks_both <- bind_rows(ks_unweighted, ks_weighted) |>
+  mutate(weight_status = factor(weight_status, levels = c("Unweighted", "Weighted")))
+
+plot_data <- seven_dwarfs_9_with_wt |>
+  select(park_temperature_high, park_extra_magic_morning, w_ate) |>
+  mutate(
+    Unweighted = 1,
+    Weighted = as.numeric(w_ate)
+  ) |>
+  pivot_longer(
+    cols = c(Unweighted, Weighted),
+    names_to = "weight_status",
+    values_to = "weight"
+  ) |>
+  mutate(weight_status = factor(weight_status, levels = c("Unweighted", "Weighted")))
+
+ggplot(
+  plot_data,
+  aes(
+    x = park_temperature_high,
+    color = factor(park_extra_magic_morning),
+    weight = weight
+  )
+) +
+  geom_ecdf(linewidth = 1, alpha = .5) +
+  geom_segment(
+    data = ks_both,
+    aes(x = x, xend = x, y = y0, yend = y1),
+    color = "#DB5461",
+    linewidth = .8,
+    linetype = "solid",
+    inherit.aes = FALSE
+  ) +
+  geom_point(
+    data = ks_both,
+    aes(x = x, y = y0),
+    color = "#DB5461",
+    size = 2,
+    inherit.aes = FALSE
+  ) +
+  geom_point(
+    data = ks_both,
+    aes(x = x, y = y1),
+    color = "#DB5461",
+    size = 2,
+    inherit.aes = FALSE
+  ) +
+  geom_label(
+    data = ks_both,
+    aes(
+      x = x,
+      y = (y0 + y1) / 2,
+      label = paste0("KS = ", round(ks, 3))
+    ),
+    color = "#DB5461",
+    size = 3.5,
+    fontface = "bold",
+    hjust = 1.1,
+    inherit.aes = FALSE
+  ) +
+  facet_wrap(~weight_status) +
+  labs(
+    x = "Historic temperature high",
+    y = "Proportion <= x",
+    color = "Extra Magic Morning"
+  ) +
+  theme(legend.position = "bottom")
+```
+
+We want the KS statistic to be as close to 0 as possible after weighting or matching, indicating that the distributions overlap well across their entire range.
 
 ## Balance across the joint distribution
 
-ECDFs allow as to look across the distribution of a continuous confounder, and SMDs and variance ratios give us different perspectives into moments of the distribution. However, for exchangeability to hold, we need balance across the joint distribution of confounders. This means balance across the entire multi-dimensional covariate space, including interactions between variables. This is hard to comprehend, let alone assess, but we have a few tools to try.
+eCDFs allow as to look across the distribution of a continuous confounder, and SMDs and variance ratios give us different perspectives into moments of the distribution. However, for exchangeability to hold, we need balance across the joint distribution of confounders. This means balance across the entire multi-dimensional covariate space, including interactions between variables. This is hard to comprehend, let alone assess, but we have a few tools to try.
 
 ### Interactions and higher moments
 
-The simplest method of assessing balance in the joint distribution is to calculate single variables that represent components of the distribution. SMDs and friends look at single variables on their original scale, which is one perspective of the joint distribution. Balance is also commonly assessed among interaction terms and squares of continuous confounders (which is closely related to the variance, the second moment of the distribution, so we've already had one perspective through variance ratios). `check_balance()` can do this automatically (as well as cubes). 
+The simplest method of assessing balance in the joint distribution is to calculate single variables that represent components of the distribution. SMDs and friends look at single variables on their original scale, which is one perspective of the joint distribution. Balance is also commonly assessed among interaction terms and squares of continuous confounders (which is closely related to the variance, the second moment of the distribution, so we've already had one perspective through variance ratios). `check_balance()` can do this automatically (as well as cubes).
 
 ```{r}
+#| fig-width: 9
 balance_metrics_joint <-
   seven_dwarfs_9_with_wt |>
   mutate(park_close = as.numeric(park_close)) |>
@@ -500,19 +649,21 @@ balance_metrics_joint <-
     squares = TRUE
   )
 
-balance_metrics_joint |> 
-    filter(metric %in% c("smd", "vr")) |> 
-    plot_balance(facet_scales = "free_x")
+balance_metrics_joint |>
+  filter(metric %in% c("smd", "vr")) |>
+  plot_balance(facet_scales = "free_x") +
+  theme(axis.title.y = element_blank())
 ```
 
+From this perspective, it seems we have decent balance over the subset of the joint distribution we've computed.
 
 ### Energy
 
 An alternative measure of balance is the energy statistic. The energy statistic is the average distance across the joint ECDFs. As opposed to looking at many measures across derived variables, the energy statistic is a single-number summary of the joint distribution. Unlike some of the other metrics we've seen, the scale of the energy metric depends on the number of covariates and their distribution, so it's more useful as a comparison between approaches. That said, smaller energy indicates better balance across the covariate space; after weighting, we see much smaller energy compared to the observed sample.
 
 ```{r}
-balance_metrics_joint |> 
-  filter(metric == "energy") |> 
+balance_metrics_joint |>
+  filter(metric == "energy") |>
   select(method, estimate)
 ```
 
@@ -546,7 +697,8 @@ seven_dwarfs_9_with_improved <- seven_dwarfs_9_with_wt |>
 Now let's check the balance with both our original and improved models:
 
 ```{r}
-#| fig-width: 12
+#| fig-height: 9
+#| fig-width: 8.5
 balance_comparison <- seven_dwarfs_9_with_improved |>
   mutate(park_close = as.numeric(park_close)) |>
   check_balance(
@@ -562,7 +714,7 @@ balance_comparison |>
   theme(axis.text.y = element_blank())
 ```
 
-The plot shows that our feature engineering has improved the balance across all variables. The improved weights (w_ate_improved) achieve smaller standardized mean differences compared to the original weights (w_ate).
+The plot shows that our feature engineering has improved the balance across all variables. The improved weights (`w_ate_improved`) achieve smaller standardized mean differences compared to the original weights (`w_ate`).
 
 Let's also compare the effective sample sizes:
 
@@ -582,22 +734,15 @@ While our improved model achieves better balance, it may come at the cost of a l
 
 ### Using optimization-based balancing weights {#sec-wts-balancing}
 
-So far, we've focused on propensity score weights, which model the treatment assignment mechanism and then use the inverse of those probabilities to create weights. An alternative approach is to directly optimize the weights to achieve balance without explicitly modeling the propensity score. The `{optweight}` package implements this approach by solving a constrained optimization problem: it finds weights that minimize variability (maximizing effective sample size) while ensuring that covariates are balanced within specified tolerances.
+So far, we've focused on propensity score weights, which model the treatment assignment mechanism and then use the inverse of those probabilities to create weights. An alternative approach is to directly optimize the weights to achieve balance without explicitly modeling the propensity score. The `{optweight}` package implements this approach by solving a constrained optimization problem: it finds weights that minimize variability (maximizing effective sample size) while ensuring that covariates are balanced within specified tolerances. There are two main benefits to this approach. First, we can reduce iterating between estimating weights and checking balance because optimization-based weights directly target a balancing statistic. Second, the particular class of optimization-based weights that optweight implements, called stable balancing weights, often acheives comparable balance to a good propensity score model with better effective sample size.
 
-This approach has several advantages:
-- It directly targets balance rather than hoping good propensity score models lead to good balance
-- It allows you to specify different balance tolerances for different covariates
-- It can sometimes achieve better balance with less extreme weights than propensity score methods
-
-Let's see how to use optweight with our Seven Dwarfs data:
+Let's use the `optweight()` function to estimate stable balancing weights. In addition to a formula similar to the propensity score model, we also specify `tols`, the tolerance of the balance statistic, and `min.w`, the minimal allowable weight. By setting `min.w = 0`, we allow `optweight()` to assign weights of zero, effectively filtering out some observations.
 
 ```{r}
 library(optweight)
 
-# Fit optimization-based weights
-# We'll target the ATE and set a tolerance of 0.01 for all covariates
 opt_weights <- optweight(
-  park_extra_magic_morning ~ 
+  park_extra_magic_morning ~
     park_ticket_season + park_close + park_temperature_high,
   data = seven_dwarfs_9,
   estimand = "ATE",
@@ -605,14 +750,6 @@ opt_weights <- optweight(
   min.w = 0
 )
 
-# View the optimization results
-opt_weights
-```
-
-The output shows us how well the optimization achieved balance for each covariate. Now let's extract these weights and add them to our dataframe following the same approach as with propensity score weights:
-
-```{r}
-# Extract weights into our existing dataframe
 seven_dwarfs_9_with_opt <- seven_dwarfs_9_with_wt |>
   mutate(
     w_opt = opt_weights$weights
@@ -622,7 +759,8 @@ seven_dwarfs_9_with_opt <- seven_dwarfs_9_with_wt |>
 Let's check the balance achieved by these optimization-based weights and compare it to our propensity score weights:
 
 ```{r}
-# Check balance with both sets of weights
+#| fig-height: 9
+#| fig-width: 8
 balance_opt_comparison <- seven_dwarfs_9_with_opt |>
   mutate(park_close = as.numeric(park_close)) |>
   check_balance(
@@ -631,22 +769,29 @@ balance_opt_comparison <- seven_dwarfs_9_with_opt |>
     .weights = c(w_ate, w_opt)
   )
 
-# Extract SMDs for comparison
 balance_opt_comparison |>
-  plot_balance()
+  plot_balance() +
+  theme(axis.title.y = element_blank())
 ```
 
-Now let's compare the distribution of weights between the two methods:
+It looks like the balance between the two approaches is similar. Now let's compare the distribution of weights between the two methods:
 
 ```{r}
 seven_dwarfs_9_with_opt |>
   select(w_ate, w_opt) |>
-  mutate(w_ate = as.numeric(w_ate)) |> 
+  mutate(w_ate = as.numeric(w_ate)) |>
   pivot_longer(everything(), names_to = "method", values_to = "weight") |>
-  group_by(method) |> 
+  group_by(method) |>
   reframe(range = range(weight))
 ```
-seven_dwarfs_9_with_opt |> filter(w_opt == 0)
+
+The range of the stable balancing weights is much smaller than the propensity score weights. We also see one day did indeed recieve a weight of 0, removing it from the analysis.
+
+```{r}
+seven_dwarfs_9_with_opt |>
+  filter(w_opt == 0) |>
+  select(park_date, park_extra_magic_morning, park_ticket_season, park_close, park_temperature_high)
+```
 
 Finally, let's compare the effective sample sizes between the two weighting methods:
 
@@ -663,72 +808,26 @@ seven_dwarfs_9_with_opt |>
 
 The optimization-based weights often achieve a better effective sample size because they directly minimize weight variability while achieving the specified balance constraints. This can lead to more precise estimates in the outcome model.
 
-We can also examine the balance by exposure group:
+#### Energy balancing
 
-```{r}
-seven_dwarfs_9_with_opt |>
-  group_by(park_extra_magic_morning) |>
-  summarize(
-    n = n(),
-    ess_ate = ess(w_ate),
-    ess_opt = ess(w_opt),
-    mean_weight_ate = mean(w_ate),
-    mean_weight_opt = mean(w_opt),
-    sd_weight_ate = sd(w_ate),
-    sd_weight_opt = sd(w_opt)
-  )
-```
-
-::: callout-tip
-## When to use optimization-based weights
-
-Optimization-based weights are particularly useful when:
-- You have specific balance requirements for different covariates
-- Propensity score models lead to extreme weights
-- You want to maximize effective sample size while achieving good balance
-- You're more concerned with achieving balance than modeling the treatment mechanism
-
-However, propensity score methods may be preferred when:
-- You want to understand the treatment assignment mechanism
-- The propensity score model has a clear theoretical justification
-- You need to assess positivity violations through the propensity score distribution
-:::
-
-#### Energy balancing: Balancing full distributions
-
-While optweight focuses on balancing specific moments (like means) of the covariates, energy balancing takes a more comprehensive approach by balancing the entire distributions of covariates between treatment groups. Energy balancing uses the concept of "energy distance"—a measure of the distance between probability distributions—to ensure that the weighted covariate distributions are similar across treatment groups.
-
-The key advantage of energy balancing is that it captures differences not just in central tendency but also in the shape, spread, and other features of the distributions. This can be particularly valuable when relationships between covariates and outcomes are complex or non-linear.
-
-Let's implement energy balancing using the `{WeightIt}` package:
+Optimization-based weights are a general technique that can target many aspects of balance. For instance, we may want to target the energy statistic to balance the joint distribution of the covariates. The `{WeightIt}` package implements this and many other optimization-based approaches. Let's estimate energy balancing weights.
 
 ```{r}
 library(WeightIt)
 
-# Fit energy balancing weights
 energy_weights <- weightit(
-  park_extra_magic_morning ~ 
+  park_extra_magic_morning ~
     park_ticket_season + park_close + park_temperature_high,
   data = seven_dwarfs_9,
   method = "energy",
   estimand = "ATE"
 )
 
-# Extract summary information
-summary(energy_weights)
-```
-
-Now let's add these weights to our dataframe:
-
-```{r}
-# Extract weights into our existing dataframe
 seven_dwarfs_9_with_all <- seven_dwarfs_9_with_opt |>
-  mutate(
-    w_energy = energy_weights$weights
-  )
+  mutate(w_energy = energy_weights$weights)
 ```
 
-Let's compare the balance achieved by all three methods—propensity score, optweight, and energy balancing:
+Let's compare the balance achieved by all three methods:
 
 ```{r}
 # Check balance with all three sets of weights
@@ -740,124 +839,14 @@ balance_all_comparison <- seven_dwarfs_9_with_all |>
     .weights = c(w_ate, w_opt, w_energy)
   )
 
-# Extract and plot SMDs for comparison
 balance_all_comparison |>
   filter(metric == "smd") |>
-  plot_balance() +
-  labs(title = "Standardized Mean Differences Across Weighting Methods")
+  plot_balance()
 ```
-
-Let's visualize how the three methods differ in their weight distributions:
-
-```{r}
-#| label: fig-three-weight-comparison
-#| fig-cap: "Comparison of weight distributions across three methods. Propensity score ATE weights (blue) show the most variation, optimization-based weights (orange) are more concentrated, and energy balancing weights (green) fall in between, reflecting their focus on full distributional balance."
-library(tidyr)
-
-seven_dwarfs_9_with_all |>
-  select(w_ate, w_opt, w_energy) |>
-  pivot_longer(everything(), names_to = "method", values_to = "weight") |>
-  mutate(
-    method = case_when(
-      method == "w_ate" ~ "Propensity Score ATE",
-      method == "w_opt" ~ "Optimization-based",
-      method == "w_energy" ~ "Energy Balancing"
-    ),
-    method = factor(method, levels = c("Propensity Score ATE", "Optimization-based", "Energy Balancing"))
-  ) |>
-  ggplot(aes(x = weight, fill = method)) +
-  geom_density(alpha = 0.6, color = NA) +
-  scale_x_log10() +
-  scale_fill_manual(values = c("#5154B8", "#DB5461", "#5DB854")) +
-  labs(
-    x = "Weight (log scale)",
-    y = "Density",
-    fill = "Method"
-  ) +
-  theme(legend.position = "bottom")
-```
-
-Now let's compare the effective sample sizes across all three methods:
-
-```{r}
-seven_dwarfs_9_with_all |>
-  reframe(
-    method = c("ps", "opt", "energy"),
-    n = n(),
-    ess = c(ess(w_ate), ess(w_opt), ess(w_energy)),
-    percent = percent(ess / n)
-  )
-```
-
-To better understand how energy balancing achieves distributional balance, let's examine the weighted eCDF for temperature across all three methods:
-
-```{r}
-#| label: fig-ecdf-all-methods
-#| fig-cap: "Weighted empirical cumulative distribution functions for historic high temperature. Energy balancing (bottom panel) achieves excellent overlap across the entire distribution, demonstrating its strength in balancing full distributions rather than just summary statistics."
-#| fig-height: 8
-
-library(patchwork)
-
-p1 <- ggplot(
-  seven_dwarfs_9_with_all,
-  aes(x = park_temperature_high, color = factor(park_extra_magic_morning))
-) +
-  geom_ecdf(aes(weights = w_ate)) +
-  scale_color_manual(values = c("#5154B8", "#DB5461")) +
-  labs(
-    title = "Propensity Score ATE Weights",
-    x = "Historic temperature high",
-    y = "Proportion <= x",
-    color = "Extra Magic Morning"
-  ) +
-  theme(legend.position = "none")
-
-p2 <- ggplot(
-  seven_dwarfs_9_with_all,
-  aes(x = park_temperature_high, color = factor(park_extra_magic_morning))
-) +
-  geom_ecdf(aes(weights = w_opt)) +
-  scale_color_manual(values = c("#5154B8", "#DB5461")) +
-  labs(
-    title = "Optimization-based Weights",
-    x = "Historic temperature high",
-    y = "Proportion <= x",
-    color = "Extra Magic Morning"
-  ) +
-  theme(legend.position = "none")
-
-p3 <- ggplot(
-  seven_dwarfs_9_with_all,
-  aes(x = park_temperature_high, color = factor(park_extra_magic_morning))
-) +
-  geom_ecdf(aes(weights = w_energy)) +
-  scale_color_manual(values = c("#5154B8", "#DB5461")) +
-  labs(
-    title = "Energy Balancing Weights",
-    x = "Historic temperature high",
-    y = "Proportion <= x",
-    color = "Extra Magic Morning"
-  ) +
-  theme(legend.position = "bottom")
-
-p1 / p2 / p3
-```
-
-::: callout-note
-## Choosing between optimization methods
-
-Each optimization-based method has its strengths:
-
-- **Optweight**: Directly controls balance tolerances for specific moments; computationally efficient; good for when you have specific balance requirements
-
-- **Energy balancing**: Balances entire distributions; captures complex relationships; ideal when you're concerned about non-linear associations or higher-order interactions
-
-- **Traditional propensity scores**: Provides insight into treatment mechanism; well-established theory; useful for understanding selection processes
-
-The choice depends on your specific goals: understanding treatment assignment (propensity scores), achieving targeted balance efficiently (optweight), or ensuring comprehensive distributional balance (energy balancing).
-:::
 
 ### Don't use p-values
+
+
 
 ### Don't use prediction metrics for causal modeling
 
@@ -907,7 +896,7 @@ In practice, cross-validation, a technique to reduce overfitting, is often used 
 
 ### Matching and the propensity score paradox
 
-A quirk of propensity score matching is that, after we've achieved good balance, if we *continue* to prune matches, we will see the opposite effect: we *increase* imbalance. The reason for this is that, with propensity score matching, after we've achieved balance, there is no good reason to prefer one match over another in terms of pruning; pruning becomes random. The problem is that we are more likely to then accidentally remove well-matched pairs than we are to maintain balance. 
+A quirk of propensity score matching is that, after we've achieved good balance, if we *continue* to prune matches, we will see the opposite effect: we *increase* imbalance. The reason for this is that, with propensity score matching, after we've achieved balance, there is no good reason to prefer one match over another in terms of pruning; pruning becomes random. The problem is that we are more likely to then accidentally remove well-matched pairs than we are to maintain balance.
 
 In @fig-TODO3, we see that as we tighten the caliper (resulting in fewer matched pairs), we first improve balance then, as the caliper approaches zero, we worsen balance.
 
@@ -920,23 +909,23 @@ caliper_widths <- c(0.25, 0.1, 0.05, 0.025, 0.01)
 
 check_balance_by_cal <- function(caliper) {
   match_obj <- matchit(
-    park_extra_magic_morning ~ 
+    park_extra_magic_morning ~
       park_ticket_season + park_close + park_temperature_high,
     data = seven_dwarfs_9,
     method = "nearest",
     caliper = caliper,
     distance = "glm"
   )
-  
+
   matched_data <- match.data(match_obj)
-  
+
   balance <- matched_data |>
     mutate(park_close = as.numeric(park_close)) |>
     check_balance(
       .vars = c(park_ticket_season, park_close, park_temperature_high),
       .exposure = park_extra_magic_morning
     )
-  
+
   balance |>
     filter(metric == "smd") |>
     mutate(
@@ -945,11 +934,11 @@ check_balance_by_cal <- function(caliper) {
     )
 }
 
-balance_by_caliper <- map(caliper_widths, check_balance_by_cal) |> 
+balance_by_caliper <- map(caliper_widths, check_balance_by_cal) |>
   bind_rows()
 
 ggplot(
-  balance_by_caliper, 
+  balance_by_caliper,
   aes(x = caliper, y = abs(estimate), color = variable)
 ) +
   geom_line() +
@@ -962,4 +951,4 @@ ggplot(
   theme(legend.position = "right")
 ```
 
-In practice, the propensity score paradox is not such a big deal, for two reasons: first, for many data sets, you will see improved balance by pruning matches well before you start to encounter the paradox. Second, if we start to see that a caliper is too stringent and is starting to worse balance, we can simply use a less stringent caliper. That said, some other matching algorithms, such as coarsened exact matching and Mahalanobis distance matching---both available in MatchIt---don't suffer from this problem and may be worth considering if you are encountering it but feel you need to continue pruning.
+In practice, the propensity score paradox is not such a big deal, for two reasons: first, for many data sets, you will see improved balance by pruning matches well before you start to encounter the paradox. Second, if we start to see that a caliper is too stringent and is starting to worse balance, we can simply use a less stringent caliper. That said, some other matching algorithms, such as coarsened exact matching and Mahalanobis distance matching---both available in MatchIt---don't suffer from this problem and may be worth considering if you are encountering the paradox but feel you need to continue pruning.
