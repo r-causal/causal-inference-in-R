@@ -352,7 +352,6 @@ tibble(
 This Monte Carlo approach propagates uncertainty forward through time, giving us not just a point estimate but a distribution of plausible outcomes under the intervention.
 
 
-
 ::: callout-tip
 ## Monte Carlo simulations
 
