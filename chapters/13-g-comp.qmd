@@ -68,7 +68,7 @@ bind_cols(pred_exposed, pred_unexposed) |>
   )
 ```
 
-The `{marginaleffects`} package makes some of these mechanics easy and help with uncertainty quantification. For example, rather than creating the separate counterfactual datasets, we can calcualte the average treatment effect directly using the `average_comparisons` function.
+The `{marginaleffects`} package makes some of these mechanics easy and help with uncertainty quantification. For example, rather than creating the separate counterfactual datasets, we can calculate the average treatment effect directly using the `average_comparisons` function.
 
 ```{r}
 library(marginaleffects)
