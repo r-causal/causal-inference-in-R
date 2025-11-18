@@ -271,19 +271,87 @@ m10 <- lm(
 To evaluate an intervention, suppose that all park dates begin with an 8am posted wait of thirty minutes. The longitudinal g-formula uses the fitted models to reconstruct the rest of the morning under this counterfactual scenario. The observed data are first modified so that the 8am wait is replaced by the intervention value. The 9am posted wait is then generated from its model using this modified 8am value, and the 10am actual wait is generated from its model using both the modified 8am value and the model-based value of the 9am wait. This sequence reproduces the evolving process under the intervention.
 
 ```{r}
-set.seed(1)
+# Observed: use observed 8am waits
+natural <- three |>
+  mutate(
+    wait_9_pred = predict(m9, newdata = cur_data()),
+    wait_10_pred = predict(m10, 
+      newdata = mutate(cur_data(), wait_9 = wait_9_pred))
+  )
 
-sim <- three |>
+# Intervention: set all 8am waits to 30
+intervention <- three |>
   mutate(wait_8 = 30) |>
+  mutate(
+    wait_9_pred = predict(m9, newdata = cur_data()),
+    wait_10_pred = predict(m10, 
+      newdata = mutate(cur_data(), wait_9 = wait_9_pred))
+  )
+
+# Estimate causal effect
+tibble(
+  natural_mean = mean(natural$wait_10_pred),
+  intervention_mean = mean(intervention$wait_10_pred),
+  ate = intervention_mean - natural_mean
+)
+```
+
+The average of `wait_10` across all dates gives the estimated expected outcome under the intervention. Repeating the same procedure with the observed values of `wait_8` yields the expected outcome under the natural course. Their difference measures the effect of lowering the early-morning posted wait to thirty minutes.
+
+For short sequences with deterministic models, the calculation can be performed exactly in this way. For longer sequences simulation becomes a natural computational tool. The simulation-based implementation is simply a practical method for evaluating the g-formula when the number of time points grows. Standard implementations create synthetic datasets of size 50-100 times the original sample by randomly sampling baseline covariates from the observed data. At each time point, confounders are simulated from fitted models using previously simulated values, exposure is assigned according to the intervention strategy, and outcomes are computed from fitted models. Let's set a seed for reproducibility (since we are introducing some random noise) and create a large synthetic population by sampling baseline covariates.
+
+```{r}
+set.seed(1)
+n_mc <- nrow(three) * 50 # 50x the original sample size
+
+baseline_sample <- three |>
+  select(
+    park_extra_magic_morning,
+    park_ticket_season, 
+    park_close,
+    park_temperature_high,
+    wait_8  
+  ) |>
+ slice_sample(n = n_mc, replace = TRUE)
+
+```
+
+Now let's simulate under the interventions, setting `wait_8` to 30 and running the values through the outcome models `m9` and `m10`.
+
+```{r}
+sim_intervention <- baseline_sample |>
+  mutate(wait_8 = 30,
+    # Simulate wait_9 using fitted model m9
+    wait_9 = predict(m9, newdata = cur_data()),
+    # Simulate wait_10 using fitted model m10
+    wait_10 = predict(m10, newdata = cur_data())
+  )
+```
+
+Next, let's simulate under the observed wait (leave `wait_8` as observed and run the values through the outcome models `m9` and `m10`).
+
+```{r}
+sim_natural <- baseline_sample |>
+  # Keep observed wait_8 values
   mutate(
     wait_9 = predict(m9, newdata = cur_data()),
     wait_10 = predict(m10, newdata = cur_data())
   )
 ```
 
-The average of `wait_10` across all dates gives the estimated expected outcome under the intervention. Repeating the same procedure with the observed values of `wait_8` yields the expected outcome under the natural course. Their difference measures the effect of lowering the early-morning posted wait to thirty minutes.
+Finally, we can compare the average outcomes
 
-For short sequences with deterministic models, the calculation can be performed exactly in this way. For longer sequences, or when the fitted models include stochastic components, simulation becomes a natural computational tool. The simulation-based implementation is simply a practical method for evaluating the g-formula when the number of time points grows.
+```{r}
+tibble(
+  natural_course = mean(sim_natural$wait_10),
+  intervention = mean(sim_intervention$wait_10),
+  causal_effect = intervention - natural_course
+)
+```
+
+This Monte Carlo approach propagates uncertainty forward through time, giving us not just a point estimate but a distribution of plausible outcomes under the intervention.
+
+
 
 ::: callout-tip
 ## Monte Carlo simulations
