@@ -209,7 +209,81 @@ dagify(
 
 Because each park date includes hourly posted waits across the morning, these repeated measurements form a simple longitudinal sequence. Weather, ticket season, Extra Magic Morning, and closing time remain fixed for the date, but posted waits change from hour to hour and depend on what happened earlier. The posted wait at 8am influences the posted wait at 9am, and both influence the actual wait at 10am, so an intervention applied at 8am propagates forward through the subsequent hours.
 
+To set up this example, let's reshape the 8am and 9am posted waits so that both appear on the same row, along with the baseline park-level features.
 
+```{r}
+df <- seven_dwarfs_train_2018 |>
+  filter(wait_hour %in% c(8, 9)) |>
+  select(
+    park_date, wait_hour, wait_minutes_posted_avg,
+    park_extra_magic_morning, park_ticket_season,
+    park_close, park_temperature_high
+  )
+
+wide <- df |>
+  pivot_wider(
+    names_from = wait_hour,
+    values_from = wait_minutes_posted_avg,
+    names_prefix = "wait_"
+  ) |>
+  drop_na(wait_8, wait_9)
+```
+
+Now let's fit the model forthe posted wait, expressing its dependence on the 8am posted wait and the baseline covariates.
+
+```{r}
+m9 <- lm(
+  wait_9 ~ wait_8 +
+    park_extra_magic_morning +
+    park_ticket_season +
+    park_close +
+    park_temperature_high,
+  data = wide
+)
+```
+
+To add the outcome, the 10am actual wait is merged with these data.
+
+```{r}
+ten <- seven_dwarfs_train_2018 |>
+  filter(wait_hour == 10) |>
+  select(park_date, wait_minutes_actual_avg)
+
+three <- wide |>
+  left_join(ten, by = "park_date") |>
+  drop_na(wait_minutes_actual_avg)
+```
+
+Now let's fit a second model that describes the 10am actual wait in terms of the earlier posted waits and the same baseline confounders.
+
+```{r}
+m10 <- lm(
+  wait_minutes_actual_avg ~
+    wait_9 + wait_8 +
+    park_extra_magic_morning +
+    park_ticket_season +
+    park_close +
+    park_temperature_high,
+  data = three
+)
+```
+
+To evaluate an intervention, suppose that all park dates begin with an 8am posted wait of thirty minutes. The longitudinal g-formula uses the fitted models to reconstruct the rest of the morning under this counterfactual scenario. The observed data are first modified so that the 8am wait is replaced by the intervention value. The 9am posted wait is then generated from its model using this modified 8am value, and the 10am actual wait is generated from its model using both the modified 8am value and the model-based value of the 9am wait. This sequence reproduces the evolving process under the intervention.
+
+```{r}
+set.seed(1)
+
+sim <- three |>
+  mutate(wait_8 = 30) |>
+  mutate(
+    wait_9 = predict(m9, newdata = cur_data()),
+    wait_10 = predict(m10, newdata = cur_data())
+  )
+```
+
+The average of `wait_10` across all dates gives the estimated expected outcome under the intervention. Repeating the same procedure with the observed values of `wait_8` yields the expected outcome under the natural course. Their difference measures the effect of lowering the early-morning posted wait to thirty minutes.
+
+For short sequences with deterministic models, the calculation can be performed exactly in this way. For longer sequences, or when the fitted models include stochastic components, simulation becomes a natural computational tool. The simulation-based implementation is simply a practical method for evaluating the g-formula when the number of time points grows.
 
 ::: callout-tip
 ## Monte Carlo simulations
