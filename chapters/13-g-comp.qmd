@@ -67,6 +67,19 @@ bind_cols(pred_exposed, pred_unexposed) |>
     difference = mean_exposed - mean_unexposed
   )
 ```
+
+The `{marginaleffects`} package makes some of these mechanics easy and help with uncertainty quantification. For example, rather than creating the separate counterfactual datasets, we can calcualte the average treatment effect directly using the `average_comparisons` function.
+
+```{r}
+library(marginaleffects)
+ate <- avg_comparisons(
+  gcomp_model,
+  variables = "park_extra_magic_morning"
+)
+
+ate
+```
+
 ### Continuous Exposures
 
 The same strategy applies when the exposure is continuous. For instance, imagine estimating how the actual wait time at 9am would change if the posted wait time at 8am were set to 60 minutes rather than 30 minutes. The procedure outlined above is identical, except that the exposure is set to the chosen numerical values for the counterfactual datasets.
@@ -92,7 +105,9 @@ We fit the outcome model the same way as for the binary exposure, as the outcome
 ```{r}
 fit_wait <- lm(
   wait_minutes_actual_avg ~ 
-    splines::ns(wait_minutes_posted_avg, 3) +
+    # Use a natural spline to flexibly model the nonlinear relationship
+    # between posted and actual wait times
+    splines::ns(wait_minutes_posted_avg, df = 3) + # 
     park_extra_magic_morning + 
     park_ticket_season + 
     park_close + 
@@ -122,7 +137,18 @@ bind_cols(pred_high, pred_low) |>
     difference = mean_high - mean_low
   )
 ```
+
 The resulting difference estimates how much the actual wait time would change if posted wait time were set to these two specific values and all other variables remained as observed.
+
+As above, we can also use the {`marginaleffects`} package along with the `average_comparisons` function:
+
+```{r}
+comparison_30_60 <- avg_comparisons(
+  fit_wait,
+  variables = list(wait_minutes_posted_avg = c(30, 60))
+)
+comparison_30_60
+```
 
 ### Time-varying Settings
 
@@ -132,9 +158,9 @@ The parameteric g-formula can naturally extend to scenarios when the exposure, c
 
 2. For each time point after baseline, a parametric model is specified for every variable whose value evolves over time. Each model expresses the variable at that moment as a function of the variables that precede it in the graph. Linear models are commonly used for continuous variables and logistic regressions for binary variables, although any suitable parametric specification can be used.
 
-3. Beginning with a sample from the observed distribution of baseline variables, the remaining variables are generated sequentially by sampling from the fitted models. This forward generation constitutes a Monte Carlo simulation of the data-generating process. When evaluating an intervention, the exposure is not simulated from its model; instead, it is set to follow the intervention regime under study at each time point.
+3. Using the observed baseline covariates for each individual, predicted values for time-varying confounders and outcomes are generated sequentially using the fitted models. At each time point, the exposure is set according to the intervention regime being evaluated (rather than using its observed or predicted value). Predictions from one time point become inputs to the model for the next time point, propagating the intervention's effects forward through time.
 
-4. Once the simulated outcomes have been produced under each intervention, the resulting distributions are compared to obtain the desired causal contrast.
+4. The predicted outcomes under the intervention are averaged across all individuals in the sample to obtain the expected outcome under that intervention regime. This process is repeated for each intervention of interest (including the natural course where exposures remain at their observed values). The desired causal contrast is obtained by comparing these averages.
 
 Returning to the Seven Dwarfs Mine Train data, suppose the park is considering an operational policy that guarantees the posted wait at 8am never exceeds thirty minutes. The policy is expected to influence congestion later in the morning, since the early-morning posted wait affects how quickly queues accumulate. We therefore pose the following question:
 
@@ -204,7 +230,6 @@ dagify(
       "10am\n(today)"
     )
   )
-
 ```
 
 Because each park date includes hourly posted waits across the morning, these repeated measurements form a simple longitudinal sequence. Weather, ticket season, Extra Magic Morning, and closing time remain fixed for the date, but posted waits change from hour to hour and depend on what happened earlier. The posted wait at 8am influences the posted wait at 9am, and both influence the actual wait at 10am, so an intervention applied at 8am propagates forward through the subsequent hours.
@@ -229,7 +254,7 @@ wide <- df |>
   drop_na(wait_8, wait_9)
 ```
 
-Now let's fit the model forthe posted wait, expressing its dependence on the 8am posted wait and the baseline covariates.
+Now let's fit the model for the posted wait, expressing its dependence on the 8am posted wait and the baseline covariates.
 
 ```{r}
 m9 <- lm(
@@ -297,80 +322,4 @@ tibble(
 ```
 
 The average of `wait_10` across all dates gives the estimated expected outcome under the intervention. Repeating the same procedure with the observed values of `wait_8` yields the expected outcome under the natural course. Their difference measures the effect of lowering the early-morning posted wait to thirty minutes.
-
-For short sequences with deterministic models, the calculation can be performed exactly in this way. For longer sequences simulation becomes a natural computational tool. The simulation-based implementation is simply a practical method for evaluating the g-formula when the number of time points grows. Standard implementations create synthetic datasets of size 50-100 times the original sample by randomly sampling baseline covariates from the observed data. At each time point, confounders are simulated from fitted models using previously simulated values, exposure is assigned according to the intervention strategy, and outcomes are computed from fitted models. Let's set a seed for reproducibility (since we are introducing some random noise) and create a large synthetic population by sampling baseline covariates.
-
-```{r}
-set.seed(1)
-n_mc <- nrow(three) * 50 # 50x the original sample size
-
-baseline_sample <- three |>
-  select(
-    park_extra_magic_morning,
-    park_ticket_season, 
-    park_close,
-    park_temperature_high,
-    wait_8  
-  ) |>
- slice_sample(n = n_mc, replace = TRUE)
-
-```
-
-Now let's simulate under the interventions, setting `wait_8` to 30 and running the values through the outcome models `m9` and `m10`.
-
-```{r}
-sim_intervention <- baseline_sample |>
-  mutate(wait_8 = 30,
-    # Simulate wait_9 using fitted model m9
-    wait_9 = predict(m9, newdata = cur_data()),
-    # Simulate wait_10 using fitted model m10
-    wait_10 = predict(m10, newdata = cur_data())
-  )
-```
-
-Next, let's simulate under the observed wait (leave `wait_8` as observed and run the values through the outcome models `m9` and `m10`).
-
-```{r}
-sim_natural <- baseline_sample |>
-  # Keep observed wait_8 values
-  mutate(
-    wait_9 = predict(m9, newdata = cur_data()),
-    wait_10 = predict(m10, newdata = cur_data())
-  )
-```
-
-Finally, we can compare the average outcomes
-
-```{r}
-tibble(
-  natural_course = mean(sim_natural$wait_10),
-  intervention = mean(sim_intervention$wait_10),
-  causal_effect = intervention - natural_course
-)
-```
-
-This Monte Carlo approach propagates uncertainty forward through time, giving us not just a point estimate but a distribution of plausible outcomes under the intervention.
-
-
-::: callout-tip
-## Monte Carlo simulations
-
-Monte Carlo simulations are computational approaches that generate a sample of outcomes for random processes.
-One example would be to calculate the probability of rolling "snake eyes" (two ones) on a single roll of two six-sided dice.
-We could certainly calculate this probability mathematically ($\frac{1}{6}*\frac{1}{6}=\frac{1}{36}\approx 2.8$%), though it can be just as quick to write a Monte Carlo simulation of the process (1,000,000 rolls shown below).
-
-```{r}
-n <- 1000000
-tibble(
-  roll_1 = sample(1:6, n, replace = TRUE),
-  roll_2 = sample(1:6, n, replace = TRUE),
-) |>
-  reframe(roll_1 + roll_2 == 2) |>
-  pull() |>
-  sum() / n
-```
-
-Monte Carlo simulations are extremely useful for estimating outcomes of complex processes for which closed mathematical solutions are not easy to determine.
-Indeed, that's why Monte Carlo simulations are so useful for the real-world causal mechanisms described in this book!
-:::
 
