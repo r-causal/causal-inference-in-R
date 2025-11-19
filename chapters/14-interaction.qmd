@@ -5,13 +5,689 @@
 ```{r}
 #| echo: false
 # TODO: remove when first edition complete
-status("unstarted")
+status("wip")
 ```
 
-## Functional form, hetereogenous effects, and joint causes
+```{r}
+#| echo: false
+#| message: false
+library(ggdag)
+```
 
-## Fitting interaction terms in causal models
+## Functional form, heterogeneous effects, and joint causes
 
-<!-- Maybe also: -->
+When we fit regression models to estimate causal effects, we often include interaction terms, which allow the effect of one variable to vary across levels of another.
+But what exactly are we estimating when we include an interaction term?
+The answer depends on the causal structure of our question.
 
-<!-- ## type ii selection bias, induced by EM [@lu2022] -->
+As noted in @sec-dags, DAGs don't inherently make statements about interaction or effect modification.
+This because interaction and effect modification could generally be considered matters of functional form [@weinberg2007; @Nilsson2021].
+However, some groups have proposed extensions to DAG construction designed to help make our interaction assumptions explicit.
+Approaches include @Nilsson2021, who introduced interaction DAGs (IDAGs) that replace the outcome node with a node representing a causal effect measure, and @Attia2022 who use explicit interaction nodes within conventional DAGs.
+
+Consider a simple example: Does a new medication reduce blood pressure, and does this effect differ between men and women?
+We might fit a model like `blood_pressure ~ medication + sex + medication:sex`.
+The coefficient on the interaction term tells us something, but what exactly?
+Does it tell us about how the medication's effect varies by sex?
+Or does it tell us about how the joint effect of medication and sex differs from their separate effects?
+These are different questions, and the answer depends on whether we're thinking about **effect modification** or **interaction**.
+
+This distinction matters because effect modification and interaction are fundamentally different concepts, even though they're often used interchangeably [@VanderWeele2009].
+Understanding when they coincide and when they don't is crucial for correctly interpreting our models and drawing valid causal conclusions.
+In this chapter, we'll use causal diagrams to clarify these concepts and show how to assess each appropriately.
+
+## Effect modification versus interaction
+
+**Effect modification** occurs when the effect of one exposure (E) on an outcome (D) varies across strata of a third variable (Q).
+In effect modification, we're interested in how the effect of E changes depending on Q.
+In this setting, we condition on Q to look at what happens within levels of Q, but we don't necessarily intervene on Q itself.
+Effect modification is asymmetric: it focuses on the effect of E, not on the effect of Q.
+Importantly, Q must be a pre-treatment variable which cannot be affected by E [@hernan2021].
+
+**Interaction**, on the other hand, concerns whether the joint effect of two exposures (E and Q) together differs from what we'd expect based on their individual effects.
+In interaction, we consider interventions on both E and Q.
+Interaction is symmetric: both E and Q are intervention variables of equal interest, and the definition gives them equal status [@hernan2021].
+
+To summarize, the key difference is that, in effect modification, Q is a conditioning variable, while, in interaction, Q is an intervention variable.
+This distinction becomes clearer when we think about it in terms of counterfactuals and causal diagrams.
+
+### Formal definitions
+
+Let's make these concepts more precise using counterfactual notation.
+Let $D_e$ denote the counterfactual outcome D under an intervention to set exposure E to level e.
+Let $D_{eq}$ denote the counterfactual outcome D under interventions to set both E and Q to levels e and q, respectively.
+
+**Effect modification** on the causal risk difference scale occurs when:
+$$E[D_{e_1} | Q = q_1] - E[D_{e_0} | Q = q_1] \neq E[D_{e_1} | Q = q_0] - E[D_{e_0} | Q = q_0]$$
+
+Notice that we're conditioning on Q (looking at $D_e$ given Q), not intervening on it.
+Effect modification can be defined with respect to the entire distribution of potential outcomes or with respect to a specific measure (like the risk difference above) [@VanderWeele2012].
+The key question we are asking is "Does the effect of E vary across levels of Q?"
+
+**Effect-measure modification** emphasizes that the presence of effect modification depends on the effect measure chosen [@hernan2021].
+For example, there may be effect modification on the additive scale (risk difference) but not on the multiplicative scale (risk ratio), or vice versa.
+When the effects are in opposite directions across strata of Q, we have **qualitative effect modification**.
+In this case, effect modification will be present on both additive and multiplicative scales [@hernan2021].
+
+It's important to note that effect modification by Q does not necessarily imply that Q plays a causal role in modifying the effect.
+Q may be a **surrogate effect modifier**, that is, a marker for the true causal effect modifier.
+For example, nationality might modify the effect of treatment because it's correlated with quality of care, which is the true causal effect modifier [@hernan2021].
+
+**Interaction** on the causal risk difference scale occurs when:
+$$E[D_{e_1 q_1}] - E[D_{e_0 q_1}] \neq E[D_{e_1 q_0}] - E[D_{e_0 q_0}]$$
+
+Here, we're intervening on both E and Q (looking at $D_{eq}$).
+This definition asks: does the effect of E vary depending on what level we set Q to?
+
+Because interaction is symmetric, this definition is equivalent to asking whether the effect of Q varies depending on what level we set E to:
+$$E[D_{e_1 q_1}] - E[D_{e_1 q_0}] \neq E[D_{e_0 q_1}] - E[D_{e_0 q_0}]$$
+
+The two formulations are mathematically equivalent and show that E and Q have equal status in the definition of interaction [@hernan2021].
+Like effect modification, interaction can be defined with respect to distributions or specific measures, and the presence of interaction may depend on the scale chosen (additive vs. multiplicative) [@VanderWeele2012; @VanderWeele2014].
+
+These definitions make clear that effect modification and interaction are asking different questions.
+Effect modification asks about variation in the effect of E across observed levels of Q.
+Interaction asks about variation in the effect of E across intervened-upon levels of Q (or equivalently, variation in the effect of Q across intervened-upon levels of E).
+
+## Representing interaction and effect modification in DAGs
+
+As noted earlier, conventional DAGs don't inherently represent interaction or effect modification, though some proposals exist to include these features.
+Here we demonstrate three approaches using a simple example where E (treatment) and Q (another exposure) may interact in their effect on D (outcome), with X as a confounder.
+
+### Conventional DAGs
+
+The standard approach is to draw a conventional DAG without explicitly representing interactions.
+
+```{r}
+#| label: fig-dag-conventional
+#| fig-cap: "A conventional DAG showing E, Q, and D without explicitly representing interaction. The interaction, if present, is implicit in the functional form of the relationship."
+#| fig-width: 5
+#| fig-height: 4
+
+conventional_dag <- dagify(
+  E ~ X,
+  Q ~ X,
+  D ~ E + Q + X,
+  coords = time_ordered_coords(
+    list(
+      c("X"),
+      c("E", "Q"),
+      "D"
+    )
+  ),
+  exposure = "E",
+  outcome = "D",
+  labels = c(
+    E = "E",
+    D = "D",
+    X = "X",
+    Q = "Q"
+  )
+)
+
+ggdag(conventional_dag) +
+  theme_dag()
+```
+
+This DAG shows that E, Q, and X all affect D, but it doesn't explicitly indicate whether E and Q interact.
+The interaction, if present, would be implicit in the functional form of how E and Q jointly affect D in a statistical model.
+
+### Explicit interaction nodes
+
+@Attia2022 proposed representing interactions explicitly by adding an interaction node (like `ExQ`) to conventional DAGs.
+
+```{r}
+#| label: fig-dag-explicit-interaction
+#| fig-cap: "A DAG with an explicit interaction node ExQ, following the approach proposed by @Attia2022. This makes the interaction explicit in the causal structure."
+#| fig-width: 5
+#| fig-height: 4
+
+explicit_interaction_dag <- dagify(
+  E ~ X,
+  Q ~ X,
+  D ~ E + Q + X + ExQ,
+  ExQ ~ E + Q,
+  coords = time_ordered_coords(
+    list(
+      c("X"),
+      c("E", "Q"),
+      "ExQ",
+      "D"
+    )
+  ),
+  exposure = "E",
+  outcome = "D",
+  labels = c(
+    E = "E",
+    D = "D",
+    X = "X",
+    Q = "Q",
+    ExQ = "E × Q\ninteraction"
+  )
+)
+
+ggdag(explicit_interaction_dag) +
+  theme_dag()
+```
+
+This approach makes the interaction explicit: arrows from E and Q point to `ExQ`, and `ExQ` points to D.
+This can help identify appropriate adjustment sets for estimating interaction effects [@Attia2022].
+The DAG maintains conventional DAG conventions and can be drawn using standard DAG software.
+
+### Interaction DAGs (IDAGs)
+
+@Nilsson2021 proposed a different approach: **interaction DAGs (IDAGs)** that replace the outcome node with a node representing a causal effect measure.
+
+```{r}
+#| label: fig-dag-idag
+#| fig-cap: "An interaction DAG (IDAG) following @Nilsson2021, where the outcome node D is replaced with a node representing the causal effect. This requires a separate DAG for interactions."
+#| fig-width: 5
+#| fig-height: 4
+
+# Note: IDAGs represent causal effects rather than outcomes
+# This is a simplified representation - full IDAGs would show the effect node
+# For demonstration, we show a conceptual version
+idag_dag <- dagify(
+  E ~ X,
+  Q ~ X,
+  Effect ~ E + Q + X,
+  coords = time_ordered_coords(
+    list(
+      c("X"),
+      c("E", "Q"),
+      "Effect"
+    )
+  ),
+  exposure = "E",
+  outcome = "Effect",
+  labels = c(
+    E = "E",
+    Effect = "Causal\neffect",
+    X = "X",
+    Q = "Q"
+  )
+)
+
+ggdag(idag_dag) +
+  theme_dag()
+```
+
+In IDAGs, instead of depicting how different variables influence the outcome, the DAG depicts how different variables influence the size of a chosen effect measure [@Nilsson2021].
+This framework separates interactions from main effects, typically requiring separate DAGs for main effects and interactions.
+IDAGs preserve usual DAG conventions for reading and interpreting causal relationships.
+
+### Choosing an approach
+
+Each approach has advantages:
+
+- **Conventional DAGs** are simple and widely understood, but interactions are implicit
+- **Explicit interaction nodes** make interactions visible while maintaining conventional DAG structure
+- **IDAGs** provide a rigorous framework but require separate diagrams for main effects and interactions
+
+The choice depends on your goals.
+If you want to make interactions explicit within a single diagram, the explicit interaction node approach may be most practical.
+If you're conducting a detailed analysis of interaction mechanisms, IDAGs provide a more formal framework.
+For most purposes, conventional DAGs suffice, with interactions handled in the statistical modeling stage.
+
+## When effect modification and interaction differ
+
+It's possible to have effect modification without interaction, and vice versa.
+Understanding when and why this happens helps clarify the distinction.
+
+### Effect modification without interaction
+
+Consider the DAG in @fig-effect-mod-no-interaction, which uses `ggdag` to reproduce an example given by @VanderWeele2009.
+Here, E is a drug, D is hypertension, X is a person's genotype, and Q is hair color.
+Hair color serves as a proxy for a genotype that drives risk of hypertension.
+
+```{r}
+#| label: fig-effect-mod-no-interaction
+#| fig-cap: "A DAG showing effect modification by Q (hair color) of the effect of E (drug) on D (hypertension) without interaction between E and Q. Hair color Q is a proxy for genotype X, which modifies the effect of E on D."
+#| fig-width: 5
+#| fig-height: 4
+
+effect_mod_dag <- dagify(
+  D ~ E + X,
+  Q ~ X,
+  coords = time_ordered_coords(
+    list(
+      c("X"),
+      c("E", "Q"),
+      "D"
+    )
+  ),
+  exposure = "E",
+  outcome = "D",
+  labels = c(
+    E = "Drug",
+    D = "Hypertension",
+    X = "Genotype",
+    Q = "Hair\ncolor"
+  )
+)
+
+ggdag(effect_mod_dag, use_labels = TRUE) +
+  theme_dag()
+```
+
+In this DAG, Q (hair color) can serve as an effect modifier for the effect of E (drug) on D (hypertension) because Q is a proxy for X (genotype), which actually modifies the effect.
+We might observe that $E[D_e | Q = q_1] - E[D_e | Q = q_0] \neq E[D_e | Q = q_0] - E[D_e | Q = q_0]$, meaning the effect of the drug varies across hair color groups.
+
+However, there is no interaction between the effects of E and Q on D.
+Because Q has no causal effect on D (the only path from Q to D goes through X, and we're conditioning on X when we look at the effect of E), interventions on Q do nothing to D.
+We have $E[D_{eq}] - E[D_{e_0 q}] = E[D_e] - E[D_{e_0}]$ for all values of q.
+Intervening to change someone's hair color won't change their hypertension risk, so there can be no interaction.
+
+This example illustrates that a variable can be an effect modifier without there being an interaction between the effects of that variable and the primary exposure.
+
+### Interaction without effect modification
+
+The converse is also possible, where interaction can exist without effect modification.
+Consider @fig-interaction-no-effect-mod which is another `ggdag` reporoduction from [@VanderWeele2009].
+E is a weight-loss drug given in a randomized trial, D is weight at the end of the trial, X is sugar intake, and Q is exercise level.
+
+```{r}
+#| label: fig-interaction-no-effect-mod
+#| fig-cap: "A DAG showing potential interaction between the effects of E (weight-loss drug) and Q (exercise) on D (weight) without effect modification by Q of the effect of E on D. Sugar intake X affects both exercise Q and weight D."
+#| fig-width: 5
+#| fig-height: 4
+
+interaction_dag <- dagify(
+  Q ~ X,
+  D ~ X + Q + E,
+  coords = time_ordered_coords(
+    list(
+      c("X"),
+      c("E", "Q"),
+      "D"
+    )
+  ),
+  exposure = "E",
+  outcome = "D",
+  labels = c(
+    E = "Weight-loss\ndrug",
+    D = "Weight",
+    X = "Sugar\nintake",
+    Q = "Exercise"
+  )
+)
+
+ggdag(interaction_dag, use_labels = TRUE) +
+  theme_dag()
+```
+
+Suppose the effects of the weight-loss drug E and exercise Q interact such that $E[D_{e_1 q_1}] - E[D_{e_0 q_1}] \neq E[D_{e_1 q_0}] - E[D_{e_0 q_0}]$.
+In other words, if we were to intervene to give participants the drug and also implement an exercise routine, the effect of these two interventions together would differ from the sum of their individual effects.
+
+However, Q might not be an effect modifier for the effect of E on D.
+Sugar intake X affects both exercise Q and weight D.
+High sugar intake might increase weight directly, but it might also make participants more hyperactive (more likely to exercise), which decreases weight.
+These effects might cancel out.
+Participants with high exercise levels might also have high sugar intake (which increases weight), while participants with low exercise might have low sugar intake (which decreases weight).
+These cancellations can occur regardless of whether a participant receives the drug E.
+
+It's therefore possible that we observe $E[D_{e_1} | Q = q_1] - E[D_{e_0} | Q = q_1] = E[D_{e_1} | Q = q_0] - E[D_{e_0} | Q = q_0]$, meaning Q is not an effect modifier, even though there is interaction between the effects of E and Q when we intervene on both.
+
+The key insight is that conditioning on Q (as in effect modification) captures information about common causes of Q and D (like X), while intervening on Q (as in interaction) does not.
+This difference can lead to effect modification and interaction giving different answers.
+
+Let's demonstrate this with a simulation:
+
+```{r}
+#| message: false
+#| warning: false
+set.seed(67)
+library(tidyverse)
+library(broom)
+
+# Simulate data where:
+# - X (sugar intake) affects both Q (exercise) and D (weight)
+# - E (drug) and Q interact in their effect on D
+# - But conditioning on Q masks the interaction due to confounding by X
+# We set up the parameters so that when we condition on Q without controlling for X,
+# the confounding cancels out the interaction, making it appear there's no effect modification
+
+n <- 2000
+sim_data <- tibble(
+  # Sugar intake (confounder)
+  X = rnorm(n),
+  # Exercise level (affected by sugar intake)
+  Q = rbinom(n, 1, plogis(-0.5 + 1.2 * X)),
+  # Drug assignment (randomized, so independent of X and Q)
+  E = rbinom(n, 1, 0.5),
+  # Weight outcome with interaction between E and Q
+  # But also affected by X (common cause of Q and D)
+  # The coefficients are carefully chosen so that conditioning on Q without X
+  # creates confounding that attenuates the interaction
+  # True interaction: -4, but X's effect on D creates bias when we condition on Q
+  D = 70 - 2 * E - 1 * Q - 4 * E * Q + 3.5 * X + rnorm(n, 0, 2)
+)
+
+# Check: Is there interaction when we intervene on both E and Q?
+# We can assess this by controlling for X (the confounder)
+mod_interaction <- lm(D ~ E + Q + E:Q + X, data = sim_data)
+tidy(mod_interaction) |>
+  filter(str_detect(term, "E|Q"))
+```
+
+The interaction term `E:Q` is `r round(coef(mod_interaction)["E:Q"], 2)`, indicating there is interaction between E and Q when we control for X.
+
+Now let's check for effect modification by conditioning on Q (without controlling for X):
+
+```{r}
+# Effect modification: Does the effect of E vary across levels of Q?
+# We condition on Q but don't control for X
+mod_effect_mod <- lm(D ~ E + Q + E:Q, data = sim_data)
+tidy(mod_effect_mod) |>
+  filter(str_detect(term, "E|Q"))
+```
+
+The interaction term in the effect modification model is `r round(coef(mod_effect_mod)["E:Q"], 2)`.
+This is smaller in magnitude and differs from the interaction term (`r round(coef(mod_interaction)["E:Q"], 2)`) when we control for X.
+
+Why the difference?
+When we stratify by Q without controlling for X, we're estimating the effect of E within each stratum of Q.
+However, X is a confounder of the E-D relationship, and by not controlling for X, we leave confounding unadjusted within each stratum.
+This leads to biased estimates of the effect of E within each stratum of Q, which in turn biases our estimate of the interaction term.
+
+When we control for X (as in the interaction model), we properly adjust for confounding within each stratum, allowing us to see the true interaction.
+
+This demonstrates that **interaction** (requiring control for confounders of both E and Q) can exist even when **effect modification** (conditioning on Q alone) appears weaker or absent due to confounding.
+
+### Identification strategies
+
+Not only can effect modification and interaction differ in whether they're present, but we may also be able to identify one but not the other from our data, depending on what variables we have measured and the causal structure.
+Specifically, the identification conditions differ in that effect modification requires that the effect of E on D is unconfounded given Q (and possibly other covariates), while interaction requires that the effects of both E and Q on D are unconfounded (possibly given other covariates).
+For example, if an unmeasured variable U confounds the effect of Q on D but not the effect of E on D, we may be able to identify effect modification but not interaction.
+Conversely, in some DAGs we can identify interaction but not effect modification.
+For a detailed discussion of identification strategies and examples, see @VanderWeele2009.
+
+## When effect modification and interaction coincide
+
+Despite these differences, effect modification and interaction often coincide in practice.
+This happens when conditioning on Q gives the same information as intervening on Q for the purposes of understanding the effect of E on D.
+This happens when Q doesn't share common causes with D (other than through E) or when we've controlled for all such common causes.
+
+A common setting where this occurs is when:
+
+1. The effects of both E and Q on D are unconfounded given X
+2. Q precedes E in time
+3. We condition on X
+
+In this case, $E[D_{eq} | X = x] = E[D_e | Q = q, X = x]$, so interaction conditional on X and effect modification conditional on X coincide.
+
+**A particularly important case** is when Q is randomly assigned (like E).
+When Q is randomly assigned, the concepts of interaction and effect modification coincide [@hernan2021].
+This is because random assignment of Q ensures that conditioning on Q and intervening on Q give equivalent information.
+In randomized experiments where both E and Q are randomized, we can assess interaction using the same methods used to assess effect modification (e.g., stratification).
+
+## Assessing effect modification and interaction in practice
+
+In practice, we often assess effect modification and interaction using regression models with interaction terms.
+However, the interpretation of these terms depends on the causal structure.
+
+### Regression models for effect modification
+
+To assess effect modification, we might fit a model like
+$$E[D | E, Q, X] = \beta_0 + \beta_1 E + \beta_2 Q + \beta_3 E \times Q + \beta_4 X$$
+
+If the effect of E on D is unconfounded given Q and X, then $\beta_3$ can be interpreted as a measure of effect modification.
+The coefficient tells us how much the effect of E varies across levels of Q.
+
+Let's see this in action with a simulated example.
+Suppose we're studying whether a medication (E) reduces blood pressure (D), and we want to know if this effect varies by sex (Q).
+
+```{r}
+#| message: false
+#| warning: false
+set.seed(8675309)
+library(broom)
+library(tidyverse)
+
+# Simulate data where medication effect varies by sex (effect modification)
+n <- 1000
+sim_data <- tibble(
+  sex = rbinom(n, 1, 0.5),
+  medication = rbinom(n, 1, 0.4 + 0.2 * sex),  # medication more likely for men
+  blood_pressure = 140 - 10 * medication - 5 * sex - 8 * medication * sex + rnorm(n, 0, 10)
+)
+
+# Fit model with interaction term
+mod_em <- lm(blood_pressure ~ medication + sex + medication:sex, data = sim_data)
+tidy(mod_em)
+```
+
+The coefficient on `medication:sex` is `r round(coef(mod_em)[4], 2)`, indicating that the effect of medication differs by sex.
+For women (sex = 0), the effect of medication is `r round(coef(mod_em)[2], 2)` mmHg.
+For men (sex = 1), the effect is `r round(coef(mod_em)[2] + coef(mod_em)[4], 2)` mmHg (`r round(coef(mod_em)[2], 2)` + `r round(coef(mod_em)[4], 2)`).
+
+If we assume that medication is not affected by sex (which is true since sex precedes medication in time) and that the effect of medication on blood pressure is unconfounded given sex, then this interaction term measures effect modification; i.e., the effect of medication varies across levels of sex.
+
+### Regression models for interaction
+
+To assess interaction, we need to ensure that the effects of both E and Q on D are unconfounded.
+This might require additional adjustment.
+If both effects are unconfounded given X, then the same regression model can be interpreted as assessing interaction, and $\beta_3$ tells us about the interaction between the effects of E and Q.
+
+However, if the effect of Q on D is confounded (even if the effect of E on D is not), then a standard regression model cannot be used to assess interaction.
+We might need to use methods like marginal structural models or g-computation, which we'll discuss below.
+
+Let's consider a case where we want to assess interaction between two exposures.
+Suppose we're studying the joint effects of exercise (E) and diet (Q) on weight loss (D).
+
+```{r}
+#| message: false
+# Simulate data where exercise and diet interact
+# Use plogis to ensure probabilities stay in [0,1]
+# We set up strong confounding for diet to make the difference between
+# effect modification and interaction pronounced
+set.seed(123)
+n <- 1000
+sim_data2 <- tibble(
+  confounder = rnorm(n),
+  exercise = rbinom(n, 1, plogis(-1 + 0.5 * confounder)),
+  diet = rbinom(n, 1, plogis(-0.5 + 2 * confounder)),  # Very strong confounding for diet
+  weight_loss = 5 * exercise + 4 * diet + 3 * exercise * diet + 5 * confounder + rnorm(n, 0, 3)
+)
+
+# If both effects are unconfounded given confounder, we can assess interaction
+mod_interaction <- lm(weight_loss ~ exercise + diet + exercise:diet + confounder, data = sim_data2)
+tidy(mod_interaction) |>
+  filter(str_detect(term, "exercise|diet"))
+```
+
+The interaction term `exercise:diet` is `r round(coef(mod_interaction)[4], 2)`, suggesting that the joint effect of exercise and diet together is greater than the sum of their individual effects.
+If we've correctly controlled for confounding of both exercise and diet, this coefficient measures interaction.
+
+### Marginal structural models
+
+**Marginal structural models (MSMs)** provide a framework for distinguishing between effect modification and interaction in the analysis [@VanderWeele2009].
+They do this through different weighting schemes.
+
+For effect modification, we use inverse probability of treatment weighting (IPTW) for E only.
+The weights are:
+$$w^E = \frac{P(E = e | Q = q)}{P(E = e | Q = q, X = x)}$$
+
+We then fit a weighted regression model:
+$$E[D_e | Q = q] = \alpha_0 + \alpha_1 e + \alpha_2 q + \alpha_3 e \times q$$
+
+The parameter $\alpha_3$ measures effect modification.
+
+For interaction, we need weights for both E and Q:
+$$w^E = \frac{P(E = e | Q = q)}{P(E = e | Q = q, X = x)}$$
+$$w^Q = \frac{P(Q = q)}{P(Q = q | X = x)}$$
+
+We then fit a weighted regression model using the product of weights $w^E \times w^Q$:
+$$E[D_{eq}] = \beta_0 + \beta_1 e + \beta_2 q + \beta_3 e \times q$$
+
+The parameter $\beta_3$ measures interaction.
+
+The key difference is that for effect modification, we only weight by the probability of E given Q, while for interaction, we weight by both the probability of E given Q and the probability of Q.
+This reflects the difference between conditioning on Q (effect modification) and intervening on Q (interaction).
+
+Let's see how this works in practice.
+We'll use the exercise and diet example, but now we'll use MSMs to properly account for confounding.
+
+```{r}
+#| message: false
+#| warning: false
+library(propensity)
+# ps_trunc is used to handle extreme weights, as discussed in @sec-ps
+
+# Fit propensity score models
+ps_exercise <- glm(exercise ~ confounder + diet, data = sim_data2, family = binomial())
+ps_diet <- glm(diet ~ confounder, data = sim_data2, family = binomial())
+
+# Calculate weights for effect modification (E only)
+# Add propensity scores - use predict with newdata to ensure all rows
+sim_data2 <- sim_data2 |>
+  mutate(
+    ps_exercise = predict(ps_exercise, newdata = sim_data2, type = "response"),
+    ps_diet = predict(ps_diet, newdata = sim_data2, type = "response")
+  ) |>
+  # Truncate propensity scores to handle extreme weights (as in @sec-ps)
+  mutate(
+    ps_exercise = ps_trunc(ps_exercise, method = "pctl", lower = 0.01, upper = 0.99),
+    ps_diet = ps_trunc(ps_diet, method = "pctl", lower = 0.01, upper = 0.99)
+  ) |>
+  group_by(diet) |>
+  mutate(
+    # Marginal probability of exercise given diet (stabilization factor)
+    p_exercise_marginal = mean(exercise),
+    # Stabilized weights for effect modification
+    # Numerator: marginal probability of observed exposure given Q
+    # Denominator: conditional probability given Q and X
+    w_em = if_else(exercise == 1, 
+                   p_exercise_marginal / ps_exercise,
+                   (1 - p_exercise_marginal) / (1 - ps_exercise))
+  ) |>
+  ungroup()
+
+# Fit MSM for effect modification
+mod_msm_em <- lm(weight_loss ~ exercise + diet + exercise:diet, 
+                 data = sim_data2, 
+                 weights = w_em)
+tidy(mod_msm_em) |>
+  filter(str_detect(term, "exercise|diet"))
+```
+
+For interaction, we need to weight by both exposures:
+
+```{r}
+#| message: false
+# Calculate weights for interaction (both E and Q)
+sim_data2 <- sim_data2 |>
+  mutate(
+    # Marginal probability of diet (stabilization factor)
+    p_diet_marginal = mean(diet),
+    # Stabilized weights for diet
+    # Numerator: marginal probability of observed diet
+    # Denominator: conditional probability given X
+    w_diet = if_else(diet == 1,
+                     p_diet_marginal / ps_diet,
+                     (1 - p_diet_marginal) / (1 - ps_diet)),
+    # Combined weights for interaction
+    w_interaction = w_em * w_diet
+  )
+
+# Fit MSM for interaction
+mod_msm_interaction <- lm(weight_loss ~ exercise + diet + exercise:diet,
+                          data = sim_data2,
+                          weights = w_interaction)
+tidy(mod_msm_interaction) |>
+  filter(str_detect(term, "exercise|diet"))
+```
+
+Notice that the interaction coefficients differ between the two models: `r round(coef(mod_msm_em)[4], 2)` for effect modification versus `r round(coef(mod_msm_interaction)[4], 2)` for interaction.
+This difference reflects the different questions they're answering.
+The effect modification model asks "Does the effect of exercise vary across levels of diet (conditioning on diet)?" while the interaction model asks "Does the joint effect of exercise and diet differ from their individual effects (intervening on both)?"
+
+The difference arises because diet is confounded by the confounder.
+When we condition on diet (effect modification), we're comparing exercise effects within strata of diet, but those strata differ in their distribution of the confounder.
+When we intervene on diet (interaction), we properly account for this confounding through weighting, giving us the true interaction effect.
+
+The magnitude of the difference depends on the strength of confounding of Q (diet) by X (the confounder).
+When Q is strongly confounded and the confounder has a large effect on the outcome, the difference between effect modification and interaction estimates can be substantial.
+When confounding is weak or properly controlled, the difference may be small, but the conceptual distinction remains important.
+
+## Practical considerations
+
+When should you assess effect modification versus interaction?
+The answer depends on your research question.
+
+**Assess effect modification when:**
+
+- You're interested in how the effect of your primary exposure varies across subgroups
+- The subgroup-defining variable (Q) is not something you would intervene on
+- You want to know which subgroups would benefit most from an intervention on E
+- You're conducting subgroup analyses in a randomized trial (where E is randomized, but Q is not)
+
+**Assess interaction when:**
+
+- You're interested in the joint effects of two exposures
+- Both exposures are things you might intervene on
+- You want to know if intervening on both together has effects beyond their individual effects
+- You're studying whether two causes interact mechanistically
+
+In many cases, you'll want to assess both.
+Effect modification is often more relevant for general public decisions about targeting interventions, while interaction is more relevant for understanding causal mechanisms.
+
+### Why care about effect modification?
+
+There are several important reasons to identify effect modification [@hernan2021]:
+
+1. **Transportability**: The average causal effect in one population depends on the distribution of effect modifiers in that population.
+   Effect modification means that causal effects may not be transportable across populations with different distributions of effect modifiers.
+   For example, if sex modifies the effect of treatment, the average causal effect will differ between populations with different sex distributions.
+
+2. **Targeting interventions**: Effect modification helps identify subgroups that would benefit most from an intervention.
+   In the presence of qualitative effect modification (where effects are in opposite directions), this is particularly important for decision-making.
+
+3. **Understanding mechanisms**: Identifying effect modification may provide insights into biological, social, or other mechanisms leading to the outcome.
+   However, remember that effect modification by Q doesn't necessarily mean Q is causally involved, as it may be a surrogate for the true causal effect modifier.
+
+### Relationship to mediation
+
+The concepts of effect modification and interaction are also related to **mediation**, which concerns the mechanisms through which an exposure affects an outcome [@Bours2023].
+While mediation focuses on intermediate variables (mediators) that lie on the causal pathway from exposure to outcome, effect modification and interaction concern how the effect of an exposure varies across levels of another variable.
+
+Understanding mediators can sometimes help clarify the distinction between effect modification and interaction.
+For example, if a variable Q modifies the effect of E on D through a mediator M, this can help explain why we observe effect modification.
+Similarly, if two exposures E and Q interact through a common mediator, this can help explain the mechanism of interaction.
+
+However, it's important to distinguish these concepts:
+
+- **Mediation** asks: through what mechanisms does E affect D?
+- **Effect modification** asks: does the effect of E on D vary across levels of Q?
+- **Interaction** asks: does the joint effect of E and Q differ from their individual effects?
+
+These are different questions, though they may be related in practice.
+We'll discuss mediation in more detail in [Chapter -@sec-mediation].
+
+## Summary
+
+Effect modification and interaction are distinct concepts, even though they're often conflated.
+Effect modification concerns variation in the effect of one exposure across levels of another variable (where we condition on that variable).
+Interaction concerns whether the joint effect of two exposures differs from what we'd expect based on their individual effects (where we intervene on both).
+
+These concepts can differ:
+
+- Effect modification can exist without interaction
+- Interaction can exist without effect modification
+- We may be able to identify one but not the other
+
+They coincide when conditioning on Q and intervening on Q give equivalent information about the effect of E on D.
+
+Understanding this distinction is crucial for:
+
+- Correctly interpreting regression models with interaction terms
+- Choosing appropriate methods for analysis
+- Drawing valid causal conclusions
+- Making informed decisions about interventions
+
+Causal diagrams help clarify when effect modification and interaction differ and when they coincide.
+By carefully specifying the causal structure of your question, you can determine which concept is relevant and how to assess it appropriately.
+
+As we've seen, representing interactions explicitly in DAGs (using interaction nodes like `ExQ`) can be helpful for identifying appropriate adjustment sets and clarifying the causal structure [@Attia2022].
+However, this remains an active area of research, and different approaches have been proposed [@weinberg2007; @Nilsson2021; @Attia2022].
+The key is to be clear about what your DAG represents and how you're interpreting interaction terms in your statistical models.
