@@ -15,7 +15,10 @@ In this chapter, we will discuss how to evaluate these sorts of practical implic
 
 ## Model-level diagnostics
 
-First, let's revisit some implications of the propensity score at the model level. In @sec-ps, we examined the mirrored distributions of the propensity score between exposure groups. After weighting, we should see more overlap between the two groups as well as more similar distributions. Let's look at an example using the same data as @sec-using-ps.
+First, let's revisit some implications of the propensity score at the model level.
+In @sec-ps, we examined the mirrored distributions of the propensity score between exposure groups.
+After weighting, we should see more overlap between the two groups as well as more similar distributions.
+Let's look at an example using the same data as @sec-using-ps.
 
 ```{r}
 library(broom)
@@ -60,8 +63,8 @@ ggplot(
   )
 ```
 
-
-We also might want to look at the weighted and unweighted distributions side-by-side, as shown in @fig-ps-weighted-unweighted-comparison. We can speed up the data wrangling and plot code with `plot_mirror_distributions()`.
+We also might want to look at the weighted and unweighted distributions side-by-side, as shown in @fig-ps-weighted-unweighted-comparison.
+We can speed up the data wrangling and plot code with `plot_mirror_distributions()`.
 
 ```{r}
 #| label: fig-ps-weighted-unweighted-comparison
@@ -75,7 +78,12 @@ seven_dwarfs_9_with_wt |>
   labs(fill = "extra magic morning")
 ```
 
-We also looked at the ROC curve and AUC of the propensity score model. That is useful for understanding the model discrimination and potential positivity violations, but there is also a hidden implication about discrimination: in a randomized trial, the AUC would be about 0.5---there is nothing to distinguish the treatment groups except randomization itself. Likewise, if we *weight* the ROC curve and AUC calculation, we hope to see the same properties. Indeed, in @fig-roc-ps-weighted, the weighted ROC curve traces the 45-degree line. In a prediction model, this would be bad. In a causal model, however, it means that, after weighting, there is no way to discriminate between the two groups given the included confounders.
+We also looked at the ROC curve and AUC of the propensity score model.
+That is useful for understanding the model discrimination and potential positivity violations, but there is also a hidden implication about discrimination: in a randomized trial, the AUC would be about 0.5---there is nothing to distinguish the treatment groups except randomization itself.
+Likewise, if we *weight* the ROC curve and AUC calculation, we hope to see the same properties.
+Indeed, in @fig-roc-ps-weighted, the weighted ROC curve traces the 45-degree line.
+In a prediction model, this would be bad.
+In a causal model, however, it means that, after weighting, there is no way to discriminate between the two groups given the included confounders.
 
 ```{r}
 #| label: fig-roc-ps-weighted
@@ -102,13 +110,21 @@ check_model_auc(
 
 ### Effective sample size
 
-One advantage propensity score weights have over matching is statistical efficiency: matching very clearly reduces the sample size when some units don't get matched. However, weights also introduce variation into the sample, and so their precision is still reduced compared to the total sample size. While summing the weights is a useful diagnostic, a more intuitive diagnostic is the **effective sample size (ESS) **. When using propensity score weights, the ESS represents the approximate number of independent observations---the number of units you would need in an actual sample to get roughly the same precision as the weighted population---after weighting. The formula for ESS is:
+One advantage propensity score weights have over matching is statistical efficiency: matching very clearly reduces the sample size when some units don't get matched.
+However, weights also introduce variation into the sample, and so their precision is still reduced compared to the total sample size.
+While summing the weights is a useful diagnostic, a more intuitive diagnostic is the **effective sample size (ESS)** .
+When using propensity score weights, the ESS represents the approximate number of independent observations---the number of units you would need in an actual sample to get roughly the same precision as the weighted population---after weighting.
+The formula for ESS is:
 
 $$
 ESS = \frac{(\sum_{i=1}^{n} w_i)^2}{\sum_{i=1}^{n} w_i^2}
 $$
 
-where $w_i$ represents the weight for observation $i$. When the weights are all equal to 1, as in the unweighted, unmatched population, we get an ESS of the original sample size. When we assign weights via propensity scores, we introduce variation; the more variation we see in the weights, the lower we expect the ESS to be. We'll see more types of weights in @sec-estimands, as well as how we can use ESS to select between weighting schemes, but for now let's take a look at the ESS of our ATE weights. The weighted sample will give us the precision of an equivalent 160-day sample, about 46% of the original sample size.
+where $w_i$ represents the weight for observation $i$.
+When the weights are all equal to 1, as in the unweighted, unmatched population, we get an ESS of the original sample size.
+When we assign weights via propensity scores, we introduce variation; the more variation we see in the weights, the lower we expect the ESS to be.
+We'll see more types of weights in @sec-estimands, as well as how we can use ESS to select between weighting schemes, but for now let's take a look at the ESS of our ATE weights.
+The weighted sample will give us the precision of an equivalent 160-day sample, about 46% of the original sample size.
 
 ```{r}
 #| message: false
@@ -121,7 +137,10 @@ seven_dwarfs_9_with_wt |>
   )
 ```
 
-It can also be instructive to look at the ESS by exposure group (note that we don't expect the grouped ESS to sum to the total ESS; the ESS is a measure of the efficiency given the variation in the weights, and the variation is different between the three calculations). We see that the days without Extra Magic Morning retain most of its sample size, meaning there is less variation in the weights. The days *with* Extra Magic Morning have a bigger reduction in ESS. This means that the variation in the weights is largely due to the exposed days.
+It can also be instructive to look at the ESS by exposure group (note that we don't expect the grouped ESS to sum to the total ESS; the ESS is a measure of the efficiency given the variation in the weights, and the variation is different between the three calculations).
+We see that the days without Extra Magic Morning retain most of its sample size, meaning there is less variation in the weights.
+The days *with* Extra Magic Morning have a bigger reduction in ESS.
+This means that the variation in the weights is largely due to the exposed days.
 
 ```{r}
 seven_dwarfs_9_with_wt |>
@@ -137,7 +156,7 @@ We can see that clearly in the distribution of the weights:
 
 ```{r}
 #| label: fig-ate-weights-grouped
-#| fig-cap: "Distribution of ATE weights stratified by exposure group. The days with Extra Magic Morning (purple) have a wider distribution of weights, indicating more variation, which leads to a lower effective sample size. The x-axis is on the log-10 scale to better visualize the distribution."
+#| fig-cap: "Distribution of ATE weights stratified by exposure group. The days with Extra Magic Morning have a wider distribution of weights, indicating more variation, which leads to a lower effective sample size. The x-axis is on the log-10 scale to better visualize the distribution."
 ggplot(
   seven_dwarfs_9_with_wt,
   aes(x = as.numeric(w_ate), fill = park_extra_magic_morning)
@@ -147,7 +166,12 @@ ggplot(
   labs(x = "ATE weight", fill = "Extra Magic Morning")
 ```
 
-If we find the ESS is too small, we have a few options. First, we could use a different set of weights with better variation, which we'll discuss in @sec-estimands as well as @sec-wts-balancing. Second, we could trim or truncate the ATE weights. For instance, if we truncate the propensity scores to the lower and upper percentiles then re-calculate the weights, we get a small improvement to our ESS. The hope here is that the small modification to the distribution of the weights provides a good balance between making sure we are targeting the right estimand (the average treatment effect) while improving the precision. The more we trim and truncate, though, the more likely we are to be answering questions about a different population than the total population.
+If we find the ESS is too small, we have a few options.
+First, we could use a different set of weights with better variation, which we'll discuss in @sec-estimands as well as @sec-wts-balancing.
+Second, we could trim or truncate the ATE weights.
+For instance, if we truncate the propensity scores to the lower and upper percentiles then re-calculate the weights, we get a small improvement to our ESS.
+The hope here is that the small modification to the distribution of the weights provides a good balance between making sure we are targeting the right estimand (the average treatment effect) while improving the precision.
+The more we trim and truncate, though, the more likely we are to be answering questions about a different population than the total population.
 
 ```{r}
 seven_dwarfs_9_with_wt |>
@@ -164,7 +188,9 @@ seven_dwarfs_9_with_wt |>
 
 ## Variable-level diagnostics
 
-An important aspect of exchangeability is that we expect the groups to be exchangeable within levels of the confounders. While we can't observe this directly, a consequence is that we also expect exchangeable groups to be balanced at the variable level. Let's look at a few more techniques for assessing balance that take this perspective.
+An important aspect of exchangeability is that we expect the groups to be exchangeable within levels of the confounders.
+While we can't observe this directly, a consequence is that we also expect exchangeable groups to be balanced at the variable level.
+Let's look at a few more techniques for assessing balance that take this perspective.
 
 ### Calculating the standardized mean difference
 
@@ -230,7 +256,9 @@ For example, we see above that the *observed* standardized mean difference (prio
 One downside of this metric is it only quantifies balance *on the mean*, which may not be sufficient for continuous confounders, as it is possible to be balanced on the mean but severely imbalanced in the tails.
 At the end of this chapter we will show you a few tools for examining balance across the full distribution of the confounder.
 
-A complement to the SMD that is the variance ratio: $s_1^2 / s_0^2$. This metric assesses the ratio of variance of the distribution by group. Ideally, the variance ratio is as close to 1 as possible.
+A complement to the SMD that is the variance ratio: $s_1^2 / s_0^2$.
+This metric assesses the ratio of variance of the distribution by group.
+Ideally, the variance ratio is as close to 1 as possible.
 
 ```{r}
 vrs <- balance_metrics |>
@@ -239,7 +267,8 @@ vrs <- balance_metrics |>
 vrs
 ```
 
-We see above that the observed variance ratio for peak ticket season is `r vrs |> filter(variable == "park_ticket_seasonpeak" & method == "observed") |> pull(estimate) |> round(2)`. After incorporating the propensity score weight, the variance ratio is closer to 1, now `r vrs |> filter(variable == "park_ticket_seasonpeak" & method == "w_ate") |> pull(estimate) |> round(2)`.
+We see above that the observed variance ratio for peak ticket season is `r vrs |> filter(variable == "park_ticket_seasonpeak" & method == "observed") |> pull(estimate) |> round(2)`.
+After incorporating the propensity score weight, the variance ratio is closer to 1, now `r vrs |> filter(variable == "park_ticket_seasonpeak" & method == "w_ate") |> pull(estimate) |> round(2)`.
 
 ### Love Plots
 
@@ -248,7 +277,7 @@ To do so, we like to use a *Love Plot* (named for Thomas Love, as he was one of 
 The `{halfmoon}` package has a function `geom_love()` that simplifies this implementation.
 In @fig-love-smd, we visualize the absolute SMDs: the closer to 0, the better the balance between exposure groups.
 After weighting, the differences between groups is greatly reduced.
-Some people suggest a cut-off of 0.1 as a measure of good balance (an SMD of 0.1 corresponds to a correlation of 0.05 for a continuous variable and 7.7% non-overlap between the distributions of the continuous covariate in the two groups @TODO-CITE); this is only a rule-of-thumb, and ideally we would get the SMDs much closer to 0.
+Some people suggest a cut-off of 0.1 as a measure of good balance (an SMD of 0.1 corresponds to a correlation of 0.05 for a continuous variable and 7.7% non-overlap between the distributions of the continuous covariate in the two groups[@austin2009]; this is only a rule-of-thumb, and ideally we would get the SMDs much closer to 0.
 
 ```{r}
 #| label: fig-love-smd
@@ -282,7 +311,7 @@ ggplot(
   geom_love(vline_xintercept = 1)
 ```
 
-::: {.callout-note}
+::: callout-note
 `plot_balance()` is a helper function to quickly plot the output of `check_balance()`, which you may find helpful for iterating, as shown in @fig-balance-helper.
 
 ```{r}
@@ -292,7 +321,6 @@ balance_metrics |>
   filter(metric %in% c("smd", "vr")) |>
   plot_balance(facet_scales = "free_x")
 ```
-
 :::
 
 ### Other data visualizations
@@ -362,20 +390,21 @@ ggplot(
   )
 ```
 
-Many other geoms in ggplot2 accept a `weight` argument that can be useful for visualizing weighted populations. Make good use of your exploratory data analysis skills by treating the weighted pseudo-population as a real sample!
+Many other geoms in ggplot2 accept a `weight` argument that can be useful for visualizing weighted populations.
+Make good use of your exploratory data analysis skills by treating the weighted pseudo-population as a real sample!
 
-- `geom_bar()`
-- `geom_boxplot()`
-- `geom_contour()`
-- `geom_count()`
-- `geom_density()`
-- `geom_dotplot()`
-- `geom_freqpoly()`
-- `geom_hex()`
-- `geom_histogram()`
-- `geom_quantile()`
-- `geom_smooth()`
-- `geom_violin()`
+-   `geom_bar()`
+-   `geom_boxplot()`
+-   `geom_contour()`
+-   `geom_count()`
+-   `geom_density()`
+-   `geom_dotplot()`
+-   `geom_freqpoly()`
+-   `geom_hex()`
+-   `geom_histogram()`
+-   `geom_quantile()`
+-   `geom_smooth()`
+-   `geom_violin()`
 
 ## The empirical cumulative distribution function
 
@@ -437,7 +466,9 @@ We can use the function `splines::ns()` for this.
 ::: callout-note
 ## Natural splines
 
-Natural splines, also called restricted cubic splines, are a type of smoothing function that allow us to model non-linear relationships between variables. Unlike polynomial terms (like $x^2$ or $x^3$), which can become extreme at the boundaries of the data, natural splines constrain the function to be linear beyond the boundary knots. This makes them particularly well-suited for propensity score modeling.
+Natural splines, also called restricted cubic splines, are a type of smoothing function that allow us to model non-linear relationships between variables.
+Unlike polynomial terms (like $x^2$ or $x^3$), which can become extreme at the boundaries of the data, natural splines constrain the function to be linear beyond the boundary knots.
+This makes them particularly well-suited for propensity score modeling.
 :::
 
 ```{r}
@@ -479,16 +510,21 @@ Now in @fig-weighted-ecdf-2 the lines appear to overlap better across the whole 
 
 ## Kolmogorov-Smirnov (KS) statistics
 
-A single-number summary of the eCDF is the Kolmogorov-Smirnov (KS) statistic[^09-evaluating-ps-1]. The KS statistic is the maximum vertical distance between the two eCDF curves. We can calculate it using `check_balance()`:
+A single-number summary of the eCDF is the Kolmogorov-Smirnov (KS) statistic[^09-evaluating-ps-1].
+The KS statistic is the maximum vertical distance between the two eCDF curves.
+We can calculate it using `check_balance()`:
 
-[^09-evaluating-ps-1]: The KS statistic is also the test statistic for the two-sample Kolmogorov-Smirnov test, which tests whether two samples come from the same distribution. However, in the context of balance assessment, we focus on the magnitude of the statistic rather than hypothesis testing.
+[^09-evaluating-ps-1]: The KS statistic is also the test statistic for the two-sample Kolmogorov-Smirnov test, which tests whether two samples come from the same distribution.
+    However, in the context of balance assessment, we focus on the magnitude of the statistic rather than hypothesis testing.
 
 ```{r}
 balance_metrics |>
   filter(metric == "ks")
 ```
 
-To better understand what the KS statistic represents, let's visualize it on the unweighted and weighted eCDF plots. @fig-ks-statistic shows the maximum distance between the two curves as a red line connecting the two points where this maximum occurs. Note that the KS statistic that we see before and after weighting are not for the same points in the distribution; after weighting, the maximum vertical distance is both smaller and more towards the center of the distribution.
+To better understand what the KS statistic represents, let's visualize it on the unweighted and weighted eCDF plots.
+@fig-ks-statistic shows the maximum distance between the two curves as a red line connecting the two points where this maximum occurs.
+Note that the KS statistic that we see before and after weighting are not for the same points in the distribution; after weighting, the maximum vertical distance is both smaller and more towards the center of the distribution.
 
 ```{r}
 #| label: fig-ks-statistic
@@ -630,11 +666,17 @@ We want the KS statistic to be as close to 0 as possible after weighting or matc
 
 ## Balance across the joint distribution
 
-eCDFs allow as to look across the distribution of a continuous confounder, and SMDs and variance ratios give us different perspectives into moments of the distribution. However, for exchangeability to hold, we need balance across the joint distribution of confounders. This means balance across the entire multi-dimensional covariate space, including interactions between variables. This is hard to comprehend, let alone assess, but we have a few tools to try.
+eCDFs allow as to look across the distribution of a continuous confounder, and SMDs and variance ratios give us different perspectives into moments of the distribution.
+However, for exchangeability to hold, we need balance across the joint distribution of confounders.
+This means balance across the entire multi-dimensional covariate space, including interactions between variables.
+This is hard to comprehend, let alone assess, but we have a few tools to try.
 
 ### Interactions and higher moments
 
-The simplest method of assessing balance in the joint distribution is to calculate single variables that represent components of the distribution. SMDs and friends look at single variables on their original scale, which is one perspective of the joint distribution. Balance is also commonly assessed among interaction terms and squares of continuous confounders (which is closely related to the variance, the second moment of the distribution, so we've already had one perspective through variance ratios). `check_balance()` can do this automatically (as well as cubes).
+The simplest method of assessing balance in the joint distribution is to calculate single variables that represent components of the distribution.
+SMDs and friends look at single variables on their original scale, which is one perspective of the joint distribution.
+Balance is also commonly assessed among interaction terms and squares of continuous confounders (which is closely related to the variance, the second moment of the distribution, so we've already had one perspective through variance ratios).
+`check_balance()` can do this automatically (as well as cubes).
 
 ```{r}
 #| fig-width: 9
@@ -659,7 +701,11 @@ From this perspective, it seems we have decent balance over the subset of the jo
 
 ### Energy
 
-An alternative measure of balance is the energy statistic. The energy statistic is the average distance across the joint ECDFs. As opposed to looking at many measures across derived variables, the energy statistic is a single-number summary of the joint distribution. Unlike some of the other metrics we've seen, the scale of the energy metric depends on the number of covariates and their distribution, so it's more useful as a comparison between approaches. That said, smaller energy indicates better balance across the covariate space; after weighting, we see much smaller energy compared to the observed sample.
+An alternative measure of balance is the energy statistic.
+The energy statistic is the average distance across the joint ECDFs.
+As opposed to looking at many measures across derived variables, the energy statistic is a single-number summary of the joint distribution.
+Unlike some of the other metrics we've seen, the scale of the energy metric depends on the number of covariates and their distribution, so it's more useful as a comparison between approaches.
+That said, smaller energy indicates better balance across the covariate space; after weighting, we see much smaller energy compared to the observed sample.
 
 ```{r}
 balance_metrics_joint |>
@@ -716,7 +762,8 @@ balance_comparison |>
   theme(axis.text.y = element_blank())
 ```
 
-The plot shows that our feature engineering has improved the balance across all variables. The improved weights (`w_ate_improved`) achieve smaller standardized mean differences compared to the original weights (`w_ate`).
+The plot shows that our feature engineering had mixed results.
+The improved weights (`w_ate_improved`), however, achieve smaller energy compared to the original weights (`w_ate`).
 
 Let's also compare the effective sample sizes:
 
@@ -731,14 +778,21 @@ seven_dwarfs_9_with_improved |>
   )
 ```
 
-While our improved model achieves better balance, it may come at the cost of a lower effective sample size due to more extreme weights. This is a common trade-off in propensity score analysis: better balance often requires more variable weights, which reduces statistical efficiency.
-
+While our improved model achieves slightly better balance, it may come at the cost of a lower effective sample size due to more extreme weights.
+This is a common trade-off in propensity score analysis: better balance often requires more variable weights, which reduces statistical efficiency.
 
 ### Using optimization-based balancing weights {#sec-wts-balancing}
 
-So far, we've focused on propensity score weights, which model the treatment assignment mechanism and then use the inverse of those probabilities to create weights. An alternative approach is to directly optimize the weights to achieve balance without explicitly modeling the propensity score. The `{optweight}` package implements this approach by solving a constrained optimization problem: it finds weights that minimize variability (maximizing effective sample size) while ensuring that covariates are balanced within specified tolerances. There are two main benefits to this approach. First, we can reduce iterating between estimating weights and checking balance because optimization-based weights directly target a balancing statistic. Second, the particular class of optimization-based weights that optweight implements, called stable balancing weights, often acheives comparable balance to a good propensity score model with better effective sample size.
+So far, we've focused on propensity score weights, which model the treatment assignment mechanism and then use the inverse of those probabilities to create weights.
+An alternative approach is to directly optimize the weights to achieve balance without explicitly modeling the propensity score.
+The `{optweight}` package implements this approach by solving a constrained optimization problem: it finds weights that minimize variability (maximizing effective sample size) while ensuring that covariates are balanced within specified tolerances.
+There are two main benefits to this approach.
+First, we can reduce iterating between estimating weights and checking balance because optimization-based weights directly target a balancing statistic.
+Second, the particular class of optimization-based weights that optweight implements, called **stable balancing weights**, often acheives comparable balance to a good propensity score model with better effective sample size.
 
-Let's use the `optweight()` function to estimate stable balancing weights. In addition to a formula similar to the propensity score model, we also specify `tols`, the tolerance of the balance statistic, and `min.w`, the minimal allowable weight. By setting `min.w = 0`, we allow `optweight()` to assign weights of zero, effectively filtering out some observations.
+Let's use the `optweight()` function to estimate stable balancing weights.
+In addition to a formula similar to the propensity score model, we also specify `tols`, the tolerance of the balance statistic, and `min.w`, the minimal allowable weight.
+By setting `min.w = 0`, we allow `optweight()` to assign weights of zero, effectively filtering out some observations.
 
 ```{r}
 library(optweight)
@@ -753,9 +807,7 @@ opt_weights <- optweight(
 )
 
 seven_dwarfs_9_with_opt <- seven_dwarfs_9_with_wt |>
-  mutate(
-    w_opt = opt_weights$weights
-  )
+  mutate(w_opt = opt_weights$weights)
 ```
 
 Let's check the balance achieved by these optimization-based weights and compare it to our propensity score weights:
@@ -778,7 +830,8 @@ balance_opt_comparison |>
   theme(axis.title.y = element_blank())
 ```
 
-It looks like the balance between the two approaches is similar. Now let's compare the distribution of weights between the two methods:
+It looks like the balance between the two approaches is similar.
+Now let's compare the distribution of weights between the two methods:
 
 ```{r}
 seven_dwarfs_9_with_opt |>
@@ -789,12 +842,13 @@ seven_dwarfs_9_with_opt |>
   reframe(range = range(weight))
 ```
 
-The range of the stable balancing weights is much smaller than the propensity score weights. We also see one day did indeed recieve a weight of 0, removing it from the analysis.
+The range of the stable balancing weights is much smaller than the propensity score weights.
+We also see one day did indeed recieve a weight of 0, removing it from the analysis.
 
 ```{r}
 seven_dwarfs_9_with_opt |>
   filter(w_opt == 0) |>
-  select(park_date, park_extra_magic_morning, park_ticket_season, park_close, park_temperature_high)
+  select(park_date, park_extra_magic_morning)
 ```
 
 Finally, let's compare the effective sample sizes between the two weighting methods:
@@ -810,11 +864,15 @@ seven_dwarfs_9_with_opt |>
   )
 ```
 
-The optimization-based weights often achieve a better effective sample size because they directly minimize weight variability while achieving the specified balance constraints. This can lead to more precise estimates in the outcome model.
+The optimization-based weights often achieve a better effective sample size because they directly minimize weight variability while achieving the specified balance constraints.
+This can lead to more precise estimates in the outcome model.
 
 #### Energy balancing
 
-Optimization-based weights are a general technique that can target many aspects of balance. For instance, we may want to target the energy statistic to balance the joint distribution of the covariates. The `{WeightIt}` package implements this and many other optimization-based approaches. Let's estimate energy balancing weights.
+Optimization-based weights are a general technique that can target many aspects of balance.
+For instance, we may want to target the energy statistic to balance the joint distribution of the covariates.
+The `{WeightIt}` package implements this and many other optimization-based approaches.
+Let's estimate energy balancing weights.
 
 ```{r}
 library(WeightIt)
@@ -848,14 +906,33 @@ balance_all_comparison |>
   plot_balance()
 ```
 
+Energy balancing weights give us excellent balance, but their effective sample size is lower.
+
+```{r}
+seven_dwarfs_9_with_all |>
+  summarize(
+    ess_energy = ess(w_energy),
+    percent_ess_energy = percent(ess_energy / n())
+  )
+```
+
 ### Don't use p-values
 
-Since we are looking at difference in distributions between groups, a natural question is: what about p-values? We often use p-values to assess whether a distribution is statistically significantly different between two groups. For balance, however, p-values are inappropriate [@TODO-CITE]. First, p-values refer to a hypothetical population from which we have sampled; balance is, however, a *property of the sample*. Second, p-values are strongly dependendent on sample size. If we found we had a small p-value when assessing balance, we could make it larger by randomly removing observations until we are underpowered to detect a difference. That procedure, of course, will not balance groups! So, if we use a p-value to evaluate balance, sooner or later we will get a non-siginificant result because of loss of precision. Finally, there is no clear relationship between p-value cut-offs and balance to begin with. We have no theretically reason to believe that a p-value of < 0.05 would indicate better balance than a different cut-off.
+Since we are looking at difference in distributions between groups, a natural question is: what about p-values?
+We often use p-values to assess whether a distribution is statistically significantly different between two groups.
+For balance, however, p-values are inappropriate [@TODO-CITE].
+First, p-values refer to a hypothetical population from which we have sampled; balance is, however, a *property of the sample*.
+Second, p-values are strongly dependendent on sample size.
+If we found we had a small p-value when assessing balance, we could make it larger by randomly removing observations until we are underpowered to detect a difference.
+That procedure, of course, will not balance groups!
+So, if we use a p-value to evaluate balance, sooner or later we will get a non-siginificant result because of loss of precision.
+Finally, there is no clear relationship between p-value cut-offs and balance to begin with.
+We have no theretical reason to believe that a p-value of \< 0.05 would indicate better balance than a different cut-off.
 
 ### Don't use prediction metrics for causal modeling
 
 By and large, metrics commonly used for building prediction models are inappropriate for building causal models.
-Researchers and data scientists often make decisions about models using metrics like R^2^, AUC, accuracy, and (often inappropriately) p-values.
+Researchers and data scientists often make decisions about models using metrics like R^2^, AUC, accuracy, and other metrics.
 However, a causal model's goal is not to predict as much about the outcome as possible [@hernan2021]; the goal is to estimate the relationship between the exposure and outcome accurately.
 A causal model needn't predict particularly well to be unbiased.
 
@@ -865,7 +942,6 @@ However, we may be unsure of the mathematical relationship between a confounder 
 For instance, we may not know if the relationship is linear.
 Misspecifying this relationship can lead to residual confounding: we may only partially account for the confounder in question, leaving some bias in the estimate.
 Testing different functional forms using prediction-focused metrics can help improve the model's accuracy, potentially allowing for better control.
-
 
 ::: callout-note
 ## Can you overfit a causal model?
@@ -900,7 +976,9 @@ In practice, cross-validation, a technique to reduce overfitting, is often used 
 
 ### Matching and the propensity score paradox
 
-A quirk of propensity score matching is that, after we've achieved good balance, if we *continue* to prune matches, we will see the opposite effect: we *increase* imbalance. The reason for this is that, with propensity score matching, after we've achieved balance, there is no good reason to prefer one match over another in terms of pruning; pruning becomes random. The problem is that we are more likely to then accidentally remove well-matched pairs than we are to maintain balance.
+A quirk of propensity score matching is that, after we've achieved good balance, if we *continue* to prune matches, we will see the opposite effect: we *increase* imbalance.
+The reason for this is that, with propensity score matching, after we've achieved balance, there is no good reason to prefer one match over another in terms of pruning; pruning becomes random.
+The problem is that we are more likely to then accidentally remove well-matched pairs than we are to maintain balance.
 
 In @fig-ps-paradox-caliper, we see that as we tighten the caliper (resulting in fewer matched pairs), we first improve balance then, as the caliper approaches zero, we worsen balance.
 
@@ -955,4 +1033,6 @@ ggplot(
   theme(legend.position = "right")
 ```
 
-In practice, the propensity score paradox is not such a big deal, for two reasons: first, for many data sets, you will see improved balance by pruning matches well before you start to encounter the paradox. Second, if we start to see that a caliper is too stringent and is starting to worse balance, we can simply use a less stringent caliper. That said, some other matching algorithms, such as coarsened exact matching and Mahalanobis distance matching---both available in MatchIt---don't suffer from this problem and may be worth considering if you are encountering the paradox but feel you need to continue pruning.
+In practice, the propensity score paradox is not such a big deal, for two reasons: first, for many data sets, you will see improved balance by pruning matches well before you start to encounter the paradox.
+Second, if we start to see that a caliper is too stringent and is starting to worse balance, we can simply use a less stringent caliper.
+That said, some other matching algorithms, such as coarsened exact matching and Mahalanobis distance matching---both available in MatchIt---don't suffer from this problem and may be worth considering if you are encountering the paradox but feel you need to continue pruning.
