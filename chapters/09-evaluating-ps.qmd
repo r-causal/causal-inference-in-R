@@ -846,7 +846,7 @@ balance_all_comparison |>
 
 ### Don't use p-values
 
-
+Since we are looking at difference in distributions between groups, a natural question is: what about p-values? We often use p-values to assess whether a distribution is statistically significantly different between two groups. For balance, however, p-values are inappropriate. First, p-values refer to a hypothetical population from which we have sampled; balance is, however, a *property of the sample*. Second, p-values are strongly dependendent on sample size. If we found we had a small p-value when assessing balance, we could make it larger by randomly removing observations until we are underpowered to detect a difference. That procedure, of course, will not balance groups! So, if we use a p-value to evaluate balance, sooner or later we will get a non-siginificant result because of loss of precision. Finally, there is no clear relationship between p-value cut-offs and balance to begin with. We have no theretically reason to believe that a p-value of < 0.05 would indicate better balance than a different cut-off.
 
 ### Don't use prediction metrics for causal modeling
 
