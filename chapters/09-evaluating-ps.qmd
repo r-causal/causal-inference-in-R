@@ -277,7 +277,7 @@ To do so, we like to use a *Love Plot* (named for Thomas Love, who popularized t
 The `{halfmoon}` package provides a `geom_love()` function that simplifies this implementation.
 In @fig-love-smd, we visualize the absolute SMDs: the closer to 0, the better the balance between exposure groups.
 After weighting, the differences between groups are greatly reduced.
-Some people suggest a cut-off of 0.1 as a measure of good balance (an SMD of 0.1 corresponds to a correlation of 0.05 for a continuous variable and 7.7% non-overlap between the distributions of the continuous covariate in the two groups[@austin2009]; this is only a rule-of-thumb, and ideally, we would get the SMDs much closer to 0.
+Some people suggest a cut-off of 0.1 as a measure of good balance (an SMD of 0.1 corresponds to a correlation of 0.05 for a continuous variable and 7.7% non-overlap between the distributions of the continuous covariate in the two groups [@austin2009]; this is only a rule-of-thumb, and ideally, we would get the SMDs much closer to 0.
 
 ```{r}
 #| label: fig-love-smd
