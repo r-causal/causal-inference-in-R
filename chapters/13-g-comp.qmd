@@ -84,7 +84,7 @@ ate
 
 The same strategy applies when the exposure is continuous. For instance, imagine estimating how the actual wait time at 9am would change if the posted wait time at 8am were set to 60 minutes rather than 30 minutes. The procedure outlined above is identical, except that the exposure is set to the chosen numerical values for the counterfactual datasets.
 
-Let's start by arranging the data so that the actual wait time at 9am can be modeled using the posted wait time at 8am and the same confounders idenfied above.
+Let's start by arranging the data so that the actual wait time at 9 AM can be modeled using the posted wait time at 8 AM and the same confounders idenfied above.
 
 ```{r}
 eight <- seven_dwarfs_train_2018 |>
