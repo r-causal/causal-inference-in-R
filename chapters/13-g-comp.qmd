@@ -107,7 +107,7 @@ fit_wait <- lm(
   wait_minutes_actual_avg ~ 
     # Use a natural spline to flexibly model the nonlinear relationship
     # between posted and actual wait times
-    splines::ns(wait_minutes_posted_avg, df = 3) + # 
+    splines::ns(wait_minutes_posted_avg, df = 3) +
     park_extra_magic_morning + 
     park_ticket_season + 
     park_close + 
