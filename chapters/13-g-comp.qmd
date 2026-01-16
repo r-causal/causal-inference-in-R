@@ -49,7 +49,7 @@ exposed <- seven_dwarfs_9 |> mutate(park_extra_magic_morning = 1)
 unexposed <- seven_dwarfs_9 |> mutate(park_extra_magic_morning = 0)
 ```
 
-Using the perviously fitted outcome model, predicted outcomes are generated for each of these counterfactual datasets and averaged. These averages (marginal means) represent the expected posted wait time if everyone were exposed or if no one were exposed. We can then take the difference between these marginal means to estimate the causal effect of Extra Magic Morning on posted wait times.
+Using the previously fitted outcome model, predicted outcomes are generated for each of these counterfactual datasets and averaged. These averages (marginal means) represent the expected posted wait time if everyone were exposed or if no one were exposed. We can then take the difference between these marginal means to estimate the causal effect of Extra Magic Morning on posted wait times.
 
 ```{r}
 pred_exposed <- gcomp_model |> 
