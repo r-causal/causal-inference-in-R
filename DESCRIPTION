@@ -34,6 +34,7 @@ Imports:
     lubridate,
     MatchIt,
     mice,
+    optweight,
     patchwork,
     propensity (>= 0.0.0.9000),
     PSW,
