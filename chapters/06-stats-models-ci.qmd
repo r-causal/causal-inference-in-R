@@ -153,7 +153,7 @@ satisfaction_strat_est <- satisfaction_strat |>
     names_from = update_frequency,
     values_from = avg_satisfaction
   ) |>
-  summarise(estimate = daily - weekly)
+  reframe(estimate = daily - weekly)
 
 satisfaction_strat_est
 ```
@@ -385,7 +385,7 @@ As opposed to binary and categorical confounders, grouping by bins for continuou
 
 ## What would happen if we change the number of bins?
 
-Let's see what happens if we increase the number of bins. In the figure below, we've changed the number of bins from 5 in the example in the text to range from 3 to 20. Notice as we increase the number of bins the bias decreases. 
+Let's see what happens if we increase the number of bins. In the figure below, we've changed the number of bins from 5 in the example in the text to range from 3 to 20. Notice as we increase the number of bins the bias decreases.
 
 ```{r}
 #| code-fold: true
@@ -416,7 +416,7 @@ map(3:20, update_bins) |>
   labs(y = "Bias", x = "Number of bins")
 ```
 
-For example, looking at the output below we see that the estimate is much closer to the truth (0) when we have 20 bins compared to 5. 
+For example, looking at the output below we see that the estimate is much closer to the truth (0) when we have 20 bins compared to 5.
 
 ```{r}
 satisfaction3 |>
@@ -434,7 +434,7 @@ satisfaction3 |>
   summarise(estimate = mean(daily - weekly))
 ```
 
-As with many good things, however, there is a limit to the utility of increasing the number of bins. For example, let's see what happens if we try to have 30 bins. 
+As with many good things, however, there is a limit to the utility of increasing the number of bins. For example, let's see what happens if we try to have 30 bins.
 
 ```{r}
 satisfaction3 |>
@@ -452,7 +452,7 @@ satisfaction3 |>
   summarise(estimate = mean(daily - weekly))
 ```
 
-The estimate is `NA` because some of our bins didn't have anyone in one of the exposure groups, making their difference inestimable. Now, this analysis violates our *positivity* assumption. This is a stochastic violation; it has to do with our sample size, `r scales::comma(n)`, and the number of bins, 30. By chance, we ended up with at least one of the 30 bins without anyone in one of the exposure groups, making our causal effect inestimable. This non-parametric method, while flexible, has limitations due to the sample size. Parametric models are useful because they allow us to extrapolate under certain assumptions, which makes them more efficient (assuming our assumptions are true, let's learn more in @sec-parametric). 
+The estimate is `NA` because some of our bins didn't have anyone in one of the exposure groups, making their difference inestimable. Now, this analysis violates our *positivity* assumption. This is a stochastic violation; it has to do with our sample size, `r scales::comma(n)`, and the number of bins, 30. By chance, we ended up with at least one of the 30 bins without anyone in one of the exposure groups, making our causal effect inestimable. This non-parametric method, while flexible, has limitations due to the sample size. Parametric models are useful because they allow us to extrapolate under certain assumptions, which makes them more efficient (assuming our assumptions are true, let's learn more in @sec-parametric).
 
 
 :::
@@ -739,7 +739,7 @@ plot_estimates <- function(d) {
     )) |>
     filter(term == "update_frequency") |>
     mutate(model = "unadjusted")
-  
+
   adj_model <- lm(
     satisfaction ~ update_frequency + business_hours +
       customer_type,
@@ -753,12 +753,12 @@ plot_estimates <- function(d) {
     )) |>
     filter(term == "update_frequency") |>
     mutate(model = "direct\nadjustment")
-  
+
   df <- d |>
     mutate(across(where(is.factor), as.integer)) |>
     mutate(update_frequency = update_frequency - 1) |>
     as.data.frame()
-  
+
   x <- PSW::psw(
     df,
     "update_frequency ~ business_hours + customer_type",
@@ -776,7 +776,7 @@ plot_estimates <- function(d) {
     p.value = NA,
     model = "inverse\nprobability\nweighting"
   )
-  
+
   models <- bind_rows(unadj_model, adj_model, psw_model) |>
     mutate(model = factor(
       model,
@@ -786,7 +786,7 @@ plot_estimates <- function(d) {
         "inverse\nprobability\nweighting"
       )
     ))
-  
+
   models |>
     select(model, estimate, std.error, starts_with("conf")) |>
     pivot_longer(
