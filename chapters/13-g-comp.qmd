@@ -10,92 +10,207 @@ status("wip")
 
 ## The Parametric G-Formula
 
-Let's pause to recap a typical goal of the causal analyses we've seen in this book so far: to estimate what would happen if *everyone* in the study were exposed versus what would happen if *no one* was exposed.
-To do this, we've used weighting techniques that create confounder-balanced pseudopopulations which, in turn, give rise to unbiased causal effect estimates in marginal outcome models.
-One alternative approach to weighting is called the parametric G-formula, which is generally executed through the following 4 steps:
+The parametric g-formula provides a direct approach to causal estimation through outcome modeling. Rather than reweighting observations to balance confounders, as we have done so far in this book, we model the outcome as a function of exposure and covariates, then use that model to predict what would happen under different exposure scenarios. By averaging these predictions across the population, we obtain estimates of causal effects.
 
-1.  Draw the appropriate time ordered DAG (as described in @sec-dags).
+We start with fitting a conditional outcome model. Importantly, this means we must correctly specify the functional form of the outcome model. If our model is misspecified, our causal estimates will be biased. The outcome model must contain all variables in the adjustment set identified from the causal diagram. Like weighting and matching-based methods, valid inference is predicated on the assumption that this adjustment set is sufficient to identify the causal effect of interest. Once this model is fit, it can be used to generate predictions under counterfactual scenarios in which the exposure is set to the levels of interest. The resulting predicted outcomes are then averaged to create estimates of the expected outcome under each hypothetical intervention. The approach is called 'parametric' because we assume a specific parametric model (e.g., linear or logistic regression) for the outcome.
 
-2.  For each point in time after baseline, decide on a parametric model that predicts each variable's value based on previously measured variables in the DAG.
-    These are often linear models for continuous variables or logistic regressions for binary variables.
+This approach has several advantages: it naturally handles multiple exposure comparisons, accommodates complex relationships through flexible modeling, and can be more efficient when outcomes are easier to model than exposure assignment. In this chapter, we will begin with the single-time-point setting, demonstrating the core logic of the g-formula with binary and continuous exposures. We then show how the same structure naturally expands to longitudinal settings with time-varying treatments and confounders.
 
-3.  Starting with a sample from the observed distribution of data at baseline, generate values for all subsequent variables according to the models in step 2 (i.e. conduct a *Monte Carlo simulation*).
-    Do this with one key modification: for each exposure regime you are interested in comparing (e.g. everyone exposed versus everyone unexposed), assign the exposure variables accordingly (that is, don't let the simulation assign values for exposure variables).
+### A Single-Time-Point Example
 
-4.  Compute the causal contrast of interest based on the simulated outcome in each exposure group.
+Let's again consider whether Extra Magic Morning hours influence the average posted wait time for the Seven Dwarfs Mine Train ride between 9 and 10am as described in @sec-data and assume the same data generating mechanism proposed in @fig-dag-magic-hours-wait. To implement the parametric g-formula we will (1) fit an outcome model with the exposure and all confounders, (2) create two versions of the dataset in which each observation is set to be exposed or unexposed, (3) generate predicted outcomes for each version using the fitted model, (4) average those predictions to construct marginal means by exposure, and (5) take the difference in marginal means to estimate the average treatment effect.
 
-::: callout-tip
-## Monte Carlo simulations
-
-Monte Carlo simulations are computational approaches that generate a sample of outcomes for random processes.
-One example would be to calculate the probability of rolling "snake eyes" (two ones) on a single roll of two six-sided dice.
-We could certainly calculate this probability mathematically ($\frac{1}{6}*\frac{1}{6}=\frac{1}{36}\approx 2.8$%), though it can be just as quick to write a Monte Carlo simulation of the process (1,000,000 rolls shown below).
+Let's first fit the outcome model that includes the exposure (`park_extra_magic_morning`) and all confounders (the historic high temperature on the day `park_temperature_high`, the time the park closed `park_close`, and the ticket season `park_ticket_season`).
 
 ```{r}
-n <- 1000000
-tibble(
-  roll_1 = sample(1:6, n, replace = TRUE),
-  roll_2 = sample(1:6, n, replace = TRUE),
-) |>
-  reframe(roll_1 + roll_2 == 2) |>
-  pull() |>
-  sum() / n
+#| message: false
+#| warning: false
+library(tidyverse)
+library(broom)
+library(touringplans)
+
+seven_dwarfs_9 <- seven_dwarfs_train_2018 |> 
+  filter(wait_hour == 9)
+
+gcomp_model <- lm(
+  wait_minutes_posted_avg ~ 
+    park_extra_magic_morning +
+    park_ticket_season + 
+    park_close + 
+    park_temperature_high,
+  data = seven_dwarfs_9
+)
 ```
 
-Monte Carlo simulations are extremely useful for estimating outcomes of complex processes for which closed mathematical solutions are not easy to determine.
-Indeed, that's why Monte Carlo simulations are so useful for the real-world causal mechanisms described in this book!
-:::
-
-## Revisiting the magic morning hours example
-
-Recall in @sec-outcome-model that we estimated the impact of extra magic morning hours on the average posted wait time for the Seven Dwarfs ride between 9 and 10am.
-To do so, we fit a propensity score model for the exposure (`park_extra_magic_morning`) with the confounders `park_ticket_season`, `park_close`, and `park_temperature_high`.
-In turn, these propensity scores were converted to regression weights for the outcome model, which concluded that the expected impact of having extra magic hours on the average posted wait time between 9 and 10am is 6.2 minutes.
-
-We will now reproduce this analysis, instead adopting the g-formula approach.
-Proceeding through the 4 steps outlined above, we begin by revisiting the time ordered DAG relevant to this question.
+We then duplicate the `seven_dwarfs_9` dataset for each unique level of exposure (in this case two: one for the exposed and one for the unexposed). One copy assigns every park date as if Extra Magic Morning hours occurred and the other assigns every park date as if it did not. These counterfactual datasets represent the hypothetical worlds under which the exposure is uniformly set to each value. 
 
 ```{r}
-#| label: fig-dag-magic-hours-wait-take-2
+exposed <- seven_dwarfs_9 |> mutate(park_extra_magic_morning = 1)
+unexposed <- seven_dwarfs_9 |> mutate(park_extra_magic_morning = 0)
+```
+
+Using the previously fitted outcome model, predicted outcomes are generated for each of these counterfactual datasets and averaged. These averages (marginal means) represent the expected posted wait time if everyone were exposed or if no one were exposed. We can then take the difference between these marginal means to estimate the causal effect of Extra Magic Morning on posted wait times.
+
+```{r}
+pred_exposed <- gcomp_model |> 
+  augment(newdata = exposed) |> 
+  select(pred_exposed = .fitted)
+
+pred_unexposed <- gcomp_model |> 
+  augment(newdata = unexposed) |> 
+  select(pred_unexposed = .fitted)
+
+bind_cols(pred_exposed, pred_unexposed) |> 
+  summarize(
+    mean_exposed = mean(pred_exposed),
+    mean_unexposed = mean(pred_unexposed),
+    difference = mean_exposed - mean_unexposed
+  )
+```
+
+The `{marginaleffects`} package makes some of these mechanics easy and help with uncertainty quantification. For example, rather than creating the separate counterfactual datasets, we can calculate the average treatment effect directly using the `average_comparisons` function.
+
+```{r}
+library(marginaleffects)
+ate <- avg_comparisons(
+  gcomp_model,
+  variables = "park_extra_magic_morning"
+)
+
+ate
+```
+
+### Continuous Exposures
+
+The same strategy applies when the exposure is continuous. For instance, imagine estimating how the actual wait time at 9am would change if the posted wait time at 8am were set to 60 minutes rather than 30 minutes. The procedure outlined above is identical, except that the exposure is set to the chosen numerical values for the counterfactual datasets.
+
+Let's start by arranging the data so that the actual wait time at 9 AM can be modeled using the posted wait time at 8 AM and the same confounders idenfied above.
+
+```{r}
+eight <- seven_dwarfs_train_2018 |>
+  filter(wait_hour == 8) |>
+  select(-wait_minutes_actual_avg)
+
+nine <- seven_dwarfs_train_2018 |>
+  filter(wait_hour == 9) |>
+  select(park_date, wait_minutes_actual_avg)
+
+wait_times <- eight |> 
+  left_join(nine, by = "park_date") |> 
+  drop_na(wait_minutes_actual_avg)
+```
+
+We fit the outcome model the same way as for the binary exposure, as the outcome in both cases is continuous. Note now since we have a continuous exposure we can flexibly fit this, for example by using a natural spline.
+
+```{r}
+fit_wait <- lm(
+  wait_minutes_actual_avg ~ 
+    # Use a natural spline to flexibly model the nonlinear relationship
+    # between posted and actual wait times
+    splines::ns(wait_minutes_posted_avg, df = 3) +
+    park_extra_magic_morning + 
+    park_ticket_season + 
+    park_close + 
+    park_temperature_high,
+  data = wait_times
+)
+```
+
+To compare posted wait times of 60 and 30 minutes, two counterfactual datasets are constructed: 
+
+```{r}
+high <- wait_times |> mutate(wait_minutes_posted_avg = 60)
+low  <- wait_times |> mutate(wait_minutes_posted_avg = 30)
+
+```
+
+We then obtain predicted outcomes for each counterfactual dataset and then average these and take the difference:
+
+```{r}
+pred_high <- fit_wait |> augment(newdata = high) |> select(pred_high = .fitted)
+pred_low  <- fit_wait |> augment(newdata = low)  |> select(pred_low  = .fitted)
+
+bind_cols(pred_high, pred_low) |> 
+  summarize(
+    mean_high = mean(pred_high),
+    mean_low = mean(pred_low),
+    difference = mean_high - mean_low
+  )
+```
+
+The resulting difference estimates how much the actual wait time would change if posted wait time were set to these two specific values and all other variables remained as observed.
+
+As above, we can also use the {`marginaleffects`} package along with the `average_comparisons` function:
+
+```{r}
+comparison_30_60 <- avg_comparisons(
+  fit_wait,
+  variables = list(wait_minutes_posted_avg = c(30, 60))
+)
+comparison_30_60
+```
+
+### Time-varying Settings
+
+The parameteric g-formula can naturally extend to scenarios when the exposure, covariates, and outcomes change over time. It is implemented through the following sequence of steps:
+
+1. The time-ordered structure of the variables is laid out by drawing the appropriate DAG, which makes explicit the ordering of baseline covariates, time-varying covariates, treatment, and outcome.
+
+2. For each time point after baseline, a parametric model is specified for every variable whose value evolves over time. Each model expresses the variable at that moment as a function of the variables that precede it in the graph. Linear models are commonly used for continuous variables and logistic regressions for binary variables, although any suitable parametric specification can be used.
+
+3. Using the observed baseline covariates for each individual, predicted values for time-varying confounders and outcomes are generated sequentially using the fitted models. At each time point, the exposure is set according to the intervention regime being evaluated (rather than using its observed or predicted value). Predictions from one time point become inputs to the model for the next time point, propagating the intervention's effects forward through time.
+
+4. The predicted outcomes under the intervention are averaged across all individuals in the sample to obtain the expected outcome under that intervention regime. This process is repeated for each intervention of interest (including the natural course where exposures remain at their observed values). The desired causal contrast is obtained by comparing these averages.
+
+Returning to the Seven Dwarfs Mine Train data, suppose the park is considering an operational policy that guarantees the posted wait at 8am never exceeds thirty minutes. The policy is expected to influence congestion later in the morning, since the early-morning posted wait affects how quickly queues accumulate. We therefore pose the following question:
+
+> What would the average actual wait time at 10am have been if, for every park date, the posted wait at 8am were set to thirty minutes, compared with what was actually observed? 
+
+Below is a proposed DAG to answer this causal question.
+
+```{r}
+#| label: fig-dag-morning-waits
 #| code-fold: true
 #| message: false
 #| warning: false
 #| fig.cap: >
-#|   Proposed DAG for the relationship between Extra Magic Hours
-#|   in the morning at a particular park and the average wait
-#|   time between 9 am and 10 am.
-#|   Here we are saying that we believe 1) Extra Magic Hours impacts average wait time and 2) both Extra Magic Hours and average wait time are determined by the time the park closes, historic high temperatures, and ticket season.
+#|   Time-ordered DAG representing the effect of setting the 8am posted wait
+#|   to a fixed value on the actual wait at 10am. Baseline covariates influence
+#|   each wait time; the posted wait at 8am influences the posted wait at 9am,
+#|   and both influence the actual wait at 10am.
 
 library(ggdag)
 library(ggokabeito)
 
 coord_dag <- list(
-  x = c(Season = 0, close = 0, weather = -1, x = 1, y = 2),
-  y = c(Season = -1, close = 1, weather = 0, x = 0, y = 0)
+  x = c(Season = -1, close = -1, weather = -1,
+        wait8 = 0, wait9 = 1, wait10 = 2),
+  y = c(Season = 1, close = 0, weather = -1,
+        wait8 = 0, wait9 = 0, wait10 = 0)
 )
 
 labels <- c(
-  x = "Extra Magic Morning",
-  y = "Average wait",
   Season = "Ticket Season",
   weather = "Historic high temperature",
-  close = "Time park closed"
+  close   = "Time park closed",
+  wait8   = "8am posted wait",
+  wait9   = "9am posted wait",
+  wait10  = "10am actual wait"
 )
 
 dagify(
-  y ~ x + close + Season + weather,
-  x ~ weather + close + Season,
+  wait8  ~ Season + weather + close,
+  wait9  ~ wait8 + Season + weather + close,
+  wait10 ~ wait9 + wait8 + Season + weather + close,
   coords = coord_dag,
   labels = labels,
-  exposure = "x",
-  outcome = "y"
+  exposure = "wait8",
+  outcome = "wait10"
 ) |>
   tidy_dagitty() |>
   node_status() |>
-  ggplot(
-    aes(x, y, xend = xend, yend = yend, color = status)
-  ) +
-  geom_dag_edges_arc(curvature = c(rep(0, 5), .3)) +
+  ggplot(aes(x, y, xend = xend, yend = yend, color = status)) +
+  geom_dag_edges_arc(curvature = c(rep(0, 6), .3)) +
   geom_dag_point() +
   geom_dag_label_repel(seed = 1630) +
   scale_color_okabe_ito(na.value = "grey90") +
@@ -106,345 +221,105 @@ dagify(
   ) +
   coord_cartesian(clip = "off") +
   scale_x_continuous(
-    limits = c(-1.25, 2.25),
+    limits = c(-1.5, 2.5),
     breaks = c(-1, 0, 1, 2),
     labels = c(
-      "\n(one year ago)",
-      "\n(6 months ago)",
-      "\n(3 months ago)",
-      "9am - 10am\n(Today)"
+      "Baseline\n(one year ago)",
+      "8am\n(today)",
+      "9am\n(today)",
+      "10am\n(today)"
     )
   )
 ```
 
-The second step is to specify a parametric model for each non-baseline variable that is based upon previously measured variables in the DAG.
-This particular example is simple, since we only have two variables that are affected by previous features (`park_extra_magic_morning` and `wait_minutes_posted_avg`).
-Let's suppose that adequate models for these two variables are the simple logistic and linear models that follow.
-Of note, we're not yet going to use the model for the exposure (`park_extra_magic_morning`), but we're including the step here because it will be an important part of patterns you will see in the next section (@sec-dynamic).
+Because each park date includes hourly posted waits across the morning, these repeated measurements form a simple longitudinal sequence. Weather, ticket season, Extra Magic Morning, and closing time remain fixed for the date, but posted waits change from hour to hour and depend on what happened earlier. The posted wait at 8am influences the posted wait at 9am, and both influence the actual wait at 10am, so an intervention applied at 8am propagates forward through the subsequent hours.
+
+To set up this example, let's reshape the 8am and 9am posted waits so that both appear on the same row, along with the baseline park-level features.
 
 ```{r}
-# Load packages and data
-library(broom)
-library(touringplans)
+df <- seven_dwarfs_train_2018 |>
+  filter(wait_hour %in% c(8, 9)) |>
+  select(
+    park_date, wait_hour, wait_minutes_posted_avg,
+    park_extra_magic_morning, park_ticket_season,
+    park_close, park_temperature_high
+  )
 
-seven_dwarfs_9 <- seven_dwarfs_train_2018 |>
-  filter(wait_hour == 9)
+wide <- df |>
+  pivot_wider(
+    names_from = wait_hour,
+    values_from = wait_minutes_posted_avg,
+    names_prefix = "wait_"
+  ) |>
+  drop_na(wait_8, wait_9)
+```
 
-# A logistic regression for park_extra_magic_morning
-fit_extra_magic <- glm(
-  park_extra_magic_morning ~
-    park_ticket_season + park_close + park_temperature_high,
-  data = seven_dwarfs_9,
-  family = "binomial"
-)
+Now let's fit the model for the posted wait, expressing its dependence on the 8am posted wait and the baseline covariates.
 
-# A linear model for wait_minutes_posted_avg
-fit_wait_minutes <- lm(
-  wait_minutes_posted_avg ~
-    park_extra_magic_morning + park_ticket_season + park_close +
+```{r}
+m9 <- lm(
+  wait_9 ~ wait_8 +
+    park_extra_magic_morning +
+    park_ticket_season +
+    park_close +
     park_temperature_high,
-  data = seven_dwarfs_9
+  data = wide
 )
 ```
 
-Next, we need to draw a large sample from the distribution of baseline characteristics.
-Deciding how large this sample should be is typically based on computational availability; larger sample sizes can minimize the risk of precision loss via simulation error [@keil2014].
-In the present case, we'll use sampling with replacement to generate a data frame of size 10,000.
+To add the outcome, the 10am actual wait is merged with these data.
 
 ```{r}
-# It's important to set seeds for reproducibility in Monte Carlo runs
-set.seed(8675309)
-
-df_sim_baseline <- seven_dwarfs_9 |>
-  select(park_ticket_season, park_close, park_temperature_high) |>
-  slice_sample(n = 10000, replace = TRUE)
-```
-
-With this population in hand, we can now simulate what would happen at each subsequent time point according to the parametric models we just defined.
-Remember that, in step 3, an important caveat is that for the variable upon which we wish to intervene (in this case, `park_extra_magic_morning`) we don't need to let the model determine the values; rather, we set them.
-Specifically, we'll set the first 5000 to `park_extra_magic_morning = 1` and the second 5000 to `park_extra_magic_morning = 0`.
-Other simulations (in this case, the only remaining variable, `wait_minutes_posted_avg`) proceed as expected.
-
-```{r}
-# Set the exposure groups for the causal contrast we wish to estimate
-df_sim_time_1 <- df_sim_baseline |>
-  mutate(park_extra_magic_morning = c(rep(1, 5000), rep(0, 5000)))
-
-# Simulate the outcome according to the parametric model in step 2
-df_outcome <- fit_wait_minutes |>
-  augment(newdata = df_sim_time_1) |>
-  rename(wait_minutes_posted_avg = .fitted)
-```
-
-All that is left to do is compute the causal contrast we wish to estimate.
-Here, that contrast is the difference between expected wait minutes on extra magic mornings versus mornings without the extra magic program.
-
-```{r}
-df_outcome |>
-  group_by(park_extra_magic_morning) |>
-  summarize(wait_minutes = mean(wait_minutes_posted_avg))
-```
-
-We see that the difference, $74.3-68.1=6.2$ is the same as our estimate of 6.2 when we used IP weighting.
-
-## The g-formula for continuous exposures
-
-As previously mentioned, a key strength of the g-formula is its capacity to handle continuous exposures, a situation in which IP weighting can give rise to unstable estimates.
-Here, we briefly repeat the example from @sec-continuous-exposures to show how this is done.
-To extend the pattern, we will wrap this execution of the technique in a bootstrap to show how confidence intervals are computed.
-
-Recall, our causal question of interest is "Do posted wait times for the Seven Dwarfs Mine Train at 8 am affect actual wait times at 9 am?" The time-ordered DAG for this question (step 1) is:
-
-```{r}
-#| label: fig-dag-avg-wait-2
-#| code-fold: true
-#| message: false
-#| warning: false
-#| fig.cap: >
-#|    Proposed DAG for the relationship between posted wait
-#|    in the morning at a particular park and the average
-#|    wait time between 5 pm and 6 pm.
-
-coord_dag <- list(
-  x = c(Season = -1, close = -1, weather = -2, extra = 0, x = 1, y = 2),
-  y = c(Season = -1, close = 1, weather = 0, extra = 0, x = 0, y = 0)
-)
-
-labels <- c(
-  extra = "Extra Magic Morning",
-  x = "Average posted wait ",
-  y = "Average actual wait",
-  Season = "Ticket Season",
-  weather = "Historic high temperature",
-  close = "Time park closed"
-)
-
-dagify(
-  y ~ x + close + Season + weather + extra,
-  x ~ weather + close + Season + extra,
-  extra ~ weather + close + Season,
-  coords = coord_dag,
-  labels = labels,
-  exposure = "x",
-  outcome = "y"
-) |>
-  tidy_dagitty() |>
-  node_status() |>
-  ggplot(
-    aes(x, y, xend = xend, yend = yend, color = status)
-  ) +
-  geom_dag_edges_arc(curvature = c(rep(0, 7), .2, 0, .2, .2, 0), edge_colour = "grey70") +
-  geom_dag_point() +
-  geom_dag_label_repel(seed = 1602) +
-  scale_color_okabe_ito(na.value = "grey90") +
-  theme_dag() +
-  theme(
-    legend.position = "none",
-    axis.text.x = element_text()
-  ) +
-  coord_cartesian(clip = "off") +
-  scale_x_continuous(
-    limits = c(-2.25, 2.25),
-    breaks = c(-2, -1, 0, 1, 2),
-    labels = c(
-      "\n(one year ago)",
-      "\n(6 months ago)",
-      "\n(3 months ago)",
-      "8am-9am\n(Today)",
-      "9am-10am\n(Today)"
-    )
-  )
-```
-
-For step 2, we need to specify parametric models for the non-baseline variables in our DAG (i.e. any variables which have arrows into them).
-In this case, we need such models for `park_extra_magic_morning`, `wait_minutes_posted_avg`, and `wait_minutes_actual_avg`; we'll assume that the below logistic and linear models are appropriate.
-One extension to our previous implementation is that we're going to embed the each step of the process into a function, since this will allow us to bootstrap the entire pipeline and obtain confidence intervals.
-
-```{r}
-library(splines)
-
-fit_models <- function(.data) {
-  # A logistic regression for park_extra_magic_morning
-  fit_extra_magic <- glm(
-    park_extra_magic_morning ~
-      park_ticket_season + park_close + park_temperature_high,
-    data = .data,
-    family = "binomial"
-  )
-
-  # A linear model for wait_minutes_posted_avg
-  fit_wait_minutes_posted <- lm(
-    wait_minutes_posted_avg ~
-      park_extra_magic_morning + park_ticket_season + park_close +
-      park_temperature_high,
-    data = .data
-  )
-
-  # A linear model for wait_minutes_actual_avg
-  # Let's go ahead an add a spline for further flexibility.
-  # Be aware this is an area where you can add many options here
-  # (interactions, etc) but you may get warnings and/or models which
-  # fail to converge if you don't have enough data.
-  fit_wait_minutes_actual <- lm(
-    wait_minutes_actual_avg ~
-      ns(wait_minutes_posted_avg, df = 3) +
-      park_extra_magic_morning +
-      park_ticket_season + park_close +
-      park_temperature_high,
-    data = .data
-  )
-
-  # return a list that we can pipe into our simulation step (up next)
-  return(
-    list(
-      .data = .data,
-      fit_extra_magic = fit_extra_magic,
-      fit_wait_minutes_posted = fit_wait_minutes_posted,
-      fit_wait_minutes_actual = fit_wait_minutes_actual
-    )
-  )
-}
-```
-
-Next, we write a function which will complete step 3: from a random sample from the distribution of baseline variables, generate values for all subsequent variables (except the intervention variable) according to the models we defined.
-
-```{r}
-# The arguments to simulate_process are as follows:
-# fit_obj is a list which is returned from our fit_models function
-# contrast gives exposure (default 60) and control group (default 30) settings
-# n_sample is the size of the baseline resample of .data
-simulate_process <- function(
-  fit_obj,
-  contrast = c(60, 30),
-  n_sample = 10000
-) {
-  # Draw a random sample of baseline variables
-  df_baseline <- fit_obj |>
-    pluck(".data") |>
-    select(park_ticket_season, park_close, park_temperature_high) |>
-    slice_sample(n = n_sample, replace = TRUE)
-
-  # Simulate park_extra_magic_morning
-  df_sim_time_1 <- fit_obj |>
-    pluck("fit_extra_magic") |>
-    augment(newdata = df_baseline, type.predict = "response") |>
-    # .fitted is the probability that park_extra_magic_morning is 1,
-    # so let's use that to generate a 0/1 outcome
-    mutate(
-      park_extra_magic_morning = rbinom(n(), 1, .fitted)
-    )
-
-  # Assign wait_minutes_posted_avg, since it's the intervention
-  df_sim_time_2 <- df_sim_time_1 |>
-    mutate(
-      wait_minutes_posted_avg =
-        c(rep(contrast[1], n_sample / 2), rep(contrast[2], n_sample / 2))
-    )
-
-  # Simulate the outcome
-  df_outcome <- fit_obj |>
-    pluck("fit_wait_minutes_actual") |>
-    augment(newdata = df_sim_time_2) |>
-    rename(wait_minutes_actual_avg = .fitted)
-
-  # return a list that we can pipe into the contrast estimation step (up next)
-  return(
-    list(
-      df_outcome = df_outcome,
-      contrast = contrast
-    )
-  )
-}
-```
-
-Finally, in step 4, we compute the summary statistics and causal contrast of interest using our simulated data.
-
-```{r}
-# sim_obj is a list created by our simulate_process() function
-compute_stats <- function(sim_obj) {
-  exposure_val <- sim_obj |>
-    pluck("contrast", 1)
-
-  control_val <- sim_obj |>
-    pluck("contrast", 2)
-
-  sim_obj |>
-    pluck("df_outcome") |>
-    group_by(wait_minutes_posted_avg) |>
-    summarize(avg_wait_actual = mean(wait_minutes_actual_avg)) |>
-    pivot_wider(
-      names_from = wait_minutes_posted_avg,
-      values_from = avg_wait_actual,
-      names_prefix = "x_"
-    ) |>
-    summarize(
-      x_60,
-      x_30,
-      x_60 - x_30
-    )
-}
-```
-
-Now, let's put it all together to get a single point estimate.
-Once we've seen that in action, we'll bootstrap for a confidence interval.
-
-```{r}
-# Wrangle the data to reflect the causal question we are asking
-eight <- seven_dwarfs_train_2018 |>
-  filter(wait_hour == 8) |>
-  select(-wait_minutes_actual_avg)
-
-nine <- seven_dwarfs_train_2018 |>
-  filter(wait_hour == 9) |>
+ten <- seven_dwarfs_train_2018 |>
+  filter(wait_hour == 10) |>
   select(park_date, wait_minutes_actual_avg)
 
-wait_times <- eight |>
-  left_join(nine, by = "park_date") |>
+three <- wide |>
+  left_join(ten, by = "park_date") |>
   drop_na(wait_minutes_actual_avg)
-
-# get a single point estimate to make sure things work as we planned
-wait_times |>
-  fit_models() |>
-  simulate_process() |>
-  compute_stats() |>
-  # rsample wants results labelled this way
-  pivot_longer(
-    names_to = "term",
-    values_to = "estimate",
-    cols = everything()
-  )
-
-# compute bootstrap confidence intervals
-library(rsample)
-
-boots <- bootstraps(wait_times, times = 1000, apparent = TRUE) |>
-  mutate(
-    models = map(
-      splits,
-      \(.x) as.data.frame(.x) |>
-        fit_models() |>
-        simulate_process() |>
-        compute_stats() |>
-        pivot_longer(
-          names_to = "term",
-          values_to = "estimate",
-          cols = everything()
-        )
-    )
-  )
-
-results <- int_pctl(boots, models)
-results
 ```
 
-In summary, our results are intepreted as follows: setting the posted wait time at 8am to 60 minutes results in an actual wait time at 9am of `r results |>  filter(term == "x_60") |> pull(.estimate) |> round()`, while setting the posted wait time to 30 minutes gives a longer wait time of `r results |>  filter(term == "x_30") |> pull(.estimate) |> round()`.
-Put another way, increasing the posted wait time at 8am from 30 minutes to 60 minutes results in a `r round(-results[3,3])` minute shorter wait time at 9am.
+Now let's fit a second model that describes the 10am actual wait in terms of the earlier posted waits and the same baseline confounders.
 
-Note that one of our models threw a warning regarding perfect discrimination (`fitted probabilities numerically 0 or 1 occurred`); this can happen when we don't have a large sample size and one of our models is overspecified due to complexity.
-In this exercise, the flexibility added by the spline in the regression for `wait_minutes_actual_avg` is what caused the issue.
-One remedy when this happens is to simplify the offending model (i.e. if you modify the `wait_minutes_actual_avg` to include a simple linear term for `wait_minutes_posted_avg`), the warning is resolved.
-We've left the warning here to highlight a common challenge that needs resolution when working with the parametric g-formula on small- to mid-sized data sets.
+```{r}
+m10 <- lm(
+  wait_minutes_actual_avg ~
+    wait_9 + wait_8 +
+    park_extra_magic_morning +
+    park_ticket_season +
+    park_close +
+    park_temperature_high,
+  data = three
+)
+```
 
-## Dynamic treatment regimes with the g-formula {#sec-dynamic}
+To evaluate an intervention, suppose that all park dates begin with an 8am posted wait of thirty minutes. The longitudinal g-formula uses the fitted models to reconstruct the rest of the morning under this counterfactual scenario. The observed data are first modified so that the 8am wait is replaced by the intervention value. The 9am posted wait is then generated from its model using this modified 8am value, and the 10am actual wait is generated from its model using both the modified 8am value and the model-based value of the 9am wait. This sequence reproduces the evolving process under the intervention.
 
-## The Natural Course
+```{r}
+# Observed: use observed 8am waits
+natural <- three |>
+  mutate(
+    wait_9_pred = predict(m9, newdata = cur_data()),
+    wait_10_pred = predict(m10, 
+      newdata = mutate(cur_data(), wait_9 = wait_9_pred))
+  )
+
+# Intervention: set all 8am waits to 30
+intervention <- three |>
+  mutate(wait_8 = 30) |>
+  mutate(
+    wait_9_pred = predict(m9, newdata = cur_data()),
+    wait_10_pred = predict(m10, 
+      newdata = mutate(cur_data(), wait_9 = wait_9_pred))
+  )
+
+# Estimate causal effect
+tibble(
+  natural_mean = mean(natural$wait_10_pred),
+  intervention_mean = mean(intervention$wait_10_pred),
+  ate = intervention_mean - natural_mean
+)
+```
+
+The average of `wait_10` across all dates gives the estimated expected outcome under the intervention. Repeating the same procedure with the observed values of `wait_8` yields the expected outcome under the natural course. Their difference measures the effect of lowering the early-morning posted wait to thirty minutes.
+
