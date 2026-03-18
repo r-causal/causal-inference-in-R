@@ -436,3 +436,143 @@ tibble(
 
 The average of `wait_10` across all dates gives the estimated expected outcome under the intervention. Repeating the same procedure with the observed values of `wait_8` yields the expected outcome under the natural course. Their difference measures the effect of lowering the early-morning posted wait to thirty minutes.
 
+::: {.callout-warning}
+## Positivity, Extrapolation, and the Price of Relying Only on the Outcome Model
+
+G-computation handles poor overlap differently from IPW. When positivity is violated (or nearly so), IPW weights become extreme, destabilizing the estimate. G-computation sidesteps this by extrapolating from the outcome model into regions of the covariate space where one exposure group is rare. This can be an advantage if the model is correctly specified, but it also comes at a cost if not as it can mask potential problems.
+
+To see this, consider a toy dataset with poor overlap. Here, the confounder `z` strongly predicts treatment, so many observations have propensity scores near 0 or 1. The true outcome model includes a nonlinear (cubic) relationship between `z` and `y`.
+
+```{r}
+#| label: fig-positivity-setup
+#| code-fold: true
+set.seed(1)
+n <- 500
+
+# Poor overlap: treatment strongly predicted by z
+sim_poor <- tibble(
+  z = rnorm(n),
+  x = rbinom(n, 1, plogis(10 * z)),
+  y = 2 * x - 2 * z - 0.5 * z^3 + rnorm(n)
+)
+```
+
+The true ATE is 2. Let's first examine the overlap.
+
+```{r}
+#| label: fig-positivity-overlap
+#| fig-cap: "Distribution of the propensity score under poor overlap. Many observations have scores near 0 or 1, leaving little common support."
+library(propensity)
+ps_model <- glm(x ~ z, data = sim_poor, family = binomial())
+
+sim_poor <- sim_poor |>
+  mutate(
+    ps = predict(ps_model, type = "response"),
+    w_ate = wt_ate(ps, x, exposure_type = "binary", .treated = 1)
+  )
+
+ggplot(sim_poor, aes(x = ps, fill = factor(x))) +
+  geom_histogram(bins = 50, alpha = 0.6, position = "identity") +
+  labs(
+    x = "Propensity Score",
+    fill = "Treated"
+  )
+```
+
+Now let's see what happens to the IPW weights.
+```{r}
+#| label: fig-positivity-weights
+#| fig-cap: "ATE weights under poor overlap. Some weights are extremely large, which will destabilize the IPW estimate."
+ggplot(sim_poor, aes(x = w_ate)) +
+  geom_histogram(bins = 50) +
+  labs(x = "ATE Weight")
+```
+
+The IPW estimate is unstable as a result.
+```{r}
+sim_poor |>
+  summarize(
+    ipw_ate = sum(y * x * w_ate) / sum(x * w_ate) -
+      sum(y * (1 - x) * w_ate) / sum((1 - x) * w_ate)
+  )
+```
+
+Now let's try g-computation with a correctly specified outcome model, i.e., one that includes the cubic term for `z`.
+```{r}
+gcomp_correct <- lm(y ~ x + z + I(z^3), data = sim_poor)
+
+exposed_sim   <- sim_poor |> mutate(x = 1)
+unexposed_sim <- sim_poor |> mutate(x = 0)
+
+bind_cols(
+  augment(gcomp_correct, newdata = exposed_sim) |> select(pred_1 = .fitted),
+  augment(gcomp_correct, newdata = unexposed_sim) |> select(pred_0 = .fitted)
+) |>
+  summarize(ate = mean(pred_1 - pred_0))
+```
+
+With a correctly specified model, g-computation recovers an estimate close to the true ATE of 2, even under poor overlap. It achieves this by extrapolating the fitted outcome surface into regions of the covariate space where one group is rare, borrowing strength from the model rather than from observed counterparts.
+
+However, this extrapolation only works if the outcome model is correctly specified. If we misspecify the model by omitting the cubic term, g-computation will extrapolate the wrong surface into exactly those regions where we have no data to detect the error.
+```{r}
+gcomp_wrong <- lm(y ~ x + z, data = sim_poor)
+
+bind_cols(
+  augment(gcomp_wrong, newdata = exposed_sim) |> select(pred_1 = .fitted),
+  augment(gcomp_wrong, newdata = unexposed_sim) |> select(pred_0 = .fitted)
+) |>
+  summarize(ate = mean(pred_1 - pred_0))
+```
+
+The misspecified model produces a noticeably biased estimate. The bias is concentrated in the tails of the covariate distribution, exactly where overlap is poor and where we are relying most heavily on the model to fill in the gaps. We can see this by plotting the fitted outcome surfaces from the two models against the true cubic relationship.
+
+```{r}
+#| label: fig-positivity-surfaces
+#| fig-cap: "Fitted outcome surfaces from the correctly specified (cubic) and misspecified (linear) outcome models, overlaid on the observed data. In the tails where overlap is poor, the linear model extrapolates the wrong surface."
+#| code-fold: true
+z_seq <- tibble(z = seq(min(sim_poor$z), max(sim_poor$z), length.out = 200))
+
+surfaces <- bind_rows(
+  z_seq |>
+    mutate(
+      x = 1,
+      correct = predict(gcomp_correct, newdata = mutate(z_seq, x = 1)),
+      wrong   = predict(gcomp_wrong,   newdata = mutate(z_seq, x = 1)),
+      group = "Treated"
+    ),
+  z_seq |>
+    mutate(
+      x = 0,
+      correct = predict(gcomp_correct, newdata = mutate(z_seq, x = 0)),
+      wrong   = predict(gcomp_wrong,   newdata = mutate(z_seq, x = 0)),
+      group = "Untreated"
+    )
+)
+
+ggplot() +
+  geom_point(
+    data = sim_poor,
+    aes(x = z, y = y, color = factor(x)),
+    alpha = 0.3, size = 0.8
+  ) +
+  geom_line(
+    data = surfaces,
+    aes(x = z, y = correct, color = group),
+    linewidth = 1
+  ) +
+  geom_line(
+    data = surfaces,
+    aes(x = z, y = wrong, color = group),
+    linewidth = 1, linetype = "dashed"
+  ) +
+  labs(
+    x = "z",
+    y = "y",
+    color = "Group",
+    caption = "Solid lines: correctly specified model. Dashed lines: misspecified model."
+  )
+```
+
+The takeaway is that g-computation and IPW face a fundamental tradeoff when overlap is poor. IPW makes its reliance on overlap explicit (i.e., the weights blow up and the analyst is forced to confront the problem). G-computation absorbs the problem silently, producing a stable estimate that may nonetheless be wrong. Neither method can conjure causal information that is not in the data; g-computation simply moves the assumption from the propensity score model to the outcome model. When overlap is poor, getting the functional form of the outcome model right in the tails matters, and it is precisely in those regions that we have the least data to check it.
+:::
+
