@@ -526,7 +526,7 @@ podcast_dag <- dagify(
     prepared = "prepared"
   )
 )
-ggdag(podcast_dag, use_labels = "label", text = FALSE) +
+ggdag(podcast_dag, use_labels = TRUE, use_text = FALSE) +
   theme_dag()
 ```
 
@@ -615,7 +615,7 @@ In @fig-paths-podcast, we see two open paths: `podcast <- mood -> exam"` and `po
 podcast_dag |>
   # show the whole dag as a light gray "shadow"
   # rather than just the paths
-  ggdag_paths(shadow = TRUE, text = FALSE, use_labels = "label")
+  ggdag_paths(shadow = TRUE, use_text = FALSE, use_labels = TRUE)
 ```
 
 ::: callout-tip
@@ -663,8 +663,8 @@ Any arrows coming out of adjusted variables are removed from the DAG because the
 #| fig-cap: "A visualization of the minimal adjustment set for the podcast-exam DAG. If this DAG is correct, two variables are required to block the backdoor paths: `mood` and `prepared`."
 ggdag_adjustment_set(
   podcast_dag,
-  text = FALSE,
-  use_labels = "label"
+  use_text = FALSE,
+  use_labels = TRUE
 )
 ```
 
@@ -720,8 +720,8 @@ Full adjustment sets are every combination of variables that result in a valid s
 #| fig-cap: "All valid adjustment sets for `podcast_dag`."
 ggdag_adjustment_set(
   podcast_dag,
-  text = FALSE,
-  use_labels = "label",
+  use_text = FALSE,
+  use_labels = TRUE,
   # get full adjustment sets
   type = "all"
 )
@@ -819,7 +819,7 @@ podcast_dag_wrong <- dagify(
     prepared = "prepared"
   )
 )
-ggdag(podcast_dag_wrong, use_labels = "label", text = FALSE) +
+ggdag(podcast_dag_wrong, use_labels = TRUE, use_text = FALSE) +
   theme_dag()
 ```
 
@@ -897,7 +897,7 @@ podcast_dag2 <- dagify(
   )
 )
 
-ggdag(podcast_dag2, use_labels = "label", text = FALSE)
+ggdag(podcast_dag2, use_labels = TRUE, use_text = FALSE)
 ```
 
 ```{r}
@@ -915,7 +915,7 @@ Now there are *three* backdoor paths we need to close: `r open_paths`.
 #| fig-width: 11
 #| fig-height: 4.5
 #| fig-cap: "Three open paths in `podcast_dag2`. Since there is no effect of `podcast` on `exam`, all three are backdoor paths that must be closed to get the correct effect."
-ggdag_paths(podcast_dag2, use_labels = "label", text = FALSE, shadow = TRUE)
+ggdag_paths(podcast_dag2, use_labels = TRUE, use_text = FALSE, shadow = TRUE)
 ```
 
 There are four minimal adjustment sets to close all three paths (and eighteen full adjustment sets!).
@@ -930,7 +930,7 @@ Notably, `prepared` and `alertness` could happen at the same time or even after 
 #| fig-width: 7
 #| fig-height: 8
 #| fig-cap: "Valid minimal adjustment sets that will close the backdoor paths in @fig-podcast_dag2-paths."
-ggdag_adjustment_set(podcast_dag2, use_labels = "label", text = FALSE)
+ggdag_adjustment_set(podcast_dag2, use_labels = TRUE, use_text = FALSE)
 ```
 
 Deciding between these adjustment sets is a matter of judgment: if all data are perfectly measured, the DAG is correct, and we've modeled them correctly, then it doesn't matter which we use.
@@ -982,7 +982,7 @@ podcast_dag3 <- dagify(
     showed_up = "showed up"
   )
 )
-ggdag(podcast_dag3, use_labels = "label", text = FALSE)
+ggdag(podcast_dag3, use_labels = TRUE, use_text = FALSE)
 ```
 
 The problem is that `showed_up` is both a collider and a mediator: stratifying on it induces a relationship between many of the variables in the DAG but blocks the indirect effect of `podcast` on `exam`.
@@ -997,7 +997,7 @@ Unfortunately, we cannot calculate the total effect of `podcast` on `exam` becau
 #| fig-cap: "The adjustment set for `podcast_dag3` given that the data are inherently conditioned on showing up to the exam. In this case, there is no way to recover an unbiased estimate of the total effect of `podcast` on `exam`."
 podcast_dag3 |>
   adjust_for("showed_up") |>
-  ggdag_adjustment_set(text = FALSE, use_labels = "label")
+  ggdag_adjustment_set(use_text = FALSE, use_labels = TRUE)
 ```
 
 Sometimes, you can still estimate effects in this situation by changing the estimand you wish to estimate.
@@ -1011,7 +1011,7 @@ We can't calculate the total effect because we are missing the indirect effect, 
 #| fig-cap: "The adjustment set for `podcast_dag3` when targeting a different effect. There is one minimal adjustment set that we can use to estimate the direct effect of `podcast` on `exam`."
 podcast_dag3 |>
   adjust_for("showed_up") |>
-  ggdag_adjustment_set(effect = "direct", text = FALSE, use_labels = "label")
+  ggdag_adjustment_set(effect = "direct", use_text = FALSE, use_labels = TRUE)
 ```
 
 #### M-Bias and Butterfly Bias {#sec-m-bias}
@@ -1073,7 +1073,7 @@ podcast_dag4 <- dagify(
   latent = c("u1", "u2")
 )
 
-ggdag(podcast_dag4, use_labels = "label", text = FALSE)
+ggdag(podcast_dag4, use_labels = TRUE, use_text = FALSE)
 ```
 
 The problem arises when we think our original DAG is the right DAG: `mood` is in the adjustment set, so we control for it.
@@ -1090,7 +1090,7 @@ There is no way to close this open path.
 #| fig-cap: "The adjustment set where `mood` is a collider. If we control for `mood` and don't know about or have the unmeasured causes of `mood`, we have no means of closing the backdoor path opened by adjusting for a collider."
 podcast_dag4 |>
   adjust_for("mood") |>
-  ggdag_adjustment_set(use_labels = "label", text = FALSE)
+  ggdag_adjustment_set(use_labels = TRUE, use_text = FALSE)
 ```
 
 Of course, the best thing to do here is not control for `mood` at all.
@@ -1107,7 +1107,7 @@ This arrangement is sometimes called butterfly or bowtie bias, again because of 
 #| fig-height: 4
 #| fig-cap: "In butterfly bias, `mood` is both a collider and a confounder. Controlling for the bias induced by `mood` opens a new pathway because we've also conditioned on a collider. We can't properly close all backdoor paths without either `u1` or `u2`."
 butterfly_bias(x = "podcast", y = "exam", m = "mood", a = "u1", b = "u2") |>
-  ggdag(text = FALSE, use_labels = "label")
+  ggdag(use_text = FALSE, use_labels = TRUE)
 ```
 
 Now, we're in a challenging position: we need to control for `mood` because it's a confounder, but controlling for `mood` opens up the pathway from `u1` to `u2`.
@@ -1152,7 +1152,7 @@ podcast_dag5 <- dagify(
     grader_mood = "grader\nmood"
   )
 )
-ggdag(podcast_dag5, use_labels = "label", text = FALSE)
+ggdag(podcast_dag5, use_labels = TRUE, use_text = FALSE)
 ```
 
 There are now two variables that aren't related to *both* the exposure and the outcome: `humor`, which causes `podcast` but not `exam`, and `grader_mood`, which causes `exam` but not `podcast`.
@@ -1219,7 +1219,7 @@ error_dag <- dagify(
 )
 
 error_dag |>
-  ggdag(text = FALSE, use_labels = "label")
+  ggdag(use_text = FALSE, use_labels = TRUE)
 ```
 
 ## Recommendations in building DAGs
@@ -1351,7 +1351,7 @@ dagify(
   global_temp ~ ac_use,
   labels = c(ac_use = "A/C use", global_temp = "Global\ntemperature")
 ) |>
-  ggdag(layout = "circle", edge_type = "arc", text = FALSE, use_labels = "label")
+  ggdag(layout = "circle", edge_type = "arc", use_text = FALSE, use_labels = TRUE)
 ```
 
 From a DAG perspective, this is a problem because of the *A* part of *DAG*: it's cyclic!
@@ -1385,7 +1385,7 @@ dagify(
     global_temp_2020 = "Global\ntemperature\n(2020)"
   )
 ) |>
-  ggdag(text = FALSE, use_labels = "label")
+  ggdag(use_text = FALSE, use_labels = TRUE)
 ```
 
 The two variables, rather than being in a feed*back* loop, are actually in a feed*forward* loop: they co-evolve over time.
@@ -1454,7 +1454,7 @@ Can you answer the question at all?
 
 <!-- ) |>  -->
 
-<!--   ggdag(text = FALSE, use_labels = "label") -->
+<!--   ggdag(use_text = FALSE, use_labels = TRUE) -->
 
 <!-- ``` -->
 
@@ -1672,7 +1672,7 @@ podcast_dag_pruned <- dagify(
   )
 )
 
-ggdag(podcast_dag_pruned, text = FALSE, use_labels = "label")
+ggdag(podcast_dag_pruned, use_text = FALSE, use_labels = TRUE)
 ```
 
 This DAG seems more reasonable.
