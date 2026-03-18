@@ -80,6 +80,17 @@ ate <- avg_comparisons(
 ate
 ```
 
+::: {.callout-note}
+## Under the Hood: The Delta Method
+
+When `{marginaleffects}` computes uncertainty estimates for quantities like average treatment effects, it relies on the **delta method**, a technique for approximating the variance of a transformation of estimated parameters. If you have a vector of coefficients $\hat{\boldsymbol{\beta}}$ with known variance-covariance matrix $\Sigma$, and you want the variance of some function $g(\hat{\boldsymbol{\beta}})$ (like a predicted probability or a marginal effect), the delta method gives you:
+
+$$\text{Var}\left[g(\hat{\boldsymbol{\beta}})\right] \approx \nabla
+g(\hat{\boldsymbol{\beta}})^\top \, \Sigma \, \nabla g(\hat{\boldsymbol{\beta}})$$
+
+where $\nabla g$ is the gradient of $g$ with respect to $\boldsymbol{\beta}$. `{marginaleffects}` handles this gradient computation automatically and propagates it through $\Sigma$ to produce standard errors.
+:::
+
 ### Continuous Exposures
 
 The same strategy applies when the exposure is continuous. For instance, imagine estimating how the actual wait time at 9am would change if the posted wait time at 8am were set to 60 minutes rather than 30 minutes. The procedure outlined above is identical, except that the exposure is set to the chosen numerical values for the counterfactual datasets.
