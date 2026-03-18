@@ -367,20 +367,7 @@ wide <- df |>
   drop_na(wait_8, wait_9)
 ```
 
-Now let's fit the model for the posted wait, expressing its dependence on the 8am posted wait and the baseline covariates.
-
-```{r}
-m9 <- lm(
-  wait_9 ~ wait_8 +
-    park_extra_magic_morning +
-    park_ticket_season +
-    park_close +
-    park_temperature_high,
-  data = wide
-)
-```
-
-To add the outcome, the 10am actual wait is merged with these data.
+To add the outcome, the 10am actual wait is merged with these data before fitting any models, so that both models are trained on the same set of dates.
 
 ```{r}
 ten <- seven_dwarfs_train_2018 |>
@@ -390,6 +377,19 @@ ten <- seven_dwarfs_train_2018 |>
 three <- wide |>
   left_join(ten, by = "park_date") |>
   drop_na(wait_minutes_actual_avg)
+```
+
+Now let's fit the model for the posted wait, expressing its dependence on the 8am posted wait and the baseline covariates.
+
+```{r}
+m9 <- lm(
+  wait_9 ~ wait_8 +
+    park_extra_magic_morning +
+    park_ticket_season +
+    park_close +
+    park_temperature_high,
+  data = three
+)
 ```
 
 Now let's fit a second model that describes the 10am actual wait in terms of the earlier posted waits and the same baseline confounders.
@@ -435,6 +435,104 @@ tibble(
 ```
 
 The average of `wait_10` across all dates gives the estimated expected outcome under the intervention. Repeating the same procedure with the observed values of `wait_8` yields the expected outcome under the natural course. Their difference measures the effect of lowering the early-morning posted wait to thirty minutes.
+
+To estimate the uncertainty around this effect we can use the bootstrap. Following the convention outlined in @sec-bootstrap, we wrap the entire procedure (including fitting both models) into a single function. Because the intervention's effect at 10am flows through predictions from the 9am model, both models must be refit on each resample; fitting only the outcome model would produce confidence intervals that are too narrow. Here are the steps: 
+
+1. Create a function to run the time-varying g-formula once on a sample of your data:
+
+```{r}
+fit_gformula_tv <- function(.split, ...) {
+  .df <- as.data.frame(.split)
+
+  # fit model for 9am posted wait
+  m9 <- lm(
+    wait_9 ~ wait_8 +
+      park_extra_magic_morning +
+      park_ticket_season +
+      park_close +
+      park_temperature_high,
+    data = .df
+  )
+  
+  # fit model for 10am actual wait
+  m10 <- lm(
+    wait_minutes_actual_avg ~
+      wait_9 + wait_8 +
+      park_extra_magic_morning +
+      park_ticket_season +
+      park_close +
+      park_temperature_high,
+    data = .df
+  )
+  
+  # natural course
+  natural <- .df |>
+    mutate(wait_9_pred = predict(m9, newdata = pick(everything()))) |>
+    mutate(
+      wait_10_pred = predict(m10,
+        newdata = mutate(pick(everything()), wait_9 = wait_9_pred))
+    )
+  
+  # intervention: set all 8am waits to 30
+  intervention <- .df |>
+    mutate(wait_8 = 30) |>
+    mutate(wait_9_pred = predict(m9, newdata = pick(everything()))) |>
+    mutate(
+      wait_10_pred = predict(m10,
+        newdata = mutate(pick(everything()), wait_9 = wait_9_pred))
+    )
+  
+  tibble(
+    term = "ate",
+    estimate = mean(intervention$wait_10_pred) - mean(natural$wait_10_pred)
+  )
+}
+```
+
+2. Use {rsample} to bootstrap our causal effect:
+
+```{r}
+#| message: false
+#| warning: false
+library(rsample)
+set.seed(1)
+bootstrapped_dwarfs_tv <- bootstraps(
+  three,
+  times = 1000,
+  apparent = TRUE
+)
+
+gformula_tv_results <- bootstrapped_dwarfs_tv |>
+  mutate(boot_fits = map(splits, fit_gformula_tv))
+```
+
+Let's look at the results.
+
+```{r}
+gformula_tv_results |>
+  mutate(
+    estimate = map_dbl(
+      boot_fits,
+      \(.fit) .fit |>
+        filter(term == "ate") |>
+        pull(estimate)
+    )
+  ) |>
+  ggplot(aes(estimate)) +
+  geom_histogram(bins = 30, color = "white", alpha = 0.8) +
+  theme_minimal()
+```
+
+3. Pull out the causal effect:
+
+```{r}
+boot_estimate_tv <- int_pctl(gformula_tv_results, boot_fits) |>
+  filter(term == "ate")
+
+boot_estimate_tv
+```
+
+We estimate that setting the 8am posted wait to thirty minutes for every park date would change the average actual wait time at 10am by `r round(boot_estimate_tv$.estimate, 1)` minutes, 95% CI (`r round(boot_estimate_tv$.lower, 1)`, `r round(boot_estimate_tv$.upper, 1)`).
 
 ::: {.callout-warning}
 ## Positivity, Extrapolation, and the Price of Relying Only on the Outcome Model
