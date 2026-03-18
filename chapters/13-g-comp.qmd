@@ -80,6 +80,9 @@ ate <- avg_comparisons(
 ate
 ```
 
+It is worth pausing here to connect back to the framework from @sec-estimands. The estimand is the same whether we use IPW or an outcome model: $E[Y(1)−Y(0)]$, the average treatment effect. What differs is the
+estimator, the recipe we use to get there. When we used IPW in @sec-outcome-model, we reweighted the observed data to balance confounders across exposure groups. Above, with g-computation we fit the outcome model to directly estimate the potential outcomes under each exposure level and average their difference. Because these are different recipes for the same cake, we should not be surprised if they produce somewhat different estimates in practice. Each relies on its own modeling assumptions: IPW depends on a correctly specified propensity score model, while the outcome model depends on a correctly specified model for the outcome. When those models are wrong in different ways, the estimates will diverge.
+
 ::: {.callout-note}
 ## Under the Hood: The Delta Method
 
