@@ -312,19 +312,19 @@ To evaluate an intervention, suppose that all park dates begin with an 8am poste
 ```{r}
 # Observed: use observed 8am waits
 natural <- three |>
+  mutate(wait_9_pred = predict(m9, newdata = pick(everything()))) |>
   mutate(
-    wait_9_pred = predict(m9, newdata = cur_data()),
-    wait_10_pred = predict(m10, 
-      newdata = mutate(cur_data(), wait_9 = wait_9_pred))
+    wait_10_pred = predict(m10,
+      newdata = mutate(pick(everything()), wait_9 = wait_9_pred))
   )
 
 # Intervention: set all 8am waits to 30
 intervention <- three |>
   mutate(wait_8 = 30) |>
+  mutate(wait_9_pred = predict(m9, newdata = pick(everything()))) |>
   mutate(
-    wait_9_pred = predict(m9, newdata = cur_data()),
-    wait_10_pred = predict(m10, 
-      newdata = mutate(cur_data(), wait_9 = wait_9_pred))
+    wait_10_pred = predict(m10,
+      newdata = mutate(pick(everything()), wait_9 = wait_9_pred))
   )
 
 # Estimate causal effect
