@@ -49,6 +49,19 @@ exposed <- seven_dwarfs_9 |> mutate(park_extra_magic_morning = 1)
 unexposed <- seven_dwarfs_9 |> mutate(park_extra_magic_morning = 0)
 ```
 
+To build intuition for what these counterfactual datasets look like, it helps to examine them directly. Each row in the original data is "cloned" twice, once into a world where Extra Magic Morning hours occurred, and once into a world where they did not. The covariates are identical across the two clones; only the exposure value differs.
+
+```{r}
+bind_rows(
+  exposed |> mutate(clone = "exposed"),
+  unexposed |> mutate(clone = "unexposed")
+) |>
+  select(park_date, clone, park_extra_magic_morning, 
+         park_ticket_season, park_temperature_high) |>
+  arrange(park_date) |>
+  slice_head(n = 6)
+```
+
 Using the previously fitted outcome model, predicted outcomes are generated for each of these counterfactual datasets and averaged. These averages (marginal means) represent the expected posted wait time if everyone were exposed or if no one were exposed. We can then take the difference between these marginal means to estimate the causal effect of Extra Magic Morning on posted wait times.
 
 ```{r}
@@ -67,6 +80,30 @@ bind_cols(pred_exposed, pred_unexposed) |>
     difference = mean_exposed - mean_unexposed
   )
 ```
+
+We can visualize what is happening by plotting the predicted wait times under each scenario against a covariate, for example here, the historic high temperature.
+
+```{r}
+bind_cols(
+  seven_dwarfs_9 |> select(park_date, park_temperature_high),
+  pred_exposed,
+  pred_unexposed
+) |>
+  pivot_longer(
+    cols = starts_with("pred"),
+    names_to = "scenario",
+    values_to = "predicted_wait"
+  ) |>
+  ggplot(aes(x = park_temperature_high, y = predicted_wait, color = scenario)) +
+  geom_point(alpha = 0.5) +
+  labs(
+    x = "Historic High Temperature",
+    y = "Predicted Wait Time (minutes)",
+    color = "Scenario"
+  )
+```
+
+Each point represents a single park date predicted under the exposed and unexposed scenarios. Because we are using a linear model, the two sets of predictions are parallel (in other words, the gap between them is constant across the range of temperature). That gap, averaged across all park dates, is the estimated average treatment effect. Notice that we are not plugging in a single "representative" covariate value; we are generating predictions for every observation at their actual covariate values and then averaging. This is what it means to marginalize over the covariate distribution, and it is what distinguishes g-computation from simply extracting a coefficient from the outcome model.
 
 The `{marginaleffects`} package makes some of these mechanics easy and help with uncertainty quantification. For example, rather than creating the separate counterfactual datasets, we can calculate the average treatment effect directly using the `average_comparisons` function.
 
