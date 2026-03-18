@@ -131,6 +131,68 @@ g(\hat{\boldsymbol{\beta}})^\top \, \Sigma \, \nabla g(\hat{\boldsymbol{\beta}})
 where $\nabla g$ is the gradient of $g$ with respect to $\boldsymbol{\beta}$. `{marginaleffects}` handles this gradient computation automatically and propagates it through $\Sigma$ to produce standard errors.
 :::
 
+### Targeting Different Estimands
+
+As we discussed in @sec-estimands, the ATE is not the only causal estimand of interest. G-computation makes it straightforward to target different estimands by changing which covariate distribution we average over. For the ATE, we average predictions over the full observed sample. For the ATT, we average only over the covariate distribution of the exposed (in our case, days that actually had Extra Magic Morning hours). For the ATC, we average only over the unexposed. The outcome model is the same in all three cases; what changes is whose covariate values we use when generating predictions.
+We can target each of these estimands directly in `avg_comparisons` using the `newdata` argument:
+
+```{r}
+# ATE: average over the full sample
+avg_comparisons(
+  gcomp_model,
+  variables = "park_extra_magic_morning"
+)
+
+# ATT: average over exposed observations only
+avg_comparisons(
+  gcomp_model,
+  variables = "park_extra_magic_morning",
+  newdata = filter(seven_dwarfs_9, park_extra_magic_morning == 1)
+)
+
+# ATC: average over unexposed observations only
+avg_comparisons(
+  gcomp_model,
+  variables = "park_extra_magic_morning",
+  newdata = filter(seven_dwarfs_9, park_extra_magic_morning == 0)
+)
+```
+In this case, because our outcome model contains no interaction terms between the exposure and the covariates, the three estimates will be identical. A linear model without interactions assumes a constant treatment effect across all covariate values, so it does not matter whose covariate distribution we average over, we always recover the same gap. To see differences between the ATE, ATT, and ATC from g-computation, the outcome model needs to allow the effect of the exposure to vary with covariates, for example by including an interaction term like `park_extra_magic_morning * park_ticket_season`. Let's refit our model to see these differences.
+
+```{r}
+gcomp_model_int <- lm(
+  wait_minutes_posted_avg ~ 
+    park_extra_magic_morning +
+    park_ticket_season + 
+    park_close + 
+    park_temperature_high + 
+    park_extra_magic_morning * park_ticket_season,
+  data = seven_dwarfs_9
+)
+
+# ATE: average over the full sample
+avg_comparisons(
+  gcomp_model_int,
+  variables = "park_extra_magic_morning"
+)
+
+# ATT: average over exposed observations only
+avg_comparisons(
+  gcomp_model_int,
+  variables = "park_extra_magic_morning",
+  newdata = filter(seven_dwarfs_9, park_extra_magic_morning == 1)
+)
+
+# ATC: average over unexposed observations only
+avg_comparisons(
+  gcomp_model_int,
+  variables = "park_extra_magic_morning",
+  newdata = filter(seven_dwarfs_9, park_extra_magic_morning == 0)
+)
+```
+
+Once at least one interaction has been specified, the three estimates can differ because the exposed and unexposed days tend to have different covariate distributions. The ATT asks what the effect was for the kinds of days that actually had Extra Magic Hours; the ATC asks what the effect would be for the kinds of days that did not. If the treatment effect were constant across all covariate values, the three estimates would coincide. When they differ, that divergence is itself informative about treatment effect heterogeneity across the population.
+
 ### Continuous Exposures
 
 The same strategy applies when the exposure is continuous. For instance, imagine estimating how the actual wait time at 9am would change if the posted wait time at 8am were set to 60 minutes rather than 30 minutes. The procedure outlined above is identical, except that the exposure is set to the chosen numerical values for the counterfactual datasets.
