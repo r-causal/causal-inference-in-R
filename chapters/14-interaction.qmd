@@ -143,24 +143,24 @@ The interaction, if present, would be implicit in the functional form of how X a
 #| fig-height: 4
 
 explicit_interaction_dag <- dagify(
-  E ~ X,
-  Q ~ X,
-  D ~ E + Q + X + ExQ,
-  ExQ ~ E + Q,
+  X ~ Z,
+  Q ~ Z,
+  Y ~ X + Q + Z + XxQ,
+ XxQ ~ X + Q,
   coords = time_ordered_coords(
     list(
-      c("X"),
-      c("E", "Q"),
-      "ExQ",
-      "D"
+      c("Z"),
+      c("X", "Q"),
+      "XxQ",
+      "Y"
     )
   ),
-  exposure = "E",
-  outcome = "D",
+  exposure = "X",
+  outcome = "Y",
   labels = c(
-    E = "E",
-    D = "D",
     X = "X",
+    Y = "Y",
+    Z = "Z",
     Q = "Q",
     ExQ = "E × Q\ninteraction"
   )
