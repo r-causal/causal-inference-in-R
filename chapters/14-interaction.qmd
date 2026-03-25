@@ -106,21 +106,21 @@ The standard approach is to draw a conventional DAG without explicitly represent
 
 conventional_dag <- dagify(
   X ~ Z,
-  Q ~ X,
-  D ~ E + Q + X,
+  Q ~ Z,
+  Y ~ X + Q + Z,
   coords = time_ordered_coords(
     list(
-      c("X"),
-      c("E", "Q"),
+      c("Z"),
+      c("X", "Q"),
       "Y"
     )
   ),
-  exposure = "E",
-  outcome = "D",
+  exposure = "X",
+  outcome = "Y",
   labels = c(
-    E = "E",
-    D = "D",
     X = "X",
+    Y = "Y",
+    Z = "Z",
     Q = "Q"
   )
 )
@@ -129,8 +129,8 @@ ggdag(conventional_dag) +
   theme_dag()
 ```
 
-This DAG shows that E, Q, and X all affect D, but it doesn't explicitly indicate whether E and Q interact.
-The interaction, if present, would be implicit in the functional form of how E and Q jointly affect D in a statistical model.
+This DAG shows that X, Q, and Z all affect Y, but it doesn't explicitly indicate whether X and Q interact.
+The interaction, if present, would be implicit in the functional form of how X and Q jointly affect Y in a statistical model.
 
 ### Explicit interaction nodes
 
