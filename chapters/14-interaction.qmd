@@ -367,7 +367,7 @@ sim_data <- tibble(
 # We can assess this by controlling for X (the confounder)
 mod_interaction <- lm(D ~ E + Q + E:Q + X, data = sim_data)
 tidy(mod_interaction) |>
-  filter(str_detect(term, "E|Q"))
+  filter(str_detect(term, "X|Q"))
 ```
 
 The interaction term `X:Q` is `r round(coef(mod_interaction)["X:Q"], 2)`, indicating there is interaction between X and Q when we control for Z.
