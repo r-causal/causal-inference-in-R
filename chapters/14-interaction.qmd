@@ -162,7 +162,7 @@ explicit_interaction_dag <- dagify(
     Y = "Y",
     Z = "Z",
     Q = "Q",
-    ExQ = "E × Q\ninteraction"
+    XxQ = "X × Q\ninteraction"
   )
 )
 
@@ -170,7 +170,7 @@ ggdag(explicit_interaction_dag) +
   theme_dag()
 ```
 
-This approach makes the interaction explicit: arrows from E and Q point to `ExQ`, and `ExQ` points to D.
+This approach makes the interaction explicit: arrows from X and Q point to `XxQ`, and `XxQ` points to Y.
 This can help identify appropriate adjustment sets for estimating interaction effects [@Attia2022].
 The DAG maintains conventional DAG conventions and can be drawn using standard DAG software.
 
@@ -188,20 +188,20 @@ The DAG maintains conventional DAG conventions and can be drawn using standard D
 # This is a simplified representation - full IDAGs would show the effect node
 # For demonstration, we show a conceptual version
 idag_dag <- dagify(
-  E ~ X,
-  Q ~ X,
-  Effect ~ E + Q + X,
+  X ~ Z,
+  Q ~ Z,
+  Effect ~ X + Q + Z,
   coords = time_ordered_coords(
     list(
-      c("X"),
-      c("E", "Q"),
+      c("Z"),
+      c("X", "Q"),
       "Effect"
     )
   ),
-  exposure = "E",
+  exposure = "X",
   outcome = "Effect",
   labels = c(
-    E = "E",
+    X = "X",
     Effect = "Causal\neffect",
     X = "X",
     Q = "Q"
