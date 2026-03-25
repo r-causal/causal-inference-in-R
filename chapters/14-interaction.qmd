@@ -370,7 +370,7 @@ tidy(mod_interaction) |>
   filter(str_detect(term, "E|Q"))
 ```
 
-The interaction term `E:Q` is `r round(coef(mod_interaction)["E:Q"], 2)`, indicating there is interaction between E and Q when we control for X.
+The interaction term `X:Q` is `r round(coef(mod_interaction)["X:Q"], 2)`, indicating there is interaction between X and Q when we control for Z.
 
 Now let's check for effect modification by conditioning on Q (without controlling for X):
 
