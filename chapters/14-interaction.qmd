@@ -364,7 +364,7 @@ sim_data <- tibble(
 )
 
 # Check: Is there interaction when we intervene on both E and Q?
-# We can assess this by controlling for X (the confounder)
+# We can assess this by controlling for Z (the confounder)
 mod_interaction <- lm(Y ~ X + Q + X:Q + Z, data = sim_data)
 tidy(mod_interaction) |>
   filter(str_detect(term, "X|Q"))
