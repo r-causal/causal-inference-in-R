@@ -54,7 +54,7 @@ This distinction becomes clearer when we think about it in terms of counterfactu
 ### Formal definitions
 
 Let's make these concepts more precise using counterfactual notation.
-Let $D_e$ denote the counterfactual outcome D under an intervention to set exposure E to level e.
+Let $Y(x)$ denote the counterfactual outcome $Y$ under an intervention to set exposure $X$ to level $x$.
 Let $D_{eq}$ denote the counterfactual outcome D under interventions to set both E and Q to levels e and q, respectively.
 
 **Effect modification** on the causal risk difference scale occurs when:
