@@ -203,7 +203,7 @@ idag_dag <- dagify(
   labels = c(
     X = "X",
     Effect = "Causal\neffect",
-    X = "X",
+    Z = "Z",
     Q = "Q"
   )
 )
@@ -237,26 +237,26 @@ Understanding when and why this happens helps clarify the distinction.
 ### Effect modification without interaction
 
 Consider the DAG in @fig-effect-mod-no-interaction, which uses `ggdag` to reproduce an example given by @VanderWeele2009.
-Here, E is a drug, D is hypertension, X is a person's genotype, and Q is hair color.
+Here, X is a drug, Y is hypertension, Z is a person's genotype, and Q is hair color.
 Hair color serves as a proxy for a genotype that drives risk of hypertension.
 
 ```{r}
 #| label: fig-effect-mod-no-interaction
-#| fig-cap: "A DAG showing effect modification by Q (hair color) of the effect of E (drug) on D (hypertension) without interaction between E and Q. Hair color Q is a proxy for genotype X, which modifies the effect of E on D."
+#| fig-cap: "A DAG showing effect modification by Q (hair color) of the effect of X (drug) on Y (hypertension) without interaction between X and Q. Hair color Q is a proxy for genotype Z, which modifies the effect of X on Y."
 #| fig-width: 5
 #| fig-height: 4
 
 effect_mod_dag <- dagify(
-  D ~ E + X,
-  Q ~ X,
+  Y ~ X + Z,
+  Q ~ Z,
   coords = time_ordered_coords(
     list(
-      c("X"),
-      c("E", "Q"),
-      "D"
+      c("Z"),
+      c("X", "Q"),
+      "Y"
     )
   ),
-  exposure = "E",
+  exposure = "X",
   outcome = "D",
   labels = c(
     E = "Drug",
