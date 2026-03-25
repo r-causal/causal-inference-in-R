@@ -297,17 +297,17 @@ interaction_dag <- dagify(
   Y ~ Z + Q + X,
   coords = time_ordered_coords(
     list(
-      c("X"),
-      c("E", "Q"),
-      "D"
+      c("Z"),
+      c("X", "Q"),
+      "Y"
     )
   ),
-  exposure = "E",
-  outcome = "D",
+  exposure = "X",
+  outcome = "Y",
   labels = c(
-    E = "Weight-loss\ndrug",
-    D = "Weight",
-    X = "Sugar\nintake",
+    X = "Weight-loss\ndrug",
+    Y = "Weight",
+    Z = "Sugar\nintake",
     Q = "Exercise"
   )
 )
@@ -316,19 +316,19 @@ ggdag(interaction_dag, use_labels = TRUE) +
   theme_dag()
 ```
 
-Suppose the effects of the weight-loss drug E and exercise Q interact such that $E[D_{e_1 q_1}] - E[D_{e_0 q_1}] \neq E[D_{e_1 q_0}] - E[D_{e_0 q_0}]$.
+Suppose the effects of the weight-loss drug X and exercise Q interact such that $E[Y(x_1,q_1)] - E[Y(x_0,q_1)] \neq E[Y(x_1,q_0)] - E[Y(x_0, q_0)]$.
 In other words, if we were to intervene to give participants the drug and also implement an exercise routine, the effect of these two interventions together would differ from the sum of their individual effects.
 
-However, Q might not be an effect modifier for the effect of E on D.
-Sugar intake X affects both exercise Q and weight D.
+However, Q might not be an effect modifier for the effect of X on Y.
+Sugar intake Z affects both exercise Q and weight Y.
 High sugar intake might increase weight directly, but it might also make participants more hyperactive (more likely to exercise), which decreases weight.
 These effects might cancel out.
 Participants with high exercise levels might also have high sugar intake (which increases weight), while participants with low exercise might have low sugar intake (which decreases weight).
-These cancellations can occur regardless of whether a participant receives the drug E.
+These cancellations can occur regardless of whether a participant receives the drug X.
 
-It's therefore possible that we observe $E[D_{e_1} | Q = q_1] - E[D_{e_0} | Q = q_1] = E[D_{e_1} | Q = q_0] - E[D_{e_0} | Q = q_0]$, meaning Q is not an effect modifier, even though there is interaction between the effects of E and Q when we intervene on both.
+It's therefore possible that we observe $E[Y(x_1) | Q = q_1] - E[Y(x_0) | Q = q_1] = E[Y(x_1) | Q = q_0] - E[Y(x_0) | Q = q_0]$, meaning Q is not an effect modifier, even though there is causal interaction between the effects of X and Q when we intervene on both.
 
-The key insight is that conditioning on Q (as in effect modification) captures information about common causes of Q and D (like X), while intervening on Q (as in interaction) does not.
+The key insight is that conditioning on Q (as in effect modification) captures information about common causes of Q and Y (like Z), while intervening on Q (as in interaction) does not.
 This difference can lead to effect modification and interaction giving different answers.
 
 Let's demonstrate this with a simulation:
@@ -336,31 +336,31 @@ Let's demonstrate this with a simulation:
 ```{r}
 #| message: false
 #| warning: false
-set.seed(67)
+set.seed(1)
 library(tidyverse)
 library(broom)
 
 # Simulate data where:
-# - X (sugar intake) affects both Q (exercise) and D (weight)
-# - E (drug) and Q interact in their effect on D
-# - But conditioning on Q masks the interaction due to confounding by X
-# We set up the parameters so that when we condition on Q without controlling for X,
+# - Z (sugar intake) affects both Q (exercise) and Y (weight)
+# - X (drug) and Q interact in their effect on Y
+# - But conditioning on Q masks the interaction due to confounding by Z
+# We set up the parameters so that when we condition on Q without controlling for Z,
 # the confounding cancels out the interaction, making it appear there's no effect modification
 
 n <- 2000
 sim_data <- tibble(
   # Sugar intake (confounder)
-  X = rnorm(n),
+  Z = rnorm(n),
   # Exercise level (affected by sugar intake)
-  Q = rbinom(n, 1, plogis(-0.5 + 1.2 * X)),
-  # Drug assignment (randomized, so independent of X and Q)
-  E = rbinom(n, 1, 0.5),
-  # Weight outcome with interaction between E and Q
-  # But also affected by X (common cause of Q and D)
-  # The coefficients are carefully chosen so that conditioning on Q without X
+  Q = rbinom(n, 1, plogis(-0.5 + 1.2 * Z)),
+  # Drug assignment (randomized, so independent of Z and Q)
+  X = rbinom(n, 1, 0.5),
+  # Weight outcome with interaction between X and Q
+  # But also affected by Z (common cause of Q and Y)
+  # The coefficients are carefully chosen so that conditioning on Q without Z
   # creates confounding that attenuates the interaction
-  # True interaction: -4, but X's effect on D creates bias when we condition on Q
-  D = 70 - 2 * E - 1 * Q - 4 * E * Q + 3.5 * X + rnorm(n, 0, 2)
+  # True interaction: -4, but Z's effect on Y creates bias when we condition on Q
+  Y = 70 - 2 * X - 1 * Q - 4 * X * Q + 3.5 * Z + rnorm(n, 0, 2)
 )
 
 # Check: Is there interaction when we intervene on both X and Q?
