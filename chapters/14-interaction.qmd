@@ -257,7 +257,7 @@ effect_mod_dag <- dagify(
     )
   ),
   exposure = "X",
-  outcome = "D",
+  outcome = "Y",
   labels = c(
     E = "Drug",
     D = "Hypertension",
