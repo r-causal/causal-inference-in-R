@@ -46,7 +46,7 @@ Importantly, Q must be a pre-treatment variable which cannot be affected by X [@
 
 **Interaction**, on the other hand, concerns whether the joint effect of two exposures (X and Q) together differs from what we'd expect based on their individual effects.
 In interaction, we consider interventions on both E and Q.
-Interaction is symmetric: both E and Q are intervention variables of equal interest, and the definition gives them equal status [@hernan2021].
+Interaction is symmetric: both X and Q are intervention variables of equal interest, and the definition gives them equal status [@hernan2021].
 
 To summarize, the key difference is that, in effect modification, Q is a conditioning variable, while, in interaction, Q is an intervention variable.
 This distinction becomes clearer when we think about it in terms of counterfactuals and causal diagrams.
