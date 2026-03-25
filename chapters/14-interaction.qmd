@@ -55,7 +55,7 @@ This distinction becomes clearer when we think about it in terms of counterfactu
 
 Let's make these concepts more precise using counterfactual notation.
 Let $Y(x)$ denote the counterfactual outcome $Y$ under an intervention to set exposure $X$ to level $x$.
-Let $D_{eq}$ denote the counterfactual outcome D under interventions to set both E and Q to levels e and q, respectively.
+Let $Y(x,q)$ denote the counterfactual outcome $Y$ under interventions to set both X and Q to levels x and q, respectively.
 
 **Effect modification** on the causal risk difference scale occurs when:
 $$E[Y(1) | Q = q_1] - E[Y(0)| Q = q_1] \neq E[Y(1) | Q = q_0] - E[Y(0) | Q = q_0]$$
