@@ -134,7 +134,7 @@ The interaction, if present, would be implicit in the functional form of how X a
 
 ### Explicit interaction nodes
 
-@Attia2022 proposed representing interactions explicitly by adding an interaction node (like `ExQ`) to conventional DAGs.
+@Attia2022 proposed representing interactions explicitly by adding an interaction node (like `XxQ`) to conventional DAGs.
 
 ```{r}
 #| label: fig-dag-explicit-interaction
