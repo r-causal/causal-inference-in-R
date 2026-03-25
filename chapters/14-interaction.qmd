@@ -60,9 +60,9 @@ Let $D_{eq}$ denote the counterfactual outcome D under interventions to set both
 **Effect modification** on the causal risk difference scale occurs when:
 $$E[D_{e_1} | Q = q_1] - E[D_{e_0} | Q = q_1] \neq E[D_{e_1} | Q = q_0] - E[D_{e_0} | Q = q_0]$$
 
-Notice that we're conditioning on Q (looking at $D_e$ given Q), not intervening on it.
+Notice that we're conditioning on Q (looking at $Y(x)$ given Q), not intervening on it.
 Effect modification can be defined with respect to the entire distribution of potential outcomes or with respect to a specific measure (like the risk difference above) [@VanderWeele2012].
-The key question we are asking is "Does the effect of E vary across levels of Q?"
+The key question we are asking is "Does the effect of X vary across levels of Q?"
 
 **Effect-measure modification** emphasizes that the presence of effect modification depends on the effect measure chosen [@hernan2021].
 For example, there may be effect modification on the additive scale (risk difference) but not on the multiplicative scale (risk ratio), or vice versa.
@@ -74,25 +74,25 @@ Q may be a **surrogate effect modifier**, that is, a marker for the true causal 
 For example, nationality might modify the effect of treatment because it's correlated with quality of care, which is the true causal effect modifier [@hernan2021].
 
 **Interaction** on the causal risk difference scale occurs when:
-$$E[D_{e_1 q_1}] - E[D_{e_0 q_1}] \neq E[D_{e_1 q_0}] - E[D_{e_0 q_0}]$$
+$$E[Y(1, q_1)] - E[Y(0, q_1)] \neq E[Y(1,q_0)] - E[Y(0, q_0)]$$
 
-Here, we're intervening on both E and Q (looking at $D_{eq}$).
-This definition asks: does the effect of E vary depending on what level we set Q to?
+Here, we're intervening on both X and Q (looking at $Y(xq)$).
+This definition asks: does the effect of X vary depending on what level we set Q to?
 
-Because interaction is symmetric, this definition is equivalent to asking whether the effect of Q varies depending on what level we set E to:
-$$E[D_{e_1 q_1}] - E[D_{e_1 q_0}] \neq E[D_{e_0 q_1}] - E[D_{e_0 q_0}]$$
+Because interaction is symmetric, this definition is equivalent to asking whether the effect of Q varies depending on what level we set X to:
+$$E[Y(1, q_1)] - E[Y(1, q_0)] \neq E[Y(0, q_1)] - E[Y(0, q_0)]$$
 
-The two formulations are mathematically equivalent and show that E and Q have equal status in the definition of interaction [@hernan2021].
+The two formulations are mathematically equivalent and show that X and Q have equal status in the definition of interaction [@hernan2021].
 Like effect modification, interaction can be defined with respect to distributions or specific measures, and the presence of interaction may depend on the scale chosen (additive vs. multiplicative) [@VanderWeele2012; @VanderWeele2014].
 
 These definitions make clear that effect modification and interaction are asking different questions.
-Effect modification asks about variation in the effect of E across observed levels of Q.
-Interaction asks about variation in the effect of E across intervened-upon levels of Q (or equivalently, variation in the effect of Q across intervened-upon levels of E).
+Effect modification asks about variation in the effect of X across observed levels of Q.
+Interaction asks about variation in the effect of E across intervened-upon levels of Q (or equivalently, variation in the effect of Q across intervened-upon levels of X).
 
 ## Representing interaction and effect modification in DAGs
 
 As noted earlier, conventional DAGs don't inherently represent interaction or effect modification, though some proposals exist to include these features.
-Here we demonstrate three approaches using a simple example where E (treatment) and Q (another exposure) may interact in their effect on D (outcome), with X as a confounder.
+Here we demonstrate three approaches using a simple example where X (treatment) and Q (another exposure) may interact in their effect on D (outcome), with Z as a confounder.
 
 ### Conventional DAGs
 
