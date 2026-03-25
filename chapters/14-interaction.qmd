@@ -39,7 +39,7 @@ In this chapter, we'll use causal diagrams to clarify these concepts and show ho
 ## Effect modification versus interaction
 
 **Effect modification** occurs when the effect of one exposure (X) on an outcome (Y) varies across strata of a third variable (Q).
-In effect modification, we're interested in how the effect of E changes depending on Q.
+In effect modification, we're interested in how the effect of X changes depending on Q.
 In this setting, we condition on Q to look at what happens within levels of Q, but we don't necessarily intervene on Q itself.
 Effect modification is asymmetric: it focuses on the effect of X, not on the effect of Q.
 Importantly, Q must be a pre-treatment variable which cannot be affected by X [@hernan2021].
