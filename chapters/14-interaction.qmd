@@ -45,7 +45,7 @@ Effect modification is asymmetric: it focuses on the effect of X, not on the eff
 Importantly, Q must be a pre-treatment variable which cannot be affected by X [@hernan2021].
 
 **Interaction**, on the other hand, concerns whether the joint effect of two exposures (X and Q) together differs from what we'd expect based on their individual effects.
-In interaction, we consider interventions on both E and Q.
+In interaction, we consider interventions on both X and Q.
 Interaction is symmetric: both X and Q are intervention variables of equal interest, and the definition gives them equal status [@hernan2021].
 
 To summarize, the key difference is that, in effect modification, Q is a conditioning variable, while, in interaction, Q is an intervention variable.
