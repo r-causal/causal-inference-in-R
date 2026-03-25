@@ -105,7 +105,7 @@ The standard approach is to draw a conventional DAG without explicitly represent
 #| fig-height: 4
 
 conventional_dag <- dagify(
-  E ~ X,
+  X ~ Z,
   Q ~ X,
   D ~ E + Q + X,
   coords = time_ordered_coords(
