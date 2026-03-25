@@ -44,7 +44,7 @@ In this setting, we condition on Q to look at what happens within levels of Q, b
 Effect modification is asymmetric: it focuses on the effect of X, not on the effect of Q.
 Importantly, Q must be a pre-treatment variable which cannot be affected by X [@hernan2021].
 
-**Interaction**, on the other hand, concerns whether the joint effect of two exposures (E and Q) together differs from what we'd expect based on their individual effects.
+**Interaction**, on the other hand, concerns whether the joint effect of two exposures (X and Q) together differs from what we'd expect based on their individual effects.
 In interaction, we consider interventions on both E and Q.
 Interaction is symmetric: both E and Q are intervention variables of equal interest, and the definition gives them equal status [@hernan2021].
 
