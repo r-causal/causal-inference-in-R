@@ -259,9 +259,9 @@ effect_mod_dag <- dagify(
   exposure = "X",
   outcome = "Y",
   labels = c(
-    E = "Drug",
-    D = "Hypertension",
-    X = "Genotype",
+    X = "Drug",
+    Y = "Hypertension",
+    Z = "Genotype",
     Q = "Hair\ncolor"
   )
 )
@@ -270,12 +270,12 @@ ggdag(effect_mod_dag, use_labels = TRUE) +
   theme_dag()
 ```
 
-In this DAG, Q (hair color) can serve as an effect modifier for the effect of E (drug) on D (hypertension) because Q is a proxy for X (genotype), which actually modifies the effect.
-We might observe that $E[D_e | Q = q_1] - E[D_e | Q = q_0] \neq E[D_e | Q = q_0] - E[D_e | Q = q_0]$, meaning the effect of the drug varies across hair color groups.
+In this DAG, Q (hair color) can serve as an effect modifier for the effect of X (drug) on Y (hypertension) because Q is a proxy for Z (genotype), which actually modifies the effect.
+We might observe that $E[Y(x) | Q = q_1] - E[Y(x) | Q = q_0] \neq E[Y(x) | Q = q_0] - E[Y(x) | Q = q_0]$, meaning the effect of the drug varies across hair color groups.
 
-However, there is no interaction between the effects of E and Q on D.
+However, there is no interaction between the effects of X and Q on Y.
 Because Q has no causal effect on D (the only path from Q to D goes through X, and we're conditioning on X when we look at the effect of E), interventions on Q do nothing to D.
-We have $E[D_{eq}] - E[D_{e_0 q}] = E[D_e] - E[D_{e_0}]$ for all values of q.
+We have $E[Y(1, q)] - E[Y(0,q)] = E[Y(1)] - E[Y(0)]$ for all values of q.
 Intervening to change someone's hair color won't change their hypertension risk, so there can be no interaction.
 
 This example illustrates that a variable can be an effect modifier without there being an interaction between the effects of that variable and the primary exposure.
@@ -284,17 +284,17 @@ This example illustrates that a variable can be an effect modifier without there
 
 The converse is also possible, where interaction can exist without effect modification.
 Consider @fig-interaction-no-effect-mod which is another `ggdag` reporoduction from [@VanderWeele2009].
-E is a weight-loss drug given in a randomized trial, D is weight at the end of the trial, X is sugar intake, and Q is exercise level.
+X is a weight-loss drug given in a randomized trial, Y is weight at the end of the trial, Z is sugar intake, and Q is exercise level.
 
 ```{r}
 #| label: fig-interaction-no-effect-mod
-#| fig-cap: "A DAG showing potential interaction between the effects of E (weight-loss drug) and Q (exercise) on D (weight) without effect modification by Q of the effect of E on D. Sugar intake X affects both exercise Q and weight D."
+#| fig-cap: "A DAG showing potential interaction between the effects of X (weight-loss drug) and Q (exercise) on Y (weight) without effect modification by Q of the effect of X on Y. Sugar intake Z affects both exercise Q and weight Y."
 #| fig-width: 5
 #| fig-height: 4
 
 interaction_dag <- dagify(
-  Q ~ X,
-  D ~ X + Q + E,
+  Q ~ Z,
+  Y ~ Z + Q + X,
   coords = time_ordered_coords(
     list(
       c("X"),
