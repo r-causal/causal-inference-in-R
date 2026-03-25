@@ -58,7 +58,7 @@ Let $Y(x)$ denote the counterfactual outcome $Y$ under an intervention to set ex
 Let $D_{eq}$ denote the counterfactual outcome D under interventions to set both E and Q to levels e and q, respectively.
 
 **Effect modification** on the causal risk difference scale occurs when:
-$$E[D_{e_1} | Q = q_1] - E[D_{e_0} | Q = q_1] \neq E[D_{e_1} | Q = q_0] - E[D_{e_0} | Q = q_0]$$
+$$E[Y(1) | Q = q_1] - E[Y(0)| Q = q_1] \neq E[Y(1) | Q = q_0] - E[Y(0) | Q = q_0]$$
 
 Notice that we're conditioning on Q (looking at $Y(x)$ given Q), not intervening on it.
 Effect modification can be defined with respect to the entire distribution of potential outcomes or with respect to a specific measure (like the risk difference above) [@VanderWeele2012].
@@ -112,7 +112,7 @@ conventional_dag <- dagify(
     list(
       c("X"),
       c("E", "Q"),
-      "D"
+      "Y"
     )
   ),
   exposure = "E",
