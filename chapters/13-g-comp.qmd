@@ -253,7 +253,7 @@ bind_cols(pred_high, pred_low) |>
 
 The resulting difference estimates how much the actual wait time would change if posted wait time were set to these two specific values and all other variables remained as observed.
 
-As above, we can also use the {`marginaleffects`} package along with the `average_comparisons` function:
+As above, we can also use the `{marginaleffects}` package along with the `average_comparisons` function:
 
 ```{r}
 comparison_30_60 <- avg_comparisons(
