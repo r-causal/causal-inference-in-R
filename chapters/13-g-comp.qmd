@@ -105,7 +105,7 @@ bind_cols(
 
 Each point represents a single park date predicted under the exposed and unexposed scenarios. Because we are using a linear model, the two sets of predictions are parallel (in other words, the gap between them is constant across the range of temperature). That gap, averaged across all park dates, is the estimated average treatment effect. Notice that we are not plugging in a single "representative" covariate value; we are generating predictions for every observation at their actual covariate values and then averaging. This is what it means to marginalize over the covariate distribution, and it is what distinguishes g-computation from simply extracting a coefficient from the outcome model.
 
-The `{marginaleffects`} package makes some of these mechanics easy and help with uncertainty quantification. For example, rather than creating the separate counterfactual datasets, we can calculate the average treatment effect directly using the `average_comparisons` function.
+The `{marginaleffects}` package makes some of these mechanics easy and help with uncertainty quantification. For example, rather than creating the separate counterfactual datasets, we can calculate the average treatment effect directly using the `average_comparisons` function.
 
 ```{r}
 library(marginaleffects)
