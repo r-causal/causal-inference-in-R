@@ -224,3 +224,142 @@ In practice, many regression models with interaction terms are used to study eff
 
 For most policy and applied settings, the subgroup question is the relevant one: **who benefits more, who benefits less, and how does the average effect depend on population composition?** That is why heterogeneous treatment effects and effect modification are central to causal inference, transportability, and targeting interventions.
 
+## Representing interaction and effect modification in DAGs
+
+As noted earlier, conventional DAGs don't inherently represent interaction or effect modification, though some proposals exist to include these features.
+Here we demonstrate three approaches using a simple example where $X$ (exposure) and $Q$ (another exposure) may interact in their effect on Y (outcome), with $Z$ as a confounder.
+
+### Conventional DAGs
+
+The standard approach is to draw a conventional DAG without explicitly representing interactions.
+
+```{r}
+#| label: fig-dag-conventional
+#| fig-cap: "A conventional DAG showing X, Q, and Y without explicitly representing interaction. The interaction, if present, is implicit in the functional form of the relationship."
+#| fig-width: 5
+#| fig-height: 4
+
+conventional_dag <- dagify(
+  X ~ Z,
+  Q ~ Z,
+  Y ~ X + Q + Z,
+  coords = time_ordered_coords(
+    list(
+      c("Z"),
+      c("X", "Q"),
+      "Y"
+    )
+  ),
+  exposure = "X",
+  outcome = "Y",
+  labels = c(
+    X = "X",
+    Y = "Y",
+    Z = "Z",
+    Q = "Q"
+  )
+)
+
+ggdag(conventional_dag) +
+  theme_dag()
+```
+
+This DAG shows that X, Q, and Z all affect Y, but it doesn't explicitly indicate whether X and Q interact. The interaction, if present, would be implicit in the functional form of how X and Q jointly affect Y in a statistical model.
+
+### Explicit interaction nodes
+
+@Attia2022 proposed representing interactions explicitly by adding an interaction node (like `XxQ`) to conventional DAGs.
+
+```{r}
+#| label: fig-dag-explicit-interaction
+#| fig-cap: "A DAG with an explicit interaction node XxQ, following the approach proposed by @Attia2022. This makes the interaction explicit in the causal structure."
+#| fig-width: 5
+#| fig-height: 4
+
+explicit_interaction_dag <- dagify(
+  X ~ Z,
+  Q ~ Z,
+  Y ~ X + Q + Z + XxQ,
+  XxQ ~ X + Q,
+  coords = time_ordered_coords(
+    list(
+      c("Z"),
+      c("X", "Q"),
+      "XxQ",
+      "Y"
+    )
+  ),
+  exposure = "X",
+  outcome = "Y",
+  labels = c(
+    X = "X",
+    Y = "Y",
+    Z = "Z",
+    Q = "Q",
+    XxQ = "X × Q\ninteraction"
+  )
+)
+
+ggdag(explicit_interaction_dag) +
+  theme_dag()
+```
+
+This approach makes the interaction explicit: arrows from X and Q point to `XxQ`, and `XxQ` points to Y.
+This can help identify appropriate adjustment sets for estimating interaction effects [@Attia2022].
+The DAG maintains conventional DAG conventions and can be drawn using standard DAG software.
+
+### Interaction DAGs (IDAGs)
+
+@Nilsson2021 proposed a different approach: **interaction DAGs (IDAGs)** that replace the outcome node with a node representing a causal effect measure.
+
+```{r}
+#| label: fig-dag-idag
+#| fig-cap: "An interaction DAG (IDAG) following @Nilsson2021, where the outcome node Y is replaced with a node representing the causal effect. This requires a separate DAG for interactions."
+#| fig-width: 5
+#| fig-height: 4
+
+# Note: IDAGs represent causal effects rather than outcomes
+# This is a simplified representation - full IDAGs would show the effect node
+# For demonstration, we show a conceptual version
+idag_dag <- dagify(
+  X ~ Z,
+  Q ~ Z,
+  Effect ~ X + Q + Z,
+  coords = time_ordered_coords(
+    list(
+      c("Z"),
+      c("X", "Q"),
+      "Effect"
+    )
+  ),
+  exposure = "X",
+  outcome = "Effect",
+  labels = c(
+    X = "X",
+    Effect = "Causal\neffect",
+    Z = "Z",
+    Q = "Q"
+  )
+)
+
+ggdag(idag_dag) +
+  theme_dag()
+```
+
+In IDAGs, instead of depicting how different variables influence the outcome, the DAG depicts how different variables influence the size of a chosen effect measure [@Nilsson2021].
+This framework separates interactions from main effects, typically requiring separate DAGs for main effects and interactions.
+IDAGs preserve usual DAG conventions for reading and interpreting causal relationships.
+
+### Choosing an approach
+
+Each approach has advantages:
+
+- **Conventional DAGs** are simple and widely understood, but interactions are implicit
+- **Explicit interaction nodes** make interactions visible while maintaining conventional DAG structure
+- **IDAGs** provide a rigorous framework but require separate diagrams for main effects and interactions
+
+The choice depends on your goals.
+If you want to make interactions explicit within a single diagram, the explicit interaction node approach may be most practical.
+If you're conducting a detailed analysis of interaction mechanisms, IDAGs provide a more formal framework.
+For most purposes, conventional DAGs suffice, with interactions handled in the statistical modeling stage.
+
