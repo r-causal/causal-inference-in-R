@@ -31,6 +31,7 @@ $$
 \text{ATC}=E[\tau(Z)\mid X=0].
 $$
 
+The above are different averages of the same function $\tau(Z)$. Any difference between them is driven by two things: 1. variation in treatment effects across covariate profiles, and 2. differences in the distribution of those covariate profiles across treated and untreated units.
 
 ## Functional form, heterogeneous effects, and joint causes
 
