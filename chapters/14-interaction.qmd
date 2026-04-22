@@ -196,6 +196,34 @@ lm(
   tidy()
 ```
 
+## Effect modification versus interaction
+
+Up to this point, we have used interaction terms in regression models to represent heterogeneous treatment effects: the effect of the exposure varies across levels of a covariate $\mathbf{Z}$. That is often pracitioners mean when they ask whether an effect "differs by subgroup." It can be  useful to distinguish two related but different ideas: **effect modification** and **interaction**. These terms are often used interchangeably, but they answer different causal questions. **Effect modification** asks whether the causal effect of treatment $X$ on outcome $Y$ differs across levels of some pre-treatment variable $Z$. In our notation, this is the question:
+
+$$
+E[Y(1)-Y(0)\mid Z=z_1] \neq E[Y(1)-Y(0)\mid Z=z_0].
+$$
+
+Here, $Z$ is used to define subgroups. We are interested in how the effect of $X$ changes across observed strata of $Z$, not in intervening on $Z$ itself.
+
+For the Seven Dwarfs example, $Z$ might be `park_ticket_season`. Then the question is whether Extra Magic Morning changes posted wait time differently during peak season versus off-season.
+
+**Causal interaction**, by contrast, treats both variables as exposures of causal interest. Instead of asking whether the effect of $X$ varies across strata of $Z$, it asks whether the **joint effect** of changing both $X$ and $Z$ differs from what would be expected based on their separate effects.
+
+Formally, causal interaction compares counterfactual contrasts such as
+
+$$
+E[Y(x_1,z_1)-Y(x_0,z_1)] \neq E[Y(x_1,z_0)-Y(x_0,z_0)].
+$$
+
+This may look similar to effect modification, but the interpretation is different. In effect modification, $Z$ is a subgroup-defining characteristic. In causal interaction, $Z$ is itself something we conceptually intervene on. That distinction matters because some variables are natural subgroup indicators but not plausible intervention targets. For example, season, age group, or baseline risk category may be useful effect modifiers, even though we would not think of "assigning" people to them in the same way we assign an exposure.
+
+In the Seven Dwarfs setting, asking whether the effect of Extra Magic Morning differs by `park_ticket_season` is naturally an effect-modification question: does the policy work differently in busy versus less busy periods? That is different from asking about the joint causal effect of changing both Extra Magic Morning access and ticket season itself.
+
+In practice, many regression models with interaction terms are used to study effect modification rather than interaction in the stricter causal sense. The same algebraic model can serve either purpose, but interpretation depends on the underlying question.
+
+For most policy and applied settings, the subgroup question is the relevant one: **who benefits more, who benefits less, and how does the average effect depend on population composition?** That is why heterogeneous treatment effects and effect modification are central to causal inference, transportability, and targeting interventions.
+
 
 
 ## Functional form, heterogeneous effects, and joint causes
