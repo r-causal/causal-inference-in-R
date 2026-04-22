@@ -17,7 +17,11 @@ library(ggdag)
 
 As discussed in @sec-estimands, causal estimands such as the ATE, ATT, and ATC are all defined as expectations of the same unit-level contrast, $(Y(1)-Y(0))$, but taken over different covariate distributions. This distinction becomes meaningful only when the individual treatment effect varies across units.
 
-As defined in @sec-po, $Y(1)$ and $Y(0)$ denote potential outcomes under exposure $(X=1)$ and control $(X=0)$. $\mathbf{Z}$ is a vector of pre-treatment covariates. Thhe individual treatment effect can be written as
+::: {.callout-tip}
+Note here we denote $\mathbf{Z}$ in bold. This is to indicate that this represents several covariates (in practice, all of the confounders), rather than a single variable
+:::
+
+As defined in @sec-po, $Y(1)$ and $Y(0)$ denote potential outcomes under exposure $(X=1)$ and control $(X=0)$. $\mathbf{Z}$ is a vector of pre-treatment covariates. The individual treatment effect can be written as
 
 $$
 \tau(Z)=Y(1)-Y(0).
@@ -32,6 +36,36 @@ $$
 $$
 
 The above are different averages of the same function $\tau(Z)$. Any difference between them is driven by two things: 1. variation in treatment effects across covariate profiles, and 2. differences in the distribution of those covariate profiles across treated and untreated units.
+
+## Interaction terms as a parameterization of heterogeneity
+
+Suppose we fit a simple regression model to understand the relationship between an exposure and outcome. In other words, we model the conditional mean of the observed outcome $Y$ as a function of treatment $X$ and confounders $\mathbf{Z}$.
+
+$$E[Y\mid X,Z]=\beta_0+\beta_1X+\boldsymbol\beta^\top \textbf{Z}$$
+Under this specification,
+
+
+$$E[Y\mid X=1,\mathbf{Z}]-E[Y\mid X=0,\mathbf{Z}]=\beta_1.$$
+
+This means the treatment effect is assumed to be the same for every unit, regardless of covariate values. In other words, after adjusting for $\mathbf{Z}$, the model assumes the effect of treatment does not vary across the population.
+
+That can be a strong assumption. In many settings, treatment effects may differ across subgroups. To allow for this possibility, suppose one variable in the confounder set $\mathbf{Z}$ modifies the treatment effect (let's call this $Z_1$). We can include an interaction between treatment and that covariate:
+
+$$
+E[Y \mid X,\mathbf{Z}] =
+\beta_0 + \beta_1 X + \beta_2 Z_1 + \beta_3(X \times Z_1) + \boldsymbol{\beta}_4^{\top}\mathbf{W},
+$$
+
+where $\mathbf{W}$ contains the remaining covariates in $\mathbf{Z}$ excluding $Z_1$. Then the conditional treatment effect becomes
+
+
+$$\tau(Z_1)= E[Y \mid X=1,\mathbf{Z}] - E[Y \mid X=0,\mathbf{Z}] =\beta_1 + \beta_3 Z_1.$$
+
+Now the treatment effect depends on $Z_1$. If $\beta_3=0$, the treatment effect is constant, otherwise the treatment effect changes across values of $Z_1$.
+
+This is one way regression models represent heterogeneous treatment effects. The interaction term formalizes the claim that the effect of treatment differs across levels of a covariate. 
+
+An equivalent way to represent the same idea is to fit separate regression models within strata of $Z_1$ (or if $Z_1$ is categorical, fitting the model within each category). Separate models allow the treatment coefficient to differ across groups. The interaction model is often preferred because it estimates those subgroup-specific effects within a single unified framework while using all available data simultaneously.
 
 ## Functional form, heterogeneous effects, and joint causes
 
