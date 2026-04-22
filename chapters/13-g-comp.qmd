@@ -131,7 +131,7 @@ g(\hat{\boldsymbol{\beta}})^\top \, \Sigma \, \nabla g(\hat{\boldsymbol{\beta}})
 where $\nabla g$ is the gradient of $g$ with respect to $\boldsymbol{\beta}$. `{marginaleffects}` handles this gradient computation automatically and propagates it through $\Sigma$ to produce standard errors.
 :::
 
-### Targeting Different Estimands
+### Targeting Different Estimands {#sec-gcomp-target}
 
 As we discussed in @sec-estimands, the ATE is not the only causal estimand of interest. G-computation makes it straightforward to target different estimands by changing which covariate distribution we average over. For the ATE, we average predictions over the full observed sample. For the ATT, we average only over the covariate distribution of the exposed (in our case, days that actually had Extra Magic Morning hours). For the ATC, we average only over the unexposed. The outcome model is the same in all three cases; what changes is whose covariate values we use when generating predictions.
 We can target each of these estimands directly in `avg_comparisons` using the `newdata` argument:
