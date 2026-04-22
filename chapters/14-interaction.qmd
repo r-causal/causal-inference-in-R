@@ -226,7 +226,7 @@ For most policy and applied settings, the subgroup question is the relevant one:
 
 ## Representing interaction and effect modification in DAGs
 
-As noted earlier, conventional DAGs don't inherently represent interaction or effect modification, though some proposals exist to include these features.
+As noted in @sec-dags, conventional DAGs don't inherently represent interaction or effect modification, though some proposals exist to include these features.
 Here we demonstrate three approaches using a simple example where $X$ (exposure) and $Q$ (another exposure) may interact in their effect on Y (outcome), with $Z$ as a confounder.
 
 ### Conventional DAGs
