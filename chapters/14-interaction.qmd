@@ -67,6 +67,70 @@ This is one way regression models represent heterogeneous treatment effects. The
 
 An equivalent way to represent the same idea is to fit separate regression models within strata of $Z_1$ (or if $Z_1$ is categorical, fitting the model within each category). Separate models allow the treatment coefficient to differ across groups. The interaction model is often preferred because it estimates those subgroup-specific effects within a single unified framework while using all available data simultaneously.
 
+## Interaction in G-computation
+
+G-computation makes the link between conditional effects and marginal estimands explicit. After fitting an outcome model, we generate two predictions for each unit:
+
+$$
+\hat Y_i(1)=\widehat{E}[Y\mid X=1,Z_i], \quad
+\hat Y_i(0)=\widehat{E}[Y\mid X=0,Z_i].
+$$
+
+This gives a unit-level estimated treatment effect:
+
+$$
+\hat\tau_i=\hat Y_i(1)-\hat Y_i(0).
+$$
+
+When interactions are present, $\hat\tau_i$ varies across units because it depends on $Z_i$. The ATE is then
+
+$$
+\widehat{\text{ATE}}=\frac{1}{n}\sum_{i=1}^n \hat\tau_i.
+$$
+The ATT and ATC are obtained by averaging over treated or untreated subsets instead. Let's return to the example from @sec-gcomp-target. Once again, we are interested in understanding the relationship between whether a particular day offers Extra Magic Morning hours and the average posted wait time at the Seven Dwarfs Mine Train ride between 9 and 10am. Here, we allow the effect of Extra Magic Morning to vary by ticket season through an interaction term. Once treatment effects are allowed to differ across covariate profiles, g-computation averages different unit-level effects over different target populations, and the ATE, ATT, and ATC need not coincide. 
+
+
+```{r}
+#| message: false
+#| warning: false
+library(tidyverse)
+library(broom)
+library(touringplans)
+
+seven_dwarfs_9 <- seven_dwarfs_train_2018 |>
+  filter(wait_hour == 9)
+
+gcomp_model_int <- lm(
+  wait_minutes_posted_avg ~
+    park_extra_magic_morning +
+    park_ticket_season +
+    park_close +
+    park_temperature_high +
+    park_extra_magic_morning * park_ticket_season,
+  data = seven_dwarfs_9
+)
+
+# ATE: average over the full sample
+avg_comparisons(
+  gcomp_model_int,
+  variables = "park_extra_magic_morning"
+)
+
+# ATT: average over exposed observations only
+avg_comparisons(
+  gcomp_model_int,
+  variables = "park_extra_magic_morning",
+  newdata = filter(seven_dwarfs_9, park_extra_magic_morning == 1)
+)
+
+# ATC: average over unexposed observations only
+avg_comparisons(
+  gcomp_model_int,
+  variables = "park_extra_magic_morning",
+  newdata = filter(seven_dwarfs_9, park_extra_magic_morning == 0)
+)
+```
+
 ## Functional form, heterogeneous effects, and joint causes
 
 When we fit regression models to estimate causal effects, we often include interaction terms, which allow the effect of one variable to vary across levels of another.
