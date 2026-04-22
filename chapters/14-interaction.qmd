@@ -67,7 +67,7 @@ This is one way regression models represent heterogeneous treatment effects. The
 
 An equivalent way to represent the same idea is to fit separate regression models within strata of $Z_1$ (or if $Z_1$ is categorical, fitting the model within each category). Separate models allow the treatment coefficient to differ across groups. The interaction model is often preferred because it estimates those subgroup-specific effects within a single unified framework while using all available data simultaneously.
 
-## Interaction in G-computation
+## Heterogeneity in G-computation
 
 G-computation makes the link between conditional effects and marginal estimands explicit. After fitting an outcome model, we generate two predictions for each unit:
 
@@ -95,6 +95,7 @@ The ATT and ATC are obtained by averaging over treated or untreated subsets inst
 library(tidyverse)
 library(broom)
 library(touringplans)
+library(marginaleffects)
 
 seven_dwarfs_9 <- seven_dwarfs_train_2018 |>
   filter(wait_hour == 9)
@@ -129,6 +130,73 @@ avg_comparisons(
   newdata = filter(seven_dwarfs_9, park_extra_magic_morning == 0)
 )
 ```
+
+Once interaction is introduced, these estimands can differ because they average the same heterogeneous response surface over different covariate distributions. Because g-computation focuses on modeling the *outcome* we must specify every interaction we think exists in order to accurately estimate treatment effect heterogeneity. 
+
+## Heterogeneity in IPW
+
+Inverse probability weighting targets the same estimands through a different mechanism. Rather than modeling $E[Y\mid X,\mathbf{Z}]$ directly, IPW reweights the data so treatment assignment is independent of $Z$.
+
+Unlike g-computation, IPW does not require us to specify an explicit regression model for the outcome surface. The weighting scheme determines which covariate distribution is used to average those heterogeneous unit-level effects. Just as with g-computation, ATE, ATT, and ATC can differ when treatment effects vary across covariate profiles, but we didn't need to specify the interaction terms explicitly to see these differences. IPW captures heterogeneity implicitly through the weighting and averaging target, not by estimating subgroup-specific treatment effects.
+
+Let's look at the same example as above. As in @sec-outcome-model, we first estimate the propensity score, the probability of receiving Extra Magic Morning conditional on observed covariates:
+
+```{r}
+propensity_model <- glm(
+  park_extra_magic_morning ~
+    park_ticket_season +
+    park_close +
+    park_temperature_high,
+  data = seven_dwarfs_9,
+  family = binomial()
+)
+```
+
+We then pull the propensity scores from this model and estimate the weights according to the estimand of interest.
+
+```{r}
+#| message: false
+#| warning: false
+library(propensity)
+seven_dwarfs_9_with_ps <- propensity_model |>
+  augment(type.predict = "response", data = seven_dwarfs_9)
+
+seven_dwarfs_9_with_wt <- seven_dwarfs_9_with_ps |>
+  mutate(
+    w_ate = wt_ate(.fitted, park_extra_magic_morning),
+    w_att = wt_att(.fitted, park_extra_magic_morning),
+    w_atc = wt_atc(.fitted, park_extra_magic_morning))
+```
+
+Finally we get our estimates by fitting the weighted outcome models:
+
+```{r}
+# ATE
+lm(
+  wait_minutes_posted_avg ~ park_extra_magic_morning,
+  data = seven_dwarfs_9_with_wt,
+  weights = w_ate
+) |>
+  tidy()
+
+# ATT
+lm(
+  wait_minutes_posted_avg ~ park_extra_magic_morning,
+  data = seven_dwarfs_9_with_wt,
+  weights = w_att
+) |>
+  tidy()
+
+# ATC
+lm(
+  wait_minutes_posted_avg ~ park_extra_magic_morning,
+  data = seven_dwarfs_9_with_wt,
+  weights = w_atc
+) |>
+  tidy()
+```
+
+
 
 ## Functional form, heterogeneous effects, and joint causes
 
