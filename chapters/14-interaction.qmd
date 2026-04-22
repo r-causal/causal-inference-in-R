@@ -1,4 +1,4 @@
-# Interaction {#sec-interaction}
+# Heterogeneous treatment effects {#sec-interaction}
 
 {{< include 00-setup.qmd >}}
 
@@ -13,6 +13,24 @@ status("wip")
 #| message: false
 library(ggdag)
 ```
+
+
+As discussed in @sec-estimands, causal estimands such as the ATE, ATT, and ATC are all defined as expectations of the same unit-level contrast, $(Y(1)-Y(0))$, but taken over different covariate distributions. This distinction becomes meaningful only when the individual treatment effect varies across units.
+
+As defined in @sec-po, $Y(1)$ and $Y(0)$ denote potential outcomes under exposure $(X=1)$ and control $(X=0)$. $\mathbf{Z}$ is a vector of pre-treatment covariates. Thhe individual treatment effect can be written as
+
+$$
+\tau(Z)=Y(1)-Y(0).
+$$
+
+Heterogeneous treatment effects arise when $\tau(Z)$ is not constant in $Z$. In that case, we see the various estimands defined in @sec-estimand, for example
+
+$$
+\text{ATE}=E[\tau(Z)], \quad
+\text{ATT}=E[\tau(Z)\mid X=1], \quad
+\text{ATC}=E[\tau(Z)\mid X=0].
+$$
+
 
 ## Functional form, heterogeneous effects, and joint causes
 

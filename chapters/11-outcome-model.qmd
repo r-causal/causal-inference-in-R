@@ -110,7 +110,7 @@ The first option can be computationally intensive, but should get you the correc
 The second option is computationally the easiest, but tends to overestimate the variability.
 There are not many current solutions in R (aside from coding it up yourself) for the third; however, the `{PSW}` package will do this.
 
-### The bootstrap
+### The bootstrap {#sec-bootstrap}
 
 1.  Create a function to run your analysis once on a sample of your data
 
