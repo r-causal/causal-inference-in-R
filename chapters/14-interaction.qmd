@@ -198,11 +198,13 @@ lm(
 
 ## Effect modification versus interaction
 
+
 Up to this point, we have used interaction terms in regression models to represent heterogeneous treatment effects: the effect of the exposure varies across levels of a covariate $\mathbf{Z}$. That is often pracitioners mean when they ask whether an effect "differs by subgroup." It can be  useful to distinguish two related but different ideas: **effect modification** and **interaction** [@weinberg2007; @VanderWeele2009; @Nilsson2021; @hernan2021]. These terms are often used interchangeably, but they answer different causal questions. **Effect modification** asks whether the causal effect of treatment $X$ on outcome $Y$ differs across levels of some pre-treatment variable $Z$. In our notation, this is the question:
 
 $$
 E[Y(1)-Y(0)\mid Z=z_1] \neq E[Y(1)-Y(0)\mid Z=z_0].
 $$
+
 
 Here, $Z$ is used to define subgroups. We are interested in how the effect of $X$ changes across observed strata of $Z$, not in intervening on $Z$ itself.
 
@@ -264,7 +266,9 @@ ggdag(conventional_dag) +
   theme_dag()
 ```
 
+HEAD
 This DAG shows that X, Q, and Z all affect Y, but it doesn't explicitly indicate whether X and Q interact. The interaction, if present, would be implicit in the functional form of how X and Q jointly affect Y in a statistical model.
+
 
 ### Explicit interaction nodes
 
