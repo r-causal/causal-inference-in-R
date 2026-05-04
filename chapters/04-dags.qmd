@@ -4,20 +4,23 @@
 
 ```{r}
 #| echo: false
+
 # TODO: remove when first edition complete
 status("complete")
 ```
 
 ## Visualizing Causal Assumptions
 
-> When we try to pick out anything by itself we find that it is bound fast by a thousand invisible cords that cannot be broken, to everything in the universe. -- John Muir
+> When we try to pick out anything by itself we find that it is bound fast by a thousand invisible cords that cannot be broken, to everything in the universe.
+> -- John Muir
 
 **Causal diagrams** are a tool to visualize your assumptions about the causal structure of the questions you're trying to answer.
 In a randomized experiment, the causal structure is quite simple.
 While there may be many causes of an outcome, the only cause of the exposure is the randomization process itself (we hope!).
 In many non-randomized settings, however, the structure of your question can be a complex web of causality.
 Causal diagrams help communicate what we think this structure looks like.
-In addition to being open about what we think the causal structure is, causal diagrams have incredible mathematical properties that allow us to identify a way to estimate unbiased causal effects even with observational data. In other words, if correctly specified, they help us achieve exchangeability.
+In addition to being open about what we think the causal structure is, causal diagrams have incredible mathematical properties that allow us to identify a way to estimate unbiased causal effects even with observational data.
+In other words, if correctly specified, they help us achieve exchangeability.
 
 Causal diagrams are also increasingly common.
 Data collected as a review of causal diagrams in applied health research papers show a drastic increase in use over time [@Tennant2021].
@@ -27,6 +30,7 @@ Data collected as a review of causal diagrams in applied health research papers 
 #| echo: false
 #| warning: false
 #| fig-cap: "Percentage of health research papers using causal diagrams over time."
+
 dag_data <- readxl::read_xlsx(here::here("data", "dag_data.xlsx"))
 
 dag_data <- dag_data |>
@@ -57,7 +61,7 @@ dag_data |>
   mutate(pct = n / sum(n)) |>
   filter(used_dag, year < max(year)) |>
   ggplot(aes(year, pct)) +
-  geom_line(color = "#0072B2", linewidth = .9) +
+  geom_line(color = "#0072B2", linewidth = 0.9) +
   scale_y_continuous(
     name = "percent of papers",
     labels = scales::label_percent()
@@ -87,11 +91,12 @@ Here, we are saying that `x` causes `y`.
 #| fig-width: 3
 #| fig-height: 2
 #| fig-cap: "A causal directed acyclic graph (DAG). DAGs depict causal relationships. In this DAG, the assumption is that `x` causes `y`."
+
 library(ggdag)
 dagify(y ~ x, coords = time_ordered_coords()) |>
   ggdag() +
   theme_dag() +
-  expand_plot(expand_x = expansion(c(.2, .2)))
+  expand_plot(expand_x = expansion(c(0.2, 0.2)))
 ```
 
 If we're interested in the causal effect of `x` on `y`, we're trying to estimate a numeric representation of that arrow.
@@ -103,6 +108,7 @@ There are three types of paths you'll see in DAGs: **forks**, **chains**, and **
 #| code-fold: true
 #| label: fig-dag-path-types
 #| fig-cap: "Three types of causal relationships: forks, chains, and colliders. The direction of the arrows and the relationships of interest dictate which type of path a series of variables is. Forks represent a mutual cause, chains represent direct causes, and colliders represent a mutual descendant."
+
 coords <- list(x = c(x = 0, y = 2, q = 1), y = c(x = 0, y = 0, q = 1))
 
 fork <- dagify(
@@ -128,7 +134,10 @@ collider <- dagify(
   coords = coords
 )
 
-dag_flows <- map(list(fork = fork, chain = chain, collider = collider), tidy_dagitty) |>
+dag_flows <- map(
+  list(fork = fork, chain = chain, collider = collider),
+  tidy_dagitty
+) |>
   map("data") |>
   list_rbind(names_to = "dag") |>
   mutate(dag = factor(dag, levels = c("fork", "chain", "collider")))
@@ -175,9 +184,9 @@ This question defines which paths we're interested in and which we're not.
 These three types of paths have different implications for the statistical relationship between `x` and `y`.
 If we only look at the correlation between the two variables under these assumptions:
 
-1.  In the fork, `x` and `y` will be associated, despite there being no arrow from `x` to `y`.
-2.  In the chain, `x` and `y` are related only through `q`.
-3.  In the collider, `x` and `y` will *not* be related.
+1. In the fork, `x` and `y` will be associated, despite there being no arrow from `x` to `y`.
+2. In the chain, `x` and `y` are related only through `q`.
+3. In the collider, `x` and `y` will *not* be related.
 
 Paths that transmit association are called **open paths**.
 Paths that do not transmit association are called **closed paths**.
@@ -209,12 +218,13 @@ Within levels of `q`, however, `x` and `y` are unrelated.
 #| label: fig-confounder-scatter
 #| message: false
 #| fig-cap: "Two scatterplots of the relationship between `x` and `y`. With forks, the relationship is biased by `q`. When accounting for `q`, we see the true null relationship."
+
 set.seed(123)
 library(patchwork)
 n <- 1000
 
 ### q
-q <- rbinom(n, size = 1, prob = .35)
+q <- rbinom(n, size = 1, prob = 0.35)
 ###
 
 ### x
@@ -229,13 +239,13 @@ confounder_data <- tibble(x, y, q = as.factor(q))
 
 p1 <- confounder_data |>
   ggplot(aes(x, y)) +
-  geom_point(alpha = .2) +
+  geom_point(alpha = 0.2) +
   geom_smooth(method = "lm", se = FALSE, color = "black") +
   facet_wrap(~"not adjusting for `q`\n(biased)")
 
 p2 <- confounder_data |>
   ggplot(aes(x, y, color = q)) +
-  geom_point(alpha = .2) +
+  geom_point(alpha = 0.2) +
   geom_smooth(method = "lm", se = FALSE) +
   facet_wrap(~"adjusting for `q`\n(unbiased)")
 
@@ -261,6 +271,7 @@ Neither of these effects is due to bias, but each answers a different research q
 #| label: fig-mediator-scatter
 #| message: false
 #| fig-cap: "Two scatterplots of the relationship between `x` and `y`. With chains, whether and how we should account for `q` depends on the research question. Without doing so, we see the impact of the total effect of `x` and `y`, including the indirect effect via `q`. When accounting for `q`, we see the direct (null) effect of `x` on `y`."
+
 ### x
 x <- rnorm(n)
 ###
@@ -279,13 +290,13 @@ mediator_data <- tibble(x, y, q = as.factor(q))
 
 p1 <- mediator_data |>
   ggplot(aes(x, y)) +
-  geom_point(alpha = .2) +
+  geom_point(alpha = 0.2) +
   geom_smooth(method = "lm", se = FALSE, color = "black") +
   facet_wrap(~"not adjusting for `q`\n(total effect)")
 
 p2 <- mediator_data |>
   ggplot(aes(x, y, color = q)) +
-  geom_point(alpha = .2) +
+  geom_point(alpha = 0.2) +
   geom_smooth(method = "lm", se = FALSE) +
   facet_wrap(~"adjusting for `q`\n(direct effect)")
 
@@ -310,7 +321,7 @@ We end up with a biased effect of `x` on `y`.
 #| label: fig-collider-scatter
 #| message: false
 #| fig-cap: "Two scatterplots of the relationship between `x` and `y`. The unadjusted relationship between the two is unbiased. When accounting for `q`, we open a colliding backdoor path and bias the relationship between `x` and `y`."
-#|
+
 ### x
 x <- rnorm(n)
 ###
@@ -329,13 +340,13 @@ collider_data <- tibble(x, y, q = as.factor(q))
 
 p1 <- collider_data |>
   ggplot(aes(x, y)) +
-  geom_point(alpha = .2) +
+  geom_point(alpha = 0.2) +
   geom_smooth(method = "lm", se = FALSE, color = "black") +
   facet_wrap(~"not adjusting for `q`\n(unbiased)")
 
 p2 <- collider_data |>
   ggplot(aes(x, y, color = q)) +
-  geom_point(alpha = .2) +
+  geom_point(alpha = 0.2) +
   geom_smooth(method = "lm", se = FALSE) +
   facet_wrap(~"adjusting for `q`\n(biased)")
 
@@ -376,8 +387,7 @@ t2 <- collider |>
 collider_t$data <- bind_rows(collider_t$data, t2)
 
 collider_t |>
-  mutate(deemphasize = (name %in% c("x", "y") & time ==
-    "time point 2")) |>
+  mutate(deemphasize = (name %in% c("x", "y") & time == "time point 2")) |>
   ggplot(aes(x = x, y = y, xend = xend, yend = yend)) +
   geom_dag_edges(edge_width = 1, edge_color = "grey85") +
   geom_dag_point(aes(color = deemphasize), show.legend = FALSE) +
@@ -449,6 +459,7 @@ We can diagram this using the method described in @sec-diag (@fig-diagram-podcas
 #| fig-cap: "A sentence diagram for the question: Does listening to a comedy podcast the morning before an exam improve graduate student test scores? The population is graduate students. The start time is morning, and the outcome time is after the exam."
 #| fig-height: 2
 #| label: fig-diagram-podcast
+
 knitr::include_graphics("../images/podcast-diagram.png")
 ```
 
@@ -461,6 +472,7 @@ This is just like the type of formula we specify for most regression models in R
 
 ```{r}
 #| eval: false
+
 dagify(
   effect1 ~ cause1 + cause2 + cause3,
   effect2 ~ cause1 + cause4,
@@ -482,17 +494,20 @@ dagify(
 
 In the code above, we assume that:
 
--   a graduate student's mood, sense of humor, and how prepared they feel for the exam could influence whether they listened to a podcast the morning of the test
--   their mood and how prepared they are also influence their exam score
+- a graduate student's mood, sense of humor, and how prepared they feel for the exam could influence whether they listened to a podcast the morning of the test
+- their mood and how prepared they are also influence their exam score
 
 Notice we *do not* see podcast in the exam equation; this means that we assume that there is *no* causal relationship between podcast and the exam score.
 
 There are some other useful arguments you'll often find yourself supplying to `dagify()`:
 
--   `exposure` and `outcome`: Telling ggdag the variables that are the exposure and outcome of your research question is required for many of the most valuable queries we can make of DAGs.
--   `latent`: This argument lets us tell ggdag that some variables in the DAG are unmeasured. `latent` helps identify valid adjustment sets with the data we actually have.
--   `coords`: Coordinates for the variables. You can choose between algorithmic or manual layouts, as discussed below. We'll use `time_ordered_coords()` here.
--   `labels`: A character vector of labels for the variables.
+- `exposure` and `outcome`: Telling ggdag the variables that are the exposure and outcome of your research question is required for many of the most valuable queries we can make of DAGs.
+- `latent`: This argument lets us tell ggdag that some variables in the DAG are unmeasured.
+  `latent` helps identify valid adjustment sets with the data we actually have.
+- `coords`: Coordinates for the variables.
+  You can choose between algorithmic or manual layouts, as discussed below.
+  We'll use `time_ordered_coords()` here.
+- `labels`: A character vector of labels for the variables.
 
 Let's create a DAG object, `podcast_dag`, with some of these attributes, then visualize the DAG with `ggdag()`.
 `ggdag()` returns a ggplot object, so we can add additional layers to the plot, like themes.
@@ -503,6 +518,7 @@ Let's create a DAG object, `podcast_dag`, with some of these attributes, then vi
 #| fig-width: 4
 #| fig-height: 4
 #| warning: false
+
 podcast_dag <- dagify(
   podcast ~ mood + humor + prepared,
   exam ~ mood + prepared,
@@ -550,13 +566,13 @@ theme_set(
 
 You don't need to specify coordinates to ggdag.
 If you don't, it uses algorithms designed for automatic layouts.
-There are many such algorithms, and they focus on different aspects of the layout, e.g., the shape, the space between the nodes, minimizing how many edges cross, etc.
-These layout algorithms usually have a component of randomness, so it's good to use a seed if you want to get the same result.
+There are many such algorithms, and they focus on different aspects of the layout, e.g., the shape, the space between the nodes, minimizing how many edges cross, etc. These layout algorithms usually have a component of randomness, so it's good to use a seed if you want to get the same result.
 
 ```{r}
 #| fig-width: 4
 #| fig-height: 4
 #| fig-align: center
+
 # no coordinates specified
 set.seed(123)
 pod_dag <- dagify(
@@ -575,6 +591,7 @@ We can also ask for a specific layout, e.g., the popular Sugiyama algorithm for 
 #| fig-width: 4
 #| fig-height: 4
 #| fig-align: center
+
 pod_dag |>
   ggdag(layout = "sugiyama", text_size = 2.8)
 ```
@@ -591,6 +608,7 @@ We know that's not the case: listening to the podcast happened before taking the
 #| fig-width: 4
 #| fig-height: 4
 #| fig-align: center
+
 pod_dag |>
   ggdag(layout = "time_ordered", text_size = 2.8)
 ```
@@ -607,11 +625,14 @@ We've specified the DAG for this question and told ggdag what the exposure and o
 According to the DAG, there is no direct causal relationship between listening to a podcast and exam scores.
 Are there any other open paths?
 `ggdag_paths()` takes a DAG and visualizes the open paths.
-In @fig-paths-podcast, we see two open paths: `podcast <- mood -> exam"` and `podcast <- prepared -> exam`. These are both forks---*confounding pathways*. Since there is no causal relationship between listening to a podcast and exam scores, the only open paths are *backdoor* paths, these two confounding pathways.
+In @fig-paths-podcast, we see two open paths: `podcast <- mood -> exam"` and `podcast <- prepared -> exam`.
+These are both forks---*confounding pathways*.
+Since there is no causal relationship between listening to a podcast and exam scores, the only open paths are *backdoor* paths, these two confounding pathways.
 
 ```{r}
 #| label: fig-paths-podcast
 #| fig-cap: "`ggdag_paths()` visualizes open paths in a DAG. There are two open paths in `podcast_dag`: the fork from `mood` and the fork from `prepared`."
+
 podcast_dag |>
   # show the whole dag as a light gray "shadow"
   # rather than just the paths
@@ -661,6 +682,7 @@ Any arrows coming out of adjusted variables are removed from the DAG because the
 #| fig-height: 4
 #| fig-align: center
 #| fig-cap: "A visualization of the minimal adjustment set for the podcast-exam DAG. If this DAG is correct, two variables are required to block the backdoor paths: `mood` and `prepared`."
+
 ggdag_adjustment_set(
   podcast_dag,
   use_text = FALSE,
@@ -685,6 +707,7 @@ Here's a condensed version of what `ggdag_adjustment_set()` is doing:
 #| fig-width: 4.5
 #| fig-height: 4.5
 #| fig-align: center
+
 podcast_dag_tidy |>
   # add adjustment sets to data
   dag_adjustment_sets() |>
@@ -718,6 +741,7 @@ Full adjustment sets are every combination of variables that result in a valid s
 #| fig-height: 5
 #| fig-align: center
 #| fig-cap: "All valid adjustment sets for `podcast_dag`."
+
 ggdag_adjustment_set(
   podcast_dag,
   use_text = FALSE,
@@ -760,6 +784,7 @@ In contrast, the estimate that adjusted for the two variables as suggested by `g
 #| label: fig-dag-sim
 #| fig-cap: "Forest plot of simulated data based on the DAG described in @fig-dag-podcast."
 #| code-fold: true
+
 ## Model that does not close backdoor paths
 library(broom)
 unadjusted_model <- lm(exam ~ podcast, sim_data) |>
@@ -797,6 +822,7 @@ Let's say that, not knowing the true DAG (@fig-dag-podcast), we drew @fig-dag-po
 #| fig-height: 4
 #| warning: false
 #| code-fold: true
+
 podcast_dag_wrong <- dagify(
   podcast ~ humor + prepared,
   exam ~ prepared,
@@ -831,6 +857,7 @@ Now, neither estimate is right.
 #| label: fig-dag-sim-wrong
 #| fig-cap: "Forest plot of simulated data based on the DAG described in @fig-dag-podcast. However, we've analyzed it using the adjustment set from @fig-dag-podcast-wrong, giving us the wrong answer."
 #| code-fold: true
+
 ## Model that does not close backdoor paths
 library(broom)
 unadjusted_model <- lm(exam ~ podcast, sim_data) |>
@@ -877,6 +904,7 @@ Let's take a look at @fig-podcast_dag2.
 #| fig-width: 5
 #| fig-height: 4
 #| fig-cap: "An expanded version of `podcast_dag` that includes two additional variables: `skills_course`, representing a College Skills Course, and `alertness`."
+
 podcast_dag2 <- dagify(
   podcast ~ mood + humor + skills_course,
   alertness ~ mood,
@@ -902,9 +930,15 @@ ggdag(podcast_dag2, use_labels = TRUE, use_text = FALSE)
 
 ```{r}
 #| echo: false
+
 paths <- paths(podcast_dag2)
-open_paths <- glue::glue_collapse(glue::glue("`{paths$paths[paths$open]}`"), sep = ", ", last = ", and")
-adj_sets <- unclass(adjustmentSets(podcast_dag2)) |> map_chr(\(.x) glue::glue('{unlist(glue::glue_collapse(.x, sep = " + "))}'))
+open_paths <- glue::glue_collapse(
+  glue::glue("`{paths$paths[paths$open]}`"),
+  sep = ", ",
+  last = ", and"
+)
+adj_sets <- unclass(adjustmentSets(podcast_dag2)) |>
+  map_chr(\(.x) glue::glue('{unlist(glue::glue_collapse(.x, sep = " + "))}'))
 adj_sets <- glue::glue("`{adj_sets}`")
 ```
 
@@ -915,6 +949,7 @@ Now there are *three* backdoor paths we need to close: `r open_paths`.
 #| fig-width: 11
 #| fig-height: 4.5
 #| fig-cap: "Three open paths in `podcast_dag2`. Since there is no effect of `podcast` on `exam`, all three are backdoor paths that must be closed to get the correct effect."
+
 ggdag_paths(podcast_dag2, use_labels = TRUE, use_text = FALSE, shadow = TRUE)
 ```
 
@@ -930,6 +965,7 @@ Notably, `prepared` and `alertness` could happen at the same time or even after 
 #| fig-width: 7
 #| fig-height: 8
 #| fig-cap: "Valid minimal adjustment sets that will close the backdoor paths in @fig-podcast_dag2-paths."
+
 ggdag_adjustment_set(podcast_dag2, use_labels = TRUE, use_text = FALSE)
 ```
 
@@ -956,6 +992,7 @@ The true result of `exam` is missing for those who didn't show up; by studying t
 #| fig-width: 4.5
 #| fig-height: 3.5
 #| fig-cap: "Another variant of `podcast_dag`, this time including the inherent stratification on those who appear for the exam. There is still no direct effect of `podcast` on `exam`, but there is an indirect effect via `showed_up`."
+
 podcast_dag3 <- dagify(
   podcast ~ mood + humor + prepared,
   exam ~ mood + prepared + showed_up,
@@ -995,6 +1032,7 @@ Unfortunately, we cannot calculate the total effect of `podcast` on `exam` becau
 #| fig-height: 4
 #| warning: false
 #| fig-cap: "The adjustment set for `podcast_dag3` given that the data are inherently conditioned on showing up to the exam. In this case, there is no way to recover an unbiased estimate of the total effect of `podcast` on `exam`."
+
 podcast_dag3 |>
   adjust_for("showed_up") |>
   ggdag_adjustment_set(use_text = FALSE, use_labels = TRUE)
@@ -1009,6 +1047,7 @@ We can't calculate the total effect because we are missing the indirect effect, 
 #| fig-height: 4
 #| warning: false
 #| fig-cap: "The adjustment set for `podcast_dag3` when targeting a different effect. There is one minimal adjustment set that we can use to estimate the direct effect of `podcast` on `exam`."
+
 podcast_dag3 |>
   adjust_for("showed_up") |>
   ggdag_adjustment_set(effect = "direct", use_text = FALSE, use_labels = TRUE)
@@ -1024,6 +1063,7 @@ It's called M-bias because it looks like an M when arranged top to bottom.
 #| fig-width: 4
 #| fig-height: 4
 #| fig-cap: "A DAG representing M-Bias, a situation where a collider predates the exposure and outcome."
+
 m_bias() |>
   ggdag()
 ```
@@ -1050,6 +1090,7 @@ As above, there are no open paths in this subset of the DAG.
 #| fig-width: 5.5
 #| fig-height: 4
 #| fig-cap: "A reconfiguration of @fig-dag-podcast where `mood` is a collider on an M-shaped path."
+
 podcast_dag4 <- dagify(
   podcast ~ u1,
   exam ~ u2,
@@ -1088,6 +1129,7 @@ There is no way to close this open path.
 #| fig-width: 5.5
 #| fig-height: 4.5
 #| fig-cap: "The adjustment set where `mood` is a collider. If we control for `mood` and don't know about or have the unmeasured causes of `mood`, we have no means of closing the backdoor path opened by adjusting for a collider."
+
 podcast_dag4 |>
   adjust_for("mood") |>
   ggdag_adjustment_set(use_labels = TRUE, use_text = FALSE)
@@ -1106,6 +1148,7 @@ This arrangement is sometimes called butterfly or bowtie bias, again because of 
 #| fig-width: 5
 #| fig-height: 4
 #| fig-cap: "In butterfly bias, `mood` is both a collider and a confounder. Controlling for the bias induced by `mood` opens a new pathway because we've also conditioned on a collider. We can't properly close all backdoor paths without either `u1` or `u2`."
+
 butterfly_bias(x = "podcast", y = "exam", m = "mood", a = "u1", b = "u2") |>
   ggdag(use_text = FALSE, use_labels = TRUE)
 ```
@@ -1128,6 +1171,7 @@ Let's add a variable, `grader_mood`, to the original DAG.
 #| fig-width: 5
 #| fig-height: 4
 #| fig-cap: "A DAG containing a cause of the exposure that is not the cause of the outcome (`humor`) and a cause of the outcome that is not a cause of the exposure (`grader_mood`)."
+
 podcast_dag5 <- dagify(
   podcast ~ mood + humor + prepared,
   exam ~ mood + prepared + grader_mood,
@@ -1194,12 +1238,12 @@ An example of when this can occur is a case-control study of cancer.
 Someone *with* cancer may be more motivated to ruminate on their past exposures than someone *without* cancer.
 So, their memory about a given exposure may be more refined than someone without.
 
-
 ```{r}
 #| label: fig-error_dag
 #| fig-width: 5.5
 #| fig-height: 4
 #| fig-cap: "A DAG representing measurement error in observing the exposure and outcome. In this case, the outcome impacts the participant's memory of the exposure, also known as recall bias."
+
 error_dag <- dagify(
   exposure_observed ~ exposure_real + exposure_error,
   outcome_observed ~ outcome_real + outcome_error,
@@ -1247,6 +1291,7 @@ We'll discuss estimands in detail in [Chapter -@sec-estimands].
 #| echo: false
 #| message: false
 #| tbl-cap: "A table of DAG properties in applied health research. Number of nodes and arcs are the median number of variables and arrows in the analyzed DAGs, while the Node to Arc ratio is their ratio. Saturation proportion is the proportion of all possible arrows going forward in time to other included variables. Fully saturated DAGs are those that include all such arrows. The researchers also analyzed whether studies reported their estimands and adjustment sets."
+
 library(gtsummary)
 library(gt)
 dag_data_used <- dag_data |>
@@ -1262,7 +1307,15 @@ dag_data_used |>
     report_adjset = report_adjset == "Yes",
     across(c(saturated, reported_estimand, report_adjset), as_yes_no)
   ) |>
-  select(nodes, arcs, ratio, saturation, saturated, reported_estimand, report_adjset) |>
+  select(
+    nodes,
+    arcs,
+    ratio,
+    saturation,
+    saturated,
+    reported_estimand,
+    report_adjset
+  ) |>
   tbl_summary(
     label = list(
       nodes ~ "Number of Nodes",
@@ -1346,12 +1399,18 @@ It's tempting to visualize that relationship like this:
 #| fig-width: 4.5
 #| fig-height: 3.5
 #| fig-cap: "A conceptual diagram representing the reciprocal relationship between A/C use and global temperature because of global warming. Feedback loops are useful mental shorthands to describe variables that impact each other over time compactly, but they are not true causal diagrams."
+
 dagify(
   ac_use ~ global_temp,
   global_temp ~ ac_use,
   labels = c(ac_use = "A/C use", global_temp = "Global\ntemperature")
 ) |>
-  ggdag(layout = "circle", edge_type = "arc", use_text = FALSE, use_labels = TRUE)
+  ggdag(
+    layout = "circle",
+    edge_type = "arc",
+    use_text = FALSE,
+    use_labels = TRUE
+  )
 ```
 
 From a DAG perspective, this is a problem because of the *A* part of *DAG*: it's cyclic!
@@ -1366,6 +1425,7 @@ The real DAG looks something like this:
 #| fig-width: 5
 #| fig-height: 3.5
 #| fig-cap: "A DAG showing the relationship between A/C use and global temperature over time. The true causal relationship in a feedback loop goes *forward*."
+
 dagify(
   global_temp_2000 ~ ac_use_1990 + global_temp_1990,
   ac_use_2000 ~ ac_use_1990 + global_temp_1990,
@@ -1481,6 +1541,7 @@ From the DAG, it would appear that the entire design is invalid!
 #| fig-width: 4.5
 #| fig-height: 3.2
 #| fig-cap: "A DAG representing a matched case-control study. In such a study, selection is determined by outcome status and any matched confounders. Selection into the study is thus a collider. Since it is inherently stratified on who is actually in the study, such data are limited in the types of causal effects they can estimate."
+
 dagify(
   outcome ~ confounder + exposure,
   selection ~ outcome + confounder,
@@ -1551,6 +1612,7 @@ You can think of `p` as a mismeasured version of `q`; it will seldom wholly cont
 #| fig-width: 4.5
 #| fig-height: 3.2
 #| fig-cap: "A DAG with a confounder, `q`, and a proxy confounder, `p`. The true adjustment set is `q`. Since `p` causes `q`, it contains information about `q` and can reduce the bias if we don't have `q` measured."
+
 dagify(
   y ~ x + q,
   x ~ q,
@@ -1577,9 +1639,11 @@ In practice, such a case is probably not relevant.
 There is *effectively* no arrow.
 
 ::: {.callout-note}
-Put another way, the assumption is saying that at least one unit under study has an individual causal effect. If we have a variable `X` that has an arrow leading to `Y`, we are saying that for at least one person, there is a change in the potential outcome `Y(X = x)` for the values of `X` under study. In terms of @tbl-po, `y_chocolate - y_vanilla` would be 0 for every individual.
+Put another way, the assumption is saying that at least one unit under study has an individual causal effect.
+If we have a variable `X` that has an arrow leading to `Y`, we are saying that for at least one person, there is a change in the potential outcome `Y(X = x)` for the values of `X` under study.
+In terms of @tbl-po, `y_chocolate - y_vanilla` would be 0 for every individual.
 
-When not a single unit under study has an individual causal effect, we call it a **sharp null**. 
+When not a single unit under study has an individual causal effect, we call it a **sharp null**.
 :::
 
 The more significant point, though, is that you should feel confident to add an arrow.
@@ -1599,6 +1663,7 @@ The saturated DAG given this ordering is:
 #| fig-height: 4
 #| code-fold: true
 #| fig-cap: "A saturated version of `podcast_dag`: variables have all possible arrows going forward to other variables over time."
+
 podcast_dag_sat <- dagify(
   podcast ~ mood + humor + prepared,
   exam ~ mood + prepared + humor,
@@ -1624,7 +1689,7 @@ podcast_dag_sat <- dagify(
 )
 
 curvatures <- rep(0, 8)
-curvatures[1] <- .25
+curvatures[1] <- 0.25
 
 podcast_dag_sat |>
   tidy_dagitty() |>
@@ -1649,6 +1714,7 @@ Let's prune those two.
 #| fig-width: 5.5
 #| fig-height: 4
 #| fig-cap: "A pruned version of @fig-podcast_dag_sat: we've removed implausible arrows from the fully saturated DAGs."
+
 podcast_dag_pruned <- dagify(
   podcast ~ mood + humor + prepared,
   exam ~ mood + prepared,
@@ -1728,9 +1794,18 @@ Finally, we recommend checking your DAG for robustness.
 You can never verify the correctness of your DAG under most conditions, but you can use the implications in your DAG to support it.
 Three types of robustness checks can be helpful depending on the circumstances.
 
-1.  **Negative controls** [@Lipsitch2010]. These come in two flavors: negative exposure controls and negative outcome controls. The idea is to find something associated with one but not the other, e.g., the outcome but not the exposure, so there should be no effect. Since there should be no effect, you now have a measurement for how well you control for *other* effects (e.g., the difference from null). Ideally, the confounders for negative controls are similar to the research question.
-2.  **DAG-data consistency** [@Textor2016]. Negative controls are an implication of your DAG. An extension of this idea is that there are *many* such implications. Because blocking a path removes statistical dependencies from that path, you can check those assumptions in several places in your DAG.
-3.  **Alternate adjustment sets**. Adjustment sets should give roughly the same answer because, outside of random and measurement errors, they are all sets that block backdoor paths. If more than one adjustment set seems reasonable, you can use that as a sensitivity analysis by checking multiple models.
+1. **Negative controls** [@Lipsitch2010].
+   These come in two flavors: negative exposure controls and negative outcome controls.
+   The idea is to find something associated with one but not the other, e.g., the outcome but not the exposure, so there should be no effect.
+   Since there should be no effect, you now have a measurement for how well you control for *other* effects (e.g., the difference from null).
+   Ideally, the confounders for negative controls are similar to the research question.
+2. **DAG-data consistency** [@Textor2016].
+   Negative controls are an implication of your DAG.
+   An extension of this idea is that there are *many* such implications.
+   Because blocking a path removes statistical dependencies from that path, you can check those assumptions in several places in your DAG.
+3. **Alternate adjustment sets**.
+   Adjustment sets should give roughly the same answer because, outside of random and measurement errors, they are all sets that block backdoor paths.
+   If more than one adjustment set seems reasonable, you can use that as a sensitivity analysis by checking multiple models.
 
 We'll discuss these in detail in [Chapter -@sec-sensitivity].
 The caveat here is that these should be complementary to your initial DAG, not a way of *replacing* it.

@@ -4,6 +4,7 @@
 
 ```{r}
 #| echo: false
+
 # TODO: remove when first edition complete
 status("complete")
 ```
@@ -11,12 +12,12 @@ status("complete")
 In this chapter, we'll analyze data using techniques we learn in this book.
 We'll play the [whole game](https://www.gse.harvard.edu/news/uk/09/01/education-bat-seven-principles-educators) of causal analysis using a few key steps:
 
-1.  Specify a causal question
-2.  Draw our assumptions using a causal diagram
-3.  Model our assumptions
-4.  Diagnose our models
-5.  Estimate the causal effect
-6.  Conduct sensitivity analysis on the effect estimate
+1. Specify a causal question
+2. Draw our assumptions using a causal diagram
+3. Model our assumptions
+4. Diagnose our models
+5. Estimate the causal effect
+6. Conduct sensitivity analysis on the effect estimate
 
 We'll focus on the broader ideas behind each step and what they look like all together; however, we don't expect you to fully digest each idea.
 We'll spend the rest of the book taking up each step in detail.
@@ -56,42 +57,39 @@ The study's authors found that net uptake was similar between the groups and tha
 There are several reasons we might not be able to conduct a new randomized trial to estimate the effect of bed net use on malaria risk, including ethics, cost, and time.
 We have substantial, robust evidence in favor of bed net use, but let's consider some conditions where observational causal inference could help.
 
--   Imagine we are at a time before trials on this subject, and let's say people have started to use bed nets for this purpose on their own.
-    Our goal may still be to conduct a randomized trial, but we can answer questions more quickly with observed data.
-    In addition, this study's results might guide trials' design or intermediary policy suggestions.
+- Imagine we are at a time before trials on this subject, and let's say people have started to use bed nets for this purpose on their own.
+  Our goal may still be to conduct a randomized trial, but we can answer questions more quickly with observed data.
+  In addition, this study's results might guide trials' design or intermediary policy suggestions.
 
--   Sometimes, it is also not ethical to conduct a trial.
-    An example of this in malaria research is a question that arose in the study of bed net effectiveness: does malaria control in early childhood result in delayed immunity to the disease, resulting in severe malaria or death later in life?
-    Since we now know bed net use is very effective, *withholding* nets would be unethical.
-    A recent observational study found that the benefits of bed net use in childhood on all-cause mortality persist into adulthood [@Fink2022].
+- Sometimes, it is also not ethical to conduct a trial.
+  An example of this in malaria research is a question that arose in the study of bed net effectiveness: does malaria control in early childhood result in delayed immunity to the disease, resulting in severe malaria or death later in life?
+  Since we now know bed net use is very effective, *withholding* nets would be unethical.
+  A recent observational study found that the benefits of bed net use in childhood on all-cause mortality persist into adulthood [@Fink2022].
 
--   We may also want to estimate a different effect or the effect for another population than in previous trials.
-    For example, both randomized and observational studies helped us better understand that insecticide-based nets improve malaria resistance in the entire community, not just among those who use nets, so long as net usage is high enough [@howard2000; @hawley2003].
+- We may also want to estimate a different effect or the effect for another population than in previous trials.
+  For example, both randomized and observational studies helped us better understand that insecticide-based nets improve malaria resistance in the entire community, not just among those who use nets, so long as net usage is high enough [@howard2000; @hawley2003].
 
 As we'll see in @sec-strat-outcome and @sec-g-comp, the causal inference techniques that we'll discuss in this book are often beneficial even when we're able to randomize.
 
 When we conduct an observational study, it's still helpful to think through the randomized trial we would run were it possible.
-The trial we're trying to emulate in this causal analysis is the **target trial**. Considering the target trial helps us make our causal question more precise.
+The trial we're trying to emulate in this causal analysis is the **target trial**.
+Considering the target trial helps us make our causal question more precise.
 We'll use this framework more explicitly in @sec-designs, but for now, let's consider the causal question posed earlier: does using a bed net (a mosquito net) reduce the risk of malaria?
 This question is relatively straightforward, but it is still vague.
 As we saw in @sec-causal-question, we need to clarify some key areas:
 
--   **What do we mean by "bed net"?**
-    There are several types of nets: untreated bed nets, insecticide-treated bed nets, and newer long-lasting insecticide-treated bed nets.
+- **What do we mean by "bed net"?** There are several types of nets: untreated bed nets, insecticide-treated bed nets, and newer long-lasting insecticide-treated bed nets.
 
--   **Risk compared to what?**
-    Are we, for instance, comparing insecticide-treated bed nets to *no* net?
-    Untreated nets?
-    Or are we comparing a new type of net, like long-lasting insecticide-treated bed nets, to nets that are already in use?
+- **Risk compared to what?** Are we, for instance, comparing insecticide-treated bed nets to *no* net?
+  Untreated nets?
+  Or are we comparing a new type of net, like long-lasting insecticide-treated bed nets, to nets that are already in use?
 
--   **Risk as defined by what?**
-    Whether or not a person contracted malaria?
-    Whether a person died of malaria?
+- **Risk as defined by what?** Whether or not a person contracted malaria?
+  Whether a person died of malaria?
 
--   **Risk among whom?**
-    What population are we trying to apply this knowledge to?
-    Who is it practical to include in our study?
-    Who might we need to exclude?
+- **Risk among whom?** What population are we trying to apply this knowledge to?
+  Who is it practical to include in our study?
+  Who might we need to exclude?
 
 We will use simulated data to answer a more specific question: Does using insecticide-treated bed nets compared to no nets decrease the risk of contracting malaria after 1 year?
 In this particular data, [simulated by Dr. Andrew Heiss](https://evalsp21.classes.andrewheiss.com/example/matching-ipw/#program-background):
@@ -148,20 +146,21 @@ The distribution of malaria risk appears to be quite different by net usage.
 
 ```{r}
 #| label: fig-malaria-risk-density
-#| fig.cap: >
+#| fig-cap: >
 #|   A density plot of malaria risk for those who did and did not use nets.
 #|   The risk of malaria is lower for those who use nets.
+
 library(tidyverse)
 library(causalworkshop)
 net_data |>
   ggplot(aes(malaria_risk, fill = net)) +
-  geom_density(color = NA, alpha = .8)
+  geom_density(color = NA, alpha = 0.8)
 ```
 
 ```{r}
 #| echo = FALSE
 means <- net_data |>
-  group_by(net) |> 
+  group_by(net) |>
   summarize(malaria_risk = mean(malaria_risk)) |>
   pull(malaria_risk)
 ```
@@ -171,7 +170,7 @@ The mean difference in malaria risk is about `r round(means[[1]] - means[[2]], d
 
 ```{r}
 net_data |>
-  group_by(net) |> 
+  group_by(net) |>
   summarize(malaria_risk = mean(malaria_risk))
 ```
 
@@ -197,8 +196,8 @@ Here's the DAG that we're proposing for this question.
 ```{r}
 #| label: fig-net-data-dag
 #| echo: false
-#| fig.width: 7
-#| fig.cap: >
+#| fig-width: 7
+#| fig-cap: >
 #|   A proposed causal diagram of the effect of bed net use on malaria.
 #|   This directed acyclic graph (DAG) states our assumption that bed net
 #|   use causes a reduction in malaria risk. It also says that we assume:
@@ -208,6 +207,7 @@ Here's the DAG that we're proposing for this question.
 #|   people in a household; eligibility for the free net programs is impacted
 #|   by income and the number of people in a household; and health is impacted
 #|   by income.
+
 library(ggdag, warn.conflicts = FALSE)
 library(ggokabeito)
 mosquito_dag <- dagify(
@@ -272,10 +272,10 @@ In DAGs, each point represents a variable, and each arrow represents a cause.
 In other words, this diagram declares what we think the causal relationships are between these variables.
 In @fig-net-data-dag, we're saying that we believe:
 
--   Malaria risk is causally impacted by net usage, income, health, temperature, and insecticide resistance.
--   Net usage is causally impacted by income, health, temperature, eligibility for the free net program, and the number of people in a household.
--   Eligibility for the free net programs is determined by income and the number of people in a household.
--   Health is causally impacted by income.
+- Malaria risk is causally impacted by net usage, income, health, temperature, and insecticide resistance.
+- Net usage is causally impacted by income, health, temperature, eligibility for the free net program, and the number of people in a household.
+- Eligibility for the free net programs is determined by income and the number of people in a household.
+- Health is causally impacted by income.
 
 You may agree or disagree with some of these assertions.
 That's a good thing!
@@ -297,13 +297,14 @@ The association between bed net use and malaria risk is a mixture of all of thes
 ```{r}
 #| label: fig-net-data-confounding
 #| echo: false
-#| fig.width: 14
-#| fig.height: 10
-#| fig.cap: >
+#| fig-width: 14
+#| fig-height: 10
+#| fig-cap: >
 #|   In the proposed DAG, there are eight open pathways that contribute to the
 #|   causal effect seen in the naive regression: the true effect (in green) of
 #|   net usage on malaria risk and seven other confounding pathways (in orange).
 #|   The naive estimate is wrong because it is a composite of all these effects.
+
 glyph <- function(data, params, size) {
   data$shape <- 15
   data$size <- 12
@@ -320,8 +321,18 @@ mosquito_dag |>
     ),
     effects = factor(effects, c("true effect", "confounding effect"))
   ) |>
-  ggplot(aes(x = x, y = y, xend = xend, yend = yend, color = effects, alpha = path)) +
-  geom_dag_edges(aes(edge_alpha = path, edge_colour = effects), show.legend = FALSE) +
+  ggplot(aes(
+    x = x,
+    y = y,
+    xend = xend,
+    yend = yend,
+    color = effects,
+    alpha = path
+  )) +
+  geom_dag_edges(
+    aes(edge_alpha = path, edge_colour = effects),
+    show.legend = FALSE
+  ) +
   geom_dag_point(
     data = function(.x) dplyr::filter(.x, is.na(path)),
     key_glyph = glyph
@@ -347,13 +358,13 @@ mosquito_dag |>
   scale_alpha_manual(
     drop = FALSE,
     values = c("open path" = 1),
-    na.value = .5,
+    na.value = 0.5,
     breaks = "open path"
   ) +
   ggraph::scale_edge_alpha_manual(
     drop = FALSE,
     values = c("open path" = 1),
-    na.value = .5,
+    na.value = 0.5,
     breaks = "open path"
   ) +
   scale_color_okabe_ito(
@@ -373,7 +384,9 @@ mosquito_dag |>
 
 When we calculate a naive linear regression that only includes net usage and malaria risk, the effect we see is incorrect because the seven other confounding pathways in @fig-net-data-confounding distort it.
 In DAG terminology, we need to *block* these open pathways that distort the causal estimate we're after.
-(We can block paths through several techniques, including stratification, matching, weighting, and more. We'll see several methods throughout the book.) Luckily, by specifying a DAG, we can precisely determine the variables we need to control for.
+(We can block paths through several techniques, including stratification, matching, weighting, and more.
+We'll see several methods throughout the book.)
+Luckily, by specifying a DAG, we can precisely determine the variables we need to control for.
 For this DAG, we need to control for three variables: `r glue::glue_collapse(as.list(dagitty::adjustmentSets(mosquito_dag))[[1]], sep = ", ", last = ", and ")`.
 These three variables are a *minimal adjustment set*, the minimum set (or sets) of variables you need to block all confounding pathways.
 We'll discuss adjustment sets further in @sec-dags.
@@ -448,8 +461,9 @@ Here's the distribution of the propensity score by group, created by `geom_mirro
 
 ```{r}
 #| label: fig-mirror-histogram-net-data-unweighted
-#| fig.cap: >
+#| fig-cap: >
 #|   A mirrored histogram of the propensity scores of those who used nets (top, blue) versus those who did not use nets (bottom, orange). The range of propensity scores is similar between groups, with those who used nets slightly to the left of those who didn't, but the shapes of the distribution are different.
+
 library(halfmoon)
 ggplot(net_data_wts, aes(.fitted)) +
   geom_mirror_histogram(
@@ -464,8 +478,9 @@ The weighted propensity score creates a pseudo-population where the distribution
 
 ```{r}
 #| label: fig-mirror-histogram-net-data-weighted
-#| fig.cap: >
+#| fig-cap: >
 #|   A mirrored histogram of the propensity scores of those who used nets (top, blue) versus those who did not use nets (bottom, orange). The shaded region represents the unweighted distribution, and the lighter colored region represents the weighted distributions. The ATE weights up-weight the groups to be similar in range and shape of the distribution of propensity scores.
+
 ggplot(net_data_wts, aes(.fitted)) +
   geom_mirror_histogram(
     aes(group = net),
@@ -474,7 +489,7 @@ ggplot(net_data_wts, aes(.fitted)) +
   geom_mirror_histogram(
     aes(fill = net, weight = wts),
     bins = 50,
-    alpha = .5
+    alpha = 0.5
   ) +
   scale_y_continuous(labels = abs) +
   labs(x = "propensity score")
@@ -497,8 +512,9 @@ We'll calculate the SMDs with `tidy_smd()` then plot them with `geom_love()`, bo
 
 ```{r}
 #| label: fig-love-plot-net-data
-#| fig.cap: >
+#| fig-cap: >
 #|   A love plot representing the standardized mean differences (SMD) between exposure groups of three confounders: temperature, income, and health. Before weighting, there are considerable differences in the groups. After weighting, the confounders are much more balanced between groups.
+
 plot_df <- tidy_smd(
   net_data_wts,
   c(income, health, temperature),
@@ -527,8 +543,9 @@ We'll also discuss several other types of weights that are less prone to this is
 
 ```{r}
 #| label: fig-ate-density-net-data
-#| fig.cap: >
+#| fig-cap: >
 #|   A density plot of the average treatment effect (ATE) weights. The plot is skewed, with higher values towards 8. This may indicate a problem with the model, but the weights aren't so extreme to destabilize the variance of the estimate.
+
 net_data_wts |>
   ggplot(aes(wts)) +
   geom_density(fill = "#CC79A7", color = NA, alpha = 0.8)
@@ -630,12 +647,12 @@ bootstrapped_net_data <- bootstraps(
 bootstrapped_net_data
 ```
 
-The result is a nested data frame: each `splits` object contains metadata that rsample uses to subset the bootstrap samples for each of the 1,000 samples. 
+The result is a nested data frame: each `splits` object contains metadata that rsample uses to subset the bootstrap samples for each of the 1,000 samples.
 We actually have 1,001 rows because `apparent = TRUE` keeps a copy of the original data frame, as well, which is needed for some types of confidence interval calculations.
 Next, we'll run `fit_ipw()` 1,001 times to create a distribution for `estimate`.
 At its heart, the calculation we're doing is
 
-``` r
+```r
 fit_ipw(bootstrapped_net_data$splits[[n]])
 ```
 
@@ -663,18 +680,21 @@ Now we have a distribution of estimates:
 #| label: fig-bootstrap-estimates-net-data
 #| message: false
 #| warning: false
-#| fig.cap: >
+#| fig-cap: >
 #|   "A histogram of 1,000 bootstrapped estimates of the effect of net use on malaria risk. The spread of these estimates accounts for the dependency and uncertainty in the use of IPW weights."
+
 ipw_results |>
   # remove original data set results
-  filter(id != "Apparent") |> 
+  filter(id != "Apparent") |>
   mutate(
     estimate = map_dbl(
       boot_fits,
       # pull the `estimate` for `netTRUE` for each fit
-      \(.fit) .fit |>
-        filter(term == "netTRUE") |>
-        pull(estimate)
+      \(.fit) {
+        .fit |>
+          filter(term == "netTRUE") |>
+          pull(estimate)
+      }
     )
   ) |>
   ggplot(aes(estimate)) +
@@ -720,15 +740,20 @@ We'll use tipr to calculate this answer for 5 scenarios, where the mean differen
 
 ```{r}
 #| echo: false
+
 options(tipr.verbose = FALSE)
 ```
 
 ```{r}
 #| label: fig-tip-coef-net
-#| fig.cap: >
+#| fig-cap: >
 #|   A tipping point analysis under several confounding scenarios where the unmeasured confounder is a normally-distributed continuous variable. The line represents the strength of confounding necessary to tip the upper confidence interval of the causal effect estimate to 0. The x-axis represents the coefficient of the confounder-outcome relationship adjusted for the exposure and the set of measured confounders. The y-axis represents the scaled mean difference of the confounder between exposure groups.
+
 library(tipr)
-tipping_points <- tip_coef(boot_estimate$.upper, exposure_confounder_effect = 1:5)
+tipping_points <- tip_coef(
+  boot_estimate$.upper,
+  exposure_confounder_effect = 1:5
+)
 
 tipping_points |>
   ggplot(aes(confounder_outcome_effect, exposure_confounder_effect)) +
@@ -752,9 +777,9 @@ Let's say that in our simulated data, an unnamed ethnic group in the unnamed cou
 For historical reasons, bed net use in this group is also very high.
 We don't have this variable in `net_data`, but let's say we know from the literature that in this sample, we can estimate at:
 
-1.  People with this genetic resistance have, on average, a lower malaria risk by about 10.
-2.  About 26% of people who use nets in our study have this genetic resistance.
-3.  About 5% of people who don't use nets have this genetic resistance.
+1. People with this genetic resistance have, on average, a lower malaria risk by about 10.
+2. About 26% of people who use nets in our study have this genetic resistance.
+3. About 5% of people who don't use nets have this genetic resistance.
 
 With this amount of information, we can use tipr to adjust the estimates we calculated for the unmeasured confounder.
 We'll use `adjust_coef_with_binary()` to calculate the adjusted estimates.
@@ -780,11 +805,22 @@ The true effect of net use on malaria is about -10, and the true DAG that genera
 ```{r}
 #| label: fig-net-data-true-dag
 #| echo: false
-#| fig.cap: >
+#| fig-cap: >
 #|   The true causal diagram for `net_data`. This DAG is identical to the one we proposed with one addition: genetic resistance to malaria causally reduces the risk of malaria and impacts net use. It's thus a confounder and a part of the minimal adjustment set required to get an unbiased effect estimate. In otherwords, by not including it, we've calculated the wrong effect.
+
 mosquito_dag_full <- dagify(
-  malaria_risk ~ net + income + health + temperature + insecticide_resistance + genetic_resistance,
-  net ~ income + health + temperature + eligible + household + genetic_resistance,
+  malaria_risk ~ net +
+    income +
+    health +
+    temperature +
+    insecticide_resistance +
+    genetic_resistance,
+  net ~ income +
+    health +
+    temperature +
+    eligible +
+    household +
+    genetic_resistance,
   eligible ~ income + household,
   health ~ income,
   exposure = "net",
@@ -843,6 +879,7 @@ mosquito_dag_full |>
 
 ```{r}
 #| include: false
+
 fit_ipw_full <- function(.split, ...) {
   # get bootstrapped data frame
   .df <- as.data.frame(.split)
@@ -893,12 +930,12 @@ We'll explore these techniques and others in @sec-sensitivity.
 
 To calculate this effect, we:
 
-1.  Specified a causal question (for the average treatment effect)
-2.  Drew our assumptions using a causal diagram (using DAGs)
-3.  Modeled our assumptions (using propensity score weighting)
-4.  Diagnosed our models (by checking confounder balance after weighting)
-5.  Estimated the causal effect (using inverse probability weighting)
-6.  Conducted sensitivity analysis on the effect estimate (using tipping point analysis)
+1. Specified a causal question (for the average treatment effect)
+2. Drew our assumptions using a causal diagram (using DAGs)
+3. Modeled our assumptions (using propensity score weighting)
+4. Diagnosed our models (by checking confounder balance after weighting)
+5. Estimated the causal effect (using inverse probability weighting)
+6. Conducted sensitivity analysis on the effect estimate (using tipping point analysis)
 
 Throughout the rest of the book, we'll follow these broad steps in examples from many domains.
 We'll dive more deeply into propensity score techniques, explore other methods for estimating causal effects, and, most importantly, make sure, over and over again, that the assumptions we're making are reasonable---even if we'll never know for sure.

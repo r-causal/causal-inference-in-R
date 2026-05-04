@@ -4,6 +4,7 @@
 
 ```{r}
 #| echo: false
+
 # TODO: remove when first edition complete
 status("complete")
 ```
@@ -23,6 +24,7 @@ In the plots in @fig-anscombe, each data set has remarkably similar summary stat
 #| label: fig-anscombe
 #| message: false
 #| fig-cap: "Anscombe's Quartet, a set of four datasets with nearly identical summary statistics. Anscombe's point was that one must visualize the data to understand it."
+
 library(quartets)
 
 anscombe_quartet |>
@@ -49,6 +51,7 @@ datasaurus_dozen |>
 #| message: false
 #| fig-cap: "The Datasaurus Dozen, a set of datasets with nearly identical summary statistics. The Datasaurus Dozen is a modern version of Anscombe's Quartet. It's actually a baker's dozen, but who's counting?"
 #| fig-height: 8
+
 datasaurus_dozen |>
   ggplot(aes(x, y)) +
   geom_point() +
@@ -67,6 +70,7 @@ The difference is the causal structure that generated each dataset.
 #| label: fig-causal_quartet_hidden
 #| message: false
 #| fig-cap: "The Causal Quartet, four data sets with nearly identical summary statistics and visualizations. The causal structure of each dataset is different, and data alone cannot tell us which is which."
+
 causal_quartet |>
   # hide the dataset names
   mutate(dataset = as.integer(factor(dataset))) |>
@@ -91,6 +95,7 @@ Likewise, the correlation between `exposure` and `covariate` is no help: they're
 #| label: tbl-quartet_lm
 #| code-fold: true
 #| tbl-cap: "The causal quartet, with the estimated effect of `exposure` on `outcome` with and without adjustment for `covariate`. The unadjusted estimate is identical for all four datasets, as is the correlation between `exposure` and `covariate`. The adjusted estimate varies. Without background knowledge, it's not clear which is right."
+
 library(gt)
 effects <- causal_quartet |>
   nest_by(dataset = as.integer(factor(dataset))) |>
@@ -126,6 +131,7 @@ Even the reverse technique, *excluding* a variable when it's *less* than ten per
 #| label: tbl-quartet_ten_percent
 #| code-fold: true
 #| tbl-cap: "The percent change in the coefficient for `exposure` when including `covariate` in the model."
+
 effects |>
   mutate(percent_change = scales::percent((ate_x - ate_xz) / ate_x)) |>
   select(dataset, percent_change) |>
@@ -152,6 +158,7 @@ causal_quartet |>
 #| label: fig-causal_quartet_covariate
 #| message: false
 #| fig-cap: "The scaled relationship between `exposure` and `covariate`. We still do not have enough information to determine whether `covariate` is a confounder, mediator, or collider."
+
 causal_quartet |>
   # hide the dataset names
   mutate(dataset = as.integer(factor(dataset))) |>
@@ -180,6 +187,7 @@ In fact, it's a mathematical artifact of the data generating process.
 #| label: fig-causal_quartet_covariate_unscaled
 #| message: false
 #| fig-cap: "@fig-causal_quartet_covariate, unscaled"
+
 causal_quartet |>
   # hide the dataset names
   mutate(dataset = as.integer(factor(dataset))) |>
@@ -200,6 +208,7 @@ In 3, it's a mediator (it depends on the research question).
 #| label: fig-causal_quartet
 #| message: false
 #| fig-cap: "The Causal Quartet, revealed. The first and last datasets are types of collider bias; we should *not* control for `covariate.` In the second dataset, `covariate` is a confounder, and we *should* control for it. In the third dataset, `covariate` is a mediator, and we should control for it if we want the direct effect, but not if we want the total effect."
+
 causal_quartet |>
   ggplot(aes(exposure, outcome)) +
   geom_point() +
@@ -226,6 +235,7 @@ Once we compile a DAG for each dataset, we only need to query the DAG for the co
 #|   - "The DAG for dataset 2, where `covariate` (c) is a confounder. `covariate` is a mutual cause of `exposure` (e) and `outcome` (o), representing a backdoor path, so we *must* adjust for it to get the right answer."
 #|   - "The DAG for dataset 3, where `covariate` (c) is a mediator. `covariate` is a descendant of `exposure` (e) and a cause of `outcome` (o). The path through `covariate` is the indirect path, and the path through `exposure` is the direct path. We should adjust for `covariate` if we want the direct effect, but not if we want the total effect."
 #|   - "The DAG for dataset 4, where `covariate` (c) is a collider via M-Bias. Although `covariate` happens before both `outcome` (o) and `exposure` (e), it's still a collider. We should *not* adjust for `covariate`, particularly since we can't control for the bias via `u1` and `u2`, which are unmeasured."
+
 library(ggdag)
 
 d_coll <- quartet_collider(x = "e", y = "o", z = "c")
@@ -249,11 +259,13 @@ p_coll <- d_coll |>
   coord_cartesian(clip = "off") +
   theme(legend.position = "bottom") +
   ggtitle("(1) Collider") +
-  guides(color = guide_legend(
-    title = NULL,
-    keywidth = unit(1.4, "mm"),
-    override.aes = list(size = 3.4, shape = 15)
-  )) +
+  guides(
+    color = guide_legend(
+      title = NULL,
+      keywidth = unit(1.4, "mm"),
+      override.aes = list(size = 3.4, shape = 15)
+    )
+  ) +
   scale_color_discrete(breaks = "covariate", na.value = "grey70")
 
 
@@ -270,11 +282,13 @@ p_conf <- d_conf |>
   coord_cartesian(clip = "off") +
   theme(legend.position = "bottom") +
   ggtitle("(2) Confounder") +
-  guides(color = guide_legend(
-    title = NULL,
-    keywidth = unit(1.4, "mm"),
-    override.aes = list(size = 3.4, shape = 15)
-  )) +
+  guides(
+    color = guide_legend(
+      title = NULL,
+      keywidth = unit(1.4, "mm"),
+      override.aes = list(size = 3.4, shape = 15)
+    )
+  ) +
   scale_color_discrete(breaks = "covariate", na.value = "grey70")
 
 p_med <- d_med |>
@@ -290,11 +304,13 @@ p_med <- d_med |>
   coord_cartesian(clip = "off") +
   theme(legend.position = "bottom") +
   ggtitle("(3) Mediator") +
-  guides(color = guide_legend(
-    title = NULL,
-    keywidth = unit(1.4, "mm"),
-    override.aes = list(size = 3.4, shape = 15)
-  )) +
+  guides(
+    color = guide_legend(
+      title = NULL,
+      keywidth = unit(1.4, "mm"),
+      override.aes = list(size = 3.4, shape = 15)
+    )
+  ) +
   scale_color_discrete(breaks = "covariate", na.value = "grey70")
 
 
@@ -311,11 +327,13 @@ p_m_bias <- d_mbias |>
   coord_cartesian(clip = "off") +
   ggtitle("(4) M-bias") +
   theme(legend.position = "bottom") +
-  guides(color = guide_legend(
-    title = NULL,
-    keywidth = unit(1.4, "mm"),
-    override.aes = list(size = 3.4, shape = 15)
-  )) +
+  guides(
+    color = guide_legend(
+      title = NULL,
+      keywidth = unit(1.4, "mm"),
+      override.aes = list(size = 3.4, shape = 15)
+    )
+  ) +
   scale_color_discrete(breaks = "covariate", na.value = "grey70")
 
 
@@ -334,12 +352,13 @@ For dataset 3, it depends on which mediation effect we want: adjusted for the di
 #| label: tbl-quartets_true_effects
 #| echo: false
 #| tbl-cap: "The data generating mechanism and true causal effects in each dataset. Sometimes, the unadjusted effect is the same, and sometimes it is not, depending on the mechanism and question."
+
 tibble::tribble(
-  ~`Data generating mechanism`, ~`Correct causal model`, ~`Correct causal effect`,
-  "(1) Collider", "outcome ~ exposure", "1",
-  "(2) Confounder", "outcome ~ exposure; covariate", "0.5",
-  "(3) Mediator", "Direct effect: outcome ~ exposure; covariate, Total Effect: outcome ~ exposure", "Direct effect: 0, Total effect: 1",
-  "(4) M-Bias", "outcome ~ exposure", "1"
+  ~`Data generating mechanism` , ~`Correct causal model`                                                          , ~`Correct causal effect`            ,
+  "(1) Collider"               , "outcome ~ exposure"                                                             , "1"                                 ,
+  "(2) Confounder"             , "outcome ~ exposure; covariate"                                                  , "0.5"                               ,
+  "(3) Mediator"               , "Direct effect: outcome ~ exposure; covariate, Total Effect: outcome ~ exposure" , "Direct effect: 0, Total effect: 1" ,
+  "(4) M-Bias"                 , "outcome ~ exposure"                                                             , "1"
 ) |>
   gt()
 ```
@@ -374,15 +393,25 @@ Only control for variables that precede the outcome.
 #| code-fold: true
 #| fig-width: 4
 #| fig-height: 3.75
+
 d_coll <- quartet_time_collider(
-  x0 = "e0", x1 = "e1", x2 = "e2", x3 = "e3",
-  y1 = "o1", y2 = "o2", y3 = "o3",
-  z1 = "c1", z2 = "c2", z3 = "c3"
+  x0 = "e0",
+  x1 = "e1",
+  x2 = "e2",
+  x3 = "e3",
+  y1 = "o1",
+  y2 = "o2",
+  y3 = "o3",
+  z1 = "c1",
+  z2 = "c2",
+  z3 = "c3"
 )
 
 d_coll |>
   tidy_dagitty() |>
-  mutate(covariate = if_else(label == "c3", "covariate\n(follow-up)", NA_character_)) |>
+  mutate(
+    covariate = if_else(label == "c3", "covariate\n(follow-up)", NA_character_)
+  ) |>
   ggplot(
     aes(x = x, y = y, xend = xend, yend = yend)
   ) +
@@ -394,17 +423,27 @@ d_coll |>
   theme(legend.position = "bottom") +
   geom_vline(xintercept = c(2.6, 3.25, 3.6, 4.25), lty = 2, color = "grey60") +
   annotate("label", x = 2.925, y = 0.97, label = "baseline", color = "grey50") +
-  annotate("label", x = 3.925, y = 0.97, label = "follow-up", color = "grey50") +
-  guides(color = guide_legend(
-    title = NULL,
-    keywidth = unit(1.4, "mm"),
-    override.aes = list(size = 3.4, shape = 15)
-  )) +
+  annotate(
+    "label",
+    x = 3.925,
+    y = 0.97,
+    label = "follow-up",
+    color = "grey50"
+  ) +
+  guides(
+    color = guide_legend(
+      title = NULL,
+      keywidth = unit(1.4, "mm"),
+      override.aes = list(size = 3.4, shape = 15)
+    )
+  ) +
   scale_color_discrete(breaks = "covariate\n(follow-up)", na.value = "grey70")
 
 d_coll |>
   tidy_dagitty() |>
-  mutate(covariate = if_else(label == "c2", "covariate\n(baseline)", NA_character_)) |>
+  mutate(
+    covariate = if_else(label == "c2", "covariate\n(baseline)", NA_character_)
+  ) |>
   ggplot(
     aes(x = x, y = y, xend = xend, yend = yend)
   ) +
@@ -416,12 +455,20 @@ d_coll |>
   theme(legend.position = "bottom") +
   geom_vline(xintercept = c(2.6, 3.25, 3.6, 4.25), lty = 2, color = "grey60") +
   annotate("label", x = 2.925, y = 0.97, label = "baseline", color = "grey50") +
-  annotate("label", x = 3.925, y = 0.97, label = "follow-up", color = "grey50") +
-  guides(color = guide_legend(
-    title = NULL,
-    keywidth = unit(1.4, "mm"),
-    override.aes = list(size = 3.4, shape = 15)
-  )) +
+  annotate(
+    "label",
+    x = 3.925,
+    y = 0.97,
+    label = "follow-up",
+    color = "grey50"
+  ) +
+  guides(
+    color = guide_legend(
+      title = NULL,
+      keywidth = unit(1.4, "mm"),
+      override.aes = list(size = 3.4, shape = 15)
+    )
+  ) +
   scale_color_discrete(breaks = "covariate\n(baseline)", na.value = "grey70")
 ```
 
@@ -443,16 +490,16 @@ Even though `covariate_baseline` is only in the adjustment set for the second da
 #| label: tbl-quartet_time_adjusted
 #| code-fold: true
 #| tbl-cap: "The adjusted effect of `exposure_baseline` on `outcome_followup` in each dataset. The effect adjusted for `covariate_baseline` is correct for three out of four datasets."
+
 causal_quartet_time |>
   nest_by(dataset) |>
   mutate(
-    adjusted_effect =
-      coef(
-        lm(
-          outcome_followup ~ exposure_baseline + covariate_baseline,
-          data = data
-        )
-      )[2]
+    adjusted_effect = coef(
+      lm(
+        outcome_followup ~ exposure_baseline + covariate_baseline,
+        data = data
+      )
+    )[2]
   ) |>
   bind_cols(tibble(truth = c(1, 0.5, 1, 1))) |>
   select(-data, dataset) |>
@@ -512,11 +559,10 @@ causal_quartet |>
       data,
       lm(outcome ~ exposure, data = data)
     ),
-    rmse2 =
-      get_rmse(
-        data,
-        lm(outcome ~ exposure + covariate, data = data)
-      ),
+    rmse2 = get_rmse(
+      data,
+      lm(outcome ~ exposure + covariate, data = data)
+    ),
     rmse_diff = rmse2 - rmse1,
     r_squared1 = get_r_squared(lm(outcome ~ exposure, data = data)),
     r_squared2 = get_r_squared(lm(outcome ~ exposure + covariate, data = data)),
@@ -540,7 +586,7 @@ causal_quartet |>
 
 Relatedly, model coefficients for variables *other* than those of the causes we're interested in can be difficult to interpret.
 In a model with `outcome ~ exposure + covariate`, it's tempting to present the coefficient of `covariate` as well as `exposure`.
-The problem, as discussed @sec-pred-or-explain, is that the causal structure for the effect of `covariate` on `outcome` may differ from that of `exposure` on `outcome`.
+The problem, as discussed in @sec-pred-or-explain, is that the causal structure for the effect of `covariate` on `outcome` may differ from that of `exposure` on `outcome`.
 Let's consider a variation of the quartet DAGs with other variables.
 
 First, let's start with the confounder DAG.
@@ -548,7 +594,9 @@ In @fig-quartet_confounder, we see that `covariate` is a confounder.
 If this DAG represents the complete causal structure for `outcome`, the model `outcome ~ exposure + covariate` will give an unbiased estimate of the effect on `outcome` for `exposure`, assuming we've met other assumptions of the modeling process.
 The adjustment set for `covariate`'s effect on `outcome` is empty, and `exposure` is not a collider, so controlling for it does not induce bias[^06-not-just-a-stats-problem-4].
 But look again.
-`exposure` is a mediator for `covariate`'s effect on `outcome`; some of the total effect is mediated through `outcome`, while there is also a direct effect of `covariate` on `outcome`. Both estimates are unbiased, but they are different *types* of estimates. The effect of `exposure` on `outcome` is the *total effect* of that relationship, while the effect of `covariate` on `outcome` is the *direct effect*.
+`exposure` is a mediator for `covariate`'s effect on `outcome`; some of the total effect is mediated through `outcome`, while there is also a direct effect of `covariate` on `outcome`.
+Both estimates are unbiased, but they are different *types* of estimates.
+The effect of `exposure` on `outcome` is the *total effect* of that relationship, while the effect of `covariate` on `outcome` is the *direct effect*.
 
 [^06-not-just-a-stats-problem-4]: Additionally, OLS produces a *collapsible* effect.
     Other effects, like the odds and hazards ratios, are *non-collapsible*, meaning that the conditional odds or hazards ratio might differ from its marginal version, even when there is no confounding.
@@ -560,6 +608,7 @@ But look again.
 #| fig-cap: "The DAG for dataset 2, where `covariate` is a confounder. If you look closely, you'll realize that, from the perspective of the effect of `covariate` on the `outcome`, `exposure` is a *mediator*."
 #| fig-width: 3
 #| fig-height: 2.75
+
 p_conf +
   ggtitle(NULL)
 ```
@@ -578,6 +627,7 @@ Now, we have a situation where `covariate` not only answers a different type of 
 #| fig-cap: "A modification of the DAG for dataset 2, where `covariate` is a confounder. Now, the relationship between `covariate` and `outcome` is confounded by `q`, a variable not necessary to calculate the unbiased effect of `exposure` on `outcome`."
 #| fig-width: 3.5
 #| fig-height: 3
+
 coords <- list(
   x = c(X = 1.75, Z = 1, Y = 3, Q = 0),
   y = c(X = 1.1, Z = 1.5, Y = 1, Q = 1)
@@ -605,11 +655,13 @@ p_conf2 <- d_conf2 |>
   theme_dag() +
   coord_cartesian(clip = "off") +
   theme(legend.position = "none") +
-  guides(color = guide_legend(
-    title = NULL,
-    keywidth = unit(1.4, "mm"),
-    override.aes = list(size = 3.4, shape = 15)
-  )) +
+  guides(
+    color = guide_legend(
+      title = NULL,
+      keywidth = unit(1.4, "mm"),
+      override.aes = list(size = 3.4, shape = 15)
+    )
+  ) +
   scale_color_discrete(breaks = "covariate", na.value = "grey70")
 
 p_conf2

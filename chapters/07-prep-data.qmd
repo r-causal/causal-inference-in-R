@@ -4,6 +4,7 @@
 
 ```{r}
 #| echo: false
+
 # TODO: remove when first edition complete
 status("polishing")
 ```
@@ -80,6 +81,7 @@ Let's begin by diagramming this causal question (@fig-seven-diag).
 #| fig-cap: "Diagram of the causal question \"Is there a relationship between whether there were Extra Magic Hours in the morning at Magic Kingdom and the average posted wait time for the Seven Dwarfs Mine Train the same day between 9 AM and 10 AM in 2018?\""
 #| label: fig-seven-diag
 #| warning: false
+
 knitr::include_graphics(here::here("images/emm-diagram.png"))
 ```
 
@@ -102,11 +104,12 @@ For example's sake, though, we'll keep it simple.
 #| code-fold: true
 #| message: false
 #| warning: false
-#| fig.cap: >
+#| fig-cap: >
 #|   Proposed DAG for the relationship between Extra Magic Hours
 #|   in the morning at a particular park and the average posted wait
 #|   time between 9 AM and 10 AM.
 #|   Here, we believe 1) Extra Magic Hours impacts average wait time and 2) both Extra Magic Hours and average wait time are determined by the time the park closes, historic high temperatures, and ticket season.
+
 library(ggdag)
 library(ggokabeito)
 
@@ -136,7 +139,7 @@ dagify(
   ggplot(
     aes(x, y, xend = xend, yend = yend, color = status)
   ) +
-  geom_dag_edges_arc(curvature = c(rep(0, 5), .3)) +
+  geom_dag_edges_arc(curvature = c(rep(0, 5), 0.3)) +
   geom_dag_point() +
   geom_dag_label_repel(seed = 1630) +
   scale_color_okabe_ito(na.value = "grey90") +
@@ -150,17 +153,17 @@ Since we're not, we need to rely on previously collected observational data and 
 Here, our observations are *days*.
 @tbl-tt-7dwarfs maps each element of the causal question to elements of the target trial protocol.
 
-| Protocol Step               | Description                                                                                                                | Target Trial                                                                                                                            | Emulation                                                                                                                                                                              |
-|------------------|------------------|------------------|--------------------|
-| Eligibility criteria        | Which days should be included in the study?                                                                                | Days must be from 2018.                                                                                                                 | Same as target trial.                                                                                                                                                                  |
-| Exposure definition         | When eligible, what precise exposure will days under study receive?                                                        | Exposed: Magic Kingdom had Extra Magic Hours in the morning. Otherwise, unexposed.                                                      | Same as target trial.                                                                                                                                                                  |
-| Assignment procedures       | How will eligible days be assigned to an exposure?                                                                         | Days are randomized with a 50% probability of having Extra Magic Hours in the morning. The assignment is non-blinded.                   | Days are assigned the exposure consistent with their data, e.g., whether or not there were Extra Magic Hours that morning. Randomization is emulated using adjustment for confounding. |
-| Follow-up period            | When does follow-up start and end?                                                                                         | Start: When the park opens the day of the exposure; End: at 10 AM on the same day.                                                      | Same as target trial.                                                                                                                                                                  |
-| Outcome definition          | What precise outcomes will be measured?                                                                                    | The average posted wait time for the Seven Dwarfs Mine Train between 9 AM and 10 AM on the same day.                                    | Same as target trial.                                                                                                                                                                  |
-| Causal contrast of interest | Which causal estimand will be estimated?                                                                                   | Average Treatment Effect (ATE).                                                                                                         | Same as target trial.                                                                                                                                                                  |
-| Analysis plan               | What data manipulation and statistical procedures will be applied to the data to estimate the causal contrast of interest? | ATE will be calculated using inverse probability weighting, weighted for historic high temperature, ticket season, and park close time. | Same as target trial. In this case, the variables are confounders, and the adjustment set was determined by assuming the causal structure presented in @fig-dag-magic.                 |
+  | Protocol Step               | Description                                                                                                                | Target Trial                                                                                                                            | Emulation                                                                                                                                                                              |
+  | --------------------------- | -------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+  | Eligibility criteria        | Which days should be included in the study?                                                                                | Days must be from 2018.                                                                                                                 | Same as target trial.                                                                                                                                                                  |
+  | Exposure definition         | When eligible, what precise exposure will days under study receive?                                                        | Exposed: Magic Kingdom had Extra Magic Hours in the morning. Otherwise, unexposed.                                                      | Same as target trial.                                                                                                                                                                  |
+  | Assignment procedures       | How will eligible days be assigned to an exposure?                                                                         | Days are randomized with a 50% probability of having Extra Magic Hours in the morning. The assignment is non-blinded.                   | Days are assigned the exposure consistent with their data, e.g., whether or not there were Extra Magic Hours that morning. Randomization is emulated using adjustment for confounding. |
+  | Follow-up period            | When does follow-up start and end?                                                                                         | Start: When the park opens the day of the exposure; End: at 10 AM on the same day.                                                      | Same as target trial.                                                                                                                                                                  |
+  | Outcome definition          | What precise outcomes will be measured?                                                                                    | The average posted wait time for the Seven Dwarfs Mine Train between 9 AM and 10 AM on the same day.                                    | Same as target trial.                                                                                                                                                                  |
+  | Causal contrast of interest | Which causal estimand will be estimated?                                                                                   | Average Treatment Effect (ATE).                                                                                                         | Same as target trial.                                                                                                                                                                  |
+  | Analysis plan               | What data manipulation and statistical procedures will be applied to the data to estimate the causal contrast of interest? | ATE will be calculated using inverse probability weighting, weighted for historic high temperature, ticket season, and park close time. | Same as target trial. In this case, the variables are confounders, and the adjustment set was determined by assuming the causal structure presented in @fig-dag-magic.                 |
 
-: A protocol of a target trial of the effect of Extra Magic Morning on average posted wait times and a corresponding protocol for an observational study that emulates the target trial {#tbl-tt-7dwarfs}
+  : A protocol of a target trial of the effect of Extra Magic Morning on average posted wait times and a corresponding protocol for an observational study that emulates the target trial {#tbl-tt-7dwarfs}
 
 ## Data wrangling and target trials
 
@@ -169,16 +172,16 @@ In a randomized trial, many of these actions are part of the trial design and da
 In a target trial emulation, we often need to apply those actions ourselves to the data we are preparing to answer causal questions.
 @tbl-dplyr presents the type of actions (here, functions in the tidyverse) we might need to take.
 
-| Target trial protocol element | tidyverse function                            |
-|------------------------------|------------------------------------------|
-| Eligibility criteria          | `filter()`                                    |
-| Exposure definition           | `mutate()`                                    |
-| Assignment procedures         | `mutate()`, `select()`                        |
-| Follow-up period              | `mutate()`, `pivot_longer()`, `pivot_wider()` |
-| Outcome definition            | `mutate()`                                    |
-| Analysis plan                 | `select()`, `mutate()`, `*_join()`            |
+  | Target trial protocol element | tidyverse function                            |
+  | ----------------------------- | --------------------------------------------- |
+  | Eligibility criteria          | `filter()`                                    |
+  | Exposure definition           | `mutate()`                                    |
+  | Assignment procedures         | `mutate()`, `select()`                        |
+  | Follow-up period              | `mutate()`, `pivot_longer()`, `pivot_wider()` |
+  | Outcome definition            | `mutate()`                                    |
+  | Analysis plan                 | `select()`, `mutate()`, `*_join()`            |
 
-: Mapping elements of target trial protocols to commonly used tidyverse functions {#tbl-dplyr}
+  : Mapping elements of target trial protocols to commonly used tidyverse functions {#tbl-dplyr}
 
 We need to manipulate both the `seven_dwarfs_train` dataset and the `parks_metadata_raw` dataset to answer our causal question.
 Let's start with the `seven_dwarfs_train` data set.
@@ -209,6 +212,7 @@ The distribution of the wait times is quite wide, with actual times appearing sh
 
 ```{r}
 #| warning: false
+
 seven_dwarfs_train |>
   pivot_longer(
     starts_with("wait_minutes"),
@@ -242,6 +246,7 @@ Our eligibility criteria state that we need to restrict our analysis to days in 
 ```{r}
 #| message: false
 #| warning: false
+
 seven_dwarfs_9 <- seven_dwarfs_train |>
   # eligibility criteria
   filter(year(park_date) == 2018) |>
@@ -366,14 +371,15 @@ There were many more regular ticket days in the summer and more peak ticket days
 ```{r}
 #| label: fig-ticket-season
 #| fig-cap: "Ticket season by month. The proportion of days of each ticket prices varies across the year. There were many more regular ticket days in the summer and more peak ticket days in March, May, and December. Additionally, there were no peak tickets in August or September or value tickets in June, July, or December."
+
 ticket_season_by_month |>
   ggplot(aes(month, n, fill = park_ticket_season)) +
-  geom_col(position = "fill", alpha = .8) +
+  geom_col(position = "fill", alpha = 0.8) +
   labs(
     y = "proportion of days",
     x = NULL,
     fill = "ticket season"
-  ) + 
+  ) +
   theme(panel.grid.major.x = element_blank())
 ```
 
@@ -390,15 +396,16 @@ Some early times don't happen in the summer, and some late times don't happen in
 ```{r}
 #| label: fig-close-time
 #| fig-cap: "Close time for the Magic Kingdom park by month. The close time varies across the year. Earlier close times occur more often in the late fall and winter. There are months where some close times don't occur in any days, such as early times in the summer and late times in the late fall."
+
 parks_metadata |>
   count_by_month(park_close) |>
   ggplot(aes(month, n, fill = ordered(park_close))) +
-  geom_col(position = "fill", alpha = .85) +
+  geom_col(position = "fill", alpha = 0.85) +
   labs(
     y = "proportion of days",
     x = NULL,
     fill = "close time"
-  ) + 
+  ) +
   theme(panel.grid.major.x = element_blank())
 ```
 
@@ -407,6 +414,7 @@ Disney World is in Florida, so it never gets particularly cold, but it gets hot 
 ```{r}
 #| label: fig-high-temp
 #| fig-cap: "Historic high temperature in farenheit for Walt Disney World by month. Being in a warm climate, the park never gets particularly cold, but the temperature does vary quite a bit throughout the year, with very hot summers."
+
 parks_metadata |>
   mutate(
     month = month(
@@ -416,7 +424,7 @@ parks_metadata |>
     )
   ) |>
   ggplot(aes(month, park_temperature_high)) +
-  geom_jitter(height = 0, width = .15, alpha = .5) +
+  geom_jitter(height = 0, width = 0.15, alpha = 0.5) +
   labs(
     y = "historic high\ntemperature (F)",
     x = NULL
@@ -475,7 +483,10 @@ Days with Extra Magic Mornings were also slightly cooler, but not by much.
 
 ```{r}
 #| label: tbl-unweighted-gtsummary
-#| tbl-cap: A descriptive table of Extra Magic Morning in the touringplans dataset. This table shows the distributions of these variables in the observed population.
+#| tbl-cap: A descriptive table of Extra Magic Morning in the touringplans
+#|   dataset. This table shows the distributions of these variables in the
+#|   observed population.
+
 library(gtsummary)
 library(labelled)
 seven_dwarfs_9 |>
@@ -483,11 +494,11 @@ seven_dwarfs_9 |>
     park_ticket_season = "Ticket Season",
     park_close = "Close Time",
     park_temperature_high = "Historic High Temperature"
-  ) |> 
+  ) |>
   mutate(
     park_close = as.character(park_close),
     park_extra_magic_morning = factor(
-      park_extra_magic_morning, 
+      park_extra_magic_morning,
       labels = c("No Extra Magic Hours", "Extra Magic Hours")
     )
   ) |>
@@ -495,7 +506,7 @@ seven_dwarfs_9 |>
     by = park_extra_magic_morning,
     include = c(
       park_ticket_season,
-      park_close, 
+      park_close,
       park_temperature_high
     )
   ) |>
@@ -553,8 +564,9 @@ Here, we're grouping by the values of the `exposure` as we have them assigned an
 
 ```{r}
 #| eval: false
-dataset |> 
-  group_by(exposure, exposure_type) |> 
+
+dataset |>
+  group_by(exposure, exposure_type) |>
   summarize(...)
 ```
 
@@ -577,6 +589,7 @@ Both exposure levels span the majority of the covariate space, but none of the d
 ```{r}
 #| label: fig-close
 #| fig-cap: "Distribution of Magic Kingdom park closing time by whether the date had Extra Magic Hours in the morning. Some close times did not have days with Extra Magic Hours, a potential positivity violation."
+
 ggplot(
   seven_dwarfs_9,
   aes(
@@ -585,7 +598,7 @@ ggplot(
     fill = factor(park_extra_magic_morning)
   )
 ) +
-  geom_bar(position = "fill", alpha = .8) +
+  geom_bar(position = "fill", alpha = 0.8) +
   labs(
     fill = "Extra Magic Morning",
     x = "Time of Park Close"
@@ -599,6 +612,7 @@ We'll explore both in detail later on.
 
 ```{r}
 #| message: false
+
 library(hms)
 seven_dwarfs_9 |>
   count(park_close, park_extra_magic_morning) |>
@@ -617,6 +631,7 @@ Examining @fig-temp, very few days in the exposed group have maximum temperature
 ```{r}
 #| label: fig-temp
 #| fig-cap: "Distribution of historic  high temperature at Magic Kingdom by whether the date had Extra Magic Hours in the morning. Only 1 day with Extra Magic Hours had an historic high temperature of less than 60 degress Fahrenheit."
+
 library(halfmoon)
 ggplot(
   seven_dwarfs_9,
@@ -626,7 +641,7 @@ ggplot(
     fill = factor(park_extra_magic_morning)
   )
 ) +
-  geom_mirror_histogram(bins = 20, alpha = .8) +
+  geom_mirror_histogram(bins = 20, alpha = 0.8) +
   scale_y_continuous(labels = abs) +
   labs(
     fill = "Extra Magic Morning",
@@ -650,6 +665,7 @@ Examining @fig-ticket, we do not see any positivity violations.
 ```{r}
 #| label: fig-ticket
 #| fig-cap: "Distribution of ticket season by whether the date had Extra Magic Hours in the morning. As days with and without Extra Magic Hours happen across all three levels, there don't appear to be positivity violations."
+
 ggplot(
   seven_dwarfs_9,
   aes(
@@ -658,7 +674,7 @@ ggplot(
     fill = factor(park_extra_magic_morning)
   )
 ) +
-  geom_bar(position = "dodge", alpha = .8) +
+  geom_bar(position = "dodge", alpha = 0.8) +
   labs(
     fill = "Extra Magic Morning",
     x = "Magic Kingdom Ticket Season"
@@ -676,18 +692,23 @@ Let's start by discretizing the `park_temperature_high` variable, cutting it int
 #| label: fig-positivity
 #| fig-cap: "Check for positivity violations across three confounders: historic high temperature, park close time, and ticket season."
 #| fig-width: 9
+
 prop_exposed <- seven_dwarfs_9 |>
   ## cut park_temperature_high into tertiles
-  mutate(park_temperature_high_bin = cut(
+  mutate(
+    park_temperature_high_bin = cut(
       park_temperature_high,
       breaks = 3
-  )) |>
+    )
+  ) |>
   ## bin park close time
-  mutate(park_close_bin = case_when(
-    hour(park_close) < 19 & hour(park_close) > 12 ~ "(1) early",
-    hour(park_close) >= 19 & hour(park_close) < 24 ~ "(2) standard",
-    hour(park_close) >= 24 | hour(park_close) < 12 ~ "(3) late"
-  )) |>
+  mutate(
+    park_close_bin = case_when(
+      hour(park_close) < 19 & hour(park_close) > 12 ~ "(1) early",
+      hour(park_close) >= 19 & hour(park_close) < 24 ~ "(2) standard",
+      hour(park_close) >= 24 | hour(park_close) < 12 ~ "(3) late"
+    )
+  ) |>
   group_by(
     park_close_bin,
     park_temperature_high_bin,
@@ -695,7 +716,7 @@ prop_exposed <- seven_dwarfs_9 |>
   ) |>
   ## calculate the proportion exposed in each bin
   summarize(
-    prop_exposed = mean(park_extra_magic_morning), 
+    prop_exposed = mean(park_extra_magic_morning),
     .groups = "drop"
   ) |>
   complete(
@@ -708,14 +729,14 @@ prop_exposed <- seven_dwarfs_9 |>
 prop_exposed |>
   ggplot(
     aes(
-      x = park_close_bin, 
-      y = park_temperature_high_bin, 
+      x = park_close_bin,
+      y = park_temperature_high_bin,
       fill = prop_exposed
     )
   ) +
   geom_tile() +
-  scale_fill_viridis_c(begin = .1, end = .9) +
-  facet_wrap(~ park_ticket_season) +
+  scale_fill_viridis_c(begin = 0.1, end = 0.9) +
+  facet_wrap(~park_ticket_season) +
   labs(
     y = "Historic High Temperature (F)",
     x = "Magic Kingdom Park Close Time",
@@ -736,6 +757,7 @@ We also have nine combinations that were never exposed.
 #| label: tbl-positivity-check
 #| tbl-cap: "Among binned combinations of confounders, 10 were either always exposed or never exposed. These represent potential positivity violations."
 #| code-fold: true
+
 library(gt)
 prop_exposed |>
   filter(prop_exposed %in% c(1, 0)) |>
