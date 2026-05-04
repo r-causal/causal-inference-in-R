@@ -79,7 +79,7 @@ Instead of relying on a single individual, we often rely on many.
 We could conduct an experiment in which we randomize many individuals to leave criminal life (or not) and see how this impacts their outcomes on average (of course, this randomized trial presents some ethical issues, which is why observational data like Ice-T and Spike's are interesting).
 In any case, we must rely on statistical techniques to help construct these unobservable counterfactuals from observed data.
 
-## Potential outcomes
+## Potential outcomes {#sec-po}
 
 Factual outcomes and counterfactual outcomes are two realizations of **potential outcomes**.
 Before some cause occurs, the potential outcomes are all the things that could happen depending on what you are exposed to.

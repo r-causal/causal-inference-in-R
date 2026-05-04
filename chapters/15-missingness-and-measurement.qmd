@@ -703,11 +703,11 @@ fit_stats <- function(
   missing_by = NULL,
   missing_for = "actual"
 ) {
-  if (!is.null(missing_by) & missing_for == "actual") {
+  if (!is.null(missing_by) && missing_for == "actual") {
     actual[missing_by] <- NA
   }
 
-  if (!is.null(missing_by) & missing_for == "posted") {
+  if (!is.null(missing_by) && missing_for == "posted") {
     posted_60[missing_by] <- NA
   }
 

@@ -33,7 +33,7 @@ $$
 $$
 
 Heterogeneous treatment effects arise when $\tau(Z)$ is not constant in $Z$.
-In that case, we see the various estimands defined in @sec-estimand, for example
+In that case, we see the various estimands defined in @sec-estimands, for example
 
 $$
 \text{ATE}=E[\tau(Z)], \quad

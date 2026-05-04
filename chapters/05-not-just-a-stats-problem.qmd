@@ -586,7 +586,7 @@ causal_quartet |>
 
 Relatedly, model coefficients for variables *other* than those of the causes we're interested in can be difficult to interpret.
 In a model with `outcome ~ exposure + covariate`, it's tempting to present the coefficient of `covariate` as well as `exposure`.
-The problem, as discussed @sec-pred-or-explain, is that the causal structure for the effect of `covariate` on `outcome` may differ from that of `exposure` on `outcome`.
+The problem, as discussed in @sec-pred-or-explain, is that the causal structure for the effect of `covariate` on `outcome` may differ from that of `exposure` on `outcome`.
 Let's consider a variation of the quartet DAGs with other variables.
 
 First, let's start with the confounder DAG.

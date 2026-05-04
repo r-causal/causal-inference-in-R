@@ -1,0 +1,24 @@
+name: panache
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  panache:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: posit-dev/setup-air@v1
+      # Lint disabled until panache has a fix for
+      # `[lint.rules] undefined-reference-label = false` being ignored
+      # (book-wide false positives on subfig refs and cross-file refs we
+      # cannot suppress).
+      - uses: jolars/panache-action@v1
+        with:
+          path: chapters/
+          lint: "false"

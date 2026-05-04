@@ -12,7 +12,7 @@ status("polishing")
 As presented in @sec-data-causal, the causal question we'd like to answer is: **is there a relationship between whether there were "Extra Magic Hours" in the morning at Magic Kingdom and the average wait time for an attraction called the "Seven Dwarfs Mine Train" the same day between 9 AM and 10 AM in 2018?** Below is a proposed DAG for this question.
 
 ```{r}
-#| label: fig-dag-magic-hours-wait2
+#| label: fig-dag-magic-hours-wait
 #| code-fold: true
 #| message: false
 #| warning: false
