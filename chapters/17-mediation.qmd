@@ -4,6 +4,7 @@
 
 ```{r}
 #| echo: false
+
 # TODO: remove when first edition complete
 status("unstarted")
 ```

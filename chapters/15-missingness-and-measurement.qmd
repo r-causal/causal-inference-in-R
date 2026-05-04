@@ -4,6 +4,7 @@
 
 ```{r}
 #| echo: false
+
 # TODO: remove when first edition complete
 status("wip")
 ```
@@ -54,6 +55,7 @@ For simplicity, we've removed the confounders from this DAG.
 #| fig-cap: "A DAG showing the relationship between posted and actual wait times, with additional information about measurement. The mismeasured versions of the two wait time variables are represented as separate nodes. The mismeasured versions are caused by the true values and an unknown mechanism that worsens measurement. When conducting a causal analysis with mismeasured variables, we use them as proxies for the true values."
 #| code-fold: true
 #| message: false
+
 library(ggdag)
 
 glyph <- function(data, params, size) {
@@ -65,7 +67,10 @@ glyph <- function(data, params, size) {
 show_edge_color <- function(...) {
   list(
     theme(legend.position = "bottom"),
-    ggokabeito::scale_edge_color_okabe_ito(name = NULL, breaks = ~ .x[!is.na(.x)]),
+    ggokabeito::scale_edge_color_okabe_ito(
+      name = NULL,
+      breaks = ~ .x[!is.na(.x)]
+    ),
     guides(color = "none")
   )
 }
@@ -85,15 +90,32 @@ edges_with_aes <- function(..., edge_color = "grey85", shadow = TRUE) {
   )
 }
 
-ggdag2 <- function(.dag, ..., order = 1:9, seed = 1633, box.padding = 3.4, edges = geom_dag_edges_link(edge_color = "grey85")) {
+ggdag2 <- function(
+  .dag,
+  ...,
+  order = 1:9,
+  seed = 1633,
+  box.padding = 3.4,
+  edges = geom_dag_edges_link(edge_color = "grey85")
+) {
   ggplot(
     .dag,
     aes_dag(...)
   ) +
     edges +
     geom_dag_point(key_glyph = glyph) +
-    geom_dag_text_repel(aes(label = label), size = 3.8, seed = seed, color = "#494949", box.padding = box.padding) +
-    ggokabeito::scale_color_okabe_ito(order = order, na.value = "grey90", breaks = ~ .x[!is.na(.x)]) +
+    geom_dag_text_repel(
+      aes(label = label),
+      size = 3.8,
+      seed = seed,
+      color = "#494949",
+      box.padding = box.padding
+    ) +
+    ggokabeito::scale_color_okabe_ito(
+      order = order,
+      na.value = "grey90",
+      breaks = ~ .x[!is.na(.x)]
+    ) +
     theme_dag() +
     theme(legend.position = "none") +
     coord_cartesian(clip = "off")
@@ -147,7 +169,10 @@ dagify(
   theme(
     legend.key.spacing.x = unit(4, "points"),
     legend.key.size = unit(1, "points"),
-    legend.text = element_text(size = rel(1.25), margin = margin(l = -10.5, b = 2.6)),
+    legend.text = element_text(
+      size = rel(1.25),
+      margin = margin(l = -10.5, b = 2.6)
+    ),
     legend.box.margin = margin(b = 20),
     strip.text = element_blank()
   )
@@ -178,6 +203,7 @@ The extent of this error depends on how well the measured version correlates wit
 #| layout-ncol: 2
 #| fig-width: 4
 #| fig-height: 4
+
 labels <- c(
   "actual" = "actual\nwait",
   "actual_star" = "measured\nactual",
@@ -239,7 +265,7 @@ x <- rnorm(n)
 y <- x + rnorm(n)
 # bad measurement of x
 u <- rnorm(n)
-x_measured <- .01 * x + u
+x_measured <- 0.01 * x + u
 cor(x, x_measured)
 lm(y ~ x_measured)
 ```
@@ -285,6 +311,7 @@ This is called *dependent, non-differential* measurement error.
 #| layout-ncol: 2
 #| fig-width: 4
 #| fig-height: 4
+
 labels <- c(
   "actual" = "actual wait",
   "actual_star" = "measured\nactual",
@@ -329,6 +356,7 @@ Let's expand @fig-meas-err-dag-dep-1 to include an arrow from posted time to how
 #| fig-cap: "When the true value of posted wait times affects the measurement of both measured variables, it becomes a confounder for them. When the backdoor path is due to either the exposure or the outcome, it's classified as differential measurement error."
 #| code-fold: true
 #| fig-width: 7.5
+
 labels <- c(
   "actual" = "actual wait",
   "actual_star" = "measured\nactual",
@@ -407,6 +435,7 @@ mismeasured_model <- lm(outcome ~ exposure * confounder)
 #| code-fold: true
 #| label: tbl-confounder-me
 #| tbl-cap: "The coefficients of interaction terms between a confounder and the exposure. In one mode, the confounder is measured correctly. In another, it is mismeasured differentially by the outcome. In addition to not closing the backdoor path completely, this type of mismeasurement often appears as an interaction between the exposure and confounder, even when such an interaction does not exist."
+
 library(gt)
 library(broom)
 pull_interaction <- function(mdl) {
@@ -450,6 +479,7 @@ The unknown mechanism is random, but the mechanism related to posted wait times 
 #| fig-cap: "A DAG representing the missingness structure of actual wait time. In this DAG, missingness is caused by posted wait times and an unknown mechanism that affects whether or not actual wait times are measured. Missingness in actual wait times is represented as a separate node, a missingness indicator."
 #| code-fold: true
 #| fig-width: 5
+
 labels <- c(
   "actual" = "actual wait",
   "actual_missing" = "missingness\nin actual",
@@ -475,14 +505,18 @@ missing_dag |>
   theme(
     legend.key.spacing.x = unit(4, "points"),
     legend.key.size = unit(1, "points"),
-    legend.text = element_text(size = rel(1.25), margin = margin(l = -10.5, b = 2.6)),
+    legend.text = element_text(
+      size = rel(1.25),
+      margin = margin(l = -10.5, b = 2.6)
+    ),
     legend.box.margin = margin(b = 20),
     strip.text = element_blank()
   )
 ```
 
 However, in this simple DAG, conditioning on missingness does not open a backdoor path between `actual` and `posted`.
-(It does bias the relationship between `unknown` and `posted`, but we don't care about that relationship even if we could estimate it.) The only open path in @fig-missing-dag-2 is the one from `posted` to `actual`.
+(It does bias the relationship between `unknown` and `posted`, but we don't care about that relationship even if we could estimate it.)
+The only open path in @fig-missing-dag-2 is the one from `posted` to `actual`.
 
 ```{r}
 #| label: fig-missing-dag-2
@@ -490,6 +524,7 @@ However, in this simple DAG, conditioning on missingness does not open a backdoo
 #| code-fold: true
 #| fig-width: 4
 #| fig-height: 4
+
 missing_dag |>
   tidy_dagitty() |>
   add_missing() |>
@@ -528,6 +563,7 @@ In this case, there is no way to close the backdoor paths opened by conditioning
 #| layout-ncol: 2
 #| fig-width: 5
 #| fig-height: 5
+
 labels <- c(
   "actual" = "actual wait",
   "actual_missing" = "missingness\nin actual",
@@ -561,7 +597,7 @@ missing_dag |>
   ) +
   show_edge_color() +
   facet_wrap(~set) +
-  expand_plot(expand_x = expansion(c(.2, .2))) +
+  expand_plot(expand_x = expansion(c(0.2, 0.2))) +
   theme(strip.text = element_blank())
 ```
 
@@ -576,6 +612,7 @@ Each of the DAGs represents a simple but differing structure of missingness.
 #| label: fig-missing-dags-sim
 #| fig-cap: "5 DAGs where `a` is `actual`, `p` is `posted`, `u` is `unknown`, and `m` is `missing`. Each DAG represents a slightly different missingness mechanism. In DAGs 1-3, the actual wait time values have missingness; in DAGs 4-5, some posted wait times are missing. The causal structure of missingness impacts what we can estimate."
 #| code-fold: true
+
 library(patchwork)
 
 define_dag <- function(..., tag, title) {
@@ -585,7 +622,7 @@ define_dag <- function(..., tag, title) {
     exposure = "p",
     outcome = "a"
   ) |>
-    ggdag(size = .7) +
+    ggdag(size = 0.7) +
     labs(title = paste0(tag, ": ", title)) +
     theme_dag() +
     theme(plot.title = element_text(size = 12)) +
@@ -641,6 +678,7 @@ In DAG 4, we can calculate the mean of `actual` and the causal effect but not th
 #| label: fig-recoverables
 #| fig-cap: "A forest plot of the results of three different effects for data simulated from each DAG in @fig-missing-dags-sim. In the non-missing results, we can see what the effect should be for the sample. Each simulated dataset has 365 rows with missingness in either actual or posted wait times. For each of the DAGs, we're limited in what we can estimate correctly."
 #| code-fold: true
+
 set.seed(123)
 posted <- rnorm(365, mean = 30, sd = 5)
 # create an effect where an hour of posted time creates 50 min of actual time
@@ -648,30 +686,36 @@ coef <- 50 / 60
 actual <- coef * posted + rnorm(365, mean = 0, sd = 2)
 
 posted_60 <- posted / 60
-missing_dag_1 <- rbinom(365, 1, .3) |>
+missing_dag_1 <- rbinom(365, 1, 0.3) |>
   as.logical()
-missing_dag_2 <- if_else(posted_60 > .50, rbinom(365, 1, .95), 0) |>
+missing_dag_2 <- if_else(posted_60 > 0.50, rbinom(365, 1, 0.95), 0) |>
   as.logical()
-missing_dag_3 <- if_else(actual > 22, rbinom(365, 1, .99), 0) |>
+missing_dag_3 <- if_else(actual > 22, rbinom(365, 1, 0.99), 0) |>
   as.logical()
 # the same structure, but it's `posted` that gets the resulting missingness
 missing_dag_4 <- missing_dag_2
 missing_dag_5 <- missing_dag_3
 
-fit_stats <- function(dag, actual, posted_60, missing_by = NULL, missing_for = "actual") {
-  if (!is.null(missing_by) & missing_for == "actual") {
+fit_stats <- function(
+  dag,
+  actual,
+  posted_60,
+  missing_by = NULL,
+  missing_for = "actual"
+) {
+  if (!is.null(missing_by) && missing_for == "actual") {
     actual[missing_by] <- NA
   }
-  
-  if (!is.null(missing_by) & missing_for == "posted") {
+
+  if (!is.null(missing_by) && missing_for == "posted") {
     posted_60[missing_by] <- NA
   }
-  
+
   t_actual <- t.test(actual)
   t_posted <- t.test(posted_60 * 60)
   mdl <- lm(actual ~ posted_60)
   mdl_confints <- confint(mdl)
-  
+
   tibble(
     dag = dag,
     mean_actual_estimate = as.numeric(t_actual$estimate),
@@ -696,13 +740,29 @@ dag_stats <- bind_rows(
   fit_stats("DAG 1", actual, posted_60, missing_by = missing_dag_1),
   fit_stats("DAG 2", actual, posted_60, missing_by = missing_dag_2),
   fit_stats("DAG 3", actual, posted_60, missing_by = missing_dag_3),
-  fit_stats("DAG 4", actual, posted_60, missing_by = missing_dag_4, missing_for = "posted"),
-  fit_stats("DAG 5", actual, posted_60, missing_by = missing_dag_5, missing_for = "posted"),
+  fit_stats(
+    "DAG 4",
+    actual,
+    posted_60,
+    missing_by = missing_dag_4,
+    missing_for = "posted"
+  ),
+  fit_stats(
+    "DAG 5",
+    actual,
+    posted_60,
+    missing_by = missing_dag_5,
+    missing_for = "posted"
+  ),
 )
 
 dag_stats |>
   mutate(
-    true_value = if_else(dag == "No missingness", "True value", "Observed value"),
+    true_value = if_else(
+      dag == "No missingness",
+      "True value",
+      "Observed value"
+    ),
     dag = factor(dag, levels = c(paste("DAG", 5:1), "No missingness")),
     stat = factor(
       stat,
@@ -712,7 +772,13 @@ dag_stats |>
   ) |>
   ggplot(aes(color = true_value)) +
   geom_point(aes(estimate, dag)) +
-  geom_segment(aes(x = lower, xend = upper, y = dag, yend = dag, group = stat)) +
+  geom_segment(aes(
+    x = lower,
+    xend = upper,
+    y = dag,
+    yend = dag,
+    group = stat
+  )) +
   facet_wrap(~stat, scales = "free_x") +
   labs(y = NULL, color = NULL)
 ```
@@ -727,9 +793,12 @@ In the grand tradition of statisticians being bad at naming things, you'll also 
 
 In the case of causal models, we can explain these ideas by the causal structure of missingness and the availability of variables and values related to that structure in your data.
 
--   **Missing completely at random (MCAR)**: there are missing values, but the causes of missingness are such that the missingness process is unrelated to the causal structure of your question. In other words, the only problem with missingness is a reduction in sample size.
--   **Missing at random (MAR)**: the causes of missingness are related to the causal structure of the research problem, but it only depends on the variables and values in the data that we've actually observed.
--   **Missing not at random (MNAR)**: the causes of missingness are related to the causal structure of the research problem, but this process is related to values we are missing. A classic example is when a variable's missingness is impacted by itself, e.g., higher values of `x` are more likely to be missing in `x`. We don't have that information because, by definition, it's missing.
+- **Missing completely at random (MCAR)**: there are missing values, but the causes of missingness are such that the missingness process is unrelated to the causal structure of your question.
+  In other words, the only problem with missingness is a reduction in sample size.
+- **Missing at random (MAR)**: the causes of missingness are related to the causal structure of the research problem, but it only depends on the variables and values in the data that we've actually observed.
+- **Missing not at random (MNAR)**: the causes of missingness are related to the causal structure of the research problem, but this process is related to values we are missing.
+  A classic example is when a variable's missingness is impacted by itself, e.g., higher values of `x` are more likely to be missing in `x`.
+  We don't have that information because, by definition, it's missing.
 
 These terms don't always tell you what to do next, so we'll avoid them in favor of explicitly describing the missingness generation process.
 :::
@@ -747,19 +816,20 @@ In [Chapter -@sec-sensitivity], we'll also discuss sensitivity analyses for miss
 
 ## Regression Calibration
 
-Sometimes, you have a well-measured version of a variable for a subset of observations and a version with more measurement error for a more significant proportion of the dataset. Sometimes people call this a **validation set**.
+Sometimes, you have a well-measured version of a variable for a subset of observations and a version with more measurement error for a more significant proportion of the dataset.
+Sometimes people call this a **validation set**.
 When this is the case, you can use a simple approach called *regression calibration* to predict the value of the well-measured version for more observations in the dataset.
 This technique's name refers to the fact that you're recalibrating the variable that you've observed more of, given the subset of values you have for the well-measured version.
 But other than that, it's just a prediction model that includes the version of the variable you have more observations of and other variables you find essential to the measurement process.
 
 As we know, the actual wait times have a lot of missingness.
 What if we considered posted wait times a proxy for actual wait times?
-In this case, we could redo the analysis of Extra Magic Morning's effect on the calibrated version of actual wait times. 
+In this case, we could redo the analysis of Extra Magic Morning's effect on the calibrated version of actual wait times.
 
-First, we'll fit a model to predict `wait_minutes_actual_avg` using `wait_minutes_posted_avg`. Then, instead of using `wait_minutes_posted_avg` we'll use the calibrated value from that model in it's place.
+First, we'll fit a model to predict `wait_minutes_actual_avg` using `wait_minutes_posted_avg`.
+Then, instead of using `wait_minutes_posted_avg` we'll use the calibrated value from that model in it's place.
 
 When fitting regression calibration models, it is crucial to include all variables that will be in subsequent models in the same form they will be there (for example, if we have a confounder in our final model that is fit using a spline, we need this same confounder, fit using a spline, in our calibration model).
-
 
 ```{r}
 library(splines)
@@ -768,35 +838,44 @@ library(broom)
 
 calib_model <- lm(
   wait_minutes_actual_avg ~
-    wait_minutes_posted_avg * wait_hour +
-    park_extra_magic_morning + 
-    park_temperature_high + park_close + park_ticket_season,
-  data = seven_dwarfs_train_2018)
+    wait_minutes_posted_avg *
+    wait_hour +
+    park_extra_magic_morning +
+    park_temperature_high +
+    park_close +
+    park_ticket_season,
+  data = seven_dwarfs_train_2018
+)
 
 seven_dwarves_calib <- calib_model |>
   augment(newdata = seven_dwarfs_train_2018) |>
   rename(wait_minutes_posted_calib = .fitted)
 ```
 
-
 ```{r}
 #| echo: false
+
 library(propensity)
-fit_ipw_effect <- function(.fmla, .data = seven_dwarfs, .trt = "park_extra_magic_morning", .outcome_fmla = wait_minutes_posted_calib ~ park_extra_magic_morning) {
+fit_ipw_effect <- function(
+  .fmla,
+  .data = seven_dwarfs,
+  .trt = "park_extra_magic_morning",
+  .outcome_fmla = wait_minutes_posted_calib ~ park_extra_magic_morning
+) {
   .trt_var <- rlang::ensym(.trt)
-  
+
   # fit propensity score model
   propensity_model <- glm(
     .fmla,
     data = .data,
     family = binomial()
   )
-  
+
   # calculate ATE weights
   .df <- propensity_model |>
     augment(type.predict = "response", data = .data) |>
     mutate(w_ate = wt_ate(.fitted, !!.trt_var, exposure_type = "binary"))
-  
+
   # fit ipw model
   lm(.outcome_fmla, data = .df, weights = w_ate) |>
     tidy() |>
@@ -806,7 +885,8 @@ fit_ipw_effect <- function(.fmla, .data = seven_dwarfs, .trt = "park_extra_magic
 
 effect_calib <- fit_ipw_effect(
   park_extra_magic_morning ~ park_temperature_high +
-    park_close + park_ticket_season,
+    park_close +
+    park_ticket_season,
   .outcome_fmla = wait_minutes_posted_calib ~ park_extra_magic_morning,
   .data = seven_dwarves_calib |> filter(wait_hour == 9)
 ) |>
@@ -814,7 +894,12 @@ effect_calib <- fit_ipw_effect(
 ```
 Fitting this model with the IPW estimator results in an effect of `r effect_calib`, marginally attenuated compared to the value we saw when using the uncalibrated `wait_minutes_posted_avg` in [Chapter -@sec-outcome-model].
 
-Another approach could be to **impute** the values. Where `wait_minutes_actual_avg` is available, we'll use that. If it's `NA`, we'll use the calibrated value. In practice, this uses the same calibration model as above, but instead of giving the calibrated values to all observations, we only impute them for the observations missing in the validation set. This method is sometimes called *regression imputation* or *deterministic imputation*. It is deterministic in the sense that we are just giving every observation with missing data a single predicted value and treating it as fixed rather than adding any variability (we'll see a *stocastic* imptuation method next, where we introduce some variability).
+Another approach could be to **impute** the values.
+Where `wait_minutes_actual_avg` is available, we'll use that.
+If it's `NA`, we'll use the calibrated value.
+In practice, this uses the same calibration model as above, but instead of giving the calibrated values to all observations, we only impute them for the observations missing in the validation set.
+This method is sometimes called *regression imputation* or *deterministic imputation*.
+It is deterministic in the sense that we are just giving every observation with missing data a single predicted value and treating it as fixed rather than adding any variability (we'll see a *stocastic* imptuation method next, where we introduce some variability).
 
 ```{r}
 seven_dwarves_reg_impute <- calib_model |>
@@ -834,7 +919,8 @@ seven_dwarves_reg_impute <- calib_model |>
 
 effect_reg_impute <- fit_ipw_effect(
   park_extra_magic_morning ~ park_temperature_high +
-    park_close + park_ticket_season,
+    park_close +
+    park_ticket_season,
   .outcome_fmla = wait_minutes_actual_impute ~ park_extra_magic_morning,
   .data = seven_dwarves_reg_impute |> filter(wait_hour == 9)
 ) |>
@@ -850,24 +936,34 @@ Be sure to include the fitting of this model in your bootstrap to get the correc
 
 ## Multiple Imputation {#sec-imputation}
 
-Regression calibration provides a straightforward way to address measurement error and missingness by predicting values with a single model and plugging those predictions into the analysis. However, this plug-in approach is generally inefficient. If we correctly estimate uncertainty (for example, by bootstrapping both the calibration and outcome models), we often end up with wide confidence intervals, reflecting the fact that we've relied on a single imputed value.
+Regression calibration provides a straightforward way to address measurement error and missingness by predicting values with a single model and plugging those predictions into the analysis.
+However, this plug-in approach is generally inefficient.
+If we correctly estimate uncertainty (for example, by bootstrapping both the calibration and outcome models), we often end up with wide confidence intervals, reflecting the fact that we've relied on a single imputed value.
 
-Multiple imputation (MI) is an often more efficient alternative. Instead of producing one "best guess" for the missing value, MI draws predicted values from a distribution, capturing the uncertainty inherent in the missing data. This process allows for better estimates of both summary statistics (like the mean of the imputed variable) and downstream conditional effects (like treatment effects when the imputed variable appears in the outcome model). Through this process, we will generate multiple imputed datasets. The default is often 5, but if a large portion of your data is missing, more imputations may be necessary to achieve stable results. A common rule of thumb is that the number of imputations should roughly match the percentage of incomplete cases.
+Multiple imputation (MI) is an often more efficient alternative.
+Instead of producing one "best guess" for the missing value, MI draws predicted values from a distribution, capturing the uncertainty inherent in the missing data.
+This process allows for better estimates of both summary statistics (like the mean of the imputed variable) and downstream conditional effects (like treatment effects when the imputed variable appears in the outcome model).
+Through this process, we will generate multiple imputed datasets.
+The default is often 5, but if a large portion of your data is missing, more imputations may be necessary to achieve stable results.
+A common rule of thumb is that the number of imputations should roughly match the percentage of incomplete cases.
 
 There are a few critical modeling considerations when using MI in causal analyses:
 
-1. Your imputation model *must include all variables* that appear in your final outcome model and your propensity score model. This includes variables that confound the treatment–outcome relationship, the treatment, *and the outcome itself* (when the outcome is not the target of the imputation). Leaving out key variables, especially the outcome, can lead to biased estimates. [@d2024behind]
-2. As with regression calibration, *use the same functional forms in your imputation model as you'll use later*. If a variable is modeled with splines or interactions downstream, those need to be mirrored in the imputation step.
+1. Your imputation model *must include all variables* that appear in your final outcome model and your propensity score model.
+   This includes variables that confound the treatment--outcome relationship, the treatment, *and the outcome itself* (when the outcome is not the target of the imputation).
+   Leaving out key variables, especially the outcome, can lead to biased estimates.
+   [@d2024behind]
+2. As with regression calibration, *use the same functional forms in your imputation model as you'll use later*.
+   If a variable is modeled with splines or interactions downstream, those need to be mirrored in the imputation step.
 
 In a typical causal analysis, we proceed as follows:
 
 1. Impute multiple complete datasets using an imputation model that includes the outcome and all covariates.
 2. Estimate the treatment effect within each dataset:
-    * Fit the propensity score model.
-    * Compute inverse probability weights.
-    * Fit the weighted outcome model.
+   - Fit the propensity score model.
+   - Compute inverse probability weights.
+   - Fit the weighted outcome model.
 3. Pool the estimates using Rubin's rules (see @tip-rubin) to obtain an overall treatment effect and valid standard errors.
-
 
 ::: {#tip-rubin .callout-tip}
 
@@ -877,30 +973,35 @@ After performing the analysis separately on each of the $m$ imputed datasets:
 
 Let:
 
-- $\hat{Q}_i$: the estimate from the $i$-th imputed dataset  
-- $U_i$: the variance of $\hat{Q}_i$  
-- $\bar{Q} = \frac{1}{m} \sum_{i=1}^m \hat{Q}_i$: the pooled estimate  
-- $\bar{U} = \frac{1}{m} \sum_{i=1}^m U_i$: the average within-imputation variance  
+- $\hat{Q}_i$: the estimate from the $i$-th imputed dataset\
+- $U_i$: the variance of $\hat{Q}_i$\
+- $\bar{Q} = \frac{1}{m} \sum_{i=1}^m \hat{Q}_i$: the pooled estimate\
+- $\bar{U} = \frac{1}{m} \sum_{i=1}^m U_i$: the average within-imputation variance\
 - $B = \frac{1}{m - 1} \sum_{i=1}^m (\hat{Q}_i - \bar{Q})^2$: the between-imputation variance
 
 Then the total variance is:
 
-$$T = \bar{U} + \left(1 + \frac{1}{m}\right) B$$
+$$
+T = \bar{U} + \left(1 + \frac{1}{m}\right) B
+$$
 
 The standard error of the pooled estimate is $\sqrt{T}$ and this can be used to construct confidence intervals or perform hypothesis testing.
 
 :::
 
+This approach accounts for uncertainty in both the imputation and the treatment effect estimation steps.
+It is particularly helpful when missingness affects variables involved in the treatment assignment or outcome processes, cases where complete-case analysis or single imputation can yield biased or inefficient estimates.
 
-This approach accounts for uncertainty in both the imputation and the treatment effect estimation steps. It is particularly helpful when missingness affects variables involved in the treatment assignment or outcome processes, cases where complete-case analysis or single imputation can yield biased or inefficient estimates.
+In practice, multiple imputation is often implemented using the MICE (Multivariate Imputation by Chained Equations) algorithm, which iteratively imputes each variable with missing values using models conditional on the others.
+In R, we often use the `{mice}` package to implement the imputation.
 
-In practice, multiple imputation is often implemented using the MICE (Multivariate Imputation by Chained Equations) algorithm, which iteratively imputes each variable with missing values using models conditional on the others. In R, we often use the `{mice}` package to implement the imputation.
-
-Let's use the same example as above, but rather than just performing a single regression imputation, we will perform the stochastic (multiple) imputation 10 times. First, we need to impute our data. 
+Let's use the same example as above, but rather than just performing a single regression imputation, we will perform the stochastic (multiple) imputation 10 times.
+First, we need to impute our data.
 
 ```{r}
 #| message: false
 #| warning: false
+
 library(mice)
 
 seven_dwarfs_to_impute_data <- seven_dwarfs_train_2018 |>
@@ -926,7 +1027,7 @@ seven_dwarfs_mi <- mice(
   seven_dwarfs_to_impute_data,
   m = 10, # we are doing 10 imputations
   predictorMatrix = predictor_matrix,
-  method = "pmm",  # predictive mean matching
+  method = "pmm", # predictive mean matching
   seed = 1,
   print = FALSE
 )
@@ -938,42 +1039,53 @@ Then we can collect our imputed datasets into a list using the `complete` functi
 seven_dwarfs_mi_data <- complete(seven_dwarfs_mi, action = "all")
 ```
 
-
-Finally, let's write a functcion to fit the IPW effect across these datasets. We want to preserve the treatment effect as well as the standard error for applying Rubin's Rules.
+Finally, let's write a functcion to fit the IPW effect across these datasets.
+We want to preserve the treatment effect as well as the standard error for applying Rubin's Rules.
 
 ```{r}
-fit_ipw_effect <- function(.fmla, .data = seven_dwarfs, .trt = "park_extra_magic_morning", .outcome_fmla = wait_minutes_posted_calib ~ park_extra_magic_morning) {
+fit_ipw_effect <- function(
+  .fmla,
+  .data = seven_dwarfs,
+  .trt = "park_extra_magic_morning",
+  .outcome_fmla = wait_minutes_posted_calib ~ park_extra_magic_morning
+) {
   .trt_var <- rlang::ensym(.trt)
-  
+
   # fit propensity score model
   propensity_model <- glm(
     .fmla,
     data = .data,
     family = binomial()
   )
-  
+
   # calculate ATE weights
   .df <- propensity_model |>
     augment(type.predict = "response", data = .data) |>
     mutate(w_ate = wt_ate(.fitted, !!.trt_var, exposure_type = "binary"))
-  
+
   # fit outcome model
-  outcome_model <- lm(.outcome_fmla, data = .df, weights = w_ate) 
-  
+  outcome_model <- lm(.outcome_fmla, data = .df, weights = w_ate)
+
   # fit ipw effect
   ipw_output <- ipw(propensity_model, outcome_model, .df)
-  return(c(estimate = ipw_output$estimates$estimate,
-           std.err = ipw_output$estimates$std.err))
+  return(c(
+    estimate = ipw_output$estimates$estimate,
+    std.err = ipw_output$estimates$std.err
+  ))
 }
 ```
 
 ```{r}
-effect_mi_all <- map(seven_dwarfs_mi_data, ~fit_ipw_effect(
-  park_extra_magic_morning ~ park_temperature_high +
-    park_close + park_ticket_season,
-  .outcome_fmla = wait_minutes_actual_avg ~ park_extra_magic_morning,
-  .data = .x |> filter(wait_hour == 9)
-)) |>
+effect_mi_all <- map(
+  seven_dwarfs_mi_data,
+  ~ fit_ipw_effect(
+    park_extra_magic_morning ~ park_temperature_high +
+      park_close +
+      park_ticket_season,
+    .outcome_fmla = wait_minutes_actual_avg ~ park_extra_magic_morning,
+    .data = .x |> filter(wait_hour == 9)
+  )
+) |>
   bind_rows()
 ```
 
@@ -988,18 +1100,16 @@ To get the final effect, we are going to average the `estimate` column and to ge
 ```{r}
 effect_mi_all |>
   summarise(
-    effect_mi = mean(estimate),      # pooled estimate
-    u_bar = mean(std.err^2),         # average within-imputation variance
-    b = var(estimate),               # between-imputation variance
-    t_var = u_bar + (1 + 1/n()) * b, # total variance
-    se_mi = sqrt(t_var)              # pooled standard error
+    effect_mi = mean(estimate), # pooled estimate
+    u_bar = mean(std.err^2), # average within-imputation variance
+    b = var(estimate), # between-imputation variance
+    t_var = u_bar + (1 + 1 / n()) * b, # total variance
+    se_mi = sqrt(t_var) # pooled standard error
   ) |>
   select(effect_mi, se_mi)
 ```
 
 Again, this effect is attenuated compared to what we saw in [Chapter -@sec-outcome-model] (although the standard error is quite large, so the differences may not be meaningful).
-
-
 
 ::: callout-tip
 The effects of missingness on results and the impact of complete case analyses and multiple imputation can be deeply unintuitive.
@@ -1008,9 +1118,11 @@ A partial solution to this problem is to offload some of the reasoning from your
 
 We recommend writing down the causal mechanisms you think are involved in your research question and then using simulation to probe different strategies.
 
-1.  Create a DAG that includes the missingness and mismeasurement generation process and any other types of bias you think are essential.
-2.  Simulate data that match this process. Often, you'll want to simulate it to match different assumptions, such as the strength of mismeasurement or missingness related to variables in the DAG.
-3.  Check the results under different analysis strategies, such as complete-case analysis vs. imputation. You may also want to calculate the nominal coverage for the confidence intervals (the proportion of confidence intervals attained through your simulation that contain the true value; e.g., for 95% confidence intervals, 95% of the confidence intervals from your simulation should contain the true result).
+1. Create a DAG that includes the missingness and mismeasurement generation process and any other types of bias you think are essential.
+2. Simulate data that match this process.
+   Often, you'll want to simulate it to match different assumptions, such as the strength of mismeasurement or missingness related to variables in the DAG.
+3. Check the results under different analysis strategies, such as complete-case analysis vs. imputation.
+   You may also want to calculate the nominal coverage for the confidence intervals (the proportion of confidence intervals attained through your simulation that contain the true value; e.g., for 95% confidence intervals, 95% of the confidence intervals from your simulation should contain the true result).
 
 As with our general suggestion about DAGs, if you are unsure about the correct DAG, you should check to see how these results differ depending on the specification.
 :::

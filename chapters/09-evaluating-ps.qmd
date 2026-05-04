@@ -4,6 +4,7 @@
 
 ```{r}
 #| echo: false
+
 # TODO: remove when first edition complete
 status("polishing")
 ```
@@ -34,13 +35,13 @@ seven_dwarfs_9_with_ps <-
       park_ticket_season + park_close + park_temperature_high,
     data = seven_dwarfs_9,
     family = binomial()
- ) |>
+  ) |>
   augment(type.predict = "response", data = seven_dwarfs_9)
 seven_dwarfs_9_with_wt <- seven_dwarfs_9_with_ps |>
   mutate(
     w_ate = wt_ate(.fitted, park_extra_magic_morning),
     park_extra_magic_morning = factor(park_extra_magic_morning)
- )
+  )
 ```
 
 Once we have weights, we can use them in `geom_mirror_histogram()`'s `weight` argument to visualize the weighted distributions of the propensity score, as shown in @fig-ps-weighted-histogram.
@@ -49,18 +50,19 @@ Once we have weights, we can use them in `geom_mirror_histogram()`'s `weight` ar
 #| label: fig-ps-weighted-histogram
 #| fig-cap: "Weighted propensity score distributions for days with Extra Magic Morning hours compared to those without."
 #| message: false
+
 ggplot(
   seven_dwarfs_9_with_wt,
   aes(.fitted, group = park_extra_magic_morning)
 ) +
   geom_mirror_histogram(
     aes(fill = factor(park_extra_magic_morning), weight = w_ate)
- ) +
+  ) +
   scale_y_continuous(labels = abs) +
   labs(
     x = "propensity score",
     fill = "Extra Magic Morning"
- )
+  )
 ```
 
 We also might want to look at the weighted and unweighted distributions side-by-side, as shown in @fig-ps-weighted-unweighted-comparison.
@@ -69,12 +71,13 @@ We can speed up data wrangling and plotting with `plot_mirror_distributions()`.
 ```{r}
 #| label: fig-ps-weighted-unweighted-comparison
 #| fig-cap: "Weighted and unweighted propensity score distributions for days with and without Extra Magic Morning hours."
+
 seven_dwarfs_9_with_wt |>
   plot_mirror_distributions(
     .exposure = park_extra_magic_morning,
     .var = .fitted,
     .weights = w_ate
- ) +
+  ) +
   labs(fill = "extra magic morning")
 ```
 
@@ -88,12 +91,13 @@ In a causal model, however, it means that, after weighting, there is no way to d
 ```{r}
 #| label: fig-roc-ps-weighted
 #| fig-cap: "A weighted and unweighted. ROC curve for the propensity score model. The observed curve is above the 45-degree line, indicating that the model has some discrimination. The AUC is 0.65, indicating that we've picked up enough signal from the confounders to use for adjustment, but not so much that we have extreme positivity issues. Once we've weighted the curve, it traces the 45-degree line, indicating that, after weighting, the discrimination is no better than random. The weighted AUC is 0.50, exactly as good as random."
+
 seven_dwarfs_9_with_wt |>
   check_model_roc_curve(
     park_extra_magic_morning,
     .fitted,
     .weights = w_ate
- ) |>
+  ) |>
   plot_model_roc_curve()
 ```
 
@@ -128,13 +132,14 @@ The weighted sample will give us the precision of an equivalent 160-day sample, 
 
 ```{r}
 #| message: false
+
 library(scales)
 seven_dwarfs_9_with_wt |>
   summarize(
     n = n(),
     ess_ate = ess(w_ate),
     percent_ess_ate = percent(ess_ate / n)
- )
+  )
 ```
 
 It can also be instructive to look at the ESS by exposure group (note that we don't expect the grouped ESS to sum to the total ESS; the ESS is a measure of the efficiency given the variation in the weights, and this variation differs across the three calculations).
@@ -149,7 +154,7 @@ seven_dwarfs_9_with_wt |>
     n = n(),
     ess_ate = ess(w_ate),
     percent_ess_ate = percent(ess_ate / n)
- )
+  )
 ```
 
 We can see that clearly in the distribution of the weights:
@@ -157,6 +162,7 @@ We can see that clearly in the distribution of the weights:
 ```{r}
 #| label: fig-ate-weights-grouped
 #| fig-cap: "Distribution of ATE weights stratified by exposure group. The days with Extra Magic Morning have a wider distribution of weights, indicating greater variation, which in turn leads to a lower effective sample size. The x-axis is on the log-10 scale to better visualize the distribution."
+
 ggplot(
   seven_dwarfs_9_with_wt,
   aes(x = as.numeric(w_ate), fill = park_extra_magic_morning)
@@ -176,14 +182,14 @@ The more we trim and truncate, though, the more likely we are to be answering qu
 ```{r}
 seven_dwarfs_9_with_wt |>
   mutate(
-    trunc_ps = ps_trunc(.fitted, method = "pctl", lower = .01, upper = .99),
+    trunc_ps = ps_trunc(.fitted, method = "pctl", lower = 0.01, upper = 0.99),
     w_ate_trunc = wt_ate(trunc_ps, park_extra_magic_morning)
- ) |>
+  ) |>
   summarize(
     n = n(),
     ess_ate_trunc = ess(w_ate_trunc),
     percent_ess_ate = percent(ess_ate_trunc / n)
- )
+  )
 ```
 
 ## Variable-level diagnostics
@@ -217,6 +223,7 @@ In R, the `{halfmoon}` package has a function `check_balance()` that will calcul
 
 ```{r}
 #| eval: false
+
 library(halfmoon)
 
 balance_metrics <- check_balance(
@@ -238,7 +245,7 @@ balance_metrics <-
     .vars = c(park_ticket_season, park_close, park_temperature_high),
     .exposure = park_extra_magic_morning,
     .weights = w_ate
- )
+  )
 
 balance_metrics
 ```
@@ -282,6 +289,7 @@ Some people suggest a cut-off of 0.1 as a measure of good balance (an SMD of 0.1
 ```{r}
 #| label: fig-love-smd
 #| fig-cap: "Love plot showing absolute standardized mean differences before and after weighting."
+
 ggplot(
   data = smds,
   aes(
@@ -289,7 +297,7 @@ ggplot(
     y = variable,
     group = method,
     color = method
- )
+  )
 ) +
   geom_love()
 ```
@@ -299,6 +307,7 @@ The variance ratios, on the other hand, don't show as much improvement; while mo
 ```{r}
 #| label: fig-love-vr
 #| fig-cap: "Love plot showing variance ratios before and after weighting."
+
 ggplot(
   data = vrs,
   aes(
@@ -306,7 +315,7 @@ ggplot(
     y = variable,
     group = method,
     color = method
- )
+  )
 ) +
   geom_love(vline_xintercept = 1)
 ```
@@ -317,6 +326,7 @@ ggplot(
 ```{r}
 #| label: fig-balance-helper
 #| fig-cap: "Balance metrics using the `plot_balance()` helper function."
+
 balance_metrics |>
   filter(metric %in% c("smd", "vr")) |>
   plot_balance(facet_scales = "free_x")
@@ -336,27 +346,28 @@ SMDs can't tell us if this is improved.
 
 ```{r}
 #| label: fig-boxplot
-#| fig.cap: "Unweighted boxplot showing the difference in historical high temperature between days that had extra magic hours and those that did not."
+#| fig-cap: "Unweighted boxplot showing the difference in historical high temperature between days that had extra magic hours and those that did not."
+
 ggplot(
   seven_dwarfs_9_with_wt,
   aes(
     x = factor(park_extra_magic_morning),
     y = park_temperature_high,
     color = park_extra_magic_morning
- )
+  )
 ) +
-  geom_jitter(width = .12, height = 0, alpha = .5) +
+  geom_jitter(width = 0.12, height = 0, alpha = 0.5) +
   geom_boxplot(
     outlier.color = NA,
     fill = NA,
-    width = .3,
+    width = 0.3,
     color = "black"
- ) +
+  ) +
   labs(
     color = "Extra magic morning",
     y = "Historic temperature high",
     x = NULL
- )
+  )
 ```
 
 Now let's look at a weighted version.
@@ -365,8 +376,9 @@ The tails of the distribution, while improved, still show some imbalance.
 
 ```{r}
 #| label: fig-weighted-boxplot
-#| fig.cap: "Weighted boxplot showing the difference in historical high temperature between days that had extra magic hours and those that did not after incorporating the propensity score weight (ATE weight)."
+#| fig-cap: "Weighted boxplot showing the difference in historical high temperature between days that had extra magic hours and those that did not after incorporating the propensity score weight (ATE weight)."
 #| warning: false
+
 ggplot(
   seven_dwarfs_9_with_wt,
   aes(
@@ -374,37 +386,37 @@ ggplot(
     y = park_temperature_high,
     color = park_extra_magic_morning,
     weight = w_ate
- )
+  )
 ) +
-  geom_jitter(width = .12, height = 0, alpha = .5) +
+  geom_jitter(width = 0.12, height = 0, alpha = 0.5) +
   geom_boxplot(
     outlier.color = NA,
     fill = NA,
-    width = .3,
+    width = 0.3,
     color = "black"
- ) +
+  ) +
   labs(
     color = "Extra magic morning",
     y = "Historic temperature high",
     x = NULL
- )
+  )
 ```
 
 Many other geoms in ggplot2 accept a `weight` argument that can be useful for visualizing weighted populations.
 Make good use of your exploratory data analysis skills by treating the weighted pseudo-population as a real sample!
 
--   `geom_bar()`
--   `geom_boxplot()`
--   `geom_contour()`
--   `geom_count()`
--   `geom_density()`
--   `geom_dotplot()`
--   `geom_freqpoly()`
--   `geom_hex()`
--   `geom_histogram()`
--   `geom_quantile()`
--   `geom_smooth()`
--   `geom_violin()`
+- `geom_bar()`
+- `geom_boxplot()`
+- `geom_contour()`
+- `geom_count()`
+- `geom_density()`
+- `geom_dotplot()`
+- `geom_freqpoly()`
+- `geom_hex()`
+- `geom_histogram()`
+- `geom_quantile()`
+- `geom_smooth()`
+- `geom_violin()`
 
 ## The empirical cumulative distribution function
 
@@ -415,42 +427,42 @@ In a balanced population, we expect the lines to overlap across the distribution
 
 ```{r}
 #| label: fig-ecdf
-#| fig.cap: "Unweighted eCDF examining the difference in distribution for historic high temperature among days that had extra magic morning hours (blue) compared to those that did not (orange)."
+#| fig-cap: "Unweighted eCDF examining the difference in distribution for historic high temperature among days that had extra magic morning hours (blue) compared to those that did not (orange)."
 
 ggplot(
   seven_dwarfs_9_with_wt,
   aes(
     x = park_temperature_high,
     color = factor(park_extra_magic_morning)
- )
+  )
 ) +
   geom_ecdf() +
   labs(
     x = "Historic temperature high",
     y = "Proportion <= x",
     color = "Extra Magic Morning"
- )
+  )
 ```
 
 `geom_ecdf()` allows for the additional `weight` argument to display a weighted eCDF plot.
 
 ```{r}
 #| label: fig-weighted-ecdf
-#| fig.cap: "Weighted eCDF examining the difference in distribution for historic high temperature among days that had extra magic morning hours (blue) compared to those that did not (orange) after incorporating the propensity score weight (ATE)."
+#| fig-cap: "Weighted eCDF examining the difference in distribution for historic high temperature among days that had extra magic morning hours (blue) compared to those that did not (orange) after incorporating the propensity score weight (ATE)."
 
 ggplot(
   seven_dwarfs_9_with_wt,
   aes(
     x = park_temperature_high,
     color = factor(park_extra_magic_morning)
- )
+  )
 ) +
   geom_ecdf(aes(weights = w_ate)) +
   labs(
     x = "Historic temperature high",
     y = "Proportion <= x",
     color = "Extra Magic Morning"
- )
+  )
 ```
 
 Examining @fig-weighted-ecdf reveals a few things.
@@ -473,12 +485,13 @@ Unlike polynomial terms (like $x^2$ or $x^3$), which can become extreme at the b
 ```{r}
 seven_dwarfs_9_with_ps <-
   glm(
-    park_extra_magic_morning ~ park_ticket_season + park_close +
-       # refit model with a spline
+    park_extra_magic_morning ~ park_ticket_season +
+      park_close +
+      # refit model with a spline
       splines::ns(park_temperature_high, df = 5),
     data = seven_dwarfs_9,
     family = binomial()
- ) |>
+  ) |>
   augment(type.predict = "response", data = seven_dwarfs_9)
 seven_dwarfs_9_with_wt <- seven_dwarfs_9_with_ps |>
   mutate(w_ate = wt_ate(.fitted, park_extra_magic_morning))
@@ -488,21 +501,21 @@ Now, let's see how that impacts the weighted eCDF plot.
 
 ```{r}
 #| label: fig-weighted-ecdf-2
-#| fig.cap: "Weighted eCDF examining the difference in distribution for historic high temperature among days that had extra magic morning hours compared to those that did not after incorporating the propensity score weight where we modeled historic high temperature flexibly with a spline."
+#| fig-cap: "Weighted eCDF examining the difference in distribution for historic high temperature among days that had extra magic morning hours compared to those that did not after incorporating the propensity score weight where we modeled historic high temperature flexibly with a spline."
 
 ggplot(
   seven_dwarfs_9_with_wt,
   aes(
     x = park_temperature_high,
     color = factor(park_extra_magic_morning)
- )
+  )
 ) +
   geom_ecdf(aes(weights = w_ate)) +
   labs(
     color = "Extra Magic Morning",
     x = "Historic temperature high",
     y = "Proportion <= x"
- )
+  )
 ```
 
 Now in @fig-weighted-ecdf-2, the lines appear to overlap better across the whole space.
@@ -569,16 +582,16 @@ wecdf_0 <- tibble(temp = all_temps) |>
     ecdf_val = map_dbl(temp, \(t) {
       sum(wt_data_0$w_ate[wt_data_0$park_temperature_high <= t]) /
         sum(wt_data_0$w_ate)
- })
- )
+    })
+  )
 
 wecdf_1 <- tibble(temp = all_temps) |>
   mutate(
     ecdf_val = map_dbl(temp, \(t) {
       sum(wt_data_1$w_ate[wt_data_1$park_temperature_high <= t]) /
         sum(wt_data_1$w_ate)
- })
- )
+    })
+  )
 
 # Find weighted KS point
 wt_distances <- abs(wecdf_0$ecdf_val - wecdf_1$ecdf_val)
@@ -593,20 +606,24 @@ ks_weighted <- tibble(
 )
 
 ks_both <- bind_rows(ks_unweighted, ks_weighted) |>
-  mutate(weight_status = factor(weight_status, levels = c("Unweighted", "Weighted")))
+  mutate(
+    weight_status = factor(weight_status, levels = c("Unweighted", "Weighted"))
+  )
 
 plot_data <- seven_dwarfs_9_with_wt |>
   select(park_temperature_high, park_extra_magic_morning, w_ate) |>
   mutate(
     Unweighted = 1,
     Weighted = as.numeric(w_ate)
- ) |>
+  ) |>
   pivot_longer(
     cols = c(Unweighted, Weighted),
     names_to = "weight_status",
     values_to = "weight"
- ) |>
-  mutate(weight_status = factor(weight_status, levels = c("Unweighted", "Weighted")))
+  ) |>
+  mutate(
+    weight_status = factor(weight_status, levels = c("Unweighted", "Weighted"))
+  )
 
 ggplot(
   plot_data,
@@ -614,50 +631,50 @@ ggplot(
     x = park_temperature_high,
     color = factor(park_extra_magic_morning),
     weight = weight
- )
+  )
 ) +
-  geom_ecdf(linewidth = 1, alpha = .5) +
+  geom_ecdf(linewidth = 1, alpha = 0.5) +
   geom_segment(
     data = ks_both,
     aes(x = x, xend = x, y = y0, yend = y1),
     color = "#DB5461",
-    linewidth = .8,
+    linewidth = 0.8,
     linetype = "solid",
     inherit.aes = FALSE
- ) +
+  ) +
   geom_point(
     data = ks_both,
     aes(x = x, y = y0),
     color = "#DB5461",
     size = 2,
     inherit.aes = FALSE
- ) +
+  ) +
   geom_point(
     data = ks_both,
     aes(x = x, y = y1),
     color = "#DB5461",
     size = 2,
     inherit.aes = FALSE
- ) +
+  ) +
   geom_label(
     data = ks_both,
     aes(
       x = x,
       y = (y0 + y1) / 2,
       label = paste0("KS = ", round(ks, 3))
- ),
+    ),
     color = "#DB5461",
     size = 3.5,
     fontface = "bold",
     hjust = 1.1,
     inherit.aes = FALSE
- ) +
+  ) +
   facet_wrap(~weight_status) +
   labs(
     x = "Historic temperature high",
     y = "Proportion <= x",
     color = "Extra Magic Morning"
- ) +
+  ) +
   theme(legend.position = "bottom")
 ```
 
@@ -679,6 +696,7 @@ Balance is also commonly assessed among interaction terms and squares of continu
 
 ```{r}
 #| fig-width: 9
+
 balance_metrics_joint <-
   seven_dwarfs_9_with_wt |>
   mutate(park_close = as.numeric(park_close)) |>
@@ -688,7 +706,7 @@ balance_metrics_joint <-
     .weights = w_ate,
     interactions = TRUE,
     squares = TRUE
- )
+  )
 
 balance_metrics_joint |>
   filter(metric %in% c("smd", "vr")) |>
@@ -723,8 +741,11 @@ Let's expand on that modification and create a more flexible propensity score mo
 ```{r}
 ps_improved_model <- glm(
   park_extra_magic_morning ~
-    park_ticket_season + park_close + park_temperature_high +
-    splines::ns(park_temperature_high, df = 5) + I(as.numeric(park_close)^2) +
+    park_ticket_season +
+    park_close +
+    park_temperature_high +
+    splines::ns(park_temperature_high, df = 5) +
+    I(as.numeric(park_close)^2) +
     park_ticket_season:park_close +
     park_ticket_season:park_temperature_high +
     park_close:park_temperature_high,
@@ -736,7 +757,7 @@ seven_dwarfs_9_with_improved <- seven_dwarfs_9_with_wt |>
   mutate(
     .fitted_improved = predict(ps_improved_model, type = "response"),
     w_ate_improved = wt_ate(.fitted_improved, park_extra_magic_morning)
- )
+  )
 ```
 
 Now let's check the balance with both our original and improved models:
@@ -746,6 +767,7 @@ Now let's check the balance with both our original and improved models:
 #| fig-cap: "Balance comparison between original and improved propensity score models."
 #| fig-height: 9
 #| fig-width: 8.5
+
 balance_comparison <- seven_dwarfs_9_with_improved |>
   mutate(park_close = as.numeric(park_close)) |>
   check_balance(
@@ -754,7 +776,7 @@ balance_comparison <- seven_dwarfs_9_with_improved |>
     .weights = c(w_ate, w_ate_improved),
     squares = TRUE,
     interactions = TRUE
- )
+  )
 
 balance_comparison |>
   plot_balance() +
@@ -774,7 +796,7 @@ seven_dwarfs_9_with_improved |>
     ess_ate_improved = ess(w_ate_improved),
     percent_ess_original = percent(ess_ate_original / n),
     percent_ess_improved = percent(ess_ate_improved / n)
- )
+  )
 ```
 
 While our improved model achieves slightly better balance, it may come at the cost of a lower effective sample size due to more extreme weights.
@@ -816,13 +838,14 @@ Let's check the balance achieved by these optimization-based weights and compare
 #| fig-cap: "Balance comparison between propensity score weights and optimization-based balancing weights."
 #| fig-height: 9
 #| fig-width: 8
+
 balance_opt_comparison <- seven_dwarfs_9_with_opt |>
   mutate(park_close = as.numeric(park_close)) |>
   check_balance(
     .vars = c(park_ticket_season, park_close, park_temperature_high),
     .exposure = park_extra_magic_morning,
     .weights = c(w_ate, w_opt)
- )
+  )
 
 balance_opt_comparison |>
   plot_balance() +
@@ -860,7 +883,7 @@ seven_dwarfs_9_with_opt |>
     ess_opt = ess(w_opt),
     percent_ess_ate = percent(ess_ate / n),
     percent_ess_opt = percent(ess_opt / n)
- )
+  )
 ```
 
 This class of optimization-based weights often yields a better effective sample size because they directly minimize weight variability while satisfying the specified balance constraints.
@@ -898,7 +921,7 @@ balance_all_comparison <- seven_dwarfs_9_with_all |>
     .vars = c(park_ticket_season, park_close, park_temperature_high),
     .exposure = park_extra_magic_morning,
     .weights = c(w_ate, w_opt, w_energy)
- )
+  )
 
 balance_all_comparison |>
   filter(metric == "smd") |>
@@ -912,7 +935,7 @@ seven_dwarfs_9_with_all |>
   summarize(
     ess_energy = ess(w_energy),
     percent_ess_energy = percent(ess_energy / n())
- )
+  )
 ```
 
 ### Don't use p-values
@@ -985,6 +1008,7 @@ In @fig-ps-paradox-caliper, we see that as we tighten the caliper (resulting in 
 #| label: fig-ps-paradox-caliper
 #| fig-cap: "Balance metrics across different caliper widths in propensity score matching, demonstrating the propensity score paradox."
 #| code-fold: true
+
 library(MatchIt)
 caliper_widths <- c(0.25, 0.1, 0.05, 0.025, 0.01)
 
@@ -996,7 +1020,7 @@ check_balance_by_cal <- function(caliper) {
     method = "nearest",
     caliper = caliper,
     distance = "glm"
- )
+  )
 
   matched_data <- match.data(match_obj)
 
@@ -1005,14 +1029,14 @@ check_balance_by_cal <- function(caliper) {
     check_balance(
       .vars = c(park_ticket_season, park_close, park_temperature_high),
       .exposure = park_extra_magic_morning
- )
+    )
 
   balance |>
     filter(metric == "smd") |>
     mutate(
       caliper = caliper,
       n_matched = nrow(matched_data)
- )
+    )
 }
 
 balance_by_caliper <- map(caliper_widths, check_balance_by_cal) |>
@@ -1028,7 +1052,7 @@ ggplot(
   labs(
     x = "caliper",
     y = "smd"
- ) +
+  ) +
   theme(legend.position = "right")
 ```
 

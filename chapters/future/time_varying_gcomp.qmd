@@ -1,17 +1,25 @@
-
 ### Time-varying Settings
 
-The parameteric g-formula can naturally extend to scenarios when the exposure, covariates, and outcomes change over time. It is implemented through the following sequence of steps:
+The parameteric g-formula can naturally extend to scenarios when the exposure, covariates, and outcomes change over time.
+It is implemented through the following sequence of steps:
 
 1. The time-ordered structure of the variables is laid out by drawing the appropriate DAG, which makes explicit the ordering of baseline covariates, time-varying covariates, treatment, and outcome.
 
-2. For each time point after baseline, a parametric model is specified for every variable whose value evolves over time. Each model expresses the variable at that moment as a function of the variables that precede it in the graph. Linear models are commonly used for continuous variables and logistic regressions for binary variables, although any suitable parametric specification can be used.
+2. For each time point after baseline, a parametric model is specified for every variable whose value evolves over time.
+   Each model expresses the variable at that moment as a function of the variables that precede it in the graph.
+   Linear models are commonly used for continuous variables and logistic regressions for binary variables, although any suitable parametric specification can be used.
 
-3. Using the observed baseline covariates for each individual, predicted values for time-varying confounders and outcomes are generated sequentially using the fitted models. At each time point, the exposure is set according to the intervention regime being evaluated (rather than using its observed or predicted value). Predictions from one time point become inputs to the model for the next time point, propagating the intervention's effects forward through time.
+3. Using the observed baseline covariates for each individual, predicted values for time-varying confounders and outcomes are generated sequentially using the fitted models.
+   At each time point, the exposure is set according to the intervention regime being evaluated (rather than using its observed or predicted value).
+   Predictions from one time point become inputs to the model for the next time point, propagating the intervention's effects forward through time.
 
-4. The predicted outcomes under the intervention are averaged across all individuals in the sample to obtain the expected outcome under that intervention regime. This process is repeated for each intervention of interest (including the natural course where exposures remain at their observed values). The desired causal contrast is obtained by comparing these averages.
+4. The predicted outcomes under the intervention are averaged across all individuals in the sample to obtain the expected outcome under that intervention regime.
+   This process is repeated for each intervention of interest (including the natural course where exposures remain at their observed values).
+   The desired causal contrast is obtained by comparing these averages.
 
-Returning to the Seven Dwarfs Mine Train data, suppose the park is considering an operational policy that guarantees the posted wait at 8am never exceeds thirty minutes. The policy is expected to influence congestion later in the morning, since the early-morning posted wait affects how quickly queues accumulate. We therefore pose the following question:
+Returning to the Seven Dwarfs Mine Train data, suppose the park is considering an operational policy that guarantees the posted wait at 8am never exceeds thirty minutes.
+The policy is expected to influence congestion later in the morning, since the early-morning posted wait affects how quickly queues accumulate.
+We therefore pose the following question:
 
 > What would the average actual wait time at 10am have been if, for every park date, the posted wait at 8am were set to thirty minutes, compared with what was actually observed?
 
@@ -22,7 +30,7 @@ Below is a proposed DAG to answer this causal question.
 #| code-fold: true
 #| message: false
 #| warning: false
-#| fig.cap: >
+#| fig-cap: >
 #|   Time-ordered DAG representing the effect of setting the 8am posted wait
 #|   to a fixed value on the actual wait at 10am. Baseline covariates influence
 #|   each wait time; the posted wait at 8am influences the posted wait at 9am,
@@ -32,24 +40,29 @@ library(ggdag)
 library(ggokabeito)
 
 coord_dag <- list(
-  x = c(Season = -1, close = -1, weather = -1,
-        wait8 = 0, wait9 = 1, wait10 = 2),
-  y = c(Season = 1, close = 0, weather = -1,
-        wait8 = 0, wait9 = 0, wait10 = 0)
+  x = c(
+    Season = -1,
+    close = -1,
+    weather = -1,
+    wait8 = 0,
+    wait9 = 1,
+    wait10 = 2
+  ),
+  y = c(Season = 1, close = 0, weather = -1, wait8 = 0, wait9 = 0, wait10 = 0)
 )
 
 labels <- c(
   Season = "Ticket Season",
   weather = "Historic high temperature",
-  close   = "Time park closed",
-  wait8   = "8am posted wait",
-  wait9   = "9am posted wait",
-  wait10  = "10am actual wait"
+  close = "Time park closed",
+  wait8 = "8am posted wait",
+  wait9 = "9am posted wait",
+  wait10 = "10am actual wait"
 )
 
 dagify(
-  wait8  ~ Season + weather + close,
-  wait9  ~ wait8 + Season + weather + close,
+  wait8 ~ Season + weather + close,
+  wait9 ~ wait8 + Season + weather + close,
   wait10 ~ wait9 + wait8 + Season + weather + close,
   coords = coord_dag,
   labels = labels,
@@ -59,7 +72,7 @@ dagify(
   tidy_dagitty() |>
   node_status() |>
   ggplot(aes(x, y, xend = xend, yend = yend, color = status)) +
-  geom_dag_edges_arc(curvature = c(rep(0, 6), .3)) +
+  geom_dag_edges_arc(curvature = c(rep(0, 6), 0.3)) +
   geom_dag_point() +
   geom_dag_label_repel(seed = 1630) +
   scale_color_okabe_ito(na.value = "grey90") +
@@ -81,7 +94,9 @@ dagify(
   )
 ```
 
-Because each park date includes hourly posted waits across the morning, these repeated measurements form a simple longitudinal sequence. Weather, ticket season, Extra Magic Morning, and closing time remain fixed for the date, but posted waits change from hour to hour and depend on what happened earlier. The posted wait at 8am influences the posted wait at 9am, and both influence the actual wait at 10am, so an intervention applied at 8am propagates forward through the subsequent hours.
+Because each park date includes hourly posted waits across the morning, these repeated measurements form a simple longitudinal sequence.
+Weather, ticket season, Extra Magic Morning, and closing time remain fixed for the date, but posted waits change from hour to hour and depend on what happened earlier.
+The posted wait at 8am influences the posted wait at 9am, and both influence the actual wait at 10am, so an intervention applied at 8am propagates forward through the subsequent hours.
 
 To set up this example, let's reshape the 8am and 9am posted waits so that both appear on the same row, along with the baseline park-level features.
 
@@ -89,9 +104,13 @@ To set up this example, let's reshape the 8am and 9am posted waits so that both 
 df <- seven_dwarfs_train_2018 |>
   filter(wait_hour %in% c(8, 9)) |>
   select(
-    park_date, wait_hour, wait_minutes_posted_avg,
-    park_extra_magic_morning, park_ticket_season,
-    park_close, park_temperature_high
+    park_date,
+    wait_hour,
+    wait_minutes_posted_avg,
+    park_extra_magic_morning,
+    park_ticket_season,
+    park_close,
+    park_temperature_high
   )
 
 wide <- df |>
@@ -133,7 +152,8 @@ Now let's fit a second model that describes the 10am actual wait in terms of the
 ```{r}
 m10 <- lm(
   wait_minutes_actual_avg ~
-    wait_9 + wait_8 +
+    wait_9 +
+    wait_8 +
     park_extra_magic_morning +
     park_ticket_season +
     park_close +
@@ -142,15 +162,21 @@ m10 <- lm(
 )
 ```
 
-To evaluate an intervention, suppose that all park dates begin with an 8am posted wait of thirty minutes. The longitudinal g-formula uses the fitted models to reconstruct the rest of the morning under this counterfactual scenario. The observed data are first modified so that the 8am wait is replaced by the intervention value. The 9am posted wait is then generated from its model using this modified 8am value, and the 10am actual wait is generated from its model using both the modified 8am value and the model-based value of the 9am wait. This sequence reproduces the evolving process under the intervention.
+To evaluate an intervention, suppose that all park dates begin with an 8am posted wait of thirty minutes.
+The longitudinal g-formula uses the fitted models to reconstruct the rest of the morning under this counterfactual scenario.
+The observed data are first modified so that the 8am wait is replaced by the intervention value.
+The 9am posted wait is then generated from its model using this modified 8am value, and the 10am actual wait is generated from its model using both the modified 8am value and the model-based value of the 9am wait.
+This sequence reproduces the evolving process under the intervention.
 
 ```{r}
 # Observed: use observed 8am waits
 natural <- three |>
   mutate(wait_9_pred = predict(m9, newdata = pick(everything()))) |>
   mutate(
-    wait_10_pred = predict(m10,
-      newdata = mutate(pick(everything()), wait_9 = wait_9_pred))
+    wait_10_pred = predict(
+      m10,
+      newdata = mutate(pick(everything()), wait_9 = wait_9_pred)
+    )
   )
 
 # Intervention: set all 8am waits to 30
@@ -158,8 +184,10 @@ intervention <- three |>
   mutate(wait_8 = 30) |>
   mutate(wait_9_pred = predict(m9, newdata = pick(everything()))) |>
   mutate(
-    wait_10_pred = predict(m10,
-      newdata = mutate(pick(everything()), wait_9 = wait_9_pred))
+    wait_10_pred = predict(
+      m10,
+      newdata = mutate(pick(everything()), wait_9 = wait_9_pred)
+    )
   )
 
 # Estimate causal effect
@@ -170,9 +198,14 @@ tibble(
 )
 ```
 
-The average of `wait_10` across all dates gives the estimated expected outcome under the intervention. Repeating the same procedure with the observed values of `wait_8` yields the expected outcome under the natural course. Their difference measures the effect of lowering the early-morning posted wait to thirty minutes.
+The average of `wait_10` across all dates gives the estimated expected outcome under the intervention.
+Repeating the same procedure with the observed values of `wait_8` yields the expected outcome under the natural course.
+Their difference measures the effect of lowering the early-morning posted wait to thirty minutes.
 
-To estimate the uncertainty around this effect we can use the bootstrap. Following the convention outlined in @sec-bootstrap, we wrap the entire procedure (including fitting both models) into a single function. Because the intervention's effect at 10am flows through predictions from the 9am model, both models must be refit on each resample; fitting only the outcome model would produce confidence intervals that are too narrow. Here are the steps:
+To estimate the uncertainty around this effect we can use the bootstrap.
+Following the convention outlined in @sec-bootstrap, we wrap the entire procedure (including fitting both models) into a single function.
+Because the intervention's effect at 10am flows through predictions from the 9am model, both models must be refit on each resample; fitting only the outcome model would produce confidence intervals that are too narrow.
+Here are the steps:
 
 1. Create a function to run the time-varying g-formula once on a sample of your data:
 
@@ -193,7 +226,8 @@ fit_gformula_tv <- function(.split, ...) {
   # fit model for 10am actual wait
   m10 <- lm(
     wait_minutes_actual_avg ~
-      wait_9 + wait_8 +
+      wait_9 +
+      wait_8 +
       park_extra_magic_morning +
       park_ticket_season +
       park_close +
@@ -205,8 +239,10 @@ fit_gformula_tv <- function(.split, ...) {
   natural <- .df |>
     mutate(wait_9_pred = predict(m9, newdata = pick(everything()))) |>
     mutate(
-      wait_10_pred = predict(m10,
-        newdata = mutate(pick(everything()), wait_9 = wait_9_pred))
+      wait_10_pred = predict(
+        m10,
+        newdata = mutate(pick(everything()), wait_9 = wait_9_pred)
+      )
     )
 
   # intervention: set all 8am waits to 30
@@ -214,8 +250,10 @@ fit_gformula_tv <- function(.split, ...) {
     mutate(wait_8 = 30) |>
     mutate(wait_9_pred = predict(m9, newdata = pick(everything()))) |>
     mutate(
-      wait_10_pred = predict(m10,
-        newdata = mutate(pick(everything()), wait_9 = wait_9_pred))
+      wait_10_pred = predict(
+        m10,
+        newdata = mutate(pick(everything()), wait_9 = wait_9_pred)
+      )
     )
 
   tibble(
@@ -230,6 +268,7 @@ fit_gformula_tv <- function(.split, ...) {
 ```{r}
 #| message: false
 #| warning: false
+
 library(rsample)
 set.seed(1)
 bootstrapped_dwarfs_tv <- bootstraps(
@@ -249,9 +288,11 @@ gformula_tv_results |>
   mutate(
     estimate = map_dbl(
       boot_fits,
-      \(.fit) .fit |>
-        filter(term == "ate") |>
-        pull(estimate)
+      \(.fit) {
+        .fit |>
+          filter(term == "ate") |>
+          pull(estimate)
+      }
     )
   ) |>
   ggplot(aes(estimate)) +

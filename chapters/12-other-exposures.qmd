@@ -6,6 +6,7 @@
 
 ```{r}
 #| echo: false
+
 # TODO: remove when first edition complete
 status("wip")
 ```
@@ -29,10 +30,10 @@ Here's our DAG:
 #| code-fold: true
 #| message: false
 #| warning: false
-#| fig.cap: >
-#|    Proposed DAG for the relationship between posted wait
-#|    in the morning at a particular park and the average
-#|    wait time between 5 pm and 6 pm.
+#| fig-cap: >
+#|   Proposed DAG for the relationship between posted wait
+#|   in the morning at a particular park and the average
+#|   wait time between 5 pm and 6 pm.
 
 library(tidyverse)
 library(ggdag)
@@ -66,7 +67,10 @@ dagify(
   ggplot(
     aes(x, y, xend = xend, yend = yend, color = status)
   ) +
-  geom_dag_edges_arc(curvature = c(rep(0, 7), .2, 0, .2, .2, 0), edge_colour = "grey70") +
+  geom_dag_edges_arc(
+    curvature = c(rep(0, 7), 0.2, 0, 0.2, 0.2, 0),
+    edge_colour = "grey70"
+  ) +
   geom_dag_point() +
   geom_dag_label_repel(seed = 1602) +
   scale_color_okabe_ito(na.value = "grey90") +
@@ -94,13 +98,13 @@ This is the only minimal adjustment set in the DAG, as well.
 The confounders precede the exposure and outcome, and (by definition) the exposure precedes the outcome.
 The average posted wait time is, in theory, a manipulable exposure because the park could post a time different from what they expect.
 
-
 The model is similar to the binary exposure case, but we need to use linear regression, as the posted time is a continuous variable.
 Since we're not using probabilities, we'll calculate denominators for our weights from a normal density.
 We then calculate the denominator using the `dnorm()` function, which calculates the normal density for the `exposure`, using `.fitted` as the mean and `mean(.sigma)` as the SD.
 
 ```{r}
 #| eval: false
+
 lm(
   exposure ~ confounder_1 + confounder_2,
   data = df
@@ -127,6 +131,7 @@ Bounded weights like the ATO (which are bounded to 0 and 1) do not have this pro
 
 ```{r}
 #| eval: false
+
 # for continuous exposures
 lm(
   exposure ~ 1,
@@ -176,7 +181,10 @@ We'll fit a model using `lm()` for `wait_minutes_posted_avg` with our covariates
 library(broom)
 denominator_model <- lm(
   wait_minutes_posted_avg ~
-    park_close + park_extra_magic_morning + park_temperature_high + park_ticket_season,
+    park_close +
+    park_extra_magic_morning +
+    park_temperature_high +
+    park_ticket_season,
   data = wait_times
 )
 
@@ -196,8 +204,9 @@ When we only use the inverted values of `denominator`, we end up with several ex
 
 ```{r}
 #| label: fig-hist-sd-unstable
-#| fig.cap: >
+#| fig-cap: >
 #|   A histogram of the inverse probability weights for posted waiting time. Weights for continuous exposures are prone to extreme values, which can unstabilize estimates and variance.
+
 denominators |>
   mutate(wts = 1 / denominator) |>
   ggplot(aes(wts)) +
@@ -242,8 +251,9 @@ If the mean is far from 1, we may have issues with model misspecification or pos
 
 ```{r}
 #| label: fig-hist-sd-stable
-#| fig.cap: >
+#| fig-cap: >
 #|   A histogram of the stabilized inverse probability weights for posted waiting time. These weights are much more reasonable and will allow the outcome model to behave better.
+
 ggplot(wait_times_wts, aes(swts)) +
   geom_histogram(fill = "#E69F00", color = "white", bins = 50) +
   scale_x_log10(name = "weights")
@@ -254,8 +264,9 @@ Is this a problem, or is this a valid data point?
 
 ```{r}
 #| label: fig-stabilized-wts-scatter
-#| fig.cap: >
+#| fig-cap: >
 #|   A scatter of the stabilized inverse probability weights for posted waiting time vs. posted waiting times. Days with more values of `wait_minutes_posted_avg` farther from the mean appear to be downweighted, with a few exceptions. The most unusual weight is for June 23, 2018.
+
 ggplot(wait_times_wts, aes(wait_minutes_posted_avg, swts)) +
   geom_point(size = 3, color = "grey80", alpha = 0.7) +
   geom_point(
@@ -301,6 +312,7 @@ We don't know why the posted time was so high (the actual time was much lower), 
 
 ```{r}
 #| echo: false
+
 # TODO: remove when first edition complete
 status("unstarted")
 ```
@@ -314,4 +326,3 @@ rnorm(5)
 ### Diagnostics with many categories
 
 ### Fitting the outcome model again
-

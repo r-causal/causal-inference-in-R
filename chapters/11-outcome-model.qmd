@@ -10,12 +10,12 @@ status("polishing")
 ```
 
 The propensity score workflow divides our work into two parts: the exposure model, or design phase, and the outcome model.
-It's the outcome model where we estimate the causal effect.
-For many outcome models, this stage is considerably simpler than the design phase: we fit a regression model in the same way we would normally, but without the confounders.
-Instead of including the confounders in the model, we either use a matched dataset or weight the outcome model by the propensity score weights.
-There's a hiccup, though: the standard errors that come packages with most regressions toolkits do not account for the design phase.
+The outcome model estimates the causal effect, building on the design-phase setup.
+For many outcome models, this stage is considerably simpler than the design phase: we fit a regression model as we normally would, but without the confounders.
+Instead of including confounders in the model, we either use a matched dataset or weight the outcome model using propensity score weights.
+There's a hiccup, though: the standard errors that come default with most regression toolkits do not account for the design phase.
 Thus, they will often produce incorrect uncertainty estimates.
-In this chapter, we'll discuss using matched datasets and weighted datasets, as well as a few different ways to calculate standard errors.
+In this chapter, we transition to using matched and weighted datasets and explore several methods for calculating standard errors.
 
 ## Using matched data sets
 
@@ -34,18 +34,18 @@ library(MatchIt)
 seven_dwarfs_9 <- seven_dwarfs_train_2018 |>
   filter(wait_hour == 9)
 
-m <- matchit(
+matchit_obj <- matchit(
   park_extra_magic_morning ~ park_ticket_season +
     park_close +
     park_temperature_high,
   data = seven_dwarfs_9
 )
-matched_data <- get_matches(m)
+matched_data <- get_matches(matchit_obj)
 ```
 
 Remember that, with matching, we are trying to find a subset of the data where the assumptions of causal inference, particularly exchangeability, hold.
-If we have succeeded in doing so, we can compare the difference in wait times for both groups without an additional covariates, much as we can in randomization.
-There are other good reasons to include covariates besides the outcome, including improved precision, heterogenous treatment effects, and so on, but for now we will focus on the simple question at hand: does having Extra Magic Mornings change the posted wait time between 9 A.M. and 10 A.M.?
+If we have succeeded in doing so, we can compare the differences in wait times between the groups without additional covariates, much as we can in a randomized trial.
+There are other good reasons to include covariates besides the outcome, including improved precision, heterogeneous treatment effects, and, as we will see, to get the correct standard errors, but for now, we will focus on the simple question at hand: Does having Extra Magic Mornings change the posted wait time between 9 A.M. and 10 A.M.?
 
 To answer this question, let's fit a linear regression with the matched data set.
 Here, we have the posted wait times as the outcome and Extra Magic Mornings as the exposure.
@@ -60,17 +60,20 @@ matched_outcome |>
   tidy(conf.int = TRUE)
 ```
 
-Recall that, by default `{MatchIt}` finds pairs of observations that help us estimate an average treatment effect among the treated.
+Recall that, by default, `{MatchIt}` finds pairs of observations that help us estimate an average treatment effect among the treated.
+This means among *days that have extra magic hours*, the expected impact of having extra magic hours on the average posted wait time between 9 and 10am is `r round(coef(matched_outcome)[["park_extra_magic_morning"]], 1)` minutes (95% CI: `r round(confint(matched_outcome)["park_extra_magic_morning", 1], 1)`-`r round(confint(matched_outcome)["park_extra_magic_morning", 2], 1)`).
 
-TODO: make this update based on the code.
-This means among *days that have extra magic hours*, the expected impact of having extra magic hours on the average posted wait time between 9 and 10am is 7.9 minutes (95% CI: 1.2-14.5).
+Fitting a regression with matched data is straightforward; however, the `lm()` function doesn't know that we pre-processed the data with MatchIt.
+In doing so, we induced a dependence between pairs of matches.
+We'll have to account for that clustering to get correct standard errors (@todo-cite).
+What we need to do is a little more complex than for weighting---and, in fact, will build on the approaches we use for IPW---so we'll pause on that fix until @sec-matching-se.
 
 ## Using weights in outcome models
 
-Now let's use propensity score weights to estimate this same estimand.
-We will use the ATT weights so the effect estimate is comparable to the matching-based analysis above.
+Using propensity score weights in outcome models requires only one additional step: instructing the regression function to use the weights when fitting the model.
 
-Our workflow is identical to the previous way we calculated the propensity score weights, except we use `propensity::wt_ate()`.
+In our previous examples, we used the ATE; however, here we will use ATT weights so the effect estimate is comparable to the matching-based analysis above.
+Our workflow is identical to the previous way we calculated the propensity score weights, except we use `propensity::wt_att()`.
 
 ```{r}
 #| message: false
@@ -86,61 +89,111 @@ propensity_model <- glm(
   family = binomial()
 )
 
-seven_dwarfs_9_with_ps <- propensity_model |>
-  augment(type.predict = "response", data = seven_dwarfs_9)
-seven_dwarfs_9_with_wt <- seven_dwarfs_9_with_ps |>
+seven_dwarfs_9_with_wt <- propensity_model |>
+  augment(type.predict = "response", data = seven_dwarfs_9) |>
   mutate(w_att = wt_att(.fitted, park_extra_magic_morning))
 ```
 
 We can fit a weighted outcome model by using the `weights` argument.
+Note that, with weighting, we still use the entire dataset for the `data` argument (`seven_dwarfs_9_with_wt`), unlike in matching, where we only use the matched subset.
+We instead smoothly combine information from each observation to create a pseudo-population in which (we hope) there is no confounding.
 
 ```{r}
-lm(
+weighted_outcome <- lm(
   wait_minutes_posted_avg ~ park_extra_magic_morning,
   data = seven_dwarfs_9_with_wt,
   weights = w_att
-) |>
+)
+
+weighted_outcome |>
   tidy()
 ```
 
-Using weighting, we estimate that among days that have extra magic hours, the expected impact of having extra magic hours on the average posted wait time between 9 and 10am is 6.2 minutes.
-While this approach will get us the desired estimate for the point estimate, the default output using the `lm` function for the uncertainty (the standard errors and confidence intervals) are not correct.
+::: {.callout-note}
+
+## Matching and `weights`
+
+MatchIt returns a dataframe that includes a `weights` variable.
+In the example above, all the weights are 1:
+
+```{r}
+unique(matched_data$weights)
+```
+
+However, some matching schemes, such as full matching, also use weights.
+Since the weights will either be useful (as in full matching) or benign (as in equal weights for everyone), the authors of the MatchIt package recommend always setting `weights = weights` in the outcome model.
+In our earlier case, we could also fit:
+
+```{r}
+matched_outcome <- lm(
+  wait_minutes_posted_avg ~ park_extra_magic_morning,
+  data = matched_data,
+  weights = weights
+)
+```
+
+Again, these weights are all 1, so we get identical results.
+However, if you are considering other matching approaches, it's a good defensive practice to ensure you specify the outcome model correctly.
+
+:::
+
+Using weighting, we estimate that among days that have extra magic hours, the expected impact of having extra magic hours on the average posted wait time between 9 and 10am is `r round(coef(weighted_outcome)[["park_extra_magic_morning"]], 1)` minutes.
 
 ::: callout-tip
+
 ## Causal inference with `group_by()` and `summarize()`, revisted
 
-For this simple example, the weighted outcome model is equivalent to taking the difference in the weighted means.
+In this simple example, the weighted outcome model is equivalent to the difference between the weighted means.
+The weighted population is a pseudo-population where there is no confounding by the variables in the propensity score.
+Philosophically and practically, we can perform calculations directly from the data in this population.
+
+In this case, `weighted.mean()` will help us calculate the means among the pseudo-population.
 
 ```{r}
 wt_means <- seven_dwarfs_9_with_wt |>
   group_by(park_extra_magic_morning) |>
-  summarize(average_wait = weighted.mean(wait_minutes_posted_avg, w = w_att))
+  summarize(
+    average_wait = weighted.mean(wait_minutes_posted_avg, w = as.numeric(w_att))
+  )
 
 wt_means
 ```
 
 The difference is `r round(wt_means$average_wait[[2]] - wt_means$average_wait[[1]], 2)`, the same as the weighted outcome model.
-
-The weighted population is a psuedo-population where there is no confounding by the variables in the propensity score.
-Philosophically and practically, we can make calculations with the data from this population.
 Causal inference with `group_by()` and `summarize()` works just fine now, since we've already accounted for confounding in the weights.
 :::
 
-## Estimating uncertainty
+While this approach will give us the desired point estimate, the default output from the `lm()` function for the uncertainty (standard errors and confidence intervals) is incorrect.
+The reason for this problem is slightly different than matching: `lm()` thinks that the values we pass to the `weights` argument are *fixed* weights, as in frequency weights.
+However, our weights are not fixed; they are estimated.
+The estimate of the weights themselves introduces uncertainty that we need to bring downstream to the uncertainty around the point estimate.
 
-There are three ways to estimate the uncertainty:
+## Estimating uncertainty for IPW {#sec-ipw-se}
+
+Inverse probability weighting is a two-step estimator: first, we fit a regression for the exposure and generate weights from the propensity score, then we use those weights to fit a regression for the outcome.
+To correctly specify the uncertainty in the second model, we need to include the uncertainty from the first one.
+Much of this chapter is focused on statistical inference. While causal inference is the set of tools that we've used so far to make causal effect estimation possible, statistical inference is the more general toolkit of standard errors, confidence intervals, and hypothesis tests, built on sampling distributions of estimators. It's the kind of inference normally taught in a statistics class.
+Like the distinction between description, prediction, and causal inference, these are separate but complementary ideas: we use statistical inference to test if our causal estimates have a meaningful statistical interpretation, and we likewise can't estimate causal effects out of hypothesis tests without a set of causal assumptions.
+
+There are three ways to estimate the uncertainty for IPW:
 
 1. A bootstrap
-2. A sandwich estimator that only takes into account the outcome model
-3. A sandwich estimator that takes into account the propensity score model
+2. A sandwich estimator that only takes into account the outcome model, also called a robust standard error
+3. A sandwich estimator that also takes into account the propensity score model
 
-The first option can be computationally intensive, but should get you the correct estimates.
-The second option is computationally the easiest, but tends to overestimate the variability.
-There are not many current solutions in R (aside from coding it up yourself) for the third; however, the `{PSW}` package will do this.
+The first option can be computationally intensive, but it should get you the correct estimates.
+The bootstrap is also a general solution to many problems of causal inference uncertainty, so knowing it is very useful.
+The second option is computationally easier but tends to overestimate or underestimate the variability.
+The third option is both correct and fast to compute; however, it is mathematically more complicated, usually relying on the calculus of M-Estimation to calculate (@todo-cite).
+We'll use the tools in propensity's `ipw()` function to compute the correct sandwich estimator.
+It's also implemented in `{WeightIt}`, `{PSweight}`, and a few other tools.
 
 ### The bootstrap {#sec-bootstrap}
 
-1. Create a function to run your analysis once on a sample of your data
+We used the bootstrap in @sec-whole-game to estimate the uncertainty around the causal effect estimate of mosquito nets on malaria risk (see also @sec-appendix-bootstrap for a detailed exploration of the bootstrap).
+The algorithm is identical here.
+
+First, we'll create a function to run the analysis once on a sample of the data.
 
 ```{r}
 fit_ipw <- function(.split, ...) {
@@ -177,7 +230,7 @@ fit_ipw <- function(.split, ...) {
 }
 ```
 
-2. Use {rsample} to bootstrap our causal effect
+Then use `{rsample}` to bootstrap the dataset and apply the function to each bootstrap sample.
 
 ```{r}
 #| message: false
@@ -198,7 +251,7 @@ ipw_results <- bootstrapped_seven_dwarfs |>
 ipw_results
 ```
 
-Let's look at the results.
+After applying `fit_ipw()` to each replicate of the dataset, we obtain a distribution of effect estimates.
 
 ```{r}
 ipw_results |>
@@ -217,7 +270,7 @@ ipw_results |>
   theme_minimal()
 ```
 
-3. Pull out the causal effect
+Finally, calculate the confidence intervals from this distribution using one of rsample's `int_*()` functions (here, we use `int_t()` to calculate a simple t-statistic-based CI).
 
 ```{r}
 # get t-based CIs
@@ -226,44 +279,101 @@ boot_estimate <- int_t(ipw_results, boot_fits) |>
 boot_estimate
 ```
 
-We estimate that among days that have extra magic hours, the expected impact of having extra magic hours on the average posted wait time between 9 and 10am is `r round(boot_estimate$.estimate, 1)` minutes, 95% CI (`r round(boot_estimate$.lower, 1)`, `r round(boot_estimate$.upper, 1)`).
+Now that we have incorporated the uncertainty we introduced estimating the propensity scores, we can say more correctly: we estimate that among days that have extra magic hours, the expected impact of having extra magic hours on the average posted wait time between 9 and 10am is `r round(boot_estimate$.estimate, 1)` minutes, 95% CI (`r round(boot_estimate$.lower, 1)`, `r round(boot_estimate$.upper, 1)`).
+
+The bootstrap works well for a wide variety of problems.
+However, it's both verbose and computationally intensive.
+Let's now take a look at two approaches using robust sandwich estimators.
 
 ### The outcome model sandwich
 
-There are two ways to get the sandwich estimator.
-The first is to use the same weighted outcome model as above along with the `{sandwich}` package.
-Using the `sandwich` function, we can get the robust estimate for the variance for the parameter of interest, as shown below.
+The sandwich estimator gets its name from the form of the variance it calculates: a "meat" matrix built from the variability of each observation's residuals, sandwiched between two copies of a "bread" matrix that comes from the design of the model (the predictors and weights).
+When the model's assumptions hold, the bread and meat combine to give the usual model-based variance; when they don't---as with IPW weights---the sandwich form still gives a consistent variance estimate.
+That's why these are called "robust" standard errors.
+
+Many packages implement sandwich estimators for variance, but let's first compute it by hand with the `{sandwich}` package and compare it to the variance `lm()` gives us by default. `vcov()` returns the variance-covariance matrix that `tidy()` and `summary()` use under the hood to compute their standard errors.
+It treats the weights we passed as fixed, which, in our case, they aren't.
+
+```{r}
+vcov(weighted_outcome)
+```
+
+`sandwich()` returns a matrix of the same shape, where the diagonal entries are the variances of each coefficient.
 
 ```{r}
 #| message: false
 #| warning: false
 
 library(sandwich)
-weighted_mod <- lm(
-  wait_minutes_posted_avg ~ park_extra_magic_morning,
-  data = seven_dwarfs_9_with_wt,
-  weights = w_att
-)
-
-sandwich(weighted_mod)
+sandwich(weighted_outcome)
 ```
 
-Here, our robust variance estimate is `r round(sandwich(weighted_mod)[2,2], 3)`.
+The two matrices disagree.
+For the treatment coefficient, the sandwich variance (`r round(sandwich(weighted_outcome)[2,2], 3)`) is more than double the model-based one (`r round(vcov(weighted_outcome)[2,2], 3)`), so the model-based SE understates the uncertainty around the treatment effect.
+For the intercept, the sandwich version is smaller.
+The "robust" label doesn't mean "always larger"; it means the variance is consistent without leaning on `lm()`'s assumption that the weights are fixed and the residuals are homoskedastic.
 We can then use this to construct a robust confidence interval.
 
 ```{r}
-robust_var <- sandwich(weighted_mod)[2, 2]
-point_est <- coef(weighted_mod)[2]
-lb <- point_est - 1.96 * sqrt(robust_var)
-ub <- point_est + 1.96 * sqrt(robust_var)
-lb
-ub
+robust_ci <- tibble(
+  estimate = coef(weighted_outcome)[2],
+  # calculate the robust standard error
+  # from the robust variance
+  robust_se = sqrt(sandwich(weighted_outcome)[2, 2]),
+  # and use the SE to calculate the 95% CI
+  conf.low = estimate - 1.96 * robust_se,
+  conf.high = estimate + 1.96 * robust_se
+)
+
+robust_ci
 ```
 
-We estimate that among days that have extra magic hours, the expected impact of having extra magic hours on the average posted wait time between 9 and 10am is `r round(point_est, 1)` minutes, 95% CI (`r round(lb, 1)`, `r round(ub, 1)`).
+Now, let's try to say our interpretation again, this time using the sandwich estimator as the basis for the uncertainty: we estimate that among days that have extra magic hours, the expected impact of having extra magic hours on the average posted wait time between 9 and 10am is `r round(robust_ci$estimate, 1)` minutes, 95% CI (`r round(robust_ci$conf.low, 1)`, `r round(robust_ci$conf.high, 1)`).
 
-Alternatively, we could fit the model using the `{survey}` package.
-To do this, we need to create a design object, like we did when fitting weighted tables.
+::: callout-note
+
+## HC0, HC1, HC2, HC3, ...
+
+The variance returned by a bare call to `sandwich()` is sometimes called HC0.
+The "HC" part stands for "heteroskedasticity-consistent" because these techniques were originally developed to address heteroskedasticity in regression fits.
+HC0 tends to be downwardly biased in small samples because least-squares residuals systematically understate the true errors, especially at high-leverage points.
+A family of refinements has accumulated over the years (@todo-cite).
+HC1 applies a degrees-of-freedom correction of $n / (n - k)$.
+HC2 and HC3 instead inflate each squared residual to undo the shrinkage caused by leverage---HC2 by $1 / (1 - h_{ii})$ and HC3 by $1 / (1 - h_{ii})^2$, where $h_{ii}$ is the leverage of observation $i$.
+HC3 approximates the jackknife, another form of resampling used to calculate variance.
+HC4 and successors push the leverage adjustment further at extreme points.
+
+The `sandwich()` function can compute any of these variants if you swap in the HC meat estimator: `sandwich(model, meat. = meatHC, type = "HC3")`.
+The convenience wrapper `sandwich::vcovHC(model)` does the same thing and defaults to HC3, which many authors recommend as a reasonable starting point for most analyses (Long and Ervin) (@todo-cite).
+
+:::
+
+Alternatively, we can use `{marginaleffects}` to compute the same quantity from the fitted model, along with robust standard errors built in.
+
+```{r}
+#| message: false
+#| warning: false
+
+library(marginaleffects)
+
+avg_comparisons(
+  weighted_outcome,
+  variables = "park_extra_magic_morning",
+  vcov = "HC3"
+)
+```
+
+`avg_comparisons()` returns a marginal effect: the average of $\hat{Y}(1) - \hat{Y}(0)$ across the observed covariate distribution.
+Will come back to this subject, and `{marginaleffects}`, in more detail in @sec-g-comp.
+Passing `vcov = "HC3"` requests the HC3 variance estimator from the previous callout.
+
+::: callout-note
+
+## Fitting weighted outcome models with `{survey}`
+
+Another way to fit the same weighted outcome model is via the `{survey}` package, which treats the IPW weights as survey sampling weights and adjusts the standard errors accordingly.
+Historically, many propensity score analyses in R used this approach, so you might see it out in the wild.
+You wrap the data and weights in a design object and then fit the model with `svyglm()`:
 
 ```{r}
 #| message: false
@@ -276,23 +386,26 @@ des <- svydesign(
   weights = ~w_att,
   data = seven_dwarfs_9_with_wt
 )
-```
 
-Then we can use `svyglm` to fit the outcome model.
-
-```{r}
 svyglm(wait_minutes_posted_avg ~ park_extra_magic_morning, des) |>
   tidy(conf.int = TRUE)
 ```
 
-### Sandwich estimator that takes into account the propensity score model
+The standard errors reported by `svyglm()` are based on the same family of robust sandwich estimators, so the results are comparable to the manual approach above.
+:::
 
-The correct sandwich estimator will also take into account the uncertainty in estimating the propensity score model.
-`ipw()` will allow us to do this.
-To do so, we need to provide both the propensity score model and the outcome model.
+### A sandwich estimator that takes into account the propensity score model
+
+The correct sandwich estimator also accounts for the uncertainty in the propensity score model.
+propensity's `ipw()` function uses this approach.
+`ipw()` is a bring-your-own-model (BYOM) inverse probability weighted estimator.
+Rather than fitting the two regressions for you, you fit them yourself, then supply them to `ipw()`.
+This allows you to retain control---and, crucially, diagnostic ownership---over the regression fits.
+
+We already fit both models, so let's pass them to `ipw()`.
 
 ```{r}
-results <- ipw(propensity_model, weighted_mod)
+results <- ipw(propensity_model, weighted_outcome)
 results
 ```
 
@@ -303,59 +416,166 @@ results |>
   as.data.frame()
 ```
 
+::: callout-note
+
+## The two-step variance: linearization and M-estimation
+
+IPW is a two-step estimator: fit a propensity model, then run a weighted outcome regression.
+The naive sandwich estimator above treats the propensity scores as known constants and ignores the propensity-estimation step entirely.
+Two routes recover a closed-form variance that accounts for both steps.
+
+*M-estimation* (Stefanski and Boos, @todo-cite; Williamson et al., @todo-cite) stacks the two stages into a single system of estimating equations: the score equations from the propensity model and those from the weighted outcome regression, solved simultaneously for the combined parameter vector.
+The joint estimator's variance is the usual sandwich built from that whole system, so propensity-stage uncertainty propagates into the outcome-stage variance automatically.
+
+*Linearization* (Deville, @todo-cite; Kostouraki et al., @todo-cite) works one observation at a time.
+Each observation's contribution to the variance is written as a Taylor expansion in the propensity-score coefficients and decomposed into two pieces.
+The first is the influence-function contribution from the weighted regression alone, equal to what the naive sandwich computes.
+The second is a correction term that propagates that observation's role in fitting the propensity model into the outcome estimate via the chain rule.
+Adding the two pieces and averaging gives a closed-form variance.
+
+The two approaches are connected.
+Under a logit propensity model, Kostouraki et al. (@todo-cite) prove that the linearization and M-estimation formulas are algebraically identical.
+:::
+
+## Correcting standard errors for matched outcome models {#sec-matching-se}
+
+Now that we've seen some approaches for correcting IPW estimators, let's return to matching.
+The simple model `wait_minutes_posted_avg ~ park_extra_magic_morning` omits the matching covariates, so its residuals carry that omitted information.
+Matching pairs units with similar values of the covariates, so the paired residuals are correlated.
+`lm()` and a bare call to `sandwich()` both treat observations as independent and miss this correlation.
+Abadie and Spiess (@todo-cite) show that naive standard errors are valid only when matching is done without replacement, and the outcome model is correctly specified.
+Outside that case, the SEs are biased: usually toward overcoverage when treatment effects don't depend on the matching covariates, and toward undercoverage when they do.
+
+There are three fixes.
+
+The most direct approach is to include the matching covariates in the outcome model with the right functional form.
+Correctly specifying the model removes the omitted-variable signal from the residuals, and naive SEs become valid.
+The catch is that we now need to avoid misspecifying the functional form of all covariates in the outcome model.
+
+The other two fixes correct the SE without including more variables in the outcome model.
+The second solution is a cluster-robust standard error clustered within matched pairs.
+`get_matches()` returns a `subclass` column identifying each pair, which we pass to `sandwich::vcovCL()` as the cluster argument (as a formula) to compute the cluster-robust variance.
+
+```{r}
+vcl <- vcovCL(matched_outcome, cluster = ~subclass)
+
+robust_ci <- tibble(
+  estimate = coef(matched_outcome)[["park_extra_magic_morning"]],
+  robust_se = sqrt(vcl["park_extra_magic_morning", "park_extra_magic_morning"]),
+  conf.low = estimate - 1.96 * robust_se,
+  conf.high = estimate + 1.96 * robust_se
+)
+
+robust_ci
+```
+
+::: callout-note
+
+## Cluster-robust SEs via `{marginaleffects}`
+
+`marginaleffects::avg_comparisons()` computes the same cluster-robust SE by passing `~subclass` to `vcov`.
+
+```{r}
+avg_comparisons(
+  matched_outcome,
+  variables = "park_extra_magic_morning",
+  vcov = ~subclass,
+  newdata = filter(matched_data, park_extra_magic_morning == 1)
+)
+```
+
+Since we are targeting the ATT, we also need to filter the data down to the treated before calculating the average comparisons; we'll come back to that topic in @sec-g-comp.
+:::
+
+The third solution is a cluster bootstrap: resample whole matched pairs as units rather than rows, leaving the matching itself fixed.
+In contrast to the bootstrap for IPW, we do not re-run `matchit()` within the bootstrap.
+Abadie and Imbens (@todo-cite) show that the standard bootstrap is theoretically invalid for nearest-neighbor matching estimators; instead, we should resample matched pairs (@todo-cite).
+`rsample::group_bootstraps()` creates this pair-level bootstrap when we pass it `subclass` as the group variable; the function-then-bootstrap pattern mirrors @sec-bootstrap, except that we do not refit the MatchIt object.
+
+```{r}
+fit_matched <- function(.split, ...) {
+  .df <- as.data.frame(.split)
+  lm(
+    wait_minutes_posted_avg ~ park_extra_magic_morning,
+    data = .df
+  ) |>
+    tidy()
+}
+
+cluster_boots <- group_bootstraps(
+  matched_data,
+  group = subclass,
+  times = 1000,
+  apparent = TRUE
+)
+
+cluster_results <- cluster_boots |>
+  mutate(boot_fits = map(splits, fit_matched))
+
+int_t(cluster_results, boot_fits) |>
+  filter(term == "park_extra_magic_morning")
+```
+
 ## Binary outcomes: Risk ratio, risk difference, and odds ratio {#sec-binary}
 
 In the example we've taken up, the outcome, posted wait times, is continuous.
-Using weighted linear regression, the ATE and friends are calculated as a difference in means.
+Using weighted linear regression, the ATE and friends are estimated as differences in means.
 A difference in means is a valuable effect to estimate, but it's not the only one.
 Let's say we use ATT weights and weight an outcome regression to calculate the relative change in posted wait time.
 The relative change is still a treatment effect among the treated, but it's on a relative scale.
 The important part is that the weights allow us to average over the covariates of the treated for whichever specific estimand we're trying to estimate.
-Sometimes, when people say something like "the average treatment effect," they are talking about a difference in mean outcomes among the whole sample, so it's good to be specific.
+Sometimes, when people say something like "the average treatment effect," they're referring to the difference in mean outcomes across the whole sample, so it's good to be specific.
 
-<!-- TODO: add example where we discretize outcome and show in code what to do -->
+For example, let's discretize the continuous posted wait time into a binary indicator of whether the average wait exceeded 60 minutes. Discretizing a continuous variable is generally a bad idea---we're sacrificing information by dichotomizing the outcome---but we'll use it as an example to show how to approach a problem that has a binary outcome.
 
-For binary outcomes, we have three standard options: the risk ratio, risk difference, and odds ratio.
-In the case of a binary outcome, we calculate average probabilities for each treatment group.
-Let's call these `p_untreated` and `p_treated`.
+```{r}
+#| label: discretize-wait-time
+
+seven_dwarfs_9_with_wt <- seven_dwarfs_9_with_wt |>
+  mutate(wait_over_60 = wait_minutes_posted_avg > 60)
+```
+
+For binary outcomes, there are three standard options: the risk ratio, the risk difference, and the odds ratio.
+For a binary outcome, we calculate the average probability for each treatment group.
+Let's call these $p_{\text{untreated}}$ and $p_{\text{treated}}$.
 When we're working with these probabilities, calculating the risk difference and risk ratio is simple:
 
-- **Risk difference**: `p_treated - p_untreated`
-- **Risk ratio**: `p_treated / p_untreated`
+* Risk difference: $p_{\text{treated}} - p_{\text{untreated}}$
+* Risk ratio: $p_{\text{treated}} / p_{\text{untreated}}$
 
 ::: callout-note
 By "risk", we mean the risk of an outcome.
 That assumes the outcome is negative, like developing a disease.
-Sometimes, you'll hear these described as the "response ratio" or "response difference".
-A more general way to think about these is as the difference in or ratio of the probabilities of the outcome.
+Sometimes, you'll hear these described as the "response ratio" or the "response difference."
+A more general way to think about these is as the difference in, or the ratio of, the probabilities of the outcome.
 :::
 
-The odds for a probability is calculated as `p / (1 - p)`, so the odds ratio is:
+The odds for a probability are calculated as $p / (1 - p)$, so the odds ratio is:
 
-- **Odds ratio**: `(p_treated / (1 - p_treated)) /  (p_untreated / (1 - p_untreated))`
+* Odds ratio: $(p_{\text{treated}} / (1 - p_{\text{treated}})) / (p_{\text{untreated}} / (1 - p_{\text{untreated}}))$
 
-When outcomes are rare, `(1 - p)` approaches 1, and odds ratios approximate risk ratios.
+When outcomes are rare, $(1 - p)$ approaches 1, and odds ratios approximate risk ratios.
 The rarer the outcome, the closer the approximation.
 
-One feature of the logistic regression model is that the coefficients are log-odds ratios, so exponentiating them produces odds ratios.
+One feature of the logistic regression model is that the coefficients are log-odds ratios; exponentiating them yields odds ratios.
 However, when using logistic regression, you can also work with predicted probabilities to calculate risk differences and ratios, as we'll see in [Chapter -@sec-g-comp].
 
-Just like with continuous outcomes, we can target each of these estimands for a different subset of the population, e.g., the risk ratio among the untreated, the odds ratio among the evenly matchable, and so on.
+Just as with continuous outcomes, we can target each of these estimands to a different subset of the population, e.g., the risk ratio among the untreated, the odds ratio among the evenly matchable, and so on.
 
 These options also extend to categorical outcomes.
 There are different ways of organizing them depending on the nature of the categorical variables.
-An effect that's commonly estimated for non-ordinal categorical variables is a series of odds ratios with one level of the outcome serving as the reference level (e.g., an OR for 1 vs. 2 and 1 vs. 3 and so on).
-Multinomial regression models, such as `nnet::multinom()`, can produce these log-odds ratios as coefficients, an extension of logistic regression.
-For ordinal outcomes, ordinal logistic regression like `MASS::polr()` calculates a series of log-odds ratios that compare each previous value of the outcome.
+An effect that's commonly estimated for non-ordinal categorical variables is a series of odds ratios, with one level of the outcome serving as the reference level (e.g., ORs for 1 vs. 2, 1 vs. 3, and so on).
+Multinomial regression models, such as `nnet::multinom()`, can produce these log-odds ratios as coefficients, extending logistic regression.
+For ordinal outcomes, ordinal logistic regression, as implemented in `MASS::polr()`, estimates a series of log-odds ratios that compare each previous value of the outcome.
 Like logistic regression, you are not limited to odds ratios with these extensions, as you can work with the predicted probabilities of each category to calculate the effect you're interested in.
 
 ::: callout-note
-Case-control studies are a typical design in epidemiology where participants are sampled by outcome status [@schlesselman1982case].
+Case-control studies are a typical design in epidemiology, in which participants are sampled by outcome status [@schlesselman1982case].
 Cases with the outcome are recruited, and controls are sampled from the population from which the cases come.
 These types of studies are used when outcomes are rare.
 They can also be faster and cheaper than studies that follow people from the time of exposure.
 
-Because of how sampling happens in case-control studies, you don't have baseline risk because you don't have all the individuals who did not have the outcome.
+Because of how sampling happens in case-control studies, you don't have a baseline risk because you don't have all the individuals who did not have the outcome.
 Interestingly, you can still recover the odds ratio.
 When outcomes are rare, odds ratios approximate risk ratios.
 You cannot, however, calculate the risk difference.
@@ -368,7 +588,7 @@ Depending on the baseline probability of the outcome, absolute and relative meas
 
 Consider a rare outcome with a baseline probability of 0.0001, a rate of 1 event per 10,000 observations.
 That's the probability for the unexposed.
-Let's say the exposed have a probability of the outcome of 0.0008.
+Let's say the exposed have a probability of 0.0008 of the outcome.
 That's 8 times greater than the unexposed, a substantial relative effect.
 But it's only 0.0007 on the absolute scale.
 
@@ -383,17 +603,18 @@ But lung cancer is a pretty rare disease.
 Smoking also increases the risk of heart disease, although the relative effect is not nearly as high as lung cancer.
 However, heart disease is much more prevalent.
 More people die of smoking-related heart disease than they do of lung cancer because of the absolute change in risk.
-Both the absolute and relative perspectives are valid.
+Both the absolute and relative perspectives are valid and useful.
 
 ::: callout-note
+
 ## The number needed to treat
 
 Another perspective on the difference in probabilities is the number needed to treat (NNT) measure.
-It's simply the inverse of the risk difference, and it represents the number of exposed individuals needed to prevent or create one outcome.
+It's simply the inverse of the risk difference and represents the number of exposed individuals needed to prevent or cause one outcome.
 
-Consider a product for sale with a baseline purchase probability of 5%, which means that 5 in 100 people will buy this product.
-A marketing team creates an ad, and those who see the ad have a probability of 7% to buy the product.
-The absolute difference in probabilities of buying the product is 0.02, and so `1 / 0.02 = 50` people need to see the ad to increase the number of purchases by one.
+Consider a product with a baseline purchase probability of 5%, meaning that 5 in 100 people will buy it.
+A marketing team creates an ad, and those who see it have a 7% chance of buying the product.
+The absolute difference in the probability of buying the product is 0.02, so $1 / 0.02 = 50$ people need to see the ad to increase the number of purchases by 1.
 
 The NNT is an imperfect measure because of its simplicity, but it offers another perspective on what the treatment effect actually means in practice.
 :::
@@ -467,7 +688,7 @@ conditional_rr_0 <- risk_ratio(conditional_tables[,, 1])
 conditional_rr_1 <- risk_ratio(conditional_tables[,, 2])
 ```
 
-First, let's look at the relationship between `exposure` and `outcome` among everyone.
+First, let's look at the relationship between `exposure` and `outcome` for everyone.
 
 ```{r}
 table(exposure, outcome)
@@ -475,14 +696,14 @@ table(exposure, outcome)
 
 We can calculate the odds ratio using this frequency table: ((`r marginal_table[2, 2]` \* `r marginal_table[1, 1]`) / (`r marginal_table[1, 2]` \* `r marginal_table[2, 1]`)) = `r marginal_or`.
 
-This odds ratio is the same result we get with logistic regression when we exponentiate the results.
+This odds ratio is the same as the one we get with logistic regression when we exponentiate the coefficients.
 
 ```{r}
 glm(outcome ~ exposure, family = binomial()) |>
   broom::tidy(exponentiate = TRUE)
 ```
 
-This is a little off from the simulation model coefficient of `exp(1)`.
+This is slightly off from the simulation model's coefficient for `exp(1)`.
 We get closer when we add in `covariate`.
 
 ```{r}
@@ -490,7 +711,7 @@ glm(outcome ~ exposure + covariate, family = binomial()) |>
   broom::tidy(exponentiate = TRUE)
 ```
 
-`covariate` is not a confounder, so by rights, it shouldn't impact the effect estimate for `exposure`.
+`covariate` is not a confounder, so, by rights, it shouldn't affect the exposure effect estimate.
 Let's look at the conditional odds ratios by `covariate`.
 
 ```{r}
@@ -504,14 +725,14 @@ The marginal odds ratio, `r marginal_or`, is smaller than both of these!
 The marginal risk ratio is `r marginal_rr`.
 The risk ratio for those with `covariate = 0` is `r conditional_rr_0`.
 For those with `covariate = 1`, it's `r conditional_rr_1`.
-In this case, the marginal risk ratio is a weighted average collapsible over the strata of `covariate` [@Huitfeldt2019].
+In this case, the marginal risk ratio is a weighted average that can be collapsed across strata of the covariate [@Huitfeldt2019].
 
-It's tempting to think you need to include `covariate` since the odds ratio changes when you add it in, and it's closer to the model coefficient from the simulation.
+It's tempting to think you need to include a covariate because the odds ratio changes when you add it, and it's closer to the model coefficient from the simulation.
 An important detail here is that non-collapsibility is *not* bias.
-Some authors describe it as omitted variable bias, but the marginal and conditional odds ratios are both correct because `covariate` is not a confounder.
-They are simply different estimands.
+Some authors describe it as omitted-variable bias, but the marginal and conditional odds ratios are both correct because `covariate` is not a confounder.
+They are, instead, different estimands.
 The conditional odds ratio is the OR conditional on `covariate`.
-To meaningfully compare it to other odds ratios, those also need to condition on `covariate`.
+To meaningfully compare it to other odds ratios, those odds ratios also need to condition on `covariate`.
 Non-collapsibility is a numerical property of odds; rather than creating bias, it creates a slightly more nuanced interpretation.
 The exact way non-collapsibility behaves also depends on whether the data-generating mechanism occurs on the additive or multiplicative scale; on the multiplicative scale (as in our simulation), removing a variable strongly related to the outcome changes the effect estimate, while on the additive scale, adding a variable strongly related to the outcome changes the effect, albeit on a smaller scale [@Whitcomb2021].
 Instead of worrying about which version of the odds ratio is right, we recommend focusing on confounders, which are necessary for unbiased estimates, and predictors of the outcome, which are helpful for variance reduction.
@@ -523,22 +744,54 @@ Be careful to interpret them with regard to the treatment group that you've incl
 For example, the average risk difference calculated with ATT weights is the average risk difference among the treated.
 
 ::: callout-note
+
 ## The linear probability model
 
 The linear probability model is another common way to estimate treatment effects for binary outcomes.
 The linear probability model is standard in econometrics and other fields.
-It's just OLS, although researchers often use a robust standard error because of heterogeneity in the variance of the residuals.
+It's just OLS, although researchers often use robust standard errors because of heteroskedasticity in the residuals (which, as we say, is what many robust SE estimators were designed to solve).
 The result is the risk difference, a collapsible measure.
 
 ```{r}
 lm(outcome ~ exposure)
 ```
 
-<!-- TODO: add where to get robust variance (estimatr, marginaleffects) -->
+For run-of-the-mill linear probability models, you can use `{sandwich}` or `{marginaleffects}` to calculate robust standard errors.
+However, for weighted or matched linear probability models, you will need to use an approach that also accounts for those processes.
 
 The linear probability model is a handy way to model the relationship on the additive scale.
-However, it comes with a significant hiccup: logistic regression is bounded by 0 and 1, while OLS is not.
-That means that individual predictions may be less than 0 or more than 1, impossible values for probabilities.
+However, it comes with a significant caveat: logistic regression is bounded between 0 and 1, whereas OLS is not.
+That means individual predictions may be less than 0 or greater than 1, which are impossible values for probabilities.
 
 We'll see an alternative method for calculating risk differences with logistic regression in [Chapter -@sec-g-comp].
 :::
+
+Returning to our binary version of the wait-time outcome, we can fit a weighted logistic regression with ATT weights to estimate the (marginal) odds ratio of having an average wait time exceeding 60 minutes on days with extra magic hours.
+We use `family = quasibinomial()` to avoid a warning about non-integer successes, which arises because propensity score weights are not whole numbers; the point estimate will match that from `family = binomial()`.
+
+```{r}
+#| label: logistic-wait-over-60
+
+glm(
+  wait_over_60 ~ park_extra_magic_morning,
+  data = seven_dwarfs_9_with_wt,
+  weights = as.numeric(w_att),
+  family = quasibinomial()
+) |>
+  tidy(exponentiate = TRUE, conf.int = TRUE)
+```
+
+For the risk difference, we can fit the same model as a linear probability model.
+
+```{r}
+#| label: lpm-wait-over-60
+
+lm(
+  wait_over_60 ~ park_extra_magic_morning,
+  data = seven_dwarfs_9_with_wt,
+  weights = w_att
+) |>
+  tidy(conf.int = TRUE)
+```
+
+As with the continuous outcome, the default standard errors and confidence intervals from `glm()` and `lm()` don't account for the propensity score model; the same bootstrap and sandwich approaches from @sec-ipw-se apply here. Likewise, matching and using the approaches in @sec-matching-se will also work as expected.
