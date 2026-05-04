@@ -4,6 +4,7 @@
 
 ```{r}
 #| echo: false
+
 # TODO: remove when first edition complete
 status("polishing")
 ```
@@ -20,18 +21,23 @@ You can think of the **estimand** as a glossy picture of a beautiful cake we are
 #| label: fig-cake-est
 #| echo: false
 #| fig-cap: "The estimand, estimator, and estimate are all important parts of the statistical estimation process. The estimand is like the perfect cake in the cookbook. The estimator is like the recipe we use to make that cake. The estimate is the cake we pull out of the oven... sometimes to our great dismay."
+
 knitr::include_graphics(here::here("chapters/images/cake_est.png"))
 ```
 
 So far, we have primarily focused on the average treatment effect, the effect of the exposure of interest averaged across the whole population.
 The **estimand** here is the expected value of the difference in potential outcomes across all individuals:
 
-$$E[Y(1) - Y(0)]$$
+$$
+E[Y(1) - Y(0)]
+$$
 
 The **estimator** we use depends on the method we've chosen.
 For example, in an A/B test or randomized controlled trial, our estimator could be the average outcome among those who received exposure A minus the average outcome among those who received exposure B.
 
-$$\sum_{i=1}^{N}\frac{Y_i\times X_i}{N_{\textrm{A}}} - \frac{Y_i\times (1-X_i)}{N_{\textrm{B}}}$$
+$$
+\sum_{i=1}^{N}\frac{Y_i\times X_i}{N_{\textrm{A}}} - \frac{Y_i\times (1-X_i)}{N_{\textrm{B}}}
+$$
 
 Where $X$ is an indicator for exposure A ($X = 1$ for exposure A and $X = 0$ for exposure B), $N_A$ is the total number in group A and $N_B$ is the total number in group B such that $N_A + N_B = N$.
 Let's motivate this example a bit more.
@@ -69,8 +75,7 @@ ab |>
     n_a = sum(x),
     n_b = sum(1 - x),
     estimate = sum(
-      (y * x) / n_a -
-        y * (1 - x) / n_b
+      (y * x) / n_a - y * (1 - x) / n_b
     )
   )
 ```
@@ -93,13 +98,13 @@ Because $X$, the exposure, was randomly assigned, this estimator results in an u
 
 ```{r}
 #| include: false
+
 estimate <- ab |>
   summarize(
     n_a = sum(x),
     n_b = sum(1 - x),
     estimate = sum(
-      (y * x) / n_a -
-        y * (1 - x) / n_b
+      (y * x) / n_a - y * (1 - x) / n_b
     )
   ) |>
   pull(estimate)
@@ -125,8 +130,7 @@ ab |>
     n_a = sum(x),
     n_b = sum(1 - x),
     estimate = sum(
-      (y * x) / n_a -
-        y * (1 - x) / n_b
+      (y * x) / n_a - y * (1 - x) / n_b
     )
   )
 ```
@@ -139,7 +143,9 @@ We could extend the unweighted estimator to use weighted means to *estimate* our
 This version of inverse probability weighting is sometimes called the Hajek estimator.
 While we'll focus on using regression for outcome models, this simple extension of the unweighted estimator shows how we can modify an estimator to adapt to different estimands.
 
-$$\frac{\sum_{i=1}^NY_i\times X_i\times w_i}{\sum_{i=1}^NX_i\times w_i}-\frac{\sum_{i=1}^NY_i\times(1-X_i)\times w_i}{\sum_{i=1}^N(1-X_i)\times w_i}$$
+$$
+\frac{\sum_{i=1}^NY_i\times X_i\times w_i}{\sum_{i=1}^NX_i\times w_i}-\frac{\sum_{i=1}^NY_i\times(1-X_i)\times w_i}{\sum_{i=1}^N(1-X_i)\times w_i}
+$$
 
 ## Estimating treatment effects with specific targets in mind
 
@@ -152,9 +158,12 @@ A common estimand is the average treatment effect (ATE).
 The target population is the *total sample* or population of interest.
 The estimand here is the expected value of the difference in potential outcomes across all individuals:
 
-$$E[Y(1) - Y(0)]$$
+$$
+E[Y(1) - Y(0)]
+$$
 
-An example research question is "Should a policy be applied to all eligible patients?" [@greifer2021choosing].
+An example research question is "Should a policy be applied to all eligible patients?"
+[@greifer2021choosing].
 
 Most randomized controlled trials are designed with the ATE as the target estimand.
 The estimator we applied to `ab` earlier will this work.
@@ -163,7 +172,9 @@ In a non-randomized setting, you can estimate the ATE using full matching.
 Each observation in the exposed group is matched to at least one observation in the control group (and vice versa) without replacement.
 We'll discuss estimands with matching further in @sec-matching-estimands) Alternatively, the following inverse probability weight will allow you to estimate the ATE using propensity score weighting.
 
-$$w_{ATE} = \frac{X}{p} + \frac{(1 - X)}{1 - p}$$
+$$
+w_{ATE} = \frac{X}{p} + \frac{(1 - X)}{1 - p}
+$$
 
 In other words, the weight is one over the propensity score for those in the exposure group and one over one minus the propensity score for the control group.
 Intuitively, this weight equates to the inverse probability of being in the exposure group in which you actually were.
@@ -172,8 +183,7 @@ That is to say, matching or weighting on the propensity score is only the first 
 It's using the matched or weighted data in the outcome model that will then generate an estimate of the ATE.
 
 Let's dig deeper into this causal estimand using the Touring Plans data.
-Recall that in @sec-using-ps, we examined the relationship between whether there were "Extra Magic Hours" in the morning and the average wait time for the Seven Dwarfs Mine Train the same day between 9 A.M.
-and 10 A.M.
+Recall that in @sec-using-ps, we examined the relationship between whether there were "Extra Magic Hours" in the morning and the average wait time for the Seven Dwarfs Mine Train the same day between 9 A.M. and 10 A.M.
 Let's reconstruct our data set, `seven_dwarfs`, and fit the same propensity score model specified previously.
 
 ```{r}
@@ -182,13 +192,16 @@ library(touringplans)
 
 seven_dwarfs <- seven_dwarfs_train_2018 |>
   filter(wait_hour == 9) |>
-  mutate(park_extra_magic_morning = factor(
-    park_extra_magic_morning,
-    labels = c("No Magic Hours", "Extra Magic Hours")
-  ))
+  mutate(
+    park_extra_magic_morning = factor(
+      park_extra_magic_morning,
+      labels = c("No Magic Hours", "Extra Magic Hours")
+    )
+  )
 
 seven_dwarfs_with_ps <- glm(
-  park_extra_magic_morning ~ park_ticket_season + park_close +
+  park_extra_magic_morning ~ park_ticket_season +
+    park_close +
     park_temperature_high,
   data = seven_dwarfs,
   family = binomial()
@@ -202,7 +215,10 @@ We will use the `tbl_summary()` function from the `{gtsummary}` package to do so
 
 ```{r}
 #| label: tbl-unweighted-gtsummary
-#| tbl-cap: A descriptive table of Extra Magic Morning in the touringplans dataset. This table shows the distributions of these variables in the observed population.
+#| tbl-cap: A descriptive table of Extra Magic Morning in the touringplans
+#|   dataset. This table shows the distributions of these variables in the
+#|   observed population.
+
 library(gtsummary)
 library(labelled)
 seven_dwarfs_with_ps <- seven_dwarfs_with_ps |>
@@ -223,8 +239,7 @@ tbl_summary(
 
 From @tbl-unweighted-gtsummary, 294 days did not have Extra Magic Hours in the morning, and 60 did.
 We also see that 30% of the Extra Magic Mornings were during peak season compared to 20% of the non-Extra Magic Mornings.
-Additionally, days with Extra Magic Mornings were more likely to close at 6 P.M.
-(18:00:00) compared to non-magic hour mornings.
+Additionally, days with Extra Magic Mornings were more likely to close at 6 P.M. (18:00:00) compared to non-magic hour mornings.
 The median high temperature on days with Extra Magic Hour mornings is slightly lower (83 degrees) than non-Extra Magic Hour morning days.
 
 Now, let's construct our propensity score weight to estimate the ATE.
@@ -241,8 +256,9 @@ Let's look at the distribution of these weights.
 
 ```{r}
 #| label: fig-sd-ate-hist
-#| fig.cap: >
+#| fig-cap: >
 #|   A histogram of the average treatment effect (ATE) weights for whether or not a day had Extra Magic Hours. ATE weights can range from 1 to infinity, so paying attention to the actual range of weights is important.
+
 ggplot(seven_dwarfs_wts, aes(x = w_ate)) +
   geom_histogram(bins = 50)
 ```
@@ -292,7 +308,8 @@ finite_sample_wts <- glm(
 
 finite_sample_wts |>
   summarize(
-    effect = sum(y * x * wts) / sum(x * wts) -
+    effect = sum(y * x * wts) /
+      sum(x * wts) -
       sum(y * (1 - x) * wts) / sum((1 - x) * wts)
   )
 ```
@@ -307,6 +324,7 @@ Let's rerun this simulation many times at different sample sizes to explore the 
 #| message: false
 #| cache: true
 #| code-fold: true
+
 sim <- function(n) {
   ## create a simulated dataset
   finite_sample <- tibble(
@@ -326,7 +344,8 @@ sim <- function(n) {
     mutate(wts = wt_ate(.fitted, x))
   bias <- finite_sample_wts |>
     summarize(
-      effect = sum(y * x * wts) / sum(x * wts) -
+      effect = sum(y * x * wts) /
+        sum(x * wts) -
         sum(y * (1 - x) * wts) / sum((1 - x) * wts)
     ) |>
     pull()
@@ -362,7 +381,8 @@ It isn't until a sample size larger than 10,000 that we see this bias disappear.
 Estimands that utilize unbounded weights (i.e., that theoretically can be infinitely large) are more likely to suffer from finite sample bias.
 The likelihood of falling into finite sample bias depends on:\
 (1) the estimand you have chosen (i.e., are the weights bounded?)\
-(2) the distribution of the covariates in the exposed and unexposed groups (i.e., is there good overlap? Potential positivity violations, when there is poor overlap, are the regions where weights can become too large)\
+(2) the distribution of the covariates in the exposed and unexposed groups (i.e., is there good overlap?
+Potential positivity violations, when there is poor overlap, are the regions where weights can become too large)\
 (3) the sample size.
 :::
 
@@ -378,9 +398,12 @@ Even though we are not doing a survey analysis, the same techniques are helpful 
 
 ```{r}
 #| label: tbl-weighted-gtsummary
-#| tbl-cap: A descriptive table of Extra Magic Morning hours weighted by the Average Treatment Effect Weights. This table shows the distributions of these variables in the pseudo-population created by these weights.
+#| tbl-cap: A descriptive table of Extra Magic Morning hours weighted by the
+#|   Average Treatment Effect Weights. This table shows the distributions of
+#|   these variables in the pseudo-population created by these weights.
 #| message: false
 #| warning: false
+
 library(survey)
 library(halfmoon)
 hdr <- paste0(
@@ -418,8 +441,9 @@ As we saw in @sec-eval-ps-model, the `{halfmoon}` package includes a function `g
 
 ```{r}
 #| label: fig-sd-mirror-hist-ate
-#| fig.cap: >
+#| fig-cap: >
 #|   A mirrored histogram of the distribution of propensity scores between exposure groups. The dark bars represent the unweighted distribution, and the colored bars represent the distribution weighted by the average treatment effect (ATE) weight.
+
 library(halfmoon)
 ggplot(seven_dwarfs_wts, aes(.fitted, group = park_extra_magic_morning)) +
   geom_mirror_histogram(bins = 50) +
@@ -443,7 +467,9 @@ We can also see that after weighting, the two distributions look similar; the sh
 
 Recall that our estimand is:
 
-$$E[Y(1) - Y(0)]$$
+$$
+E[Y(1) - Y(0)]
+$$
 
 To use data to estimate averages of potential outcomes, we need to meet the three causal assumptions discussed in @sec-assump: exchangeability, positivity, and consistency.
 This estimand also tells us what part of our data we need to make these assumptions *about*.
@@ -457,15 +483,21 @@ Another estimand we've seen---the default estimand in MatchIt---is the average t
 The target population for the ATT is the *exposed* (treated) population.
 This causal estimand conditions on those in the exposed group:
 
-$$E[Y(1) - Y(0) | X = 1]$$
+$$
+E[Y(1) - Y(0) | X = 1]
+$$
 
-Example research questions where the ATT is of interest could include "Should we stop our marketing campaign to those currently receiving it?" or "Should medical providers stop recommending treatment for those currently receiving it?" [@greifer2021choosing]
+Example research questions where the ATT is of interest could include "Should we stop our marketing campaign to those currently receiving it?"
+or "Should medical providers stop recommending treatment for those currently receiving it?"
+[@greifer2021choosing]
 
 The ATT is a common target estimand when matching; here, all exposed observations are included and matched to control observations, some of which may be discarded.
 Alternatively, we can estimate the ATT via weighting.
 The ATT weight is estimated by:
 
-$$w_{ATT} = X + \frac{(1 - X)p}{1 - p}$$
+$$
+w_{ATT} = X + \frac{(1 - X)p}{1 - p}
+$$
 
 In other words, the treated group receives a weight of 1, while the untreated group receives weights equal to their odds of being *treated*.
 Why do these weights work to target this population?
@@ -506,6 +538,7 @@ For instance, for the ATE, the tilting function keeps the target population as-i
 #| fig-cap: "The tilting function of the ATE and the behavior of the weights for each group over the range of the propensity score (x-axis). The y-axis represents the value of the tilting function scalar (top panel) or the weights corresponding to the propensity score value (bottom two panels). For the ATE, the tilting function is $1$, so the weights remain unchanged. ATE weights can range from 0 to infinity for both groups."
 #| code-fold: true
 #| fig-width: 3
+
 ps <- seq(0.01, 0.99, by = 0.01)
 
 df <- tibble(ps = ps) |>
@@ -528,7 +561,8 @@ df <- tibble(ps = ps) |>
   )
 
 plot_df <- bind_rows(
-  df |> select(ps, starts_with("h_")) |>
+  df |>
+    select(ps, starts_with("h_")) |>
     pivot_longer(
       -ps,
       names_to = "estimand",
@@ -579,7 +613,7 @@ plot_weight_properties <- function(plot_df, estimand_type) {
       y = NULL
     ) +
     theme_minimal() +
-    xlim(.01, .99) +
+    xlim(0.01, 0.99) +
     expand_limits(y = c(0, 1))
 }
 
@@ -593,6 +627,7 @@ For the ATT, the tilting function tries to make the population more like the tre
 #| fig-cap: "The tilting function of the ATT and the behavior of the weights for each group over the range of the propensity score (x-axis). The y-axis represents the value of the tilting function scalar (top panel) or the weights corresponding to the propensity score value (bottom two panels). For the ATT, the tilting function is $p$, the propensity score, so the weights are 1 for the treated and the odds of being treated for the controls. As an untreated observation approaches a propensity score of 1, the odds go to infinity."
 #| code-fold: true
 #| fig-width: 3
+
 plot_weight_properties(plot_df, "att")
 ```
 
@@ -600,8 +635,9 @@ Let's add the ATT weights to the `seven_dwarfs_wts` data frame and look at their
 
 ```{r}
 #| label: fig-sd-att-hist
-#| fig.cap : >
+#| fig-cap: >
 #|   A histogram of the average treatment effect among the treated (ATT) weights. The range of the ATT weights in this example is more stable than the ATE weights: the range is much smaller.
+
 seven_dwarfs_wts <- seven_dwarfs_wts |>
   mutate(w_att = wt_att(.fitted, park_extra_magic_morning))
 
@@ -620,9 +656,13 @@ Let's look at the weighted table to understand the pseudo-population we've creat
 
 ```{r}
 #| label: tbl-weighted-att
-#| tbl-cap: A descriptive table of Extra Magic Morning hours weighted by the Average Treatment Effect among the Treated Weights. This table shows the distributions of these variables in the pseudo-population created by these weights.
+#| tbl-cap: A descriptive table of Extra Magic Morning hours weighted by the
+#|   Average Treatment Effect among the Treated Weights. This table shows the
+#|   distributions of these variables in the pseudo-population created by these
+#|   weights.
 #| message: false
 #| warning: false
+
 seven_dwarfs_svy <- svydesign(
   ids = ~1,
   data = seven_dwarfs_wts,
@@ -647,8 +687,9 @@ We can again create a mirrored histogram to observe the weighted pseudo-populati
 
 ```{r}
 #| label: fig-sd-mirror-hist-att
-#| fig.cap: >
+#| fig-cap: >
 #|   A mirrored histogram of the distribution of propensity scores between exposure groups. The dark bars represent the unweighted distribution, and the colored bars represent the distribution weighted by the average treatment effect among the treated (ATT) weight.
+
 ggplot(seven_dwarfs_wts, aes(.fitted, group = park_extra_magic_morning)) +
   geom_mirror_histogram(bins = 50) +
   geom_mirror_histogram(
@@ -670,7 +711,9 @@ The ATT is easier to estimate when there are many more observations in the unexp
 The ATT and other estimands have an advantage over the ATE: because we only making inferences for a subset of the population, *the causal assumptions we need to make only need to be met for that subset of the population*.
 Since the estimand for the ATT is:
 
-$$E[Y(1) - Y(0) | X = 1]$$
+$$
+E[Y(1) - Y(0) | X = 1]
+$$
 
 We have a weaker assumption because it only applies to the treated group as opposed to the whole population.
 For exchangeability, we are no longer trying to estimate the potential outcome `y(1)` for the untreated; we are only making inferences for the treated and have already observed `y(1)` for that group.
@@ -683,15 +726,21 @@ The target population to estimate the average treatment effect among the unexpos
 We'll use both ATU and ATC to refer to this estimand.
 This causal estimand conditions on those in the unexposed group.
 
-$$E[Y(1) - Y(0) | X = 0]$$
+$$
+E[Y(1) - Y(0) | X = 0]
+$$
 
-Example research questions where the ATU is of interest could include "Should we send our marketing campaign to those not currently receiving it?" or "Should medical providers begin recommending treatment for those not currently receiving it?" [@greifer2021choosing]
+Example research questions where the ATU is of interest could include "Should we send our marketing campaign to those not currently receiving it?"
+or "Should medical providers begin recommending treatment for those not currently receiving it?"
+[@greifer2021choosing]
 
 The ATU can be also estimated via matching; here, all unexposed observations are included and matched to exposed observations, some of which may be discarded.
 Alternatively, the ATU can be estimated via weighting.
 The ATU weight is estimated by:
 
-$$w_{ATU} = \frac{X(1-p)}{p}+ (1-X)$$
+$$
+w_{ATU} = \frac{X(1-p)}{p}+ (1-X)
+$$
 
 This is the reverse of the ATT: the unexposed group gets a weight of 1, while the exposed group receives weights equal to the odds of being *untreated*.
 We're targeting the untreated group by using the probability of being untreated as a tilting function.
@@ -717,6 +766,7 @@ Thus, the untreated get weights of 1, and the treated get weights based on the o
 #| fig-cap: "The tilting function of the ATU and the behavior of the weights for each group over the range of the propensity score (x-axis). The y-axis represents the value of the tilting function scalar (top panel) or the weights corresponding to the propensity score value (bottom two panels). For the ATU, the tilting function is $1-p$, the propensity score, so the weights are 1 for the untreated and the odds of being untreated for the treated. As a treated observation approaches a propensity score of 0, the odds go to infinity."
 #| code-fold: true
 #| fig-width: 3
+
 plot_weight_properties(plot_df, "atc")
 ```
 
@@ -724,8 +774,9 @@ Let's add the ATU weights to the `seven_dwarfs_wts` data frame and look at their
 
 ```{r}
 #| label: fig-sd-atu-hist
-#| fig.cap : >
+#| fig-cap: >
 #|   A histogram of the average treatment effect among the unexposed (ATU) weights. The range of the ATU weights in this example is very similar to the ATE weights.
+
 seven_dwarfs_wts <- seven_dwarfs_wts |>
   mutate(w_atu = wt_atu(.fitted, park_extra_magic_morning))
 
@@ -741,7 +792,10 @@ Now, let's take a look at the weighted table.
 
 ```{r}
 #| label: tbl-weighted-atu
-#| tbl-cap: A descriptive table of Extra Magic Morning hours weighted by the Average Treatment Effect among the Unexposed Weights. This table shows the distributions of these variables in the pseudo-population created by these weights.
+#| tbl-cap: A descriptive table of Extra Magic Morning hours weighted by the
+#|   Average Treatment Effect among the Unexposed Weights. This table shows the
+#|   distributions of these variables in the pseudo-population created by these
+#|   weights.
 #| warning: false
 
 seven_dwarfs_svy <- svydesign(
@@ -764,8 +818,9 @@ We can again create a mirrored histogram to observe the weighted pseudo-populati
 
 ```{r}
 #| label: fig-sd-mirror-hist-atu
-#| fig.cap: >
+#| fig-cap: >
 #|   A mirrored histogram of the distribution of propensity scores between exposure groups. The dark bars represent the unweighted distribution, and the colored bars represent the distribution weighted by the average treatment effect among the unexposed (ATU) weight.
+
 ggplot(seven_dwarfs_wts, aes(.fitted, group = park_extra_magic_morning)) +
   geom_mirror_histogram(bins = 50) +
   geom_mirror_histogram(
@@ -794,10 +849,13 @@ In other words, we now have a positivity assumption of $0 > p$: there needs to b
 The target population to estimate the average treatment effect among the evenly matchable (ATM) is the evenly matchable.
 This causal estimand conditions on those deemed "evenly matchable" by some distance metric.
 
-$$E[Y(1) - Y(0) | M_d = 1]$$
+$$
+E[Y(1) - Y(0) | M_d = 1]
+$$
 
 Here, $d$ denotes a distance measure, and $M_d=1$ indicates that a unit is evenly matchable under that distance measure [@samuels2017aspects; @d2018improving].
-Example research questions about the ATM could include "Should those at clinical equipoise receive the exposure?" [@greifer2021choosing].
+Example research questions about the ATM could include "Should those at clinical equipoise receive the exposure?"
+[@greifer2021choosing].
 In medicine, those at **clinical equipoise** are those about whom we are genuinely uncertain how to treat.
 This is very often the part of the population about which we want to make inferences because we want to make the best decision in the face of that uncertainty.
 
@@ -808,7 +866,9 @@ This type of matching is often done via a caliper, where observations are only m
 Alternatively, the ATM can be estimated via weighting.
 The ATM weight is estimated by:
 
-$$w_{ATM} = \frac{\min \{p, 1-p\}}{Xp + (1-X)(1-p)}$$
+$$
+w_{ATM} = \frac{\min \{p, 1-p\}}{Xp + (1-X)(1-p)}
+$$
 
 The tilting function for the ATM is $min\{p, 1-p\}$.
 
@@ -837,6 +897,7 @@ Below 0.5, they have a weight of 1 and are downweighted as they approach a proba
 #| fig-cap: "The tilting function of the ATM and the behavior of the weights for each group over the range of the propensity score (x-axis). The y-axis represents the value of the tilting function scalar (top panel) or the weights corresponding to the propensity score value (bottom two panels). For the ATM, the tilting function is $min\\{p, 1-p\\}$. The untreated have weights of 1 above 0.5 and are downweighted as the propensity score approaches 0. The reverse is true for the treated."
 #| code-fold: true
 #| fig-width: 3
+
 plot_weight_properties(plot_df, "atm")
 ```
 
@@ -844,8 +905,9 @@ Let's add the ATM weights to the `seven_dwarfs_wts` data frame and look at their
 
 ```{r}
 #| label: fig-sd-atm-hist
-#| fig.cap: >
+#| fig-cap: >
 #|   A histogram of the average treatment effect among the evenly matchable (ATM) weights for whether or not a day had Extra Magic Hours. ATM weights can only range from 0 to 1, so they are always stable.
+
 seven_dwarfs_wts <- seven_dwarfs_wts |>
   mutate(w_atm = wt_atm(.fitted, park_extra_magic_morning))
 
@@ -861,7 +923,10 @@ Now, let's take a look at the weighted table.
 
 ```{r}
 #| label: tbl-weighted-atm
-#| tbl-cap: A descriptive table of Extra Magic Morning hours weighted by the Average Treatment Effect among the Evenly Matchable Weights. This table shows the distributions of these variables in the pseudo-population created by these weights.
+#| tbl-cap: A descriptive table of Extra Magic Morning hours weighted by the
+#|   Average Treatment Effect among the Evenly Matchable Weights. This table
+#|   shows the distributions of these variables in the pseudo-population created
+#|   by these weights.
 #| warning: false
 
 seven_dwarfs_svy <- svydesign(
@@ -886,8 +951,9 @@ We can again create a mirrored histogram to observe the ATM-weighted pseudo-popu
 
 ```{r}
 #| label: fig-sd-mirror-hist-atm
-#| fig.cap: >
+#| fig-cap: >
 #|   A mirrored histogram of the distribution of propensity scores between exposure groups. The dark bars represent the unweighted distribution, and the colored bars represent the distribution weighted by the average treatment effect among the evenly matchable (ATM) weights.
+
 ggplot(seven_dwarfs_wts, aes(.fitted, group = park_extra_magic_morning)) +
   geom_mirror_histogram(bins = 50) +
   geom_mirror_histogram(
@@ -912,13 +978,16 @@ This is often more feasible simply because the confounding in the middle regions
 
 The ATM estimates a particular population at equipoise (the evenly matchable), but there are several ways we could consider equipoise.
 A related target population is to estimate the average treatment effect among the overlap population (ATO).
-Example research questions where the ATO is of interest are the same as those for the ATM, such as "Should those at clinical equipoise receive the exposure?" [@greifer2021choosing].
+Example research questions where the ATO is of interest are the same as those for the ATM, such as "Should those at clinical equipoise receive the exposure?"
+[@greifer2021choosing].
 
 Again, these weights are similar to the ATM weights but are slightly attenuated, yielding improved variance properties.
 
 The ATO weight is estimated by:
 
-$$w_{ATO} = X(1-p) + (1-X)p$$
+$$
+w_{ATO} = X(1-p) + (1-X)p
+$$
 
 The tilting function for the ATO is $p(1-p)$[^10-estimands-1].
 
@@ -947,6 +1016,7 @@ We give each group weights equal to the probability of being in the other group!
 #| fig-cap: "The tilting function of the ATO and the behavior of the weights for each group over the range of the propensity score (x-axis). The y-axis represents the value of the tilting function scalar (top panel) or the weights corresponding to the propensity score value (bottom two panels). For the ATO, the tilting function is $p(1-p)$. The weights are linearly downweighted towards a probability of 0 for the group the observation falls in."
 #| code-fold: true
 #| fig-width: 3
+
 plot_weight_properties(plot_df, "ato")
 ```
 
@@ -954,8 +1024,9 @@ Let's add the ATO weights to the `seven_dwarfs_wts` data frame and look at their
 
 ```{r}
 #| label: fig-sd-ato-hist
-#| fig.cap: >
+#| fig-cap: >
 #|   A histogram of the average treatment effect among the overlap population (ATO) weights for whether or not a day had Extra Magic Hours. Like ATM weights, ATO weights can range from 0 to 1, so they are always stable. ATO weights also have improved variance properties compared to the ATM weights.
+
 seven_dwarfs_wts <- seven_dwarfs_wts |>
   mutate(w_ato = wt_ato(.fitted, park_extra_magic_morning))
 
@@ -977,6 +1048,7 @@ Let's revisit our finite sample bias simulation, adding the ATO weights to exami
 #| message: false
 #| cache: true
 #| code-fold: true
+
 sim <- function(n) {
   ## create a simulated dataset
   finite_sample <- tibble(
@@ -999,9 +1071,11 @@ sim <- function(n) {
     )
   bias <- finite_sample_wts |>
     summarize(
-      effect_ate = sum(y * x * wts_ate) / sum(x * wts_ate) -
+      effect_ate = sum(y * x * wts_ate) /
+        sum(x * wts_ate) -
         sum(y * (1 - x) * wts_ate) / sum((1 - x) * wts_ate),
-      effect_ato = sum(y * x * wts_ato) / sum(x * wts_ato) -
+      effect_ato = sum(y * x * wts_ato) /
+        sum(x * wts_ato) -
         sum(y * (1 - x) * wts_ato) / sum((1 - x) * wts_ato)
     )
   tibble(
@@ -1038,7 +1112,10 @@ Now, let's take a look at the weighted table.
 
 ```{r}
 #| label: tbl-weighted-ato
-#| tbl-cap: A descriptive table of Extra Magic Morning hours weighted by the Average Treatment Effect among the Overlap Population Weights. This table shows the distributions of these variables in the pseudo-population created by these weights.
+#| tbl-cap: A descriptive table of Extra Magic Morning hours weighted by the
+#|   Average Treatment Effect among the Overlap Population Weights. This table
+#|   shows the distributions of these variables in the pseudo-population created
+#|   by these weights.
 #| warning: false
 
 seven_dwarfs_svy <- svydesign(
@@ -1061,8 +1138,9 @@ We can again create a mirrored histogram to observe the ATO-weighted pseudo-popu
 
 ```{r}
 #| label: fig-sd-mirror-hist-ato
-#| fig.cap: >
+#| fig-cap: >
 #|   A mirrored histogram of the distribution of propensity scores between exposure groups. The dark bars represent the unweighted distribution, and the colored bars represent the distribution weighted by the average treatment effect among the overlap population (ATO) weight.
+
 ggplot(seven_dwarfs_wts, aes(.fitted, group = park_extra_magic_morning)) +
   geom_mirror_histogram(bins = 50) +
   geom_mirror_histogram(
@@ -1089,6 +1167,7 @@ In @fig-ato-love, all three covariates have an SMD of 0 when weighted by ATO wei
 ```{r}
 #| label: fig-ato-love
 #| fig-cap: "A Love plot of ticket season, park close time, and historic high temperature in the original dataset and with ATO weights. The ATO weights balance perfectly on the mean for all confounders."
+
 seven_dwarfs_wts |>
   mutate(park_close = as.numeric(park_close)) |>
   tidy_smd(
@@ -1116,12 +1195,12 @@ It may be helpful to look at the changes between the populations when trimming o
 MatchIt can easily target different estimands with the `estimand` argument.
 Note that you need to use full matching for the ATE and a caliper for the ATM.
 
-| estimand | MatchIt command                                 |
-|----------|-------------------------------------------------|
-| ATE      | `matchit(…, method = "full", estimand = "ATE")` |
-| ATT      | `matchit(…, estimand = "ATT")`                  |
-| ATC      | `matchit(…, estimand = "ATC")`                  |
-| ATM      | `matchit(…, caliper = <caliper>)`               |
+  | estimand | MatchIt command                                 |
+  | -------- | ----------------------------------------------- |
+  | ATE      | `matchit(…, method = "full", estimand = "ATE")` |
+  | ATT      | `matchit(…, estimand = "ATT")`                  |
+  | ATC      | `matchit(…, estimand = "ATC")`                  |
+  | ATM      | `matchit(…, caliper = <caliper>)`               |
 
 The intuition for how weights target different populations comes down to the tilting function: we scale the weights to represent the population we're interested in.
 The intuition for matching is more straightforward: it comes down to who we drop and don't drop.
@@ -1147,6 +1226,7 @@ In matching, we control the level of overlap we find acceptable with a caliper.
 #| echo: false
 #| fig-width: 4
 #| fig-height: 4
+
 set.seed(10)
 p <- tibble(
   x = c(runif(10, 0, 0.9), runif(10, 0.1, 1)),
@@ -1248,62 +1328,73 @@ Since other estimands besides the ATE weaken causal assumptions, they might be m
 
 Below is a table summarizing the estimands and methods for estimating them (including R functions), along with sample questions extended from Table 2 in @greifer2021choosing.
 
-+----------+----------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------+------------------+
-| Estimand | Target population                | Example Research Question                                                                                                                            | Matching Method                      | Weighting Method |
-+==========+==================================+======================================================================================================================================================+======================================+==================+
-| ATE      | Full population                  | Should we have Extra Magic Hours *all* mornings to change the wait time for Seven Dwarfs Mine Train between 5–6 P.M.?                                | Full matching                        | ATE Weights      |
-|          |                                  |                                                                                                                                                      |                                      |                  |
-|          |                                  | Should a specific policy be applied to all eligible observations?                                                                                    | Fine stratification                  | `wt_ate()`       |
-|          |                                  |                                                                                                                                                      |                                      |                  |
-|          |                                  |                                                                                                                                                      | `matchit(…, estimand = "ATE")`       | |                |
-+----------+----------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------+------------------+
-| ATT      | Exposed (treated) observations   | Should we stop Extra Magic Hours to change the wait time for Seven Dwarfs Mine Train between 5–6 P.M.?                                               | Pair matching without a caliper      | ATT weights      |
-|          |                                  |                                                                                                                                                      |                                      |                  |
-|          |                                  | Should we stop our marketing campaign to those currently receiving it?                                                                               | Full matching                        | `wt_att()`       |
-|          |                                  |                                                                                                                                                      |                                      |                  |
-|          |                                  | Should medical providers stop recommending treatment for those currently receiving it?                                                               | Fine stratification                  |                  |
-|          |                                  |                                                                                                                                                      |                                      |                  |
-|          |                                  |                                                                                                                                                      | `matchit(…, estimand = "ATT")`       |                  |
-+----------+----------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------+------------------+
-| ATU      | Unexposed (control) observations | Should we add Extra Magic Hours for all days to change the wait time for Seven Dwarfs Mine Train between 5–6 P.M.?                                   | Pair matching without a caliper      | ATU weights      |
-|          |                                  |                                                                                                                                                      |                                      |                  |
-|          |                                  | Should we extend our marketing campaign to those not receiving it?                                                                                   | Full matching                        | `wt_atu()`       |
-|          |                                  |                                                                                                                                                      |                                      |                  |
-|          |                                  | Should medical providers extend treatment to those not currently receiving it?                                                                       | Fine stratification                  |                  |
-|          |                                  |                                                                                                                                                      |                                      |                  |
-|          |                                  |                                                                                                                                                      | `matchit(…, estimand = "ATC")`       |                  |
-+----------+----------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------+------------------+
-| ATM      | Evenly matchable                 | Are there some days we should change whether we are offering Extra Magic Hours to change the wait time for Seven Dwarfs Mine Train between 5–6 P.M.? | Caliper matching                     | ATM weights      |
-|          |                                  |                                                                                                                                                      |                                      |                  |
-|          |                                  | Is there an effect of the exposure for some observations?                                                                                            | `matchit(…, caliper = 0.1)`          | `wt_atm()`       |
-|          |                                  |                                                                                                                                                      |                                      |                  |
-|          |                                  | Should those at clinical equipoise receive treatment?                                                                                                | Coarsened exact matching             |                  |
-|          |                                  |                                                                                                                                                      |                                      |                  |
-|          |                                  |                                                                                                                                                      | Cardinality matching                 |                  |
-|          |                                  |                                                                                                                                                      |                                      |                  |
-|          |                                  |                                                                                                                                                      | `matchit(…, method = "cardinality")` |                  |
-+----------+----------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------+------------------+
-| ATO      | Overlap population               | Same as ATM                                                                                                                                          |                                      | ATO weights      |
-|          |                                  |                                                                                                                                                      |                                      |                  |
-|          |                                  |                                                                                                                                                      |                                      | `wt_ato()`       |
-+----------+----------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------+------------------+
+  +----------+----------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------+------------------+
+  | Estimand | Target population                | Example Research Question                                                                                                                            | Matching Method                      | Weighting Method |
+  +==========+==================================+======================================================================================================================================================+======================================+==================+
+  | ATE      | Full population                  | Should we have Extra Magic Hours *all* mornings to change the wait time for Seven Dwarfs Mine Train between 5–6 P.M.?                                | Full matching                        | ATE Weights      |
+  |          |                                  |                                                                                                                                                      |                                      |                  |
+  |          |                                  | Should a specific policy be applied to all eligible observations?                                                                                    | Fine stratification                  | `wt_ate()`       |
+  |          |                                  |                                                                                                                                                      |                                      |                  |
+  |          |                                  |                                                                                                                                                      | `matchit(…, estimand = "ATE")`       |                  |
+  +----------+----------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------+------------------+
+  | ATT      | Exposed (treated) observations   | Should we stop Extra Magic Hours to change the wait time for Seven Dwarfs Mine Train between 5–6 P.M.?                                               | Pair matching without a caliper      | ATT weights      |
+  |          |                                  |                                                                                                                                                      |                                      |                  |
+  |          |                                  | Should we stop our marketing campaign to those currently receiving it?                                                                               | Full matching                        | `wt_att()`       |
+  |          |                                  |                                                                                                                                                      |                                      |                  |
+  |          |                                  | Should medical providers stop recommending treatment for those currently receiving it?                                                               | Fine stratification                  |                  |
+  |          |                                  |                                                                                                                                                      |                                      |                  |
+  |          |                                  |                                                                                                                                                      | `matchit(…, estimand = "ATT")`       |                  |
+  +----------+----------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------+------------------+
+  | ATU      | Unexposed (control) observations | Should we add Extra Magic Hours for all days to change the wait time for Seven Dwarfs Mine Train between 5–6 P.M.?                                   | Pair matching without a caliper      | ATU weights      |
+  |          |                                  |                                                                                                                                                      |                                      |                  |
+  |          |                                  | Should we extend our marketing campaign to those not receiving it?                                                                                   | Full matching                        | `wt_atu()`       |
+  |          |                                  |                                                                                                                                                      |                                      |                  |
+  |          |                                  | Should medical providers extend treatment to those not currently receiving it?                                                                       | Fine stratification                  |                  |
+  |          |                                  |                                                                                                                                                      |                                      |                  |
+  |          |                                  |                                                                                                                                                      | `matchit(…, estimand = "ATC")`       |                  |
+  +----------+----------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------+------------------+
+  | ATM      | Evenly matchable                 | Are there some days we should change whether we are offering Extra Magic Hours to change the wait time for Seven Dwarfs Mine Train between 5–6 P.M.? | Caliper matching                     | ATM weights      |
+  |          |                                  |                                                                                                                                                      |                                      |                  |
+  |          |                                  | Is there an effect of the exposure for some observations?                                                                                            | `matchit(…, caliper = 0.1)`          | `wt_atm()`       |
+  |          |                                  |                                                                                                                                                      |                                      |                  |
+  |          |                                  | Should those at clinical equipoise receive treatment?                                                                                                | Coarsened exact matching             |                  |
+  |          |                                  |                                                                                                                                                      |                                      |                  |
+  |          |                                  |                                                                                                                                                      | Cardinality matching                 |                  |
+  |          |                                  |                                                                                                                                                      |                                      |                  |
+  |          |                                  |                                                                                                                                                      | `matchit(…, method = "cardinality")` |                  |
+  +----------+----------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------+------------------+
+  | ATO      | Overlap population               | Same as ATM                                                                                                                                          |                                      | ATO weights      |
+  |          |                                  |                                                                                                                                                      |                                      |                  |
+  |          |                                  |                                                                                                                                                      |                                      | `wt_ato()`       |
+  +----------+----------------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------+------------------+
 
 ### Effective Sample Size
 
-As discussed in @sec-eval-ps-model, effective sample size (ESS) is a way to understand how efficient various estimates are. It measures how many independent observations would give the same variance as your weighted sample. ESS is useful both as a general check on the efficiency of your chosen method and estimation process, as well as a tool for choosing between methods when multiple approaches address your research question.
+As discussed in @sec-eval-ps-model, effective sample size (ESS) is a way to understand how efficient various estimates are.
+It measures how many independent observations would give the same variance as your weighted sample.
+ESS is useful both as a general check on the efficiency of your chosen method and estimation process, as well as a tool for choosing between methods when multiple approaches address your research question.
 
-When you have more than one set of weights or matching schemes that addresses your research question, comparing the ESS of each can help you decide which to use. All else being equal, pick the one with the highest ESS. `ess()` and `plot_ess()` in `{halfmoon}` can help with this. In @fig-ess, we see that the ATE and ATU weights have a much lower ESS than the other weights, which are all relatively similar, with the ATO weights having the highest ESS.
+When you have more than one set of weights or matching schemes that addresses your research question, comparing the ESS of each can help you decide which to use.
+All else being equal, pick the one with the highest ESS.
+`ess()` and `plot_ess()` in `{halfmoon}` can help with this.
+In @fig-ess, we see that the ATE and ATU weights have a much lower ESS than the other weights, which are all relatively similar, with the ATO weights having the highest ESS.
 
 ```{r}
 #| label: fig-ess
 #| fig-cap: "A plot of the effective sample size (ESS) for each set of weights. The ESS is the number of observations that would give the same variance as the weighted sample. The bars are relative to the original sample size in percent."
 #| fig-width: 5
+
 library(halfmoon)
 seven_dwarfs_wts |>
   plot_ess(.weights = starts_with("w_"))
 ```
 
-The fundamental tension in looking at balance vs. precision is a bias-variance trade-off. The observed sample size is the highest, but it also has the worst balance and may not address our research question. The ATO has the best balance and the highest ESS, but it addresses a particular sort of research question that may not suit our needs. Had we randomized the exposure, we would have had the best balance and the highest ESS, at least on average and with a high enough (actual) sample size. However, in observational data, we often have to make trade-offs between bias and variance. While weighting reduces our effective sample size, it's often a necessary trade-off: without it, we'd get a precisely-estimated wrong answer!
+The fundamental tension in looking at balance vs. precision is a bias-variance trade-off.
+The observed sample size is the highest, but it also has the worst balance and may not address our research question.
+The ATO has the best balance and the highest ESS, but it addresses a particular sort of research question that may not suit our needs.
+Had we randomized the exposure, we would have had the best balance and the highest ESS, at least on average and with a high enough (actual) sample size.
+However, in observational data, we often have to make trade-offs between bias and variance.
+While weighting reduces our effective sample size, it's often a necessary trade-off: without it, we'd get a precisely-estimated wrong answer!
 
 ## What estimand does multivariable linear regression target?
 
@@ -1321,8 +1412,10 @@ The default is for the ATE, but we can also target other estimands.
 ```{r}
 library(lmw)
 implied_weights <- lmw(
-  ~ park_extra_magic_morning + park_ticket_season + park_close +
-      park_temperature_high,
+  ~ park_extra_magic_morning +
+    park_ticket_season +
+    park_close +
+    park_temperature_high,
   data = seven_dwarfs_with_ps,
   treat = "park_extra_magic_morning"
 )

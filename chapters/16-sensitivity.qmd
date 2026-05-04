@@ -4,12 +4,14 @@
 
 ```{r}
 #| echo: false
+
 # TODO: remove when first edition complete
 status("wip")
 ```
 
 ```{r}
 #| include: false
+
 library(ggdag)
 library(touringplans)
 library(ggokabeito)
@@ -45,9 +47,22 @@ Let's consider the DAG we introduced in @fig-dag-magic.
 #|   average wait time and 2) both Extra Magic Hours and average wait time
 #|   are determined by the time the park closes, historic high temperatures,
 #|   and ticket season.
+
 coord_dag <- list(
-  x = c(park_ticket_season = 0, park_close = 0, park_temperature_high = -1, park_extra_magic_morning = 1, wait_minutes_posted_avg = 2),
-  y = c(park_ticket_season = -1, park_close = 1, park_temperature_high = 0, park_extra_magic_morning = 0, wait_minutes_posted_avg = 0)
+  x = c(
+    park_ticket_season = 0,
+    park_close = 0,
+    park_temperature_high = -1,
+    park_extra_magic_morning = 1,
+    wait_minutes_posted_avg = 2
+  ),
+  y = c(
+    park_ticket_season = -1,
+    park_close = 1,
+    park_temperature_high = 0,
+    park_extra_magic_morning = 0,
+    wait_minutes_posted_avg = 0
+  )
 )
 
 labels <- c(
@@ -59,8 +74,13 @@ labels <- c(
 )
 
 emm_wait_dag <- dagify(
-  wait_minutes_posted_avg ~ park_extra_magic_morning + park_close + park_ticket_season + park_temperature_high,
-  park_extra_magic_morning ~ park_temperature_high + park_close + park_ticket_season,
+  wait_minutes_posted_avg ~ park_extra_magic_morning +
+    park_close +
+    park_ticket_season +
+    park_temperature_high,
+  park_extra_magic_morning ~ park_temperature_high +
+    park_close +
+    park_ticket_season,
   coords = coord_dag,
   labels = labels,
   exposure = "park_extra_magic_morning",
@@ -68,7 +88,7 @@ emm_wait_dag <- dagify(
 )
 
 curvatures <- rep(0, 7)
-curvatures[5] <- .3
+curvatures[5] <- 0.3
 
 emm_wait_dag |>
   tidy_dagitty() |>
@@ -78,7 +98,12 @@ emm_wait_dag |>
   ) +
   geom_dag_edges_arc(curvature = curvatures, edge_color = "grey80") +
   geom_dag_point() +
-  geom_dag_text_repel(aes(label = label), size = 3.8, seed = 1630, color = "#494949") +
+  geom_dag_text_repel(
+    aes(label = label),
+    size = 3.8,
+    seed = 1630,
+    color = "#494949"
+  ) +
   scale_color_okabe_ito(na.value = "grey90") +
   theme_dag() +
   theme(legend.position = "none") +
@@ -100,8 +125,12 @@ Let's say, though, that we had used @fig-dag-magic-missing instead, which is mis
 #|   in the morning at a particular park and the average wait
 #|   time between 9 am and 10 am.
 #|   This DAG has no arrows from park close time and historical temperature to Extra Magic Hours.
+
 emm_wait_dag_missing <- dagify(
-  wait_minutes_posted_avg ~ park_extra_magic_morning + park_close + park_ticket_season + park_temperature_high,
+  wait_minutes_posted_avg ~ park_extra_magic_morning +
+    park_close +
+    park_ticket_season +
+    park_temperature_high,
   park_extra_magic_morning ~ park_ticket_season,
   coords = coord_dag,
   labels = labels,
@@ -111,12 +140,15 @@ emm_wait_dag_missing <- dagify(
 
 # produces below:
 # park_ticket_season, park_close + park_ticket_season, park_temperature_high + park_ticket_season, or park_close + park_temperature_high + park_ticket_season
-adj_sets <- unclass(dagitty::adjustmentSets(emm_wait_dag_missing, type = "all")) |>
+adj_sets <- unclass(dagitty::adjustmentSets(
+  emm_wait_dag_missing,
+  type = "all"
+)) |>
   map_chr(\(.x) glue::glue('{unlist(glue::glue_collapse(.x, sep = " + "))}')) |>
   glue::glue_collapse(sep = ", ", last = ", or ")
 
 curvatures <- rep(0, 5)
-curvatures[3] <- .3
+curvatures[3] <- 0.3
 
 emm_wait_dag_missing |>
   tidy_dagitty() |>
@@ -126,7 +158,12 @@ emm_wait_dag_missing |>
   ) +
   geom_dag_edges_arc(curvature = curvatures, edge_color = "grey80") +
   geom_dag_point() +
-  geom_dag_text_repel(aes(label = label), size = 3.8, seed = 1630, color = "#494949") +
+  geom_dag_text_repel(
+    aes(label = label),
+    size = 3.8,
+    seed = 1630,
+    color = "#494949"
+  ) +
   scale_color_okabe_ito(na.value = "grey90") +
   theme_dag() +
   theme(legend.position = "none") +
@@ -148,11 +185,17 @@ The difference in these results implies that there is something off about the ca
 #| label: tbl-alt-sets
 #| tbl-cap: "A table of ATE estimates from the IPW estimator. Each estimate was calculated for one of the valid adjustment sets for the DAG. The estimates are sorted by effect size in order. If the DAG is right and all the data well measured, different adjustment sets should give roughly the same answer."
 #| code-fold: true
+
 seven_dwarfs <- touringplans::seven_dwarfs_train_2018 |>
   filter(wait_hour == 9)
 
 # we'll use `.data` and `.trt` later
-fit_ipw_effect <- function(.fmla, .data = seven_dwarfs, .trt = "park_extra_magic_morning", .outcome_fmla = wait_minutes_posted_avg ~ park_extra_magic_morning) {
+fit_ipw_effect <- function(
+  .fmla,
+  .data = seven_dwarfs,
+  .trt = "park_extra_magic_morning",
+  .outcome_fmla = wait_minutes_posted_avg ~ park_extra_magic_morning
+) {
   .trt_var <- rlang::ensym(.trt)
 
   # fit propensity score model
@@ -179,7 +222,8 @@ effects <- list(
   park_extra_magic_morning ~ park_close + park_ticket_season,
   park_extra_magic_morning ~ park_temperature_high + park_ticket_season,
   park_extra_magic_morning ~ park_temperature_high +
-    park_close + park_ticket_season
+    park_close +
+    park_ticket_season
 ) |>
   map_dbl(fit_ipw_effect)
 
@@ -206,9 +250,9 @@ A negative control is either an exposure (negative exposure control) or outcome 
 In their article, they reference standard controls in bench science.
 In a lab experiment, any of these actions should lead to a null effect:
 
-1.  Leave out an essential ingredient.
-2.  Inactivate the hypothesized active ingredient.
-3.  Check for an effect that would be impossible by the hypothesized outcome.
+1. Leave out an essential ingredient.
+2. Inactivate the hypothesized active ingredient.
+3. Check for an effect that would be impossible by the hypothesized outcome.
 
 There's nothing unique to lab work here; these scientists merely probe the logical implications of their understanding and hypotheses.
 To find a good negative control, you usually need to extend your DAG to include more of the causal structure surrounding your question.
@@ -243,6 +287,7 @@ So, given the DAG, our adjustment set is any combination of the confounders (as 
 #|   63 days before the day's wait time we are examining.
 #|   Because of the long period, there should be no effect.
 #|   Similarly, the DAG also has earlier confounders related to day `i - 63`.
+
 labels <- c(
   x63 = "Extra Magic\nMorning (i-63)",
   x = "Extra Magic\nMorning (i)",
@@ -286,13 +331,17 @@ We'll use `lag()` from dplyr to get those variables.
 
 ```{r}
 #| eval: false
+
 n_days_lag <- 63
 distinct_emm <- seven_dwarfs_train_2018 |>
   filter(wait_hour == 9) |>
   arrange(park_date) |>
   transmute(
     park_date,
-    prev_park_extra_magic_morning = lag(park_extra_magic_morning, n = n_days_lag),
+    prev_park_extra_magic_morning = lag(
+      park_extra_magic_morning,
+      n = n_days_lag
+    ),
     prev_park_temperature_high = lag(park_temperature_high, n = n_days_lag),
     prev_park_close = lag(park_close, n = n_days_lag),
     prev_park_ticket_season = lag(park_ticket_season, n = n_days_lag)
@@ -306,13 +355,17 @@ seven_dwarfs_train_2018_lag <- seven_dwarfs_train_2018 |>
 
 ```{r}
 #| echo: false
+
 calculate_coef <- function(n_days_lag) {
   distinct_emm <- seven_dwarfs_train_2018 |>
     filter(wait_hour == 9) |>
     arrange(park_date) |>
     transmute(
       park_date,
-      prev_park_extra_magic_morning = lag(park_extra_magic_morning, n = n_days_lag),
+      prev_park_extra_magic_morning = lag(
+        park_extra_magic_morning,
+        n = n_days_lag
+      ),
       prev_park_temperature_high = lag(park_temperature_high, n = n_days_lag),
       prev_park_close = lag(park_close, n = n_days_lag),
       prev_park_ticket_season = lag(park_ticket_season, n = n_days_lag)
@@ -324,10 +377,13 @@ calculate_coef <- function(n_days_lag) {
     drop_na(prev_park_extra_magic_morning)
 
   fit_ipw_effect(
-    prev_park_extra_magic_morning ~ prev_park_temperature_high + prev_park_close + prev_park_ticket_season,
+    prev_park_extra_magic_morning ~ prev_park_temperature_high +
+      prev_park_close +
+      prev_park_ticket_season,
     .data = seven_dwarfs_train_2018_lag,
     .trt = "prev_park_extra_magic_morning",
-    .outcome_fmla = wait_minutes_posted_avg ~ prev_park_extra_magic_morning + park_extra_magic_morning
+    .outcome_fmla = wait_minutes_posted_avg ~ prev_park_extra_magic_morning +
+      park_extra_magic_morning
   )
 }
 
@@ -344,17 +400,21 @@ If these results are accurate, it implies that we have some residual confounding
 ```{r}
 #| label: fig-sens-i-63
 #| fig-cap: >
-#|    A scatterplot with a smoothed regression of the relationship between wait times on day `i` and whether there were Extra Magic Hours on day `i - n`, where `n` represents the number of days previous to day `i`. We expect this relationship to rapidly approach the null, but the effect hovers above null for quite some time. This lingering effect implies we have some residual confounding present.
+#|   A scatterplot with a smoothed regression of the relationship between wait times on day `i` and whether there were Extra Magic Hours on day `i - n`, where `n` represents the number of days previous to day `i`. We expect this relationship to rapidly approach the null, but the effect hovers above null for quite some time. This lingering effect implies we have some residual confounding present.
 #| code-fold: true
 #| warning: false
 #| message: false
+
 coefs <- purrr::map_dbl(1:63, calculate_coef)
 
 ggplot(tibble(coefs = coefs, x = 1:63), aes(x = x, y = coefs)) +
   geom_hline(yintercept = 0) +
   geom_point() +
   geom_smooth(se = FALSE) +
-  labs(y = "difference in wait times (minutes)\n on day (i) for EMM on day (i - n)", x = "day (i - n)")
+  labs(
+    y = "difference in wait times (minutes)\n on day (i) for EMM on day (i - n)",
+    x = "day (i - n)"
+  )
 ```
 
 #### Negative outcomes
@@ -373,20 +433,22 @@ seven_dwarfs_sim <- seven_dwarfs_train_2018 |>
   mutate(
     # we scale each variable and add a bit of random noise
     # to simulate reasonable Universal wait times
-    wait_time_universal =
-      park_temperature_high / 150 +
-        as.numeric(park_close) / 1500 +
-        as.integer(factor(park_ticket_season)) / 1000 +
-        rnorm(n(), 5, 5)
+    wait_time_universal = park_temperature_high /
+      150 +
+      as.numeric(park_close) / 1500 +
+      as.integer(factor(park_ticket_season)) / 1000 +
+      rnorm(n(), 5, 5)
   )
 ```
 
 ```{r}
 #| echo: false
+
 wait_universal <- seven_dwarfs_sim |>
   fit_ipw_effect(
     park_extra_magic_morning ~ park_temperature_high +
-      park_close + park_ticket_season,
+      park_close +
+      park_ticket_season,
     .data = _,
     .outcome_fmla = wait_time_universal ~ park_extra_magic_morning
   ) |>
@@ -404,24 +466,26 @@ seven_dwarfs_sim2 <- seven_dwarfs_train_2018 |>
     wait_minutes_posted_avg = wait_minutes_posted_avg + u,
     park_extra_magic_morning = if_else(
       u > 10,
-      rbinom(1, 1, .1),
+      rbinom(1, 1, 0.1),
       park_extra_magic_morning
     ),
-    wait_time_universal =
-      park_temperature_high / 150 +
-        as.numeric(park_close) / 1500 +
-        as.integer(factor(park_ticket_season)) / 1000 +
-        u +
-        rnorm(n(), 5, 5)
+    wait_time_universal = park_temperature_high /
+      150 +
+      as.numeric(park_close) / 1500 +
+      as.integer(factor(park_ticket_season)) / 1000 +
+      u +
+      rnorm(n(), 5, 5)
   )
 ```
 
 ```{r}
 #| echo: false
+
 disney <- seven_dwarfs_sim2 |>
   fit_ipw_effect(
     park_extra_magic_morning ~ park_temperature_high +
-      park_close + park_ticket_season,
+      park_close +
+      park_ticket_season,
     .data = _
   ) |>
   round(2)
@@ -429,7 +493,8 @@ disney <- seven_dwarfs_sim2 |>
 universal <- seven_dwarfs_sim2 |>
   fit_ipw_effect(
     park_extra_magic_morning ~ park_temperature_high +
-      park_close + park_ticket_season,
+      park_close +
+      park_ticket_season,
     .data = _,
     .outcome_fmla = wait_time_universal ~ park_extra_magic_morning
   ) |>
@@ -468,7 +533,8 @@ There is a correlation between the park's close time and ticket season.
 ```{r}
 #| label: fig-conditional-ind
 #| fig-cap: >
-#|    A plot of the estimates and 95% confidence intervals of the correlations between the residuals resulting from a regression of variables in the DAG that should have no relationship. While two relationships appear null, park close time and ticket season seem to be correlated, suggesting we have misspecified the DAG. One source of this misspecification may be missing arrows between the variables. Notably, the adjustment sets are identical with and without this arrow.
+#|   A plot of the estimates and 95% confidence intervals of the correlations between the residuals resulting from a regression of variables in the DAG that should have no relationship. While two relationships appear null, park close time and ticket season seem to be correlated, suggesting we have misspecified the DAG. One source of this misspecification may be missing arrows between the variables. Notably, the adjustment sets are identical with and without this arrow.
+
 test_conditional_independence(
   emm_wait_dag,
   data = seven_dwarfs_train_2018 |>
@@ -505,6 +571,7 @@ Let's look at an example that is more likely to be misspecified, where we remove
 
 ```{r}
 #| echo: false
+
 labels <- c(
   park_extra_magic_morning = "Extra Magic\nMorning",
   wait_minutes_posted_avg = "Average\nwait",
@@ -516,8 +583,10 @@ labels <- c(
 
 ```{r}
 emm_wait_dag2 <- dagify(
-  wait_minutes_posted_avg ~ park_extra_magic_morning + park_close +
-    park_ticket_season + park_temperature_high,
+  wait_minutes_posted_avg ~ park_extra_magic_morning +
+    park_close +
+    park_ticket_season +
+    park_temperature_high,
   park_extra_magic_morning ~ park_temperature_high,
   coords = coord_dag,
   labels = labels,
@@ -535,7 +604,8 @@ In @fig-conditional-ind-misspec, we see an additional association between ticket
 ```{r}
 #| label: fig-conditional-ind-misspec
 #| fig-cap: >
-#|    A plot of the estimates and 95% confidence intervals of the correlations between the residuals resulting from a regression of variables in the DAG that should have no relationship. While two relationships appear null, park close time and ticket season seem to be correlated, suggesting we have misspecified the DAG. One source of this misspecification may be missing arrows between the variables.
+#|   A plot of the estimates and 95% confidence intervals of the correlations between the residuals resulting from a regression of variables in the DAG that should have no relationship. While two relationships appear null, park close time and ticket season seem to be correlated, suggesting we have misspecified the DAG. One source of this misspecification may be missing arrows between the variables.
+
 test_conditional_independence(
   emm_wait_dag2,
   data = seven_dwarfs_train_2018 |>
@@ -558,6 +628,7 @@ These are called *equivalent* DAGs because their implications are the same.
 
 ```{r}
 #| eval: false
+
 ggdag_equivalent_dags(emm_wait_dag2)
 ```
 
@@ -566,17 +637,42 @@ ggdag_equivalent_dags(emm_wait_dag2)
 #| code-fold: true
 #| fig-width: 9
 #| fig-cap: >
-#|    Equivalent DAGs for the likely misspecified version of @fig-dag-magic.
-#|    These two DAGs produce the same set of implied conditional independencies.
-#|    The difference between them is only the direction of the arrow between
-#|    historic high temperature and Extra Magic Hours.
+#|   Equivalent DAGs for the likely misspecified version of @fig-dag-magic.
+#|   These two DAGs produce the same set of implied conditional independencies.
+#|   The difference between them is only the direction of the arrow between
+#|   historic high temperature and Extra Magic Hours.
+
 curvatures <- rep(0, 10)
-curvatures[c(4, 9)] <- .25
+curvatures[c(4, 9)] <- 0.25
 
 ggdag_equivalent_dags(emm_wait_dag2, use_edges = FALSE, use_text = FALSE) +
-  geom_dag_edges_arc(data = function(x) distinct(x), curvature = curvatures, edge_color = "grey80") +
-  geom_dag_edges_link(data = function(x) filter(x, (name == "park_extra_magic_morning" & to == "park_temperature_high") | (name == "park_temperature_high" & to == "park_extra_magic_morning")), edge_color = "black") +
-  geom_dag_text_repel(aes(label = label), data = function(x) filter(x, label %in% c("Extra Magic\nMorning", "Historic high\ntemperature")), box.padding = 15, seed = 12, color = "#494949") +
+  geom_dag_edges_arc(
+    data = function(x) distinct(x),
+    curvature = curvatures,
+    edge_color = "grey80"
+  ) +
+  geom_dag_edges_link(
+    data = function(x) {
+      filter(
+        x,
+        (name == "park_extra_magic_morning" & to == "park_temperature_high") |
+          (name == "park_temperature_high" & to == "park_extra_magic_morning")
+      )
+    },
+    edge_color = "black"
+  ) +
+  geom_dag_text_repel(
+    aes(label = label),
+    data = function(x) {
+      filter(
+        x,
+        label %in% c("Extra Magic\nMorning", "Historic high\ntemperature")
+      )
+    },
+    box.padding = 15,
+    seed = 12,
+    color = "#494949"
+  ) +
   theme_dag()
 ```
 
@@ -586,6 +682,7 @@ While technical, this connection can condense the visualization to a single DAG 
 
 ```{r}
 #| eval: false
+
 ggdag_equivalent_class(emm_wait_dag2, use_text = FALSE, use_labels = TRUE)
 ```
 
@@ -594,18 +691,35 @@ ggdag_equivalent_class(emm_wait_dag2, use_text = FALSE, use_labels = TRUE)
 #| code-fold: true
 #| fig-width: 5
 #| fig-cap: >
-#|    An alternative way of visualizing @fig-equiv-dag where all the equivalent
-#|    DAGs are condensed to a single version where the *reversible* edges are denoted
-#|    with edges without arrows.
+#|   An alternative way of visualizing @fig-equiv-dag where all the equivalent
+#|   DAGs are condensed to a single version where the *reversible* edges are denoted
+#|   with edges without arrows.
+
 curvatures <- rep(0, 4)
-curvatures[3] <- .25
+curvatures[3] <- 0.25
 
 emm_wait_dag2 |>
   node_equivalent_class() |>
   ggdag(use_edges = FALSE, use_text = FALSE) +
-  geom_dag_edges_arc(data = function(x) filter(x, !reversable), curvature = curvatures, edge_color = "grey90") +
+  geom_dag_edges_arc(
+    data = function(x) filter(x, !reversable),
+    curvature = curvatures,
+    edge_color = "grey90"
+  ) +
   geom_dag_edges_link(data = function(x) filter(x, reversable), arrow = NULL) +
-  geom_dag_text_repel(aes(label = label), data = function(x) filter(x, label %in% c("Extra Magic\nMorning", "Historic high\ntemperature")), box.padding = 16, seed = 12, size = 5, color = "#494949") +
+  geom_dag_text_repel(
+    aes(label = label),
+    data = function(x) {
+      filter(
+        x,
+        label %in% c("Extra Magic\nMorning", "Historic high\ntemperature")
+      )
+    },
+    box.padding = 16,
+    seed = 12,
+    size = 5,
+    color = "#494949"
+  ) +
   theme_dag()
 ```
 
@@ -647,7 +761,7 @@ In this case, we're considering a different causal structure.
 ```{r}
 #| label: fig-dag-extra-days
 #| fig-cap: >
-#|    An expansion of @fig-dag-magic, which now includes two new variables on their own backdoor paths: whether or not it's a holiday and/or a weekend.
+#|   An expansion of @fig-dag-magic, which now includes two new variables on their own backdoor paths: whether or not it's a holiday and/or a weekend.
 #| code-fold: true
 
 labels <- c(
@@ -661,8 +775,17 @@ labels <- c(
 )
 
 emm_wait_dag3 <- dagify(
-  wait_minutes_posted_avg ~ park_extra_magic_morning + park_close + park_ticket_season + park_temperature_high + is_weekend + is_holiday,
-  park_extra_magic_morning ~ park_temperature_high + park_close + park_ticket_season + is_weekend + is_holiday,
+  wait_minutes_posted_avg ~ park_extra_magic_morning +
+    park_close +
+    park_ticket_season +
+    park_temperature_high +
+    is_weekend +
+    is_holiday,
+  park_extra_magic_morning ~ park_temperature_high +
+    park_close +
+    park_ticket_season +
+    is_weekend +
+    is_holiday,
   park_close ~ is_weekend + is_holiday,
   coords = time_ordered_coords(),
   labels = labels,
@@ -671,7 +794,7 @@ emm_wait_dag3 <- dagify(
 )
 
 curvatures <- rep(0, 13)
-curvatures[11] <- .25
+curvatures[11] <- 0.25
 
 emm_wait_dag3 |>
   tidy_dagitty() |>
@@ -681,7 +804,12 @@ emm_wait_dag3 |>
   ) +
   geom_dag_edges_arc(curvature = curvatures, edge_color = "grey80") +
   geom_dag_point() +
-  geom_dag_text_repel(aes(label = label), size = 3.8, seed = 16301, color = "#494949") +
+  geom_dag_text_repel(
+    aes(label = label),
+    size = 3.8,
+    seed = 16301,
+    color = "#494949"
+  ) +
   scale_color_okabe_ito(na.value = "grey90") +
   theme_dag() +
   theme(legend.position = "none") +
@@ -723,10 +851,16 @@ Both Extra Magic Morning hours and posted wait times are associated with whether
 ```{r}
 #| label: tbl-days
 #| tbl-cap: >
-#|    The descriptive associations between the two new variables, holiday and weekend, and the exposure and outcome. The average posted waiting time differs on both holidays and weekends, as do the occurrences of Extra Magic Hours. While we can't determine a confounding relationship from descriptive statistics alone, this adds to the evidence that these are confounders.
+#|   The descriptive associations between the two new variables, holiday and weekend, and the exposure and outcome. The average posted waiting time differs on both holidays and weekends, as do the occurrences of Extra Magic Hours. While we can't determine a confounding relationship from descriptive statistics alone, this adds to the evidence that these are confounders.
 #| code-fold: true
+
 tbl_data_days <- seven_dwarfs_with_days |>
-  select(wait_minutes_posted_avg, park_extra_magic_morning, is_weekend, is_holiday)
+  select(
+    wait_minutes_posted_avg,
+    park_extra_magic_morning,
+    is_weekend,
+    is_holiday
+  )
 
 library(labelled)
 var_label(tbl_data_days) <- list(
@@ -753,11 +887,16 @@ gtsummary::tbl_merge(list(tbl1, tbl2), c("Weekend", "Holiday"))
 
 ```{r}
 #| echo: false
+
 ipw_results_with_days <- fit_ipw_effect(
   park_extra_magic_morning ~ park_temperature_high +
-    park_close + park_ticket_season + is_weekend + is_holiday,
+    park_close +
+    park_ticket_season +
+    is_weekend +
+    is_holiday,
   .data = seven_dwarfs_with_days
-) |> round(2)
+) |>
+  round(2)
 ```
 
 When we refit the IPW estimator, we get `r ipw_results_with_days` minutes, slightly bigger than we got without the two new confounders.
@@ -781,9 +920,9 @@ We can take this further using quantitative bias analysis, which uses mathematic
 Sensitivity analyses for unmeasured confounding are important tools in observational studies to assess how robust findings are to potential unmeasured factors [@d2022sensitivity].
 These analyses rely on three key components:
 
-1)  the observed exposure-outcome effect after adjusting for measured confounders,\
-2)  the estimated relationship between a hypothetical unmeasured confounder and the exposure, and\
-3)  the estimated relationship between that unmeasured confounder and the outcome.
+1) the observed exposure-outcome effect after adjusting for measured confounders,\
+2) the estimated relationship between a hypothetical unmeasured confounder and the exposure, and\
+3) the estimated relationship between that unmeasured confounder and the outcome.
 
 By specifying plausible values for these relationships, researchers can quantify how much the observed effect might change if such an unmeasured confounder existed.
 
@@ -804,18 +943,33 @@ The three key components above are described by 1) the arrow between 'Extra Magi
 #|   average wait time and 2) both Extra Magic Hours and average wait time
 #|   are determined by the time the park closes, historic high temperatures,
 #|   and ticket season.
+
 curvatures <- rep(0, 7)
 curvatures[5] <- 0.3
 emm_wait_dag |>
   tidy_dagitty() |>
   node_status() |>
-  mutate(linetype = if_else(name == "park_temperature_high", "dashed", "solid")) |>
+  mutate(
+    linetype = if_else(name == "park_temperature_high", "dashed", "solid")
+  ) |>
   ggplot(
-    aes(x, y, xend = xend, yend = yend, color = status, edge_linetype = linetype)
+    aes(
+      x,
+      y,
+      xend = xend,
+      yend = yend,
+      color = status,
+      edge_linetype = linetype
+    )
   ) +
   geom_dag_edges_arc(curvature = curvatures, edge_color = "grey80") +
   geom_dag_point() +
-  geom_dag_text_repel(aes(label = label), size = 3.8, seed = 1630, color = "#494949") +
+  geom_dag_text_repel(
+    aes(label = label),
+    size = 3.8,
+    seed = 1630,
+    color = "#494949"
+  ) +
   scale_color_okabe_ito(na.value = "grey90") +
   theme_dag() +
   theme(legend.position = "none") +
@@ -834,15 +988,15 @@ While these analyses cannot prove the absence of unmeasured confounding, they pr
 The first componenet, the observed exposure-outcome effect, is the proposed causal effect of interest, i.e. the effect you would like to perform a sensitivity analysis on.
 The effect itself will depend on the choice of outcome model, which in turn often depends on the distribution of the outcome and the desired effect measure:
 
-1.  For continuous outcomes: Linear models or generalized linear models (GLMs) with Gaussian distribution and identity link are used, typically estimating a coefficient.
+1. For continuous outcomes: Linear models or generalized linear models (GLMs) with Gaussian distribution and identity link are used, typically estimating a coefficient.
 
-2.  For binary outcomes, we have a few choices:
+2. For binary outcomes, we have a few choices:
 
--   GLMs with binomial distribution and log link
--   GLMs with Poisson distribution and log link
--   GLMs with binomial distribution and logit link These estimate coefficients, which can be exponentiated to obtain risk ratios (log link models) or odds ratios (logit link models).
+- GLMs with binomial distribution and log link
+- GLMs with Poisson distribution and log link
+- GLMs with binomial distribution and logit link These estimate coefficients, which can be exponentiated to obtain risk ratios (log link models) or odds ratios (logit link models).
 
-3.  For time-to-event outcomes: Cox proportional hazards models are used, with the hazard ratio obtained by exponentiating the coefficient.
+3. For time-to-event outcomes: Cox proportional hazards models are used, with the hazard ratio obtained by exponentiating the coefficient.
 
 Let's use the analysis from @tbl-alt-sets where we only adjusted for 'Time park closed' and 'Ticket season'.
 According to @fig-dag-magic-sens, we know 'Historic high temperature' is also a confounder, but it is *unmeasured* so we cannot include it in our practical adjustment set.
@@ -852,18 +1006,18 @@ This resulted in an observed effect of `r round(effects[2], 2)`.
 
 The relationship between an unmeasured confounder and the exposure can be characterized in three ways:
 
-1.  For a binary unmeasured confounder:
+1. For a binary unmeasured confounder:
 
--   Prevalence of the unmeasured confounder in the exposed group
--   Prevalence of the unmeasured confounder in the unexposed group
+- Prevalence of the unmeasured confounder in the exposed group
+- Prevalence of the unmeasured confounder in the unexposed group
 
-2.  For a continuous unmeasured confounder (assuming a normal distribution and unit variance):
+2. For a continuous unmeasured confounder (assuming a normal distribution and unit variance):
 
--   Difference in means of the unmeasured confounder between exposed and unexposed groups
+- Difference in means of the unmeasured confounder between exposed and unexposed groups
 
-3.  Distribution-agnostic approach:
+3. Distribution-agnostic approach:
 
--   Partial $R^2$, representing the proportion of variation in the exposure explained by the unmeasured confounder after accounting for measured confounders
+- Partial $R^2$, representing the proportion of variation in the exposure explained by the unmeasured confounder after accounting for measured confounders
 
 These characterizations allow researchers to specify the unmeasured confounder-exposure relationship in sensitivity analyses, accommodating different types of confounders and levels of knowledge about their distribution.
 
@@ -879,14 +1033,15 @@ Hold on to this number; we'll use it in conjunction with the next section for ou
 
 The relationship between an unmeasured confounder and the outcome can be quantified in two main ways:
 
-1.  Coefficient-based approach: Estimate the coefficient for an unmeasured confounder in a fully adjusted outcome model.
-    You can also estimate the exponentiated coefficient (risk ratio, odds ratio, or hazard ratio)
+1. Coefficient-based approach: Estimate the coefficient for an unmeasured confounder in a fully adjusted outcome model.
+   You can also estimate the exponentiated coefficient (risk ratio, odds ratio, or hazard ratio)
 
-2.  Distribution-agnostic approach (for continuous outcomes): Use partial $R^2$, representing the proportion of variation in the outcome explained by the unmeasured confounder after accounting for the exposure and measured confounders
+2. Distribution-agnostic approach (for continuous outcomes): Use partial $R^2$, representing the proportion of variation in the outcome explained by the unmeasured confounder after accounting for the exposure and measured confounders
 
 Let's do the coeffient-based approach.
 In our case, we need to estimate what we think the coefficient bewteen our standardized 'Historic high temperature' variable and our outcome after adjusting for our exposure as well as the other measured confounders (in this case ticket season and the time the park closed).
-Another way to describe this effect in the context of this problem is: "How would the average posted wait time change if we changed the historic high temperature by one standard deviation, after adjusting for whether there were extra magic morning hours, the park close time, and the ticket season?" Let's suppose we think this would change by -2.3 minutes.
+Another way to describe this effect in the context of this problem is: "How would the average posted wait time change if we changed the historic high temperature by one standard deviation, after adjusting for whether there were extra magic morning hours, the park close time, and the ticket season?"
+Let's suppose we think this would change by -2.3 minutes.
 That is, if the historic high temperature is one standard deviation unit higher (in our scenario, 9 degrees warmer), we expect this to decrease the average posted wait time by 2.3 minutes.
 
 For a mathematical explanation of these quantities, see @d2022sensitivity.
@@ -902,19 +1057,20 @@ For example, to adjust (`action`) a coefficient (`effect`) with a binary unmeasu
 
 Below is a copy of the table included in @lucy2022tipr about this package.
 
-| category   | Function term | Use                                                                                                                                                                                                                                                                   |
-|----------------|-----------------|---------------------------------------|
-| **action** | `adjust`      | These functions adjust observed effects, requiring both the unmeasured \| confounder-exposure relationship and unmeasured confounder-outcome relationship to be specified.                                                                                            |
-|            | `tip`         | These functions tip observed effects. Only one relationship, either the unmeasured confounder-exposure relationship or unmeasured confounder-outcome relationship needs to be specified.                                                                              |
-| **effect** | `coef`        | These functions specify an observed coefficient from a linear, log-linear, logistic, or Cox proportional hazards model                                                                                                                                                |
-|            | `rr`          | These functions specify an observed relative risk                                                                                                                                                                                                                     |
-|            | `or`          | These functions specify an observed odds ratio                                                                                                                                                                                                                        |
-|            | `hr`          | These functions specify an observed hazard ratio                                                                                                                                                                                                                      |
-| **what**   | `continuous`  | These functions specify an unmeasured standardized Normally distributed confounder. These functions will include the parameters `exposure_confounder_effect` and `confounder_outcome_effect`                                                                          |
-|            | `binary`      | These functions specify an unmeasured binary confounder. These functions will include the parameters `exposed_confounder_prev`, `unexposed_confounder_prev`, and `confounder_outcome_effect`                                                                          |
-|            | `r2`          | These functions specify an unmeasured confounder parameterized by specifying the percent of variation in the exposure / outcom explained by the unmeasured confounder. These functions will include the parameters `confounder_exposure_r2` and `outcome_exposure_r2` |
+  | category   | Function term | Use                                                                                                                                                                                                                                                                   |
+  | ---------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+  | **action** | `adjust`      | These functions adjust observed effects, requiring both the unmeasured \                                                                                                                                                                                              | confounder-exposure relationship and unmeasured confounder-outcome relationship to be specified. |
+  |            | `tip`         | These functions tip observed effects. Only one relationship, either the unmeasured confounder-exposure relationship or unmeasured confounder-outcome relationship needs to be specified.                                                                              |
+  | **effect** | `coef`        | These functions specify an observed coefficient from a linear, log-linear, logistic, or Cox proportional hazards model                                                                                                                                                |
+  |            | `rr`          | These functions specify an observed relative risk                                                                                                                                                                                                                     |
+  |            | `or`          | These functions specify an observed odds ratio                                                                                                                                                                                                                        |
+  |            | `hr`          | These functions specify an observed hazard ratio                                                                                                                                                                                                                      |
+  | **what**   | `continuous`  | These functions specify an unmeasured standardized Normally distributed confounder. These functions will include the parameters `exposure_confounder_effect` and `confounder_outcome_effect`                                                                          |
+  |            | `binary`      | These functions specify an unmeasured binary confounder. These functions will include the parameters `exposed_confounder_prev`, `unexposed_confounder_prev`, and `confounder_outcome_effect`                                                                          |
+  |            | `r2`          | These functions specify an unmeasured confounder parameterized by specifying the percent of variation in the exposure / outcom explained by the unmeasured confounder. These functions will include the parameters `confounder_exposure_r2` and `outcome_exposure_r2` |
 
-: Grammar of `tipr` functions. {#tbl-sens}
+  : Grammar of `tipr` functions.
+    {#tbl-sens}
 
 You can find full documentation here: [r-causal.github.io/tipr/](https://r-causal.github.io/tipr/)
 
@@ -928,7 +1084,7 @@ Let's plug in the quantities we established above for each of the three paramete
 library(tipr)
 adjust_coef(
   effect_observed = 6.58,
-  exposure_confounder_effect = -.17,
+  exposure_confounder_effect = -0.17,
   confounder_outcome_effect = -2.3
 )
 ```

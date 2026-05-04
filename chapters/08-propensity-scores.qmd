@@ -4,6 +4,7 @@
 
 ```{r}
 #| echo: false
+
 # TODO: remove when first edition complete
 status("polishing")
 ```
@@ -15,7 +16,7 @@ As presented in @sec-data-causal, the causal question we'd like to answer is: **
 #| code-fold: true
 #| message: false
 #| warning: false
-#| fig.cap: >
+#| fig-cap: >
 #|   Proposed DAG for the relationship between Extra Magic Hours
 #|   in the morning at a particular park and the average wait
 #|   time between 9 AM and 10 AM.
@@ -60,13 +61,18 @@ dag_plot <- dag |>
   coord_cartesian(clip = "off")
 
 dag_plot +
-  geom_dag_edges_arc(curvature = c(rep(0, 5), .3, 0)) +
+  geom_dag_edges_arc(curvature = c(rep(0, 5), 0.3, 0)) +
   geom_dag_label_repel(seed = 1630)
 ```
 
-Now that we've done some exploratory analysis of these data, how should we go about answering this question? We know from @sec-dags that we have three backdoor paths to close. Each path has one variable, resulting in three confounders: the historic high temperature on the day, the time the park closed, and the ticket season: value, regular, or peak.
+Now that we've done some exploratory analysis of these data, how should we go about answering this question?
+We know from @sec-dags that we have three backdoor paths to close.
+Each path has one variable, resulting in three confounders: the historic high temperature on the day, the time the park closed, and the ticket season: value, regular, or peak.
 
-We also know that we have several ways we can close these paths. Stratification isn't a good solution here because of the curse of dimensionality; we had better use a statistical model. But which relationship should we model? Consider @fig-dag-close-paths-1, @fig-dag-close-paths-2, and @fig-dag-close-paths-3.
+We also know that we have several ways we can close these paths.
+Stratification isn't a good solution here because of the curse of dimensionality; we had better use a statistical model.
+But which relationship should we model?
+Consider @fig-dag-close-paths-1, @fig-dag-close-paths-2, and @fig-dag-close-paths-3.
 
 ```{r}
 #| label: fig-dag-close-paths
@@ -76,8 +82,9 @@ We also know that we have several ways we can close these paths. Stratification 
 #|   - "Shall we close the paths going into the exposure?"
 #|   - "Or the paths going into the outcome?"
 #|   - "Or both?"
+
 dag_plot +
-  geom_dag_edges_arc(curvature = c(rep(0, 5), .3, 0), edge_color = "grey80") +
+  geom_dag_edges_arc(curvature = c(rep(0, 5), 0.3, 0), edge_color = "grey80") +
   geom_dag_edges_arc(
     data = \(.x) filter(.x, to == "x"),
     curvature = c(0, 0, 0),
@@ -85,10 +92,10 @@ dag_plot +
   )
 
 dag_plot +
-  geom_dag_edges_arc(curvature = c(rep(0, 5), .3, 0), edge_color = "grey80") +
+  geom_dag_edges_arc(curvature = c(rep(0, 5), 0.3, 0), edge_color = "grey80") +
   geom_dag_edges_arc(
     data = \(.x) filter(.x, name != "x", to == "y"),
-    curvature = c(0, 0, .3),
+    curvature = c(0, 0, 0.3),
     edge_width = 1.1
   )
 
@@ -99,18 +106,42 @@ dag_plot +
   ) +
   geom_dag_edges_arc(
     data = \(.x) filter(.x, name != "x"),
-    curvature = c(rep(0, 5), .3),
+    curvature = c(rep(0, 5), 0.3),
     edge_width = 1.1
   )
 ```
 
-First, we could model the relationship between the confounders and the exposure, as in @fig-dag-close-paths-1. A class of techniques using the **propensity score**, the probability of exposure, let us do this. Second, we could model the relationship between the confounders and the outcome, as in @fig-dag-close-paths-2. A class of techniques using the **outcome model** allows us to do this. We saw an outcome model in @sec-strat-outcome, and we'll see another approach in @sec-g-comp. Both propensity score and outcome model approaches can get us the right answer as long as we've got the right DAG and have modeled the relationships correctly. Alternatively, we could model both sets of relationships as in @fig-dag-close-paths-2. A class of techniques called **doubly robust** estimators allows us to do this, which we'll revisit in @sec-dr and @sec-causal-ml.
+First, we could model the relationship between the confounders and the exposure, as in @fig-dag-close-paths-1.
+A class of techniques using the **propensity score**, the probability of exposure, let us do this.
+Second, we could model the relationship between the confounders and the outcome, as in @fig-dag-close-paths-2.
+A class of techniques using the **outcome model** allows us to do this.
+We saw an outcome model in @sec-strat-outcome, and we'll see another approach in @sec-g-comp.
+Both propensity score and outcome model approaches can get us the right answer as long as we've got the right DAG and have modeled the relationships correctly.
+Alternatively, we could model both sets of relationships as in @fig-dag-close-paths-2.
+A class of techniques called **doubly robust** estimators allows us to do this, which we'll revisit in @sec-dr and @sec-causal-ml.
 
-For the next several chapters, we'll take up the class of techniques we can use to close the paths via @fig-dag-close-paths-1: propensity scores. First, consider what it would look like if Disney randomized the Extra Magic Mornings assignment. Let's say each day has a 0.5 probability of being assigned Extra Magic Mornings, so about half the days had them and half didn't. In this case, the arrows highlighted in @fig-dag-close-paths-1 wouldn't exist, but the arrows highlighted in @fig-dag-close-paths-2 would: we've intervened on the exposure---whether or not a day has Extra Magic Hours---not on the outcome---the posted wait times. The historic high temperature on the day, the time the park closed, and the ticket season still affect the posted wait times, but not Extra Magic Hours. Here, the probability of exposure---the propensity score---is 0.5 for every day. In other words, in an experiment, the propensity score is known. A given day is randomly assigned with `rbinom(1, 1, 0.5)`.
+For the next several chapters, we'll take up the class of techniques we can use to close the paths via @fig-dag-close-paths-1: propensity scores.
+First, consider what it would look like if Disney randomized the Extra Magic Mornings assignment.
+Let's say each day has a 0.5 probability of being assigned Extra Magic Mornings, so about half the days had them and half didn't.
+In this case, the arrows highlighted in @fig-dag-close-paths-1 wouldn't exist, but the arrows highlighted in @fig-dag-close-paths-2 would: we've intervened on the exposure---whether or not a day has Extra Magic Hours---not on the outcome---the posted wait times.
+The historic high temperature on the day, the time the park closed, and the ticket season still affect the posted wait times, but not Extra Magic Hours.
+Here, the probability of exposure---the propensity score---is 0.5 for every day.
+In other words, in an experiment, the propensity score is known.
+A given day is randomly assigned with `rbinom(1, 1, 0.5)`.
 
-Let's say Disney conducted a more complex experiment: they randomized the exposure *within levels of the three variables of the DAG*. For instance, let's say every day was granted a baseline probability of 0.5. In this experiment, historic temperatures >= 80 degrees Fahrenheit reduced the probability of exposure by 0.1, a park closure time of less than 10 PM increased the probability by 0.2, and being in peak ticket season decreased the probability by 0.3. A day with a historic temperature of 86 degrees that closed at 9:00 PM in peak ticket season, the day would be randomly assigned Extra Magic Hours in the morning with a probability of $0.5 - 0.1 + 0.2 - 0.25 = 0.35$, or `rbinom(1, 1, 0.35)`. This design is still a randomized experiment, but it's randomized within levels of the covariates. It gives us conditional exchangeability, much like we have to assume in non-randomized data: days are exchangeable within levels of the covariates.
+Let's say Disney conducted a more complex experiment: they randomized the exposure *within levels of the three variables of the DAG*.
+For instance, let's say every day was granted a baseline probability of 0.5.
+In this experiment, historic temperatures >= 80 degrees Fahrenheit reduced the probability of exposure by 0.1, a park closure time of less than 10 PM increased the probability by 0.2, and being in peak ticket season decreased the probability by 0.3.
+A day with a historic temperature of 86 degrees that closed at 9:00 PM in peak ticket season, the day would be randomly assigned Extra Magic Hours in the morning with a probability of $0.5 - 0.1 + 0.2 - 0.25 = 0.35$, or `rbinom(1, 1, 0.35)`.
+This design is still a randomized experiment, but it's randomized within levels of the covariates.
+It gives us conditional exchangeability, much like we have to assume in non-randomized data: days are exchangeable within levels of the covariates.
 
-In our case, though, these probabilities are not known. What if we could find the "hidden experiment" in this non-randomized data? Remember, *someone* decided to put Extra Magic Hours on certain days. What was that decision process? If we could use a combination of domain knowledge---to understand what factors went into treatment assignment that also affect the outcome---and statistics---to estimate these conditional probabilities---then perhaps we could use those probabilities to achieve exchangeability and calculate an unbiased causal effect. @rosenbaum1983central showed that conditioning on propensity scores in observational studies can lead to unbiased estimates of the exposure effect as long as the assumptions discussed in @sec-assump hold.
+In our case, though, these probabilities are not known.
+What if we could find the "hidden experiment" in this non-randomized data?
+Remember, *someone* decided to put Extra Magic Hours on certain days.
+What was that decision process?
+If we could use a combination of domain knowledge---to understand what factors went into treatment assignment that also affect the outcome---and statistics---to estimate these conditional probabilities---then perhaps we could use those probabilities to achieve exchangeability and calculate an unbiased causal effect.
+@rosenbaum1983central showed that conditioning on propensity scores in observational studies can lead to unbiased estimates of the exposure effect as long as the assumptions discussed in @sec-assump hold.
 
 ## Building propensity score models {#sec-building-models}
 
@@ -121,11 +152,13 @@ A logistic regression with exposure as the predicted value and the confounders a
 Below is pseudo-code for using `glm()` to fit a propensity score model using logistic regression.
 The first argument is the model, with the exposure on the left side and the confounders on the right.
 The `data` argument takes the data frame, and the `family = binomial()` argument denotes that the model should be fit using logistic regression (as opposed to a different generalized linear model, although other links are sometimes used in propensity score modeling).
-You've likely fit models like this before, but the key details are that we are predicting the probability of exposure (instead of something around the outcome; we'll get to that!) and that the predictors are the confounders determined from the DAG.
+You've likely fit models like this before, but the key details are that we are predicting the probability of exposure (instead of something around the outcome; we'll get to that!)
+and that the predictors are the confounders determined from the DAG.
 As we saw in @sec-ci-rct, if we had any predictors of the outcome that weren't related to the exposure, we'd probably want to include those, too, for precision's sake.
 
 ```{r}
 #| eval: false
+
 glm(
   # predict the probability of treatment
   exposure ~ confounder_1 + confounder_2,
@@ -135,17 +168,19 @@ glm(
 )
 ```
 
-We can extract the propensity scores by pulling out the predictions on the probability scale using `predict()` or `fitted()`. However,
-using the `augment()` function from the [{`broom`}](https://broom.tidymodels.org/) package, we can extract these propensity scores and add them to our original data frame in one step, so we'll use that approach.
+We can extract the propensity scores by pulling out the predictions on the probability scale using `predict()` or `fitted()`.
+However, using the `augment()` function from the [{`broom`}](https://broom.tidymodels.org/) package, we can extract these propensity scores and add them to our original data frame in one step, so we'll use that approach.
 The predictions will be on the *linear logit* scale by default.
 Setting the argument `type.predict` to `"response"` indicates that we want to extract the predicted values on the *probability* scale.
-The `data` argument contains the original data frame; if we leave this blank, we'll only get back a data frame with the variables in the propensity score model. However, we need the outcome, too, so it's handy to use the whole data frame, even though there are no new days in the data set.
+The `data` argument contains the original data frame; if we leave this blank, we'll only get back a data frame with the variables in the propensity score model.
+However, we need the outcome, too, so it's handy to use the whole data frame, even though there are no new days in the data set.
 This code will output a new data frame consisting of all components in `df` with six additional columns corresponding to the logistic regression model that was fit.
 The `.fitted` column is the propensity score.
 A convenient detail about broom is that the columns returned from its functions are consistent across models in R, so the code in this chapter will work for many types of broom output.
 
 ```{r}
 #| eval: false
+
 glm(
   exposure ~ confounder_1 + confounder_2,
   data = df,
@@ -171,7 +206,8 @@ seven_dwarfs_9 <- seven_dwarfs_train_2018 |>
   filter(wait_hour == 9)
 
 ps_mod <- glm(
-  park_extra_magic_morning ~ park_ticket_season + park_close +
+  park_extra_magic_morning ~ park_ticket_season +
+    park_close +
     park_temperature_high,
   data = seven_dwarfs_9,
   family = binomial()
@@ -181,21 +217,45 @@ seven_dwarfs_9_with_ps <- ps_mod |>
   augment(type.predict = "response", data = seven_dwarfs_9)
 ```
 
-First, we might ask how well this model performs. On the one hand, model statistics can't tell us how well we've adjsuted for confounding. However, we do have expectations about how the model behaves. For instance, the prediction model should be **well-calibrated**. This means that if we look at all the days with a predicted probability of 0.3, about 30% of those days should have Extra Magic Mornings. We can check this by grouping the data into bins of propensity scores and calculating the observed proportion of days with Extra Magic Mornings in each bin. @fig-calibration-ps shows a calibration plot for our propensity score model. The points are close to the 45-degree line, indicating that the model is well-calibrated. Logistic regression models tend to be well-calibrated, so this is a good sign. However, we have few points towards the higher end of the propensity score, so we are more uncertain about these. Calibration can be particularly useful for machine learning models, which can be poorly calibrated. If we find that our model is showing issues in this respect, `{propensity}` can calibrate the model using logistic regression with `ps_calibrate()`.
+First, we might ask how well this model performs.
+On the one hand, model statistics can't tell us how well we've adjsuted for confounding.
+However, we do have expectations about how the model behaves.
+For instance, the prediction model should be **well-calibrated**.
+This means that if we look at all the days with a predicted probability of 0.3, about 30% of those days should have Extra Magic Mornings.
+We can check this by grouping the data into bins of propensity scores and calculating the observed proportion of days with Extra Magic Mornings in each bin.
+@fig-calibration-ps shows a calibration plot for our propensity score model.
+The points are close to the 45-degree line, indicating that the model is well-calibrated.
+Logistic regression models tend to be well-calibrated, so this is a good sign.
+However, we have few points towards the higher end of the propensity score, so we are more uncertain about these.
+Calibration can be particularly useful for machine learning models, which can be poorly calibrated.
+If we find that our model is showing issues in this respect, `{propensity}` can calibrate the model using logistic regression with `ps_calibrate()`.
 
 ```{r}
 #| label: fig-calibration-ps
 #| fig-cap: "Calibration plot for the propensity score model. The points are close to the 45-degree line, indicating that the model is well-calibrated. However, we have few points towards the higher end of the propensity score, so we are more uncertain about these."
 #| warning: false
+
 library(halfmoon)
 plot_model_calibration(ps_mod, method = "windowed")
 ```
 
-Another common check of model performance is the receiver operating characteristic curve (ROC). The ROC curve plots the true positive rate (sensitivity) against the false positive rate (1 - specificity) at various threshold settings. The ROC is a measure of discrimination: how well the model can distinguish between days with and without Extra Magic Mornings. This means that if we randomly select one day with Extra Magic Mornings and one day without, the model will assign a higher propensity score to the day with Extra Magic Mornings more often than not. A 45 degree line indicates no discrimination (random chance), while a curve that hugs the top left corner indicates perfect discrimination. The area under the curve (AUC) is a summary measure of discrimination, with values ranging from 0.5 (no discrimination) to 1 (perfect discrimination). In prediction modeling, the goal is often to maximize discrimination. However, in a causal model, perfect discrimination would indicate a violation of positivity: some days would have a 0% chance of Extra Magic Mornings, and some would have a 100% chance. Some discrimination, howver, indicates we have identified differences between the groups. There is no clear cutoff for what is a "good" AUC is for causal inference (a randomized trial, for instance, will have an expected AUC of 0.5 because the only thing to discriminate between groups is group assignment), but values between 0.6 and 0.8 usually indicate that we've picked up enough signal from the counfounders to use for adjustment but not so much that we have positivity issues. As opposed to prediction modeling, though, we are not trying to optimize the AUC to this range; we are using it as a diagnostic. We'll revisit AUC and ROC curves in @sec-eval-ps-model.
+Another common check of model performance is the receiver operating characteristic curve (ROC).
+The ROC curve plots the true positive rate (sensitivity) against the false positive rate (1 - specificity) at various threshold settings.
+The ROC is a measure of discrimination: how well the model can distinguish between days with and without Extra Magic Mornings.
+This means that if we randomly select one day with Extra Magic Mornings and one day without, the model will assign a higher propensity score to the day with Extra Magic Mornings more often than not.
+A 45 degree line indicates no discrimination (random chance), while a curve that hugs the top left corner indicates perfect discrimination.
+The area under the curve (AUC) is a summary measure of discrimination, with values ranging from 0.5 (no discrimination) to 1 (perfect discrimination).
+In prediction modeling, the goal is often to maximize discrimination.
+However, in a causal model, perfect discrimination would indicate a violation of positivity: some days would have a 0% chance of Extra Magic Mornings, and some would have a 100% chance.
+Some discrimination, howver, indicates we have identified differences between the groups.
+There is no clear cutoff for what is a "good" AUC is for causal inference (a randomized trial, for instance, will have an expected AUC of 0.5 because the only thing to discriminate between groups is group assignment), but values between 0.6 and 0.8 usually indicate that we've picked up enough signal from the counfounders to use for adjustment but not so much that we have positivity issues.
+As opposed to prediction modeling, though, we are not trying to optimize the AUC to this range; we are using it as a diagnostic.
+We'll revisit AUC and ROC curves in @sec-eval-ps-model.
 
 ```{r}
 #| label: fig-roc-ps
 #| fig-cap: "ROC curve for the propensity score model. The curve is above the 45-degree line, indicating that the model has some discrimination. The AUC is 0.65, indicating that we've picked up enough signal from the confounders to use for adjustment but not so much that we have extreme positivity issues."
+
 seven_dwarfs_9_with_ps |>
   check_model_roc_curve(park_extra_magic_morning, .fitted) |>
   plot_model_roc_curve()
@@ -223,6 +283,7 @@ There was likewise a low probability (18.4%) on January 5, but this day *did* ha
 #| tbl-cap: >
 #|   The first six observations in the `seven_dwarfs_9_with_ps` dataset, including their propensity scores in the `.fitted` column.
 #| code-fold: true
+
 library(gt)
 seven_dwarfs_9_with_ps |>
   select(
@@ -257,10 +318,11 @@ We'll also tweak the y-axis labels to use absolute values (rather than negative 
 
 ```{r}
 #| label: fig-mirrored-ps
-#| fig.cap: >
+#| fig-cap: >
 #|   Mirrored histograms of estimated propensity scores for
 #|   Extra Magic Hour days (exposed group, top) and days without
 #|   Extra Magic hours (unexposed group, bottom)
+
 ggplot(
   seven_dwarfs_9_with_ps,
   aes(.fitted, fill = factor(park_extra_magic_morning))
@@ -270,16 +332,26 @@ ggplot(
   labs(x = "propensity score", fill = "extra magic morning")
 ```
 
-We'll explore how to assess a propensity score model after applying a method (like weighting or matching) in more detail in @sec-eval-ps-model; however, let's think about what we're seeing from the perspective of the causal assumptions we need to make for valid inferences. In @sec-explore-assump, we saw that we might have issues with both exchangeability and positivity. We were pretty confident that causal consistency wasn't an issue for this question, but looking at the raw propensity scores (before we apply weighting or matching) can give us some insight into the other two assumptions. While data will never be able to prove our assumptions are right or wrong, it does give us some evidence.
+We'll explore how to assess a propensity score model after applying a method (like weighting or matching) in more detail in @sec-eval-ps-model; however, let's think about what we're seeing from the perspective of the causal assumptions we need to make for valid inferences.
+In @sec-explore-assump, we saw that we might have issues with both exchangeability and positivity.
+We were pretty confident that causal consistency wasn't an issue for this question, but looking at the raw propensity scores (before we apply weighting or matching) can give us some insight into the other two assumptions.
+While data will never be able to prove our assumptions are right or wrong, it does give us some evidence.
 
-For positivity and exchangeability, we're looking for two things: **overlap** and **balance**. Overlap refers to overlapping ranges of the propensity scores by exposure group, sometimes called **common support**. Overlap is related to positivity: if there are regions of the propensity score where only one exposure group has observations, we might have a positivity violation. The other thing to look for is balance in the populations. In a randomized setting, we expect the distributions between the two groups to be approximately the same because their likelihood of exposure is unrelated to the baseline covariates. This balance is another perspective on the choice of the word "exchangeable": we should be able to reassign the two groups to the other exposure and still get the right answer.
+For positivity and exchangeability, we're looking for two things: **overlap** and **balance**.
+Overlap refers to overlapping ranges of the propensity scores by exposure group, sometimes called **common support**.
+Overlap is related to positivity: if there are regions of the propensity score where only one exposure group has observations, we might have a positivity violation.
+The other thing to look for is balance in the populations.
+In a randomized setting, we expect the distributions between the two groups to be approximately the same because their likelihood of exposure is unrelated to the baseline covariates.
+This balance is another perspective on the choice of the word "exchangeable": we should be able to reassign the two groups to the other exposure and still get the right answer.
 
-@fig-sim-ps shows simulated scenarios of the kinds of distributions we will tend to see with good, moderate, and poor overlap and balance. Poor balance and overlap can worsen bias and variance and make us less confident in the causal assumptions we need to make.
+@fig-sim-ps shows simulated scenarios of the kinds of distributions we will tend to see with good, moderate, and poor overlap and balance.
+Poor balance and overlap can worsen bias and variance and make us less confident in the causal assumptions we need to make.
 
 ```{r}
 #| label: fig-sim-ps
 #| fig-cap: "Simulated distributions of propensity scores. We look for two qualities in mirrored histograms: overlap and balance, related to positivity and exchangeability, respectively."
 #| code-fold: true
+
 library(patchwork)
 
 set.seed(2025)
@@ -336,7 +408,10 @@ plots_balance$moderate <- plots_balance$moderate +
   (plots_balance$good + plots_balance$moderate + plots_balance$poor)
 ```
 
-@fig-mirrored-ps gives us a perspective on these assumptions reduced to a single dimension (the propensity score). We definitely see both overlap and balance problems. Clearly, the distribution is different between the groups in terms of shape and number of days. Let's also look at the range of the propensity score by group.
+@fig-mirrored-ps gives us a perspective on these assumptions reduced to a single dimension (the propensity score).
+We definitely see both overlap and balance problems.
+Clearly, the distribution is different between the groups in terms of shape and number of days.
+Let's also look at the range of the propensity score by group.
 
 ```{r}
 seven_dwarfs_9_with_ps |>
@@ -344,7 +419,8 @@ seven_dwarfs_9_with_ps |>
   reframe(range = range(.fitted))
 ```
 
-The range between groups seems pretty close. One helpful way to look at the tails is to check the number of *unexposed* observations below the lowest probability for the *exposed* group and the number of *exposed* observations above the highest probability for the *unexposed* group.
+The range between groups seems pretty close.
+One helpful way to look at the tails is to check the number of *unexposed* observations below the lowest probability for the *exposed* group and the number of *exposed* observations above the highest probability for the *unexposed* group.
 
 ```{r}
 seven_dwarfs_9_with_ps |>
@@ -361,22 +437,28 @@ seven_dwarfs_9_with_ps |>
   count(support, .drop = FALSE)
 ```
 
-However, looking at @fig-mirrored-ps, we see some areas of sparsity, implying some combinations have positivity violations. For instance, many more days are without Extra Magic Mornings with a probability below 10%.
+However, looking at @fig-mirrored-ps, we see some areas of sparsity, implying some combinations have positivity violations.
+For instance, many more days are without Extra Magic Mornings with a probability below 10%.
 
 ```{r}
 seven_dwarfs_9_with_ps |>
-  count(park_extra_magic_morning, low_prob = .fitted <= .1)
+  count(park_extra_magic_morning, low_prob = .fitted <= 0.1)
 ```
 
-We're likely seeing a combination of structural positivity (some days will never or always get Extra Magic Hours per Disney's decision-making process) and stochastic violations. Since we have a limited number of days in the year and only about 17% of days get Extra Magic Hours in the morning, we expect some sparsity. For instance, @fig-random-days-ps is what the graph would look like if Extra Magic Mornings were randomized with the same proportions of exposed and unexposed days. (If you try this out with different seeds, you'll see that these data are prone to such random violations.) Propensity score methods are more susceptible to issues with positivity violations than outcome model-based methods and some doubly robust methods; we'll have to keep an eye on this.
+We're likely seeing a combination of structural positivity (some days will never or always get Extra Magic Hours per Disney's decision-making process) and stochastic violations.
+Since we have a limited number of days in the year and only about 17% of days get Extra Magic Hours in the morning, we expect some sparsity.
+For instance, @fig-random-days-ps is what the graph would look like if Extra Magic Mornings were randomized with the same proportions of exposed and unexposed days.
+(If you try this out with different seeds, you'll see that these data are prone to such random violations.)
+Propensity score methods are more susceptible to issues with positivity violations than outcome model-based methods and some doubly robust methods; we'll have to keep an eye on this.
 
 ```{r}
 #| label: fig-random-days-ps
 #| code-fold: true
 #| fig-cap: "A simulation of randomizing Extra Magic Mornings. There is no relationship between the covariates and the exposure except chance. Because of the small sample size and lower proportion of exposed days, we need to be cautious about interpreting the results of these distributions."
+
 set.seed(2025)
 seven_dwarfs_9 |>
-  mutate(randomized_emm = rbinom(n(), 1, .17)) |>
+  mutate(randomized_emm = rbinom(n(), 1, 0.17)) |>
   glm(
     randomized_emm ~ park_ticket_season + park_close + park_temperature_high,
     data = _,
@@ -391,7 +473,8 @@ seven_dwarfs_9 |>
   labs(x = "propensity score", fill = "extra magic morning")
 ```
 
-What can we do about these problems? Although we need good domain knowledge to base our assumptions on (and perhaps better exclusion criteria for days that are structurally unable to receive Extra Magic Hours), using the information in the propensity score can help with both exchangeability and, with some methods, positivity.
+What can we do about these problems?
+Although we need good domain knowledge to base our assumptions on (and perhaps better exclusion criteria for days that are structurally unable to receive Extra Magic Hours), using the information in the propensity score can help with both exchangeability and, with some methods, positivity.
 
 ## Using the propensity scores {#sec-using-ps}
 
@@ -401,14 +484,18 @@ There are many ways to incorporate the propensity score into an analysis.
 Commonly used techniques include stratification (estimating the causal effect within propensity score strata), matching, weighting, and direct covariate adjustment (including the propensity score as a covariate in the outcome model).
 This section will focus on **matching** and **weighting**.
 
-Matching and weighting are two different ways of creating populations with better confounder balance. In matching, we create a *sub*-population by selecting a subgroup of observations where we hope exchangeability holds. In weighting, we re-weight the observations to create a *pseudo*-population where we hope exchangeability holds.
+Matching and weighting are two different ways of creating populations with better confounder balance.
+In matching, we create a *sub*-population by selecting a subgroup of observations where we hope exchangeability holds.
+In weighting, we re-weight the observations to create a *pseudo*-population where we hope exchangeability holds.
 
 ## Matching {#sec-matching}
 
 Matching is an intuitive way to create a population where we can make apples-to-apples comparisons.
-Imagine that we start with an exposed observation. In an infinite population, we could handpick an unexposed observation, the only difference being the exposure status.
+Imagine that we start with an exposed observation.
+In an infinite population, we could handpick an unexposed observation, the only difference being the exposure status.
 In other words, we match two observations that have identical confounder values but opposite exposure values.
-This is called **exact matching**. Exact matching works well for very large data or very limited numbers (and values) of confounders, but it becomes increasingly complex to find such a match when the number and continuity of confounders increase.
+This is called **exact matching**.
+Exact matching works well for very large data or very limited numbers (and values) of confounders, but it becomes increasingly complex to find such a match when the number and continuity of confounders increase.
 This is where the propensity score, a summary measure of all of the confounders, comes into play.
 
 The `{MatchIt}` package is one of the most flexible tools for matching in R.
@@ -416,13 +503,16 @@ Let's match similar days with `matchit()`.
 (If we didn't include the pre-computed propensity score in the `distance` argument, `matchit()` would have refit the logistic regression for us.)
 There were 60 days in 2018 when the Magic Kingdom had Extra Magic Morning hours.
 For each of these 60 exposed days, `matchit()` found a comparable unexposed day, by implementing a nearest-neighbor match using the constructed propensity score.
-Examining the output, we also see that the default target estimand is an "ATT," the average treatment effect among the treated. We will discuss this and several other estimands in @sec-estimands, but the important thing to know for know is that `matchit()` is going to keep all the days with Extra Magic Morning and may discard some days that were unexposed.
+Examining the output, we also see that the default target estimand is an "ATT," the average treatment effect among the treated.
+We will discuss this and several other estimands in @sec-estimands, but the important thing to know for know is that `matchit()` is going to keep all the days with Extra Magic Morning and may discard some days that were unexposed.
 
 ```{r}
 library(MatchIt)
 ps_logit_scale <- predict(ps_mod)
 matchit_obj <- matchit(
-  park_extra_magic_morning ~ park_ticket_season + park_close + park_temperature_high,
+  park_extra_magic_morning ~ park_ticket_season +
+    park_close +
+    park_temperature_high,
   data = seven_dwarfs_9_with_ps,
   # match on the propensity score we fit on the logit scale
   # TODO: @Lucy, should we supply this on the logit scale or probability scale?
@@ -441,7 +531,9 @@ matched_data <- get_matches(matchit_obj) |>
 matched_data
 ```
 
-The `subclass` column tells us which days are matched. For instance, for `subclass == 1`, we have a pair of days, one with and one without Extra Magic Mornings. Their propensity scores are the same.
+The `subclass` column tells us which days are matched.
+For instance, for `subclass == 1`, we have a pair of days, one with and one without Extra Magic Mornings.
+Their propensity scores are the same.
 
 ```{r}
 matched_data |>
@@ -449,7 +541,9 @@ matched_data |>
   select(park_date, park_extra_magic_morning, .fitted)
 ```
 
-If we look closer at their covariates, we can see why. These are not exact matches---the temperature and park close variables are slightly different---but we can see these are both regular ticket season days with cooler historic temperatures and later close times. Do they seem like good counterfactuals for one another?
+If we look closer at their covariates, we can see why.
+These are not exact matches---the temperature and park close variables are slightly different---but we can see these are both regular ticket season days with cooler historic temperatures and later close times.
+Do they seem like good counterfactuals for one another?
 
 ```{r}
 matched_data |>
@@ -465,7 +559,8 @@ matched_data |>
   select(park_date, park_extra_magic_morning, .fitted)
 ```
 
-Their actual variables, however, are not as close. There is about a 20 degree difference in the historical temperature, and the park close time, while earlier for both, is a little further apart than pair 1.
+Their actual variables, however, are not as close.
+There is about a 20 degree difference in the historical temperature, and the park close time, while earlier for both, is a little further apart than pair 1.
 
 ```{r}
 matched_data |>
@@ -473,7 +568,9 @@ matched_data |>
   select(park_date, park_temperature_high, park_ticket_season, park_close)
 ```
 
-We might also want to know which days *weren't* matched. Since we kept all the days with Extra Magic Hours, we know all of the days that were dropped did not have them. We can check which days aren't in the matched data with an anti-join.
+We might also want to know which days *weren't* matched.
+Since we kept all the days with Extra Magic Hours, we know all of the days that were dropped did not have them.
+We can check which days aren't in the matched data with an anti-join.
 
 ```{r}
 seven_dwarfs_9_with_ps |>
@@ -481,13 +578,21 @@ seven_dwarfs_9_with_ps |>
   select(park_date, park_extra_magic_morning, .fitted)
 ```
 
-We may feel that there is still a lot of valuable statistical information in these dropped data. We could gain extra statistical precision by using more than one match for each day with Extra Magic Hours. Previously, we used $1:1$ matching, but `matchit()` also supports $1:k$ matching with the `ratio` argument. For instance, for `ratio = 2`, we would get two matches for every day with Extra Magic Mornings, resulting in a sample size of 180.
+We may feel that there is still a lot of valuable statistical information in these dropped data.
+We could gain extra statistical precision by using more than one match for each day with Extra Magic Hours.
+Previously, we used $1:1$ matching, but `matchit()` also supports $1:k$ matching with the `ratio` argument.
+For instance, for `ratio = 2`, we would get two matches for every day with Extra Magic Mornings, resulting in a sample size of 180.
 
-However, we need to be cautious about adding extra matches when data are limited. The more days we try to match, the worse the match will get. For instance, when we try to find four matches for each day with Extra Magic Mornings, the day the propensity scores for `subclass == 1` start to get pretty different for the later matches. This is a bias-variance trade-off: for more matches, we get better precision, but we make it harder to find good matches, which may increase bias.
+However, we need to be cautious about adding extra matches when data are limited.
+The more days we try to match, the worse the match will get.
+For instance, when we try to find four matches for each day with Extra Magic Mornings, the day the propensity scores for `subclass == 1` start to get pretty different for the later matches.
+This is a bias-variance trade-off: for more matches, we get better precision, but we make it harder to find good matches, which may increase bias.
 
 ```{r}
 matchit(
-  park_extra_magic_morning ~ park_ticket_season + park_close + park_temperature_high,
+  park_extra_magic_morning ~ park_ticket_season +
+    park_close +
+    park_temperature_high,
   data = seven_dwarfs_9_with_ps,
   distance = ps_logit_scale,
   ratio = 4
@@ -498,11 +603,20 @@ matchit(
   select(park_date, park_extra_magic_morning, .fitted)
 ```
 
-We can control the quality of the match by asking `matchit()` to only match observations within a certain distance away. In other words, we can ask not to match observations with propensity scores farther apart than we'd like. We control this by setting a **caliper**. The caliper is a dynamic distance, on the logit scale, that we accept as the maximum difference between two observations that can be matched. It is dynamic in that sense that whatever value we give to the `caliper` argument is multiplied by the standard deviation of the propensity score. However, let's try 1:2 matching with a caliper of 0.2. Matching with a caliper gives us 178 days, two days fewer than $60 + 60*2$. Two of the days with Extra Magic Mornings only received one matched control instead of two.
+We can control the quality of the match by asking `matchit()` to only match observations within a certain distance away.
+In other words, we can ask not to match observations with propensity scores farther apart than we'd like.
+We control this by setting a **caliper**.
+The caliper is a dynamic distance, on the logit scale, that we accept as the maximum difference between two observations that can be matched.
+It is dynamic in that sense that whatever value we give to the `caliper` argument is multiplied by the standard deviation of the propensity score.
+However, let's try 1:2 matching with a caliper of 0.2.
+Matching with a caliper gives us 178 days, two days fewer than $60 + 60*2$.
+Two of the days with Extra Magic Mornings only received one matched control instead of two.
 
 ```{r}
 mtchs <- matchit(
-  park_extra_magic_morning ~ park_ticket_season + park_close + park_temperature_high,
+  park_extra_magic_morning ~ park_ticket_season +
+    park_close +
+    park_temperature_high,
   data = seven_dwarfs_9_with_ps,
   distance = ps_logit_scale,
   ratio = 2,
@@ -516,7 +630,8 @@ mtchs |>
   filter(n < 3)
 ```
 
-One important point is that by setting a caliper, we may be changing the population about whom we are making inferences depending on which and how many observations are dropped. We'll revisit this in @sec-estimands.
+One important point is that by setting a caliper, we may be changing the population about whom we are making inferences depending on which and how many observations are dropped.
+We'll revisit this in @sec-estimands.
 
 ## Weighting {#sec-weighting}
 
@@ -528,13 +643,16 @@ We can calculate many different weights depending on the target estimand of inte
 In this section, we will focus on the Average Treatment Effect (ATE) weights, commonly referred to as inverse probability weights.
 The weight is constructed as follows: each observation is weighted by the *inverse* of the probability of receiving the exposure it actually received.
 
-$$w_{ATE} = \frac{X}{p} + \frac{(1 - X)}{1 - p}$$
+$$
+w_{ATE} = \frac{X}{p} + \frac{(1 - X)}{1 - p}
+$$
 
 For example, if observation 1 had a very high likelihood of being exposed given their pre-exposure covariates ($p = 0.9$), but they in fact were *not* exposed, their weight would be 10 ($w_1 = 1 / (1 - 0.9)$).
 Likewise, if observation 2 had a very high likelihood of being exposed given their pre-exposure covariates ($p = 0.9$), and they *were* exposed, their weight would be 1.1 ($w_2 = 1 / 0.9$).
 Intuitively, we give more weight to observations that, based on their measured confounders, appear to have helpful information for constructing a counterfactual---we would have predicted that they were exposed, but by chance, they were not, or vice versa.
 
-The `{propensity}` package calculates a variety of propensity score weights with functions named to follow the pattern `wt_estimand()`. To calculate the ATE, we use `wt_ate()`, which we provide the fitted propensity score and the observed exposure values.
+The `{propensity}` package calculates a variety of propensity score weights with functions named to follow the pattern `wt_estimand()`.
+To calculate the ATE, we use `wt_ate()`, which we provide the fitted propensity score and the observed exposure values.
 
 ```{r}
 library(propensity)
@@ -543,13 +661,19 @@ seven_dwarfs_9_with_wt <- seven_dwarfs_9_with_ps |>
   mutate(w_ate = wt_ate(.fitted, park_extra_magic_morning))
 ```
 
-@tbl-df-wt shows the weights in the first six rows. For instance, January 1 did not have Extra Magic Hours, and it only had a probability of $1 - 0.3 = 0.7$ of *not* having them. Therefore, this isn't a particularly surprising day. It gets a weight of 1.4. January 5, however, is more surprising: it has a probability of receiving Extra Magic Hours of 0.18, but it did, in fact, have them. That makes it a good counterfactual for these other days that didn't, so it gets a weight of 5.4.
+@tbl-df-wt shows the weights in the first six rows.
+For instance, January 1 did not have Extra Magic Hours, and it only had a probability of $1 - 0.3 = 0.7$ of *not* having them.
+Therefore, this isn't a particularly surprising day.
+It gets a weight of 1.4.
+January 5, however, is more surprising: it has a probability of receiving Extra Magic Hours of 0.18, but it did, in fact, have them.
+That makes it a good counterfactual for these other days that didn't, so it gets a weight of 5.4.
 
 ```{r}
 #| label: tbl-df-wt
 #| tbl-cap: >
 #|   The first six observations in the `seven_dwarfs_9_with_wt` dataset, including their propensity scores in the `.fitted` column and weight in the `w_ate` column.
 #| code-fold: true
+
 seven_dwarfs_9_with_wt |>
   select(
     park_date,
@@ -576,11 +700,14 @@ seven_dwarfs_9_with_wt |>
 ::: {.callout-note}
 ## WeightIt
 
-If you like the feel of MatchIt, it has a cousin package called `{WeightIt}` with the same design principles and many useful features. We'll focus on propensity, but WeightIt is easy to use if you are familiar with MatchIt.
+If you like the feel of MatchIt, it has a cousin package called `{WeightIt}` with the same design principles and many useful features.
+We'll focus on propensity, but WeightIt is easy to use if you are familiar with MatchIt.
 
 ```{r}
 wt_it <- WeightIt::weightit(
-  park_extra_magic_morning ~ park_ticket_season + park_close + park_temperature_high,
+  park_extra_magic_morning ~ park_ticket_season +
+    park_close +
+    park_temperature_high,
   data = seven_dwarfs_9_with_ps,
   ps = ".fitted"
 )
@@ -592,12 +719,19 @@ head(wt_it$weights)
 
 :::
 
-A day that had a very low predicted probability of Extra Magic Hours in the morning will receive a high weight if it did, in fact, have them. The minimum of ATE weights is 1, but the maximum is unbounded. The closer the probability of receiving the observed exposure is to 0, the higher the weight will be. That means we need to be cautious about **extreme weights**. Extreme weights are weights that add undue information to the resulting outcome model. Extreme weights tend to *destabilize* our estimate, resulting in worse precision and potentially worse bias. @fig-wts-distr shows the distribution of the ATE weights.
+A day that had a very low predicted probability of Extra Magic Hours in the morning will receive a high weight if it did, in fact, have them.
+The minimum of ATE weights is 1, but the maximum is unbounded.
+The closer the probability of receiving the observed exposure is to 0, the higher the weight will be.
+That means we need to be cautious about **extreme weights**.
+Extreme weights are weights that add undue information to the resulting outcome model.
+Extreme weights tend to *destabilize* our estimate, resulting in worse precision and potentially worse bias.
+@fig-wts-distr shows the distribution of the ATE weights.
 
 ```{r}
 #| label: fig-wts-distr
 #| fig-cap: "The distribution of Average Treatment Effect weights. ATE weights have a lower bound of 1 and no upper bound. Here, we see a spike near one but many weights much higher in the right tail."
 #| message: false
+
 seven_dwarfs_9_with_wt |>
   ggplot(aes(w_ate)) +
   geom_histogram() +
@@ -605,12 +739,15 @@ seven_dwarfs_9_with_wt |>
   xlab("ATE Weights")
 ```
 
-Indeed, we have several days with weights over 10 (@tbl-extreme-wts). April 27, for instance, is being treated like almost twenty days! It might be a good counterfactual for days without Extra Magic Hours, but a weight that high will add more variance than it will reduce bias.
+Indeed, we have several days with weights over 10 (@tbl-extreme-wts).
+April 27, for instance, is being treated like almost twenty days!
+It might be a good counterfactual for days without Extra Magic Hours, but a weight that high will add more variance than it will reduce bias.
 
 ```{r}
 #| label: tbl-extreme-wts
 #| tbl-cap: "Days with ATE weights over 10. These days are upweighted in our population because of their low probability of occurring, but the higher weights get, the more instability we introduce."
 #| code-fold: true
+
 seven_dwarfs_9_with_wt |>
   filter(w_ate > 10) |>
   select(
@@ -634,12 +771,18 @@ seven_dwarfs_9_with_wt |>
   )
 ```
 
-We can mitigate some of the instability of extreme weights by using a stabilization factor: the proportions of the exposed and unexposed. Instead of inverting the probability of the received exposure, we use the proportion in the numerator. Stabilization has an interesting effect on the weights. First, it improves the variance by making the spread of the weights smaller. Second, it creates weights that have a mean of 1. In other words, the pseudo-population is approximately the same size as the original population.
+We can mitigate some of the instability of extreme weights by using a stabilization factor: the proportions of the exposed and unexposed.
+Instead of inverting the probability of the received exposure, we use the proportion in the numerator.
+Stabilization has an interesting effect on the weights.
+First, it improves the variance by making the spread of the weights smaller.
+Second, it creates weights that have a mean of 1.
+In other words, the pseudo-population is approximately the same size as the original population.
 
 ```{r}
 #| label: fig-stbl-wts
 #| fig-cap: "The distribution of stabilized ATE weights. Their distribution is much more restricted than the unstabilized weights, and they average to a weight of 1."
 #| message: false
+
 seven_dwarfs_9_with_wt <- seven_dwarfs_9_with_ps |>
   mutate(stbl_wts = wt_ate(.fitted, park_extra_magic_morning, stabilize = TRUE))
 
@@ -659,20 +802,36 @@ seven_dwarfs_9_with_wt |>
   xlab("Stabilized ATE Weights")
 ```
 
-Another set of techniques that are used to address extreme weights (and poor overlap) are **trimming** and **truncation**. Trimming is when we set an acceptable range of the propensity score and drop the observations that fall outside of that range from the analysis. When trimming, you should refit the propensity score model to improve the fit and calibration. Truncation is when, instead of dropping observations, we *truncate* any value outside of the acceptable range to the minimum or maximum of the range. Truncating is also sometimes called **Winsorizing**. Note that sometimes, authors use "trim" and "truncate" interchangeably or even with the opposite meanings, so be clear about what you mean and make sure you understand what other analysts mean, too.
+Another set of techniques that are used to address extreme weights (and poor overlap) are **trimming** and **truncation**.
+Trimming is when we set an acceptable range of the propensity score and drop the observations that fall outside of that range from the analysis.
+When trimming, you should refit the propensity score model to improve the fit and calibration.
+Truncation is when, instead of dropping observations, we *truncate* any value outside of the acceptable range to the minimum or maximum of the range.
+Truncating is also sometimes called **Winsorizing**.
+Note that sometimes, authors use "trim" and "truncate" interchangeably or even with the opposite meanings, so be clear about what you mean and make sure you understand what other analysts mean, too.
 
-propensity provides helper functions for managing these processes. `ps_trim()` will trim the observations, and `ps_trunc()` will truncate them. `ps_refit()` will refit the propensity score on only the non-trimmed observations. There are a few things to note here. First, we're using an adaptive method to decide the best range to trim the scores at; this approach optimizes the variance of the resulting observations. Second, we're using `ps_refit()` on the trimmed propensity scores to recalculate the propensity score without the trimmed observations. Third, in `ps_trunc()`, we're truncating propensity scores to *under* the 1st percentile *to* the 1st percentile. Researchers will commonly truncate to the 1st and 99th percentiles, but since our highest propensity score is about 0.50, these won't produce extreme weights, so we leave them alone.
+propensity provides helper functions for managing these processes.
+`ps_trim()` will trim the observations, and `ps_trunc()` will truncate them.
+`ps_refit()` will refit the propensity score on only the non-trimmed observations.
+There are a few things to note here.
+First, we're using an adaptive method to decide the best range to trim the scores at; this approach optimizes the variance of the resulting observations.
+Second, we're using `ps_refit()` on the trimmed propensity scores to recalculate the propensity score without the trimmed observations.
+Third, in `ps_trunc()`, we're truncating propensity scores to *under* the 1st percentile *to* the 1st percentile.
+Researchers will commonly truncate to the 1st and 99th percentiles, but since our highest propensity score is about 0.50, these won't produce extreme weights, so we leave them alone.
 
 ```{r}
 seven_dwarfs_9_with_wt <- seven_dwarfs_9_with_wt |>
   mutate(
     trimmed_ps = ps_trim(.fitted, method = "adaptive") |>
       ps_refit(ps_mod),
-    trunc_ps = ps_trunc(.fitted, method = "pctl", lower = .01, upper = 1)
+    trunc_ps = ps_trunc(.fitted, method = "pctl", lower = 0.01, upper = 1)
   )
 ```
 
-Trimming and truncating affect our sample differently. In trimming, we have fewer observations afterward. We can see which observations were trimmed with `is_unit_trimmed()`. Only observations in the lower range of the original propensity score were trimmed. Their values for `trimmed_ps` are `NA` because they were not included in the model when we used `ps_refit()`.
+Trimming and truncating affect our sample differently.
+In trimming, we have fewer observations afterward.
+We can see which observations were trimmed with `is_unit_trimmed()`.
+Only observations in the lower range of the original propensity score were trimmed.
+Their values for `trimmed_ps` are `NA` because they were not included in the model when we used `ps_refit()`.
 
 ```{r}
 seven_dwarfs_9_with_wt |>
@@ -687,6 +846,7 @@ You can see the overlap in this subset is slightly improved (@fig-dist-ps-trimme
 #| fig-cap: "The distribution of propensity scores by exposure group after trimming. Trimming improved the overlap."
 #| message: false
 #| warning: false
+
 ggplot(
   seven_dwarfs_9_with_wt,
   aes(trimmed_ps, fill = factor(park_extra_magic_morning))
@@ -696,7 +856,8 @@ ggplot(
   labs(x = "propensity score", fill = "extra magic morning")
 ```
 
-In truncation, we are not removing observations but forcing some observations to be within the acceptable range. All the truncated observations (which we found with `is_unit_truncated()`) now have the same value in `trunc_ps`, equal to the 1st percentile of `.fitted`.
+In truncation, we are not removing observations but forcing some observations to be within the acceptable range.
+All the truncated observations (which we found with `is_unit_truncated()`) now have the same value in `trunc_ps`, equal to the 1st percentile of `.fitted`.
 
 ```{r}
 seven_dwarfs_9_with_wt |>
@@ -704,13 +865,15 @@ seven_dwarfs_9_with_wt |>
   select(park_date, park_extra_magic_morning, .fitted, trunc_ps)
 ```
 
-You can see how the truncation on the left side of the plot forces overlap (@fig-dist-ps-trunc). Truncation doesn't discard units (improving the sample size over trimming), but this forced change of propensity scores can be unintuitive.
+You can see how the truncation on the left side of the plot forces overlap (@fig-dist-ps-trunc).
+Truncation doesn't discard units (improving the sample size over trimming), but this forced change of propensity scores can be unintuitive.
 
 ```{r}
 #| label: fig-dist-ps-trunc
 #| fig-cap: "The distribution of propensity scores by exposure group after truncating. Truncation improved the overlap, as well."
 #| message: false
 #| warning: false
+
 ggplot(
   seven_dwarfs_9_with_wt,
   aes(trunc_ps, fill = factor(park_extra_magic_morning))
@@ -720,19 +883,26 @@ ggplot(
   labs(x = "propensity score", fill = "extra magic morning")
 ```
 
-We can then use trimmed or truncated weights to calculate weights. In fact, we can combine these approaches with stabilized weights. Let's calculate stabilized weights on the truncated propensity scores. (We can also use truncated or trimmed weights with matching and a caliper, but we won't show that here.) @fig-sbl-trunc-wts shows the distribution of weights after truncating and stabilizing.
+We can then use trimmed or truncated weights to calculate weights.
+In fact, we can combine these approaches with stabilized weights.
+Let's calculate stabilized weights on the truncated propensity scores.
+(We can also use truncated or trimmed weights with matching and a caliper, but we won't show that here.)
+@fig-sbl-trunc-wts shows the distribution of weights after truncating and stabilizing.
 
 ```{r}
 #| label: fig-sbl-trunc-wts
 #| fig-cap: "The distribution of stabilized weights where the propensity score was truncated to the 1st percentile. The extreme weights we saw before are slightly improved."
 #| message: false
 #| warning: false
+
 seven_dwarfs_9_with_wt <- seven_dwarfs_9_with_wt |>
-  mutate(trunc_stbl_wt = wt_ate(
-    trunc_ps,
-    park_extra_magic_morning,
-    stabilize = TRUE
-  ))
+  mutate(
+    trunc_stbl_wt = wt_ate(
+      trunc_ps,
+      park_extra_magic_morning,
+      stabilize = TRUE
+    )
+  )
 
 seven_dwarfs_9_with_wt |>
   ggplot(aes(trunc_stbl_wt)) +
@@ -741,9 +911,15 @@ seven_dwarfs_9_with_wt |>
   xlab("Truncated and Stabilized ATE Weights")
 ```
 
-Truncation and trimming, like using a caliper, may change the population we are making inferences about. We'll investigate this further in @sec-estimands.
+Truncation and trimming, like using a caliper, may change the population we are making inferences about.
+We'll investigate this further in @sec-estimands.
 
-You may have noticed that extreme weights are often a positivity problem. The days that were trimmed, for instance, mainly were days without Extra Magic Hours that had a low predicted probability of receiving them. Once we've fit the propensity score, we can probe the trimmed or truncated results to better understand why we need to modify them in the first place. Here, it seems the trimmed observations were all warm days in the value ticket season with later closing hours. Perhaps these days are structurally unable to receive Extra Magic Hours per Disney's requirements. We'd want to determine if that was the case, as we may wish to modify our exclusion criteria rather than dynamically removing observations based on their propensity score.
+You may have noticed that extreme weights are often a positivity problem.
+The days that were trimmed, for instance, mainly were days without Extra Magic Hours that had a low predicted probability of receiving them.
+Once we've fit the propensity score, we can probe the trimmed or truncated results to better understand why we need to modify them in the first place.
+Here, it seems the trimmed observations were all warm days in the value ticket season with later closing hours.
+Perhaps these days are structurally unable to receive Extra Magic Hours per Disney's requirements.
+We'd want to determine if that was the case, as we may wish to modify our exclusion criteria rather than dynamically removing observations based on their propensity score.
 
 ```{r}
 seven_dwarfs_9_with_wt |>
@@ -758,9 +934,13 @@ seven_dwarfs_9_with_wt |>
 ::: {.callout-note}
 ## When should I use matching vs weighting?
 
-Weighting is statistically more efficient than matching, and we recommend using it over matching when possible. However, matching has a distinct advantage: it's easy to understand. Someone with a statistical background might be comfortable interpreting results from a weighted analysis, but a stakeholder with a different background may not understand the pseudo-population or why its sample size can be a non-integer value. So, if you have a lot of data and think it will help improve the interpretation of the analysis, matching can be a good option.
+Weighting is statistically more efficient than matching, and we recommend using it over matching when possible.
+However, matching has a distinct advantage: it's easy to understand.
+Someone with a statistical background might be comfortable interpreting results from a weighted analysis, but a stakeholder with a different background may not understand the pseudo-population or why its sample size can be a non-integer value.
+So, if you have a lot of data and think it will help improve the interpretation of the analysis, matching can be a good option.
 
 We'll also present some ways to present weighted populations in @sec-estimands that may help stakeholders understand the analysis better, getting the best of both worlds.
 :::
 
-Now that we've applied the propensity score via weighting and matching, it's time to ask: do these approaches improve the balance we saw in @fig-mirrored-ps? Let's turn to techniques for probing the results of propensity score techniques.
+Now that we've applied the propensity score via weighting and matching, it's time to ask: do these approaches improve the balance we saw in @fig-mirrored-ps?
+Let's turn to techniques for probing the results of propensity score techniques.

@@ -6,6 +6,7 @@
 
 ```{r}
 #| echo: false
+
 # TODO: remove when first edition complete
 status("complete")
 ```
@@ -30,11 +31,14 @@ However, most discussed how such a cause might be justified by previous research
 
 ```{r}
 #| label: "fig-word-ranking"
-#| fig.cap: "Rankings of causal strength of root words used by researchers. Root words with more Strong rankings have stronger causal implications than those with many None or Weak rankings. Data from @haber_causal_language."
-#| fig.height: 9
+#| fig-cap: "Rankings of causal strength of root words used by researchers. Root words with more Strong rankings have stronger causal implications than those with many None or Weak rankings. Data from @haber_causal_language."
+#| fig-height: 9
 #| echo: false
 
-rankings <- read_csv(here::here("data/word_rankings.csv"), show_col_types = FALSE) |>
+rankings <- read_csv(
+  here::here("data/word_rankings.csv"),
+  show_col_types = FALSE
+) |>
   janitor::clean_names()
 
 lvls <- rankings |>
@@ -53,7 +57,9 @@ rankings |>
   mutate(rank = n / sum(n)) |>
   ungroup() |>
   drop_na(rating) |>
-  mutate(rating = factor(rating, levels = c("None", "Weak", "Moderate", "Strong"))) |>
+  mutate(
+    rating = factor(rating, levels = c("None", "Weak", "Moderate", "Strong"))
+  ) |>
   ggplot(aes(x = rank, y = root_word, fill = rating)) +
   geom_col(position = position_fill(reverse = TRUE)) +
   scale_fill_viridis_d(direction = -1) +
@@ -81,7 +87,7 @@ rankings |>
 
 Instead of clear questions with obvious assumptions and goals, we end up with "Schrödinger's causal inference":
 
-> Our results suggest that "Schrödinger's causal inference," — where studies avoid stating (or even explicitly deny) an interest in estimating causal effects yet are otherwise embedded with causal intent, inference, implications, and recommendations — is common.
+> Our results suggest that "Schrödinger's causal inference," --- where studies avoid stating (or even explicitly deny) an interest in estimating causal effects yet are otherwise embedded with causal intent, inference, implications, and recommendations --- is common.
 >
 > --- @haber_causal_language
 
@@ -126,7 +132,9 @@ Since the coronavirus is similar to other respiratory diseases, we had many publ
 Descriptive statistics of cases by region were vital for deciding local policies and the strength of those policies.
 
 A great example of a more complex descriptive analysis during the pandemic was an [ongoing report by the Financial Times of expected deaths vs. observed deaths](https://www.ft.com/content/a2901ce8-5eb7-4633-b89c-cbdf5b386938) in various countries and regions[^01-casual-to-causal-1].
-While the calculation of expected deaths is slightly more sophisticated than most descriptive statistics, it provided a tremendous amount of information about current deaths without needing to untangle causal effects (e.g., were they due to COVID-19 directly? Inaccessible healthcare? Cardiovascular events post-COVID?).
+While the calculation of expected deaths is slightly more sophisticated than most descriptive statistics, it provided a tremendous amount of information about current deaths without needing to untangle causal effects (e.g., were they due to COVID-19 directly?
+Inaccessible healthcare?
+Cardiovascular events post-COVID?).
 In this (simplified) recreation of their plot from July 2020, you can see the staggering effect of the pandemic's early months.
 
 [^01-casual-to-causal-1]: John Burn-Murdoch was responsible for many of these presentations and gave a [fascinating talk on the subject](https://cloud.rstudio.com/resources/rstudioglobal-2021/reporting-on-and-visualising-the-pandemic/).
@@ -138,6 +146,7 @@ In this (simplified) recreation of their plot from July 2020, you can see the st
 #| fig-cap: "2020 excess deaths vs. historical expected deaths from any cause. Data from the Financial Times."
 #| echo: false
 #| message: false
+
 ft_excess_deaths <- read_csv(here::here("data/ft_excess_deaths.csv")) |>
   mutate(year = factor(year))
 
@@ -190,9 +199,21 @@ ggplot(
 
 Here are some other great examples of descriptive analyses.
 
--   **Deforestation around the world**. Our World in Data [@owidforestsanddeforestation] is a data journalism organization that produces thoughtful, usually descriptive reports on various topics. In this report, they present data visualizations of both absolute change in forest coverage (forest transitions) and relative change (deforestation or reforestation), using basic statistics and forestry theory to present helpful information about the state of forests over time.
--   **The prevalence of chlamydial and gonococcal infections** [@Miller2004]. Measuring the prevalence of disease (how many people currently have a disease, usually expressed as a ratio per number of people) is helpful for basic public health (resources, prevention, education) and scientific understanding. In this study, the authors conducted a complex survey meant to be representative of all high schools in the United States (the target population); they used survey weights to address a variety of factors related to their question, then calculated prevalence ratios and other statistics. As we'll see, weights are helpful in causal inference for the same reason: targeting a particular population. That said, not all weighting techniques are causal in nature, and they were not here.
--   **Estimating race and ethnicity-specific hysterectomy inequalities** [@Gartner2020]. Descriptive techniques also help us understand disparities in areas like economics and epidemiology. In this study, the authors asked: Does the risk of hysterectomy differ by racial or ethnic background? Although the analysis is stratified by a key variable, it's still descriptive. Another interesting aspect of this paper is the authors' work ensuring the research answered questions about the right target population. Their analysis combined several data sources to better estimate the true population prevalence (instead of the prevalence among those in hospitals, as commonly presented). They also adjusted for the prevalence of hysterectomy, e.g., they calculated the incidence (new case) rate only among those who could actually have a hysterectomy (e.g., they hadn't had one yet).
+- **Deforestation around the world**.
+  Our World in Data [@owidforestsanddeforestation] is a data journalism organization that produces thoughtful, usually descriptive reports on various topics.
+  In this report, they present data visualizations of both absolute change in forest coverage (forest transitions) and relative change (deforestation or reforestation), using basic statistics and forestry theory to present helpful information about the state of forests over time.
+- **The prevalence of chlamydial and gonococcal infections** [@Miller2004].
+  Measuring the prevalence of disease (how many people currently have a disease, usually expressed as a ratio per number of people) is helpful for basic public health (resources, prevention, education) and scientific understanding.
+  In this study, the authors conducted a complex survey meant to be representative of all high schools in the United States (the target population); they used survey weights to address a variety of factors related to their question, then calculated prevalence ratios and other statistics.
+  As we'll see, weights are helpful in causal inference for the same reason: targeting a particular population.
+  That said, not all weighting techniques are causal in nature, and they were not here.
+- **Estimating race and ethnicity-specific hysterectomy inequalities** [@Gartner2020].
+  Descriptive techniques also help us understand disparities in areas like economics and epidemiology.
+  In this study, the authors asked: Does the risk of hysterectomy differ by racial or ethnic background?
+  Although the analysis is stratified by a key variable, it's still descriptive.
+  Another interesting aspect of this paper is the authors' work ensuring the research answered questions about the right target population.
+  Their analysis combined several data sources to better estimate the true population prevalence (instead of the prevalence among those in hospitals, as commonly presented).
+  They also adjusted for the prevalence of hysterectomy, e.g., they calculated the incidence (new case) rate only among those who could actually have a hysterectomy (e.g., they hadn't had one yet).
 
 #### Validity
 
@@ -271,13 +292,14 @@ Without question, some of the predictive value of this model stems from the caus
 
 Here are other good examples from the predictive space:
 
--   Some of the most exciting work in predictive modeling is in industry.
-    Netflix regularly shares details on their modeling success and novel strategies in their [research blog](https://research.netflix.com/).
-    They also recently published a paper reviewing their use of deep learning models for recommender systems (in this case, recommending shows and movies to users) [@steck2021].
-    The authors explain their experimentation with models, the details of those models, and many of the challenges they faced, resulting in a practical guide on using such models.
+- Some of the most exciting work in predictive modeling is in industry.
+  Netflix regularly shares details on their modeling success and novel strategies in their [research blog](https://research.netflix.com/).
+  They also recently published a paper reviewing their use of deep learning models for recommender systems (in this case, recommending shows and movies to users) [@steck2021].
+  The authors explain their experimentation with models, the details of those models, and many of the challenges they faced, resulting in a practical guide on using such models.
 
--   In early 2020, researchers experienced with predictive and prognostic modeling in health research published a review of models for diagnosis and prognosis of COVID-19 [@Wynants2020].
-    This review is interesting not just for its breadth but also the astounding number of models that were rated as poor quality: "\[232\] models were rated at high or unclear risk of bias, mostly because of non-representative selection of control patients, exclusion of patients who had not experienced the event of interest by the end of the study, high risk of model overfitting, and unclear reporting." This research is also a [living review](https://www.covprecise.org/).
+- In early 2020, researchers experienced with predictive and prognostic modeling in health research published a review of models for diagnosis and prognosis of COVID-19 [@Wynants2020].
+  This review is interesting not just for its breadth but also the astounding number of models that were rated as poor quality: "\[232\] models were rated at high or unclear risk of bias, mostly because of non-representative selection of control patients, exclusion of patients who had not experienced the event of interest by the end of the study, high risk of model overfitting, and unclear reporting."
+  This research is also a [living review](https://www.covprecise.org/).
 
 #### Validity
 
@@ -339,7 +361,7 @@ He was right: contaminated water was a mechanism for cholera transmission.
 Yet, he didn't have enough information to explain how: *Vibrio cholerae*, the bacteria responsible for cholera, wasn't identified until nearly thirty years later.
 :::
 
-#### Examples
+### Examples
 
 We'll see many examples of causal inference in this book, but let's continue with an example related to COVID-19.
 As the pandemic continued and tools like vaccines and anti-viral treatments became available, policies like universal masking also began to change.
@@ -354,19 +376,20 @@ The authors found that districts that continued masking saw a drastically lower 
 
 Here are a few other interesting examples:
 
--   Netflix regularly uses causal inference in their work.
-    In 2022, they published a [blog post summarizing some causal tasks](https://netflixtechblog.com/a-survey-of-causal-inference-applications-at-netflix-b62d25175e6f) they have engaged with.
-    One interesting example is localization.
-    Netflix, being worldwide, localizes content through subtitles and dubbing.
-    Randomized experiments were a bad idea because they meant withholding content from users, so researchers at Netflix used several approaches to understand the value of localization while addressing potential confounding.
-    One example is studying the impact of pandemic-related delays in dubbing.
-    Researchers used synthetic controls (@sec-did) to simulate the impact on viewership with and without these delays.
-    Presumably, the timing of the pandemic-related delays was unrelated to many factors that would typically be related to dubbing processes, thus reducing some of the potential confounding.
+- Netflix regularly uses causal inference in their work.
+  In 2022, they published a [blog post summarizing some causal tasks](https://netflixtechblog.com/a-survey-of-causal-inference-applications-at-netflix-b62d25175e6f) they have engaged with.
+  One interesting example is localization.
+  Netflix, being worldwide, localizes content through subtitles and dubbing.
+  Randomized experiments were a bad idea because they meant withholding content from users, so researchers at Netflix used several approaches to understand the value of localization while addressing potential confounding.
+  One example is studying the impact of pandemic-related delays in dubbing.
+  Researchers used synthetic controls (@sec-did) to simulate the impact on viewership with and without these delays.
+  Presumably, the timing of the pandemic-related delays was unrelated to many factors that would typically be related to dubbing processes, thus reducing some of the potential confounding.
 
--   The Tuskegee Study is one of modern history's most infamous examples of medical abuse.
-    It is commonly pointed to as a source of distrust in the medical community from Black Americans.
-    Health economics researchers used a variation of difference-in-difference techniques to assess the effect of the Tuskegee Study on distrust and life expectancy in older Black men [@Alsan2018].
-    The results are important and disturbing: "We find that the disclosure of the study in 1972 is correlated with increases in medical mistrust and mortality and decreases in both outpatient and inpatient physician interactions for older black men. Our estimates imply life expectancy at age 45 for black men fell by up to 1.5 years in response to the disclosure, accounting for approximately 35% of the 1980 life expectancy gap between black and white men and 25% of the gap between black men and women."
+- The Tuskegee Study is one of modern history's most infamous examples of medical abuse.
+  It is commonly pointed to as a source of distrust in the medical community from Black Americans.
+  Health economics researchers used a variation of difference-in-difference techniques to assess the effect of the Tuskegee Study on distrust and life expectancy in older Black men [@Alsan2018].
+  The results are important and disturbing: "We find that the disclosure of the study in 1972 is correlated with increases in medical mistrust and mortality and decreases in both outpatient and inpatient physician interactions for older black men.
+  Our estimates imply life expectancy at age 45 for black men fell by up to 1.5 years in response to the disclosure, accounting for approximately 35% of the 1980 life expectancy gap between black and white men and 25% of the gap between black men and women."
 
 #### Validity
 
@@ -446,6 +469,7 @@ We've pulled out the *cause*, the *effect*, the *subject* (for whom?), and the *
 #| fig-cap: "Example of diagraming a causal claim."
 #| fig-height: 2
 #| label: fig-diagram-1
+
 knitr::include_graphics("../images/sentence-diagram-1.png")
 ```
 
@@ -459,11 +483,13 @@ The causal claim here could be that smoking causes lung cancer.
 #| label: fig-diagram-2
 #| fig-height: 2
 #| fig-cap: "Diagram of the causal claim \"smoking causes lung cancer\"."
+
 knitr::include_graphics("../images/sentence-diagram-2.png")
 ```
 
 Let's get more specific.
-A study was published in *JAMA* (the Journal of the American Medical Association) in 2005 titled "Effect of Smoking Reduction on Lung Cancer Risk." This study concluded: "Among individuals who smoke 15 or more cigarettes per day, smoking reduction by 50% significantly reduces the risk of lung cancer".
+A study was published in *JAMA* (the Journal of the American Medical Association) in 2005 titled "Effect of Smoking Reduction on Lung Cancer Risk."
+This study concluded: "Among individuals who smoke 15 or more cigarettes per day, smoking reduction by 50% significantly reduces the risk of lung cancer".
 [@godtfredsen2005effect] The study describes the time frame studied as 5-10 years.
 Let's diagram this causal claim.
 Here, we assume that the eligibility criteria and the target population for the estimated causal effect are the same (individuals who smoke 15 or more cigarettes per day); this need not always be the case.
@@ -473,16 +499,19 @@ In @sec-estimands, we will discuss other potential target populations.
 #| echo: false
 #| fig-cap: "Example diagram of a more specific causal claim based on results from @godtfredsen2005effect."
 #| label: fig-diagram-3
+
 knitr::include_graphics("../images/sentence-diagram-3.png")
 ```
 
-Translating this idea into asking good causal questions, we can map the following terms that you will see throughout this book to these diagrams: *exposure* (the cause), *outcome* (the effect), *eligibility criteria* (for whom?), *time zero* (when did the participants begin to be followed?), *target population*, (who can we estimate an outcome effect for?) and *follow-up period* (when?).
+Translating this idea into asking good causal questions, we can map the following terms that you will see throughout this book to these diagrams: *exposure* (the cause), *outcome* (the effect), *eligibility criteria* (for whom?), *time zero* (when did the participants begin to be followed?), *target population*, (who can we estimate an outcome effect for?)
+and *follow-up period* (when?).
 
 ```{r}
 #| echo: false
 #| label: fig-diagram-4
 #| fig-height: 2
 #| fig-cap: "Example diagram mapped to causal analysis terminology"
+
 knitr::include_graphics("../images/sentence-diagram-4.png")
 ```
 
@@ -491,5 +520,4 @@ Let's return to the smoking example.
 Our initial question was: *Does smoking cause lung cancer?*; The evidence in the study shows that for people who smoke 15+ cigarettes a day, reducing smoking by 50% reduces the risk of lung cancer over 5-10 years.
 Does the answer match the question?
 Not quite.
-Let's update our question to match what the study actually showed: *For people who smoke 15+ cigarettes a day, does reducing smoking by 50% reduce the lung cancer risk over 5-10 years?* 
-Honing this skill — asking answerable causal questions — is essential and one we will discuss throughout this book.
+Let's update our question to match what the study actually showed: *For people who smoke 15+ cigarettes a day, does reducing smoking by 50% reduce the lung cancer risk over 5-10 years?* Honing this skill --- asking answerable causal questions --- is essential and one we will discuss throughout this book.

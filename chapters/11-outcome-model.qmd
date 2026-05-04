@@ -4,6 +4,7 @@
 
 ```{r}
 #| echo: false
+
 # TODO: remove when first edition complete
 status("polishing")
 ```
@@ -16,6 +17,7 @@ For example, re-performing the matching as we did in @sec-using-ps, we can extra
 ```{r}
 #| message: false
 #| warning: false
+
 library(broom)
 library(touringplans)
 library(MatchIt)
@@ -24,7 +26,9 @@ seven_dwarfs_9 <- seven_dwarfs_train_2018 |>
   filter(wait_hour == 9)
 
 m <- matchit(
-  park_extra_magic_morning ~ park_ticket_season + park_close + park_temperature_high,
+  park_extra_magic_morning ~ park_ticket_season +
+    park_close +
+    park_temperature_high,
   data = seven_dwarfs_9
 )
 matched_data <- get_matches(m)
@@ -50,13 +54,16 @@ We will use the ATT weights so the analysis matches that for matching above.
 ```{r}
 #| message: false
 #| warning: false
+
 library(propensity)
 
 propensity_model <- glm(
-    park_extra_magic_morning ~ park_ticket_season + park_close + park_temperature_high,
-    data = seven_dwarfs_9,
-    family = binomial()
-  )
+  park_extra_magic_morning ~ park_ticket_season +
+    park_close +
+    park_temperature_high,
+  data = seven_dwarfs_9,
+  family = binomial()
+)
 
 seven_dwarfs_9_with_ps <- propensity_model |>
   augment(type.predict = "response", data = seven_dwarfs_9)
@@ -102,9 +109,9 @@ Causal inference with `group_by()` and `summarize()` works just fine now, since 
 
 There are three ways to estimate the uncertainty:
 
-1.  A bootstrap
-2.  A sandwich estimator that only takes into account the outcome model
-3.  A sandwich estimator that takes into account the propensity score model
+1. A bootstrap
+2. A sandwich estimator that only takes into account the outcome model
+3. A sandwich estimator that takes into account the propensity score model
 
 The first option can be computationally intensive, but should get you the correct estimates.
 The second option is computationally the easiest, but tends to overestimate the variability.
@@ -112,7 +119,7 @@ There are not many current solutions in R (aside from coding it up yourself) for
 
 ### The bootstrap {#sec-bootstrap}
 
-1.  Create a function to run your analysis once on a sample of your data
+1. Create a function to run your analysis once on a sample of your data
 
 ```{r}
 fit_ipw <- function(.split, ...) {
@@ -121,7 +128,9 @@ fit_ipw <- function(.split, ...) {
 
   # fit propensity score model
   propensity_model <- glm(
-    park_extra_magic_morning ~ park_ticket_season + park_close + park_temperature_high,
+    park_extra_magic_morning ~ park_ticket_season +
+      park_close +
+      park_temperature_high,
     data = seven_dwarfs_9,
     family = binomial()
   )
@@ -129,11 +138,13 @@ fit_ipw <- function(.split, ...) {
   # calculate inverse probability weights
   .df <- propensity_model |>
     augment(type.predict = "response", data = .df) |>
-    mutate(wts = wt_att(
-      .fitted,
-      park_extra_magic_morning,
-      exposure_type = "binary"
-    ))
+    mutate(
+      wts = wt_att(
+        .fitted,
+        park_extra_magic_morning,
+        exposure_type = "binary"
+      )
+    )
 
   # fit correctly bootstrapped ipw model
   lm(
@@ -145,11 +156,12 @@ fit_ipw <- function(.split, ...) {
 }
 ```
 
-2.  Use {rsample} to bootstrap our causal effect
+2. Use {rsample} to bootstrap our causal effect
 
 ```{r}
 #| message: false
 #| warning: false
+
 library(rsample)
 
 # fit ipw model to bootstrapped samples
@@ -172,9 +184,11 @@ ipw_results |>
   mutate(
     estimate = map_dbl(
       boot_fits,
-      \(.fit) .fit |>
-        filter(term == "park_extra_magic_morning") |>
-        pull(estimate)
+      \(.fit) {
+        .fit |>
+          filter(term == "park_extra_magic_morning") |>
+          pull(estimate)
+      }
     )
   ) |>
   ggplot(aes(estimate)) +
@@ -182,7 +196,7 @@ ipw_results |>
   theme_minimal()
 ```
 
-3.  Pull out the causal effect
+3. Pull out the causal effect
 
 ```{r}
 # get t-based CIs
@@ -202,6 +216,7 @@ Using the `sandwich` function, we can get the robust estimate for the variance f
 ```{r}
 #| message: false
 #| warning: false
+
 library(sandwich)
 weighted_mod <- lm(
   wait_minutes_posted_avg ~ park_extra_magic_morning,
@@ -232,6 +247,7 @@ To do this, we need to create a design object, like we did when fitting weighted
 ```{r}
 #| message: false
 #| warning: false
+
 library(survey)
 
 des <- svydesign(
@@ -262,7 +278,7 @@ results
 We can also collect the results in a data frame.
 
 ```{r}
-results |> 
+results |>
   as.data.frame()
 ```
 
@@ -283,8 +299,8 @@ In the case of a binary outcome, we calculate average probabilities for each tre
 Let's call these `p_untreated` and `p_treated`.
 When we're working with these probabilities, calculating the risk difference and risk ratio is simple:
 
--   **Risk difference**: `p_treated - p_untreated`
--   **Risk ratio**: `p_treated / p_untreated`
+- **Risk difference**: `p_treated - p_untreated`
+- **Risk ratio**: `p_treated / p_untreated`
 
 ::: callout-note
 By "risk", we mean the risk of an outcome.
@@ -295,7 +311,7 @@ A more general way to think about these is as the difference in or ratio of the 
 
 The odds for a probability is calculated as `p / (1 - p)`, so the odds ratio is:
 
--   **Odds ratio**: `(p_treated / (1 - p_treated)) /  (p_untreated / (1 - p_untreated))`
+- **Odds ratio**: `(p_treated / (1 - p_treated)) /  (p_untreated / (1 - p_untreated))`
 
 When outcomes are rare, `(1 - p)` approaches 1, and odds ratios approximate risk ratios.
 The rarer the outcome, the closer the approximation.
@@ -384,6 +400,7 @@ In other words, the effect estimate of `exposure` on `outcome` should be the sam
 #| fig-height: 4
 #| fig-align: "center"
 #| fig-cap: "A DAG showing the causal relationship between `outcome`, `exposure`, and `covariate`. `exposure` and `covariate` both cause `outcome`, but there is no relationship between `exposure` and `covariate`. In a logistic regression, the odds ratio for exposure will be non-collapsible over strata of covariate."
+
 library(ggdag)
 dagify(
   outcome ~ exposure + covariate,
@@ -407,6 +424,7 @@ outcome <- rbinom(n, 1, plogis(-0.5 + exposure + 2 * covariate))
 
 ```{r}
 #| echo: false
+
 odds_ratio <- function(tbl) {
   or <- (tbl[2, 2] * tbl[1, 1]) / (tbl[1, 2] * tbl[2, 1])
   round(or, digits = 2)
@@ -422,10 +440,10 @@ marginal_table <- table(exposure, outcome)
 marginal_or <- odds_ratio(marginal_table)
 marginal_rr <- risk_ratio(marginal_table)
 conditional_tables <- table(exposure, outcome, covariate)
-conditional_or_0 <- odds_ratio(conditional_tables[, , 1])
-conditional_or_1 <- odds_ratio(conditional_tables[, , 2])
-conditional_rr_0 <- risk_ratio(conditional_tables[, , 1])
-conditional_rr_1 <- risk_ratio(conditional_tables[, , 2])
+conditional_or_0 <- odds_ratio(conditional_tables[,, 1])
+conditional_or_1 <- odds_ratio(conditional_tables[,, 2])
+conditional_rr_0 <- risk_ratio(conditional_tables[,, 1])
+conditional_rr_1 <- risk_ratio(conditional_tables[,, 2])
 ```
 
 First, let's look at the relationship between `exposure` and `outcome` among everyone.

@@ -4,27 +4,40 @@
 
 ```{r}
 #| echo: false
+
 # TODO: remove when first edition complete
 status("wip")
 ```
 
 ## The Parametric G-Formula
 
-The parametric g-formula provides a direct approach to causal estimation through outcome modeling. Rather than reweighting observations to balance confounders, as we have done so far in this book, we model the outcome as a function of exposure and covariates, then use that model to predict what would happen under different exposure scenarios. By averaging these predictions across the population, we obtain estimates of causal effects.
+The parametric g-formula provides a direct approach to causal estimation through outcome modeling.
+Rather than reweighting observations to balance confounders, as we have done so far in this book, we model the outcome as a function of exposure and covariates, then use that model to predict what would happen under different exposure scenarios.
+By averaging these predictions across the population, we obtain estimates of causal effects.
 
-We start with fitting a conditional outcome model. Importantly, this means we must correctly specify the functional form of the outcome model. If our model is misspecified, our causal estimates will be biased. The outcome model must contain all variables in the adjustment set identified from the causal diagram. Like weighting and matching-based methods, valid inference is predicated on the assumption that this adjustment set is sufficient to identify the causal effect of interest. Once this model is fit, it can be used to generate predictions under counterfactual scenarios in which the exposure is set to the levels of interest. The resulting predicted outcomes are then averaged to create estimates of the expected outcome under each hypothetical intervention. The approach is called 'parametric' because we assume a specific parametric model (e.g., linear or logistic regression) for the outcome.
+We start with fitting a conditional outcome model.
+Importantly, this means we must correctly specify the functional form of the outcome model.
+If our model is misspecified, our causal estimates will be biased.
+The outcome model must contain all variables in the adjustment set identified from the causal diagram.
+Like weighting and matching-based methods, valid inference is predicated on the assumption that this adjustment set is sufficient to identify the causal effect of interest.
+Once this model is fit, it can be used to generate predictions under counterfactual scenarios in which the exposure is set to the levels of interest.
+The resulting predicted outcomes are then averaged to create estimates of the expected outcome under each hypothetical intervention.
+The approach is called 'parametric' because we assume a specific parametric model (e.g., linear or logistic regression) for the outcome.
 
-This approach has several advantages: it naturally handles multiple exposure comparisons, accommodates complex relationships through flexible modeling, and can be more efficient when outcomes are easier to model than exposure assignment. In this chapter, we will begin with the single exposure time point setting, demonstrating the core logic of the g-formula with binary and continuous exposures.
+This approach has several advantages: it naturally handles multiple exposure comparisons, accommodates complex relationships through flexible modeling, and can be more efficient when outcomes are easier to model than exposure assignment.
+In this chapter, we will begin with the single exposure time point setting, demonstrating the core logic of the g-formula with binary and continuous exposures.
 
 ### A Single Exposure Time Point Example
 
-Let's again consider whether Extra Magic Morning hours influence the average posted wait time for the Seven Dwarfs Mine Train ride between 9 and 10am as described in @sec-data and assume the same data generating mechanism proposed in @fig-dag-magic-hours-wait. To implement the parametric g-formula we will (1) fit an outcome model with the exposure and all confounders, (2) create two versions of the dataset in which each observation is set to be exposed or unexposed, (3) generate predicted outcomes for each version using the fitted model, (4) average those predictions to construct marginal means by exposure, and (5) take the difference in marginal means to estimate the average treatment effect.
+Let's again consider whether Extra Magic Morning hours influence the average posted wait time for the Seven Dwarfs Mine Train ride between 9 and 10am as described in @sec-data and assume the same data generating mechanism proposed in @fig-dag-magic-hours-wait.
+To implement the parametric g-formula we will (1) fit an outcome model with the exposure and all confounders, (2) create two versions of the dataset in which each observation is set to be exposed or unexposed, (3) generate predicted outcomes for each version using the fitted model, (4) average those predictions to construct marginal means by exposure, and (5) take the difference in marginal means to estimate the average treatment effect.
 
 Let's first fit the outcome model that includes the exposure (`park_extra_magic_morning`) and all confounders (the historic high temperature on the day `park_temperature_high`, the time the park closed `park_close`, and the ticket season `park_ticket_season`).
 
 ```{r}
 #| message: false
 #| warning: false
+
 library(tidyverse)
 library(broom)
 library(touringplans)
@@ -42,27 +55,38 @@ gcomp_model <- lm(
 )
 ```
 
-We then duplicate the `seven_dwarfs_9` dataset for each unique level of exposure (in this case two: one for the exposed and one for the unexposed). One copy assigns every park date as if Extra Magic Morning hours occurred and the other assigns every park date as if it did not. These counterfactual datasets represent the hypothetical worlds under which the exposure is uniformly set to each value.
+We then duplicate the `seven_dwarfs_9` dataset for each unique level of exposure (in this case two: one for the exposed and one for the unexposed).
+One copy assigns every park date as if Extra Magic Morning hours occurred and the other assigns every park date as if it did not.
+These counterfactual datasets represent the hypothetical worlds under which the exposure is uniformly set to each value.
 
 ```{r}
 exposed <- seven_dwarfs_9 |> mutate(park_extra_magic_morning = 1)
 unexposed <- seven_dwarfs_9 |> mutate(park_extra_magic_morning = 0)
 ```
 
-To build intuition for what these counterfactual datasets look like, it helps to examine them directly. Each row in the original data is "cloned" twice, once into a world where Extra Magic Morning hours occurred, and once into a world where they did not. The covariates are identical across the two clones; only the exposure value differs.
+To build intuition for what these counterfactual datasets look like, it helps to examine them directly.
+Each row in the original data is "cloned" twice, once into a world where Extra Magic Morning hours occurred, and once into a world where they did not.
+The covariates are identical across the two clones; only the exposure value differs.
 
 ```{r}
 bind_rows(
   exposed |> mutate(clone = "exposed"),
   unexposed |> mutate(clone = "unexposed")
 ) |>
-  select(park_date, clone, park_extra_magic_morning,
-         park_ticket_season, park_temperature_high) |>
+  select(
+    park_date,
+    clone,
+    park_extra_magic_morning,
+    park_ticket_season,
+    park_temperature_high
+  ) |>
   arrange(park_date) |>
   slice_head(n = 6)
 ```
 
-Using the previously fitted outcome model, predicted outcomes are generated for each of these counterfactual datasets and averaged. These averages (marginal means) represent the expected posted wait time if everyone were exposed or if no one were exposed. We can then take the difference between these marginal means to estimate the causal effect of Extra Magic Morning on posted wait times.
+Using the previously fitted outcome model, predicted outcomes are generated for each of these counterfactual datasets and averaged.
+These averages (marginal means) represent the expected posted wait time if everyone were exposed or if no one were exposed.
+We can then take the difference between these marginal means to estimate the causal effect of Extra Magic Morning on posted wait times.
 
 ```{r}
 pred_exposed <- gcomp_model |>
@@ -103,9 +127,14 @@ bind_cols(
   )
 ```
 
-Each point represents a single park date predicted under the exposed and unexposed scenarios. Because we are using a linear model, the two sets of predictions are parallel (in other words, the gap between them is constant across the range of temperature). That gap, averaged across all park dates, is the estimated average treatment effect. Notice that we are not plugging in a single "representative" covariate value; we are generating predictions for every observation at their actual covariate values and then averaging. This is what it means to marginalize over the covariate distribution, and it is what distinguishes g-computation from simply extracting a coefficient from the outcome model.
+Each point represents a single park date predicted under the exposed and unexposed scenarios.
+Because we are using a linear model, the two sets of predictions are parallel (in other words, the gap between them is constant across the range of temperature).
+That gap, averaged across all park dates, is the estimated average treatment effect.
+Notice that we are not plugging in a single "representative" covariate value; we are generating predictions for every observation at their actual covariate values and then averaging.
+This is what it means to marginalize over the covariate distribution, and it is what distinguishes g-computation from simply extracting a coefficient from the outcome model.
 
-The `{marginaleffects}` package makes some of these mechanics easy and help with uncertainty quantification. For example, rather than creating the separate counterfactual datasets, we can calculate the average treatment effect directly using the `average_comparisons` function.
+The `{marginaleffects}` package makes some of these mechanics easy and help with uncertainty quantification.
+For example, rather than creating the separate counterfactual datasets, we can calculate the average treatment effect directly using the `average_comparisons` function.
 
 ```{r}
 library(marginaleffects)
@@ -117,23 +146,38 @@ ate <- avg_comparisons(
 ate
 ```
 
-It is worth pausing here to connect back to the framework from @sec-estimands. The estimand is the same whether we use IPW or an outcome model: $E[Y(1)−Y(0)]$, the average treatment effect. What differs is the
-estimator, the recipe we use to get there. When we used IPW in @sec-outcome-model, we reweighted the observed data to balance confounders across exposure groups. Above, with g-computation we fit the outcome model to directly estimate the potential outcomes under each exposure level and average their difference. Because these are different recipes for the same cake, we should not be surprised if they produce somewhat different estimates in practice. Each relies on its own modeling assumptions: IPW depends on a correctly specified propensity score model, while the outcome model depends on a correctly specified model for the outcome. When those models are wrong in different ways, the estimates will diverge.
+It is worth pausing here to connect back to the framework from @sec-estimands.
+The estimand is the same whether we use IPW or an outcome model: $E[Y(1)−Y(0)]$, the average treatment effect.
+What differs is the estimator, the recipe we use to get there.
+When we used IPW in @sec-outcome-model, we reweighted the observed data to balance confounders across exposure groups.
+Above, with g-computation we fit the outcome model to directly estimate the potential outcomes under each exposure level and average their difference.
+Because these are different recipes for the same cake, we should not be surprised if they produce somewhat different estimates in practice.
+Each relies on its own modeling assumptions: IPW depends on a correctly specified propensity score model, while the outcome model depends on a correctly specified model for the outcome.
+When those models are wrong in different ways, the estimates will diverge.
 
 ::: {.callout-note}
 ## Under the Hood: The Delta Method
 
-When `{marginaleffects}` computes uncertainty estimates for quantities like average treatment effects, it relies on the **delta method**, a technique for approximating the variance of a transformation of estimated parameters. If you have a vector of coefficients $\hat{\boldsymbol{\beta}}$ with known variance-covariance matrix $\Sigma$, and you want the variance of some function $g(\hat{\boldsymbol{\beta}})$ (like a predicted probability or a marginal effect), the delta method gives you:
+When `{marginaleffects}` computes uncertainty estimates for quantities like average treatment effects, it relies on the **delta method**, a technique for approximating the variance of a transformation of estimated parameters.
+If you have a vector of coefficients $\hat{\boldsymbol{\beta}}$ with known variance-covariance matrix $\Sigma$, and you want the variance of some function $g(\hat{\boldsymbol{\beta}})$ (like a predicted probability or a marginal effect), the delta method gives you:
 
-$$\text{Var}\left[g(\hat{\boldsymbol{\beta}})\right] \approx \nabla
-g(\hat{\boldsymbol{\beta}})^\top \, \Sigma \, \nabla g(\hat{\boldsymbol{\beta}})$$
+$$
+\text{Var}\left[g(\hat{\boldsymbol{\beta}})\right] \approx \nabla
+g(\hat{\boldsymbol{\beta}})^\top \, \Sigma \, \nabla g(\hat{\boldsymbol{\beta}})
+$$
 
-where $\nabla g$ is the gradient of $g$ with respect to $\boldsymbol{\beta}$. `{marginaleffects}` handles this gradient computation automatically and propagates it through $\Sigma$ to produce standard errors.
+where $\nabla g$ is the gradient of $g$ with respect to $\boldsymbol{\beta}$.
+`{marginaleffects}` handles this gradient computation automatically and propagates it through $\Sigma$ to produce standard errors.
 :::
 
 ### Targeting Different Estimands {#sec-gcomp-target}
 
-As we discussed in @sec-estimands, the ATE is not the only causal estimand of interest. G-computation makes it straightforward to target different estimands by changing which covariate distribution we average over. For the ATE, we average predictions over the full observed sample. For the ATT, we average only over the covariate distribution of the exposed (in our case, days that actually had Extra Magic Morning hours). For the ATC, we average only over the unexposed. The outcome model is the same in all three cases; what changes is whose covariate values we use when generating predictions.
+As we discussed in @sec-estimands, the ATE is not the only causal estimand of interest.
+G-computation makes it straightforward to target different estimands by changing which covariate distribution we average over.
+For the ATE, we average predictions over the full observed sample.
+For the ATT, we average only over the covariate distribution of the exposed (in our case, days that actually had Extra Magic Morning hours).
+For the ATC, we average only over the unexposed.
+The outcome model is the same in all three cases; what changes is whose covariate values we use when generating predictions.
 We can target each of these estimands directly in `avg_comparisons` using the `newdata` argument:
 
 ```{r}
@@ -157,7 +201,10 @@ avg_comparisons(
   newdata = filter(seven_dwarfs_9, park_extra_magic_morning == 0)
 )
 ```
-In this case, because our outcome model contains no interaction terms between the exposure and the covariates, the three estimates will be identical. A linear model without interactions assumes a constant treatment effect across all covariate values, so it does not matter whose covariate distribution we average over, we always recover the same gap. To see differences between the ATE, ATT, and ATC from g-computation, the outcome model needs to allow the effect of the exposure to vary with covariates, for example by including an interaction term like `park_extra_magic_morning * park_ticket_season`. Let's refit our model to see these differences.
+In this case, because our outcome model contains no interaction terms between the exposure and the covariates, the three estimates will be identical.
+A linear model without interactions assumes a constant treatment effect across all covariate values, so it does not matter whose covariate distribution we average over, we always recover the same gap.
+To see differences between the ATE, ATT, and ATC from g-computation, the outcome model needs to allow the effect of the exposure to vary with covariates, for example by including an interaction term like `park_extra_magic_morning * park_ticket_season`.
+Let's refit our model to see these differences.
 
 ```{r}
 gcomp_model_int <- lm(
@@ -191,11 +238,16 @@ avg_comparisons(
 )
 ```
 
-Once at least one interaction has been specified, the three estimates can differ because the exposed and unexposed days tend to have different covariate distributions. The ATT asks what the effect was for the kinds of days that actually had Extra Magic Hours; the ATC asks what the effect would be for the kinds of days that did not. If the treatment effect were constant across all covariate values, the three estimates would coincide. When they differ, that divergence is itself informative about treatment effect heterogeneity across the population.
+Once at least one interaction has been specified, the three estimates can differ because the exposed and unexposed days tend to have different covariate distributions.
+The ATT asks what the effect was for the kinds of days that actually had Extra Magic Hours; the ATC asks what the effect would be for the kinds of days that did not.
+If the treatment effect were constant across all covariate values, the three estimates would coincide.
+When they differ, that divergence is itself informative about treatment effect heterogeneity across the population.
 
 ### Continuous Exposures
 
-The same strategy applies when the exposure is continuous. For instance, imagine estimating how the actual wait time at 9am would change if the posted wait time at 8am were set to 60 minutes rather than 30 minutes. The procedure outlined above is identical, except that the exposure is set to the chosen numerical values for the counterfactual datasets.
+The same strategy applies when the exposure is continuous.
+For instance, imagine estimating how the actual wait time at 9am would change if the posted wait time at 8am were set to 60 minutes rather than 30 minutes.
+The procedure outlined above is identical, except that the exposure is set to the chosen numerical values for the counterfactual datasets.
 
 Let's start by arranging the data so that the actual wait time at 9 AM can be modeled using the posted wait time at 8 AM and the same confounders idenfied above.
 
@@ -213,7 +265,8 @@ wait_times <- eight |>
   drop_na(wait_minutes_actual_avg)
 ```
 
-We fit the outcome model the same way as for the binary exposure, as the outcome in both cases is continuous. Note now since we have a continuous exposure we can flexibly fit this, for example by using a natural spline.
+We fit the outcome model the same way as for the binary exposure, as the outcome in both cases is continuous.
+Note now since we have a continuous exposure we can flexibly fit this, for example by using a natural spline.
 
 ```{r}
 fit_wait <- lm(
@@ -233,15 +286,14 @@ To compare posted wait times of 60 and 30 minutes, two counterfactual datasets a
 
 ```{r}
 high <- wait_times |> mutate(wait_minutes_posted_avg = 60)
-low  <- wait_times |> mutate(wait_minutes_posted_avg = 30)
-
+low <- wait_times |> mutate(wait_minutes_posted_avg = 30)
 ```
 
 We then obtain predicted outcomes for each counterfactual dataset and then average these and take the difference:
 
 ```{r}
 pred_high <- fit_wait |> augment(newdata = high) |> select(pred_high = .fitted)
-pred_low  <- fit_wait |> augment(newdata = low)  |> select(pred_low  = .fitted)
+pred_low <- fit_wait |> augment(newdata = low) |> select(pred_low = .fitted)
 
 bind_cols(pred_high, pred_low) |>
   summarize(
@@ -266,13 +318,19 @@ comparison_30_60
 ::: {.callout-warning}
 ## Positivity, Extrapolation, and the Price of Relying Only on the Outcome Model
 
-G-computation handles poor overlap differently from IPW. When positivity is violated (or nearly so), IPW weights become extreme, destabilizing the estimate. G-computation sidesteps this by extrapolating from the outcome model into regions of the covariate space where one exposure group is rare. This can be an advantage if the model is correctly specified, but it also comes at a cost if not as it can mask potential problems.
+G-computation handles poor overlap differently from IPW.
+When positivity is violated (or nearly so), IPW weights become extreme, destabilizing the estimate.
+G-computation sidesteps this by extrapolating from the outcome model into regions of the covariate space where one exposure group is rare.
+This can be an advantage if the model is correctly specified, but it also comes at a cost if not as it can mask potential problems.
 
-To see this, consider a toy dataset with poor overlap. Here, the confounder `z` strongly predicts treatment, so many observations have propensity scores near 0 or 1. The true outcome model includes a nonlinear (cubic) relationship between `z` and `y`.
+To see this, consider a toy dataset with poor overlap.
+Here, the confounder `z` strongly predicts treatment, so many observations have propensity scores near 0 or 1.
+The true outcome model includes a nonlinear (cubic) relationship between `z` and `y`.
 
 ```{r}
 #| label: fig-positivity-setup
 #| code-fold: true
+
 set.seed(1)
 n <- 500
 
@@ -284,11 +342,13 @@ sim_poor <- tibble(
 )
 ```
 
-The true ATE is 2. Let's first examine the overlap.
+The true ATE is 2.
+Let's first examine the overlap.
 
 ```{r}
 #| label: fig-positivity-overlap
 #| fig-cap: "Distribution of the propensity score under poor overlap. Many observations have scores near 0 or 1, leaving little common support."
+
 library(propensity)
 ps_model <- glm(x ~ z, data = sim_poor, family = binomial())
 
@@ -311,6 +371,7 @@ Now let's see what happens to the IPW weights.
 ```{r}
 #| label: fig-positivity-weights
 #| fig-cap: "ATE weights under poor overlap. Some weights are extremely large, which will destabilize the IPW estimate."
+
 ggplot(sim_poor, aes(x = as.numeric(w_ate))) +
   geom_histogram(bins = 50) +
   labs(x = "ATE Weight")
@@ -321,7 +382,8 @@ The IPW estimate is unstable as a result.
 ```{r}
 sim_poor |>
   summarize(
-    ipw_ate = sum(y * x * w_ate) / sum(x * w_ate) -
+    ipw_ate = sum(y * x * w_ate) /
+      sum(x * w_ate) -
       sum(y * (1 - x) * w_ate) / sum((1 - x) * w_ate)
   )
 ```
@@ -331,7 +393,7 @@ Now let's try g-computation with a correctly specified outcome model, i.e., one 
 ```{r}
 gcomp_correct <- lm(y ~ x + z + I(z^3), data = sim_poor)
 
-exposed_sim   <- sim_poor |> mutate(x = 1)
+exposed_sim <- sim_poor |> mutate(x = 1)
 unexposed_sim <- sim_poor |> mutate(x = 0)
 
 bind_cols(
@@ -341,9 +403,12 @@ bind_cols(
   summarize(ate = mean(pred_1 - pred_0))
 ```
 
-With a correctly specified model, g-computation recovers an estimate close to the true ATE of 2, even under poor overlap. It achieves this by extrapolating the fitted outcome surface into regions of the covariate space where one group is rare, borrowing strength from the model rather than from observed counterparts.
+With a correctly specified model, g-computation recovers an estimate close to the true ATE of 2, even under poor overlap.
+It achieves this by extrapolating the fitted outcome surface into regions of the covariate space where one group is rare, borrowing strength from the model rather than from observed counterparts.
 
-However, this extrapolation only works if the outcome model is correctly specified. If we misspecify the model by omitting the cubic term, g-computation will extrapolate the wrong surface into exactly those regions where we have no data to detect the error.
+However, this extrapolation only works if the outcome model is correctly specified.
+If we misspecify the model by omitting the cubic term, g-computation will extrapolate the wrong surface into exactly those regions where we have no data to detect the error.
+
 ```{r}
 gcomp_wrong <- lm(y ~ x + z, data = sim_poor)
 
@@ -354,12 +419,15 @@ bind_cols(
   summarize(ate = mean(pred_1 - pred_0))
 ```
 
-The misspecified model produces a noticeably biased estimate. The bias is concentrated in the tails of the covariate distribution, exactly where overlap is poor and where we are relying most heavily on the model to fill in the gaps. We can see this by plotting the fitted outcome surfaces from the two models against the true cubic relationship.
+The misspecified model produces a noticeably biased estimate.
+The bias is concentrated in the tails of the covariate distribution, exactly where overlap is poor and where we are relying most heavily on the model to fill in the gaps.
+We can see this by plotting the fitted outcome surfaces from the two models against the true cubic relationship.
 
 ```{r}
 #| label: fig-positivity-surfaces
 #| fig-cap: "Fitted outcome surfaces from the correctly specified (cubic) and misspecified (linear) outcome models, overlaid on the observed data. In the tails where overlap is poor, the linear model extrapolates the wrong surface."
 #| code-fold: true
+
 z_seq <- tibble(z = seq(min(sim_poor$z), max(sim_poor$z), length.out = 200))
 
 surfaces <- bind_rows(
@@ -367,14 +435,14 @@ surfaces <- bind_rows(
     mutate(
       x = 1,
       correct = predict(gcomp_correct, newdata = mutate(z_seq, x = 1)),
-      wrong   = predict(gcomp_wrong,   newdata = mutate(z_seq, x = 1)),
+      wrong = predict(gcomp_wrong, newdata = mutate(z_seq, x = 1)),
       group = "Treated"
     ),
   z_seq |>
     mutate(
       x = 0,
       correct = predict(gcomp_correct, newdata = mutate(z_seq, x = 0)),
-      wrong   = predict(gcomp_wrong,   newdata = mutate(z_seq, x = 0)),
+      wrong = predict(gcomp_wrong, newdata = mutate(z_seq, x = 0)),
       group = "Untreated"
     )
 )
@@ -383,7 +451,8 @@ ggplot() +
   geom_point(
     data = sim_poor,
     aes(x = z, y = y, color = factor(x)),
-    alpha = 0.3, size = 0.8
+    alpha = 0.3,
+    size = 0.8
   ) +
   geom_line(
     data = surfaces,
@@ -393,7 +462,8 @@ ggplot() +
   geom_line(
     data = surfaces,
     aes(x = z, y = wrong, color = group),
-    linewidth = 1, linetype = "dashed"
+    linewidth = 1,
+    linetype = "dashed"
   ) +
   labs(
     x = "z",
@@ -403,5 +473,9 @@ ggplot() +
   )
 ```
 
-The takeaway is that g-computation and IPW face a fundamental tradeoff when overlap is poor. IPW makes its reliance on overlap explicit (i.e., the weights blow up and the analyst is forced to confront the problem). G-computation absorbs the problem silently, producing a stable estimate that may nonetheless be wrong. Neither method can conjure causal information that is not in the data; g-computation simply moves the assumption from the propensity score model to the outcome model. When overlap is poor, getting the functional form of the outcome model right in the tails matters, and it is precisely in those regions that we have the least data to check it.
+The takeaway is that g-computation and IPW face a fundamental tradeoff when overlap is poor.
+IPW makes its reliance on overlap explicit (i.e., the weights blow up and the analyst is forced to confront the problem).
+G-computation absorbs the problem silently, producing a stable estimate that may nonetheless be wrong.
+Neither method can conjure causal information that is not in the data; g-computation simply moves the assumption from the propensity score model to the outcome model.
+When overlap is poor, getting the functional form of the outcome model right in the tails matters, and it is precisely in those regions that we have the least data to check it.
 :::
