@@ -1,0 +1,13 @@
+flavor = "quarto"
+
+[format]
+wrap = "sentence"
+
+[linters]
+r = "jarl"
+
+[formatters]
+r = "air"
+
+[lint.rules]
+missing-chunk-labels = false
