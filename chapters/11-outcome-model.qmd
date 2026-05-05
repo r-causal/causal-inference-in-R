@@ -4,24 +4,23 @@
 
 ```{r}
 #| echo: false
-
 # TODO: remove when first edition complete
-status("polishing")
+status("complete")
 ```
 
 The propensity score workflow divides our work into two parts: the exposure model, or design phase, and the outcome model.
 The outcome model estimates the causal effect, building on the design-phase setup.
 For many outcome models, this stage is considerably simpler than the design phase: we fit a regression model as we normally would, but without the confounders.
-Instead of including confounders in the model, we either use a matched dataset or weight the outcome model using propensity score weights.
+Instead of including confounders in the model, we either use a matched data set or weight the outcome model using propensity score weights.
 There's a hiccup, though: the standard errors that come default with most regression toolkits do not account for the design phase.
 Thus, they will often produce incorrect uncertainty estimates.
-In this chapter, we transition to using matched and weighted datasets and explore several methods for calculating standard errors.
+In this chapter, we transition to using matched and weighted data sets and explore several methods for calculating standard errors.
 
 ## Using matched data sets
 
 When fitting an outcome model on matched data sets, we subset the original data to only those who were matched and then fit a model on these data as we would otherwise.
 That's it!
-For example, re-performing the matching as we did in @sec-using-ps, we extract the matched observations in a dataset called `matched_data`.
+For example, re-performing the matching as we did in @sec-using-ps, we extract the matched observations in a data set called `matched_data`.
 
 ```{r}
 #| message: false
@@ -45,7 +44,7 @@ matched_data <- get_matches(matchit_obj)
 
 Remember that, with matching, we are trying to find a subset of the data where the assumptions of causal inference, particularly exchangeability, hold.
 If we have succeeded in doing so, we can compare the differences in wait times between the groups without additional covariates, much as we can in a randomized trial.
-There are other good reasons to include covariates besides the outcome, including improved precision, heterogeneous treatment effects, and, as we will see, to get the correct standard errors, but for now, we will focus on the simple question at hand: Does having Extra Magic Mornings change the posted wait time between 9 A.M. and 10 A.M.?
+There are other good reasons to include covariates besides the outcome, including improved precision, heterogeneous treatment effects, and, as we will see, to get the correct standard errors, but for now, we will focus on the simple question at hand: Does having Extra Magic Mornings change the posted wait time between 9 AM and 10 AM?
 
 To answer this question, let's fit a linear regression with the matched data set.
 Here, we have the posted wait times as the outcome and Extra Magic Mornings as the exposure.
@@ -61,7 +60,7 @@ matched_outcome |>
 ```
 
 Recall that, by default, `{MatchIt}` finds pairs of observations that help us estimate an average treatment effect among the treated.
-This means among *days that have extra magic hours*, the expected impact of having extra magic hours on the average posted wait time between 9 and 10am is `r round(coef(matched_outcome)[["park_extra_magic_morning"]], 1)` minutes (95% CI: `r round(confint(matched_outcome)["park_extra_magic_morning", 1], 1)`-`r round(confint(matched_outcome)["park_extra_magic_morning", 2], 1)`).
+This means among *days that have Extra Magic Mornings*, the expected impact of having Extra Magic Mornings on the average posted wait time between 9 AM and 10 AM is `r round(coef(matched_outcome)[["park_extra_magic_morning"]], 1)` minutes (95% CI: `r round(confint(matched_outcome)["park_extra_magic_morning", 1], 1)`-`r round(confint(matched_outcome)["park_extra_magic_morning", 2], 1)`).
 
 Fitting a regression with matched data is straightforward; however, the `lm()` function doesn't know that we pre-processed the data with MatchIt.
 In doing so, we induced a dependence between pairs of matches.
@@ -95,7 +94,7 @@ seven_dwarfs_9_with_wt <- propensity_model |>
 ```
 
 We can fit a weighted outcome model by using the `weights` argument.
-Note that, with weighting, we still use the entire dataset for the `data` argument (`seven_dwarfs_9_with_wt`), unlike in matching, where we only use the matched subset.
+Note that, with weighting, we still use the entire data set for the `data` argument (`seven_dwarfs_9_with_wt`), unlike in matching, where we only use the matched subset.
 We instead smoothly combine information from each observation to create a pseudo-population in which (we hope) there is no confounding.
 
 ```{r}
@@ -112,7 +111,7 @@ weighted_outcome |>
 ::: callout-note
 ## Matching and `weights`
 
-MatchIt returns a dataframe that includes a `weights` variable.
+MatchIt returns a data frame that includes a `weights` variable.
 In the example above, all the weights are 1:
 
 ```{r}
@@ -135,7 +134,7 @@ Again, these weights are all 1, so we get identical results.
 However, if you are considering other matching approaches, it's a good defensive practice to ensure you specify the outcome model correctly.
 :::
 
-Using weighting, we estimate that among days that have extra magic hours, the expected impact of having extra magic hours on the average posted wait time between 9 and 10am is `r round(coef(weighted_outcome)[["park_extra_magic_morning"]], 1)` minutes.
+Using weighting, we estimate that among days that have Extra Magic Mornings, the expected impact of having Extra Magic Mornings on the average posted wait time between 9 AM and 10 AM is `r round(coef(weighted_outcome)[["park_extra_magic_morning"]], 1)` minutes.
 
 ::: callout-tip
 ## Causal inference with `group_by()` and `summarize()`, revisted
@@ -184,7 +183,7 @@ The first option can be computationally intensive, but it should get you the cor
 The bootstrap is also a general solution to many problems of causal inference uncertainty, so knowing it is very useful.
 The second option is computationally easier but tends to overestimate or underestimate the variability.
 The third option is both correct and fast to compute; however, it is mathematically more complicated, usually relying on the calculus of M-Estimation to calculate [@stefanski2002].
-We'll use the tools in propensity's `ipw()` function to compute the correct sandwich estimator.
+We'll use the tools in `{propensity}`'s `ipw()` function to compute the correct sandwich estimator.
 It's also implemented in `{WeightIt}`, `{PSweight}`, and a few other tools.
 
 ### The bootstrap {#sec-bootstrap}
@@ -229,7 +228,7 @@ fit_ipw <- function(.split, ...) {
 }
 ```
 
-Then use `{rsample}` to bootstrap the dataset and apply the function to each bootstrap sample.
+Then use `{rsample}` to bootstrap the data set and apply the function to each bootstrap sample.
 
 ```{r}
 #| message: false
@@ -250,9 +249,12 @@ ipw_results <- bootstrapped_seven_dwarfs |>
 ipw_results
 ```
 
-After applying `fit_ipw()` to each replicate of the dataset, we obtain a distribution of effect estimates.
+After applying `fit_ipw()` to each replicate of the data set, we obtain a distribution of effect estimates.
 
 ```{r}
+#| label: fig-ipw-bootstrap-distribution
+#| fig-cap: "Distribution of the bootstrapped IPW point estimates of the effect of Extra Magic Mornings on the average posted wait time between 9 AM and 10 AM. Each of the 1,000 bootstrap replicates refits the propensity model and the weighted outcome regression on a resample of the data, and we plot the resulting `park_extra_magic_morning` coefficient. The spread captures the combined uncertainty from both estimation steps and is the basis for the bootstrap confidence interval reported below."
+
 ipw_results |>
   mutate(
     estimate = map_dbl(
@@ -278,7 +280,7 @@ boot_estimate <- int_t(ipw_results, boot_fits) |>
 boot_estimate
 ```
 
-Now that we have incorporated the uncertainty we introduced estimating the propensity scores, we can say more correctly: we estimate that among days that have extra magic hours, the expected impact of having extra magic hours on the average posted wait time between 9 and 10am is `r round(boot_estimate$.estimate, 1)` minutes, 95% CI (`r round(boot_estimate$.lower, 1)`, `r round(boot_estimate$.upper, 1)`).
+Now that we have incorporated the uncertainty we introduced estimating the propensity scores, we can say more correctly: we estimate that among days that have Extra Magic Mornings, the expected impact of having Extra Magic Mornings on the average posted wait time between 9 AM and 10 AM is `r round(boot_estimate$.estimate, 1)` minutes, 95% CI (`r round(boot_estimate$.lower, 1)`, `r round(boot_estimate$.upper, 1)`).
 
 The bootstrap works well for a wide variety of problems.
 However, it's both verbose and computationally intensive.
@@ -328,7 +330,7 @@ robust_ci <- tibble(
 robust_ci
 ```
 
-Now, let's try to say our interpretation again, this time using the sandwich estimator as the basis for the uncertainty: we estimate that among days that have extra magic hours, the expected impact of having extra magic hours on the average posted wait time between 9 and 10am is `r round(robust_ci$estimate, 1)` minutes, 95% CI (`r round(robust_ci$conf.low, 1)`, `r round(robust_ci$conf.high, 1)`).
+Now, let's try to say our interpretation again, this time using the sandwich estimator as the basis for the uncertainty: we estimate that among days that have Extra Magic Mornings, the expected impact of having Extra Magic Mornings on the average posted wait time between 9 AM and 10 AM is `r round(robust_ci$estimate, 1)` minutes, 95% CI (`r round(robust_ci$conf.low, 1)`, `r round(robust_ci$conf.high, 1)`).
 
 ::: callout-note
 ## HC0, HC1, HC2, HC3, ...
@@ -420,10 +422,10 @@ IPW is a two-step estimator: fit a propensity model, then run a weighted outcome
 The naive sandwich estimator above treats the propensity scores as known constants and ignores the propensity-estimation step entirely.
 Two routes recover a closed-form variance that accounts for both steps.
 
-*M-estimation* [@stefanski2002; @ross2024; @williamson2014variance] stacks the two stages into a single system of estimating equations: the score equations from the propensity model and those from the weighted outcome regression, solved simultaneously for the combined parameter vector.
+**M-estimation** [@stefanski2002; @ross2024; @williamson2014variance] stacks the two stages into a single system of estimating equations: the score equations from the propensity model and those from the weighted outcome regression, solved simultaneously for the combined parameter vector.
 The joint estimator's variance is the usual sandwich built from that whole system, so propensity-stage uncertainty propagates into the outcome-stage variance automatically.
 
-*Linearization* [@kostouraki2024] works one observation at a time.
+**Linearization** [@kostouraki2024] works one observation at a time.
 Each observation's contribution to the variance is written as a Taylor expansion in the propensity-score coefficients and decomposed into two pieces.
 The first is the influence-function contribution from the weighted regression alone, equal to what the naive sandwich computes.
 The second is a correction term that propagates that observation's role in fitting the propensity model into the outcome estimate via the chain rule.
@@ -617,7 +619,7 @@ The NNT is an imperfect measure because of its simplicity, but it offers another
 ### Non-collapsibility {#sec-non-collapse}
 
 Odds ratios are convenient because of their connection to logistic regression.
-They also have a peculiar quality: they are *non-collapsible*.
+They also have a peculiar quality: they are **non-collapsible**.
 Non-collapsibility means that, when you compare odds ratios in the whole sample (marginal) versus among subgroups (conditional), the marginal odds ratio is not a weighted average of the conditional odds ratio [@Didelez2022; @Greenland2021; @Greenland2021a].
 This is not a property that, for instance, the risk ratio has.
 Let's look at an example.
@@ -660,7 +662,7 @@ outcome <- rbinom(n, 1, plogis(-0.5 + exposure + 2 * covariate))
 ```
 
 ```{r}
-#| echo: false
+#| code-fold: true
 
 odds_ratio <- function(tbl) {
   or <- (tbl[2, 2] * tbl[1, 1]) / (tbl[1, 2] * tbl[2, 1])
@@ -760,7 +762,7 @@ That means individual predictions may be less than 0 or greater than 1, which ar
 We'll see an alternative method for calculating risk differences with logistic regression in [Chapter -@sec-g-comp].
 :::
 
-Returning to our binary version of the wait-time outcome, we can fit a weighted logistic regression with ATT weights to estimate the (marginal) odds ratio of having an average wait time exceeding 60 minutes on days with extra magic hours.
+Returning to our binary version of the wait-time outcome, we can fit a weighted logistic regression with ATT weights to estimate the (marginal) odds ratio of having an average wait time exceeding 60 minutes on days with Extra Magic Mornings.
 We use `family = quasibinomial()` to avoid a warning about non-integer successes, which arises because propensity score weights are not whole numbers; the point estimate will match that from `family = binomial()`.
 
 ```{r}
