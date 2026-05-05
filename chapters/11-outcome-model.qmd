@@ -65,7 +65,7 @@ This means among *days that have extra magic hours*, the expected impact of havi
 
 Fitting a regression with matched data is straightforward; however, the `lm()` function doesn't know that we pre-processed the data with MatchIt.
 In doing so, we induced a dependence between pairs of matches.
-We'll have to account for that clustering to get correct standard errors (@todo-cite).
+We'll have to account for that clustering to get correct standard errors [@abadie2022].
 What we need to do is a little more complex than for weighting---and, in fact, will build on the approaches we use for IPW---so we'll pause on that fix until @sec-matching-se.
 
 ## Using weights in outcome models
@@ -109,8 +109,7 @@ weighted_outcome |>
   tidy()
 ```
 
-::: {.callout-note}
-
+::: callout-note
 ## Matching and `weights`
 
 MatchIt returns a dataframe that includes a `weights` variable.
@@ -134,13 +133,11 @@ matched_outcome <- lm(
 
 Again, these weights are all 1, so we get identical results.
 However, if you are considering other matching approaches, it's a good defensive practice to ensure you specify the outcome model correctly.
-
 :::
 
 Using weighting, we estimate that among days that have extra magic hours, the expected impact of having extra magic hours on the average posted wait time between 9 and 10am is `r round(coef(weighted_outcome)[["park_extra_magic_morning"]], 1)` minutes.
 
 ::: callout-tip
-
 ## Causal inference with `group_by()` and `summarize()`, revisted
 
 In this simple example, the weighted outcome model is equivalent to the difference between the weighted means.
@@ -172,7 +169,9 @@ The estimate of the weights themselves introduces uncertainty that we need to br
 
 Inverse probability weighting is a two-step estimator: first, we fit a regression for the exposure and generate weights from the propensity score, then we use those weights to fit a regression for the outcome.
 To correctly specify the uncertainty in the second model, we need to include the uncertainty from the first one.
-Much of this chapter is focused on statistical inference. While causal inference is the set of tools that we've used so far to make causal effect estimation possible, statistical inference is the more general toolkit of standard errors, confidence intervals, and hypothesis tests, built on sampling distributions of estimators. It's the kind of inference normally taught in a statistics class.
+Much of this chapter is focused on statistical inference.
+While causal inference is the set of tools that we've used so far to make causal effect estimation possible, statistical inference is the more general toolkit of standard errors, confidence intervals, and hypothesis tests, built on sampling distributions of estimators.
+It's the kind of inference normally taught in a statistics class.
 Like the distinction between description, prediction, and causal inference, these are separate but complementary ideas: we use statistical inference to test if our causal estimates have a meaningful statistical interpretation, and we likewise can't estimate causal effects out of hypothesis tests without a set of causal assumptions.
 
 There are three ways to estimate the uncertainty for IPW:
@@ -184,7 +183,7 @@ There are three ways to estimate the uncertainty for IPW:
 The first option can be computationally intensive, but it should get you the correct estimates.
 The bootstrap is also a general solution to many problems of causal inference uncertainty, so knowing it is very useful.
 The second option is computationally easier but tends to overestimate or underestimate the variability.
-The third option is both correct and fast to compute; however, it is mathematically more complicated, usually relying on the calculus of M-Estimation to calculate (@todo-cite).
+The third option is both correct and fast to compute; however, it is mathematically more complicated, usually relying on the calculus of M-Estimation to calculate [@stefanski2002].
 We'll use the tools in propensity's `ipw()` function to compute the correct sandwich estimator.
 It's also implemented in `{WeightIt}`, `{PSweight}`, and a few other tools.
 
@@ -291,7 +290,8 @@ The sandwich estimator gets its name from the form of the variance it calculates
 When the model's assumptions hold, the bread and meat combine to give the usual model-based variance; when they don't---as with IPW weights---the sandwich form still gives a consistent variance estimate.
 That's why these are called "robust" standard errors.
 
-Many packages implement sandwich estimators for variance, but let's first compute it by hand with the `{sandwich}` package and compare it to the variance `lm()` gives us by default. `vcov()` returns the variance-covariance matrix that `tidy()` and `summary()` use under the hood to compute their standard errors.
+Many packages implement sandwich estimators for variance, but let's first compute it by hand with the `{sandwich}` package and compare it to the variance `lm()` gives us by default.
+`vcov()` returns the variance-covariance matrix that `tidy()` and `summary()` use under the hood to compute their standard errors.
 It treats the weights we passed as fixed, which, in our case, they aren't.
 
 ```{r}
@@ -331,21 +331,19 @@ robust_ci
 Now, let's try to say our interpretation again, this time using the sandwich estimator as the basis for the uncertainty: we estimate that among days that have extra magic hours, the expected impact of having extra magic hours on the average posted wait time between 9 and 10am is `r round(robust_ci$estimate, 1)` minutes, 95% CI (`r round(robust_ci$conf.low, 1)`, `r round(robust_ci$conf.high, 1)`).
 
 ::: callout-note
-
 ## HC0, HC1, HC2, HC3, ...
 
 The variance returned by a bare call to `sandwich()` is sometimes called HC0.
 The "HC" part stands for "heteroskedasticity-consistent" because these techniques were originally developed to address heteroskedasticity in regression fits.
 HC0 tends to be downwardly biased in small samples because least-squares residuals systematically understate the true errors, especially at high-leverage points.
-A family of refinements has accumulated over the years (@todo-cite).
+A family of refinements has accumulated over the years [@mansournia2021].
 HC1 applies a degrees-of-freedom correction of $n / (n - k)$.
 HC2 and HC3 instead inflate each squared residual to undo the shrinkage caused by leverage---HC2 by $1 / (1 - h_{ii})$ and HC3 by $1 / (1 - h_{ii})^2$, where $h_{ii}$ is the leverage of observation $i$.
 HC3 approximates the jackknife, another form of resampling used to calculate variance.
 HC4 and successors push the leverage adjustment further at extreme points.
 
 The `sandwich()` function can compute any of these variants if you swap in the HC meat estimator: `sandwich(model, meat. = meatHC, type = "HC3")`.
-The convenience wrapper `sandwich::vcovHC(model)` does the same thing and defaults to HC3, which many authors recommend as a reasonable starting point for most analyses (Long and Ervin) (@todo-cite).
-
+The convenience wrapper `sandwich::vcovHC(model)` does the same thing and defaults to HC3, which many authors recommend as a reasonable starting point for most analyses [@long2000].
 :::
 
 Alternatively, we can use `{marginaleffects}` to compute the same quantity from the fitted model, along with robust standard errors built in.
@@ -368,7 +366,6 @@ Will come back to this subject, and `{marginaleffects}`, in more detail in @sec-
 Passing `vcov = "HC3"` requests the HC3 variance estimator from the previous callout.
 
 ::: callout-note
-
 ## Fitting weighted outcome models with `{survey}`
 
 Another way to fit the same weighted outcome model is via the `{survey}` package, which treats the IPW weights as survey sampling weights and adjusts the standard errors accordingly.
@@ -417,24 +414,23 @@ results |>
 ```
 
 ::: callout-note
-
 ## The two-step variance: linearization and M-estimation
 
 IPW is a two-step estimator: fit a propensity model, then run a weighted outcome regression.
 The naive sandwich estimator above treats the propensity scores as known constants and ignores the propensity-estimation step entirely.
 Two routes recover a closed-form variance that accounts for both steps.
 
-*M-estimation* (Stefanski and Boos, @todo-cite; Williamson et al., @todo-cite) stacks the two stages into a single system of estimating equations: the score equations from the propensity model and those from the weighted outcome regression, solved simultaneously for the combined parameter vector.
+*M-estimation* [@stefanski2002; @ross2024; @williamson2014variance] stacks the two stages into a single system of estimating equations: the score equations from the propensity model and those from the weighted outcome regression, solved simultaneously for the combined parameter vector.
 The joint estimator's variance is the usual sandwich built from that whole system, so propensity-stage uncertainty propagates into the outcome-stage variance automatically.
 
-*Linearization* (Deville, @todo-cite; Kostouraki et al., @todo-cite) works one observation at a time.
+*Linearization* [@kostouraki2024] works one observation at a time.
 Each observation's contribution to the variance is written as a Taylor expansion in the propensity-score coefficients and decomposed into two pieces.
 The first is the influence-function contribution from the weighted regression alone, equal to what the naive sandwich computes.
 The second is a correction term that propagates that observation's role in fitting the propensity model into the outcome estimate via the chain rule.
 Adding the two pieces and averaging gives a closed-form variance.
 
 The two approaches are connected.
-Under a logit propensity model, Kostouraki et al. (@todo-cite) prove that the linearization and M-estimation formulas are algebraically identical.
+Under a logit propensity model, @kostouraki2024 prove that the linearization and M-estimation formulas are algebraically identical.
 :::
 
 ## Correcting standard errors for matched outcome models {#sec-matching-se}
@@ -443,7 +439,7 @@ Now that we've seen some approaches for correcting IPW estimators, let's return 
 The simple model `wait_minutes_posted_avg ~ park_extra_magic_morning` omits the matching covariates, so its residuals carry that omitted information.
 Matching pairs units with similar values of the covariates, so the paired residuals are correlated.
 `lm()` and a bare call to `sandwich()` both treat observations as independent and miss this correlation.
-Abadie and Spiess (@todo-cite) show that naive standard errors are valid only when matching is done without replacement, and the outcome model is correctly specified.
+@abadie2022 show that naive standard errors are valid only when matching is done without replacement, and the outcome model is correctly specified.
 Outside that case, the SEs are biased: usually toward overcoverage when treatment effects don't depend on the matching covariates, and toward undercoverage when they do.
 
 There are three fixes.
@@ -470,7 +466,6 @@ robust_ci
 ```
 
 ::: callout-note
-
 ## Cluster-robust SEs via `{marginaleffects}`
 
 `marginaleffects::avg_comparisons()` computes the same cluster-robust SE by passing `~subclass` to `vcov`.
@@ -489,7 +484,7 @@ Since we are targeting the ATT, we also need to filter the data down to the trea
 
 The third solution is a cluster bootstrap: resample whole matched pairs as units rather than rows, leaving the matching itself fixed.
 In contrast to the bootstrap for IPW, we do not re-run `matchit()` within the bootstrap.
-Abadie and Imbens (@todo-cite) show that the standard bootstrap is theoretically invalid for nearest-neighbor matching estimators; instead, we should resample matched pairs (@todo-cite).
+The standard bootstrap is theoretically invalid for nearest-neighbor matching estimators [@onthef2008]; instead, we should resample matched pairs [@abadie2022].
 `rsample::group_bootstraps()` creates this pair-level bootstrap when we pass it `subclass` as the group variable; the function-then-bootstrap pattern mirrors @sec-bootstrap, except that we do not refit the MatchIt object.
 
 ```{r}
@@ -526,7 +521,8 @@ The relative change is still a treatment effect among the treated, but it's on a
 The important part is that the weights allow us to average over the covariates of the treated for whichever specific estimand we're trying to estimate.
 Sometimes, when people say something like "the average treatment effect," they're referring to the difference in mean outcomes across the whole sample, so it's good to be specific.
 
-For example, let's discretize the continuous posted wait time into a binary indicator of whether the average wait exceeded 60 minutes. Discretizing a continuous variable is generally a bad idea---we're sacrificing information by dichotomizing the outcome---but we'll use it as an example to show how to approach a problem that has a binary outcome.
+For example, let's discretize the continuous posted wait time into a binary indicator of whether the average wait exceeded 60 minutes.
+Discretizing a continuous variable is generally a bad idea---we're sacrificing information by dichotomizing the outcome---but we'll use it as an example to show how to approach a problem that has a binary outcome.
 
 ```{r}
 #| label: discretize-wait-time
@@ -540,8 +536,8 @@ For a binary outcome, we calculate the average probability for each treatment gr
 Let's call these $p_{\text{untreated}}$ and $p_{\text{treated}}$.
 When we're working with these probabilities, calculating the risk difference and risk ratio is simple:
 
-* Risk difference: $p_{\text{treated}} - p_{\text{untreated}}$
-* Risk ratio: $p_{\text{treated}} / p_{\text{untreated}}$
+- Risk difference: $p_{\text{treated}} - p_{\text{untreated}}$
+- Risk ratio: $p_{\text{treated}} / p_{\text{untreated}}$
 
 ::: callout-note
 By "risk", we mean the risk of an outcome.
@@ -552,7 +548,7 @@ A more general way to think about these is as the difference in, or the ratio of
 
 The odds for a probability are calculated as $p / (1 - p)$, so the odds ratio is:
 
-* Odds ratio: $(p_{\text{treated}} / (1 - p_{\text{treated}})) / (p_{\text{untreated}} / (1 - p_{\text{untreated}}))$
+- Odds ratio: $(p_{\text{treated}} / (1 - p_{\text{treated}})) / (p_{\text{untreated}} / (1 - p_{\text{untreated}}))$
 
 When outcomes are rare, $(1 - p)$ approaches 1, and odds ratios approximate risk ratios.
 The rarer the outcome, the closer the approximation.
@@ -606,7 +602,6 @@ More people die of smoking-related heart disease than they do of lung cancer bec
 Both the absolute and relative perspectives are valid and useful.
 
 ::: callout-note
-
 ## The number needed to treat
 
 Another perspective on the difference in probabilities is the number needed to treat (NNT) measure.
@@ -628,11 +623,11 @@ This is not a property that, for instance, the risk ratio has.
 Let's look at an example.
 
 Say we have an `outcome`, an `exposure`, and a `covariate`.
-`exposure` causes `outcome`, as does `covariate`[^10-estimands-3].
+`exposure` causes `outcome`, as does `covariate`[^11-outcome-model-1].
 But `covariate` does not cause `exposure`; it's *not* a confounder.
 In other words, the effect estimate of `exposure` on `outcome` should be the same whether or not we account for `covariate`.
 
-[^10-estimands-3]: If there were no relationship between `exposure` and `outcome`, the relationship between the two would be null, and the odds ratio would be collapsible regardless of the presence or absence of `covariate`.
+[^11-outcome-model-1]: If there were no relationship between `exposure` and `outcome`, the relationship between the two would be null, and the odds ratio would be collapsible regardless of the presence or absence of `covariate`.
 
 ```{r}
 #| label: fig-dag-nc
@@ -744,7 +739,6 @@ Be careful to interpret them with regard to the treatment group that you've incl
 For example, the average risk difference calculated with ATT weights is the average risk difference among the treated.
 
 ::: callout-note
-
 ## The linear probability model
 
 The linear probability model is another common way to estimate treatment effects for binary outcomes.
@@ -794,4 +788,5 @@ lm(
   tidy(conf.int = TRUE)
 ```
 
-As with the continuous outcome, the default standard errors and confidence intervals from `glm()` and `lm()` don't account for the propensity score model; the same bootstrap and sandwich approaches from @sec-ipw-se apply here. Likewise, matching and using the approaches in @sec-matching-se will also work as expected.
+As with the continuous outcome, the default standard errors and confidence intervals from `glm()` and `lm()` don't account for the propensity score model; the same bootstrap and sandwich approaches from @sec-ipw-se apply here.
+Likewise, matching and using the approaches in @sec-matching-se will also work as expected.
