@@ -4,17 +4,18 @@
 
 ```{r}
 #| echo: false
+
 # TODO: remove when first edition complete
 status("complete")
 ```
 
 The propensity score workflow divides our work into two parts: the exposure model, or design phase, and the outcome model.
-The outcome model estimates the causal effect, building on the design-phase setup.
+The outcome model estimates the causal effect, building on the preparation in the design phase.
 For many outcome models, this stage is considerably simpler than the design phase: we fit a regression model as we normally would, but without the confounders.
 Instead of including confounders in the model, we either use a matched data set or weight the outcome model using propensity score weights.
 There's a hiccup, though: the standard errors that come default with most regression toolkits do not account for the design phase.
 Thus, they will often produce incorrect uncertainty estimates.
-In this chapter, we transition to using matched and weighted data sets and explore several methods for calculating standard errors.
+In this chapter, we transition to using matched and weighted data sets in outcome models and explore several methods for calculating standard errors.
 
 ## Using matched data sets
 
@@ -60,7 +61,7 @@ matched_outcome |>
 ```
 
 Recall that, by default, `{MatchIt}` finds pairs of observations that help us estimate an average treatment effect among the treated.
-This means among *days that have Extra Magic Mornings*, the expected impact of having Extra Magic Mornings on the average posted wait time between 9 AM and 10 AM is `r round(coef(matched_outcome)[["park_extra_magic_morning"]], 1)` minutes (95% CI: `r round(confint(matched_outcome)["park_extra_magic_morning", 1], 1)`-`r round(confint(matched_outcome)["park_extra_magic_morning", 2], 1)`).
+This means *among days that have Extra Magic Mornings*, the expected impact of having Extra Magic Mornings on the average posted wait time between 9 AM and 10 AM is `r round(coef(matched_outcome)[["park_extra_magic_morning"]], 1)` minutes (95% CI: `r round(confint(matched_outcome)["park_extra_magic_morning", 1], 1)`-`r round(confint(matched_outcome)["park_extra_magic_morning", 2], 1)`).
 
 Fitting a regression with matched data is straightforward; however, the `lm()` function doesn't know that we pre-processed the data with MatchIt.
 In doing so, we induced a dependence between pairs of matches.
@@ -168,8 +169,8 @@ The estimate of the weights themselves introduces uncertainty that we need to br
 
 Inverse probability weighting is a two-step estimator: first, we fit a regression for the exposure and generate weights from the propensity score, then we use those weights to fit a regression for the outcome.
 To correctly specify the uncertainty in the second model, we need to include the uncertainty from the first one.
-Much of this chapter is focused on statistical inference.
-While causal inference is the set of tools that we've used so far to make causal effect estimation possible, statistical inference is the more general toolkit of standard errors, confidence intervals, and hypothesis tests, built on sampling distributions of estimators.
+Much of this chapter is focused on **statistical inference**.
+While *causal* inference is the set of tools that we've used so far to make causal effect estimation possible, *statistical* inference is the more general toolkit of standard errors, confidence intervals, and hypothesis tests, built on sampling distributions of estimators.
 It's the kind of inference normally taught in a statistics class.
 Like the distinction between description, prediction, and causal inference, these are separate but complementary ideas: we use statistical inference to test if our causal estimates have a meaningful statistical interpretation, and we likewise can't estimate causal effects out of hypothesis tests without a set of causal assumptions.
 
@@ -313,7 +314,6 @@ sandwich(weighted_outcome)
 The two matrices disagree.
 For the treatment coefficient, the sandwich variance (`r round(sandwich(weighted_outcome)[2,2], 3)`) is more than double the model-based one (`r round(vcov(weighted_outcome)[2,2], 3)`), so the model-based SE understates the uncertainty around the treatment effect.
 For the intercept, the sandwich version is smaller.
-The "robust" label doesn't mean "always larger"; it means the variance is consistent without leaning on `lm()`'s assumption that the weights are fixed and the residuals are homoskedastic.
 We can then use this to construct a robust confidence interval.
 
 ```{r}
@@ -364,11 +364,11 @@ avg_comparisons(
 ```
 
 `avg_comparisons()` returns a marginal effect: the average of $\hat{Y}(1) - \hat{Y}(0)$ across the observed covariate distribution.
-Will come back to this subject, and `{marginaleffects}`, in more detail in @sec-g-comp.
+We'll come back to this subject, and marginaleffects, in more detail in @sec-g-comp.
 Passing `vcov = "HC3"` requests the HC3 variance estimator from the previous callout.
 
 ::: callout-note
-## Fitting weighted outcome models with `{survey}`
+## Fitting weighted outcome models with survey
 
 Another way to fit the same weighted outcome model is via the `{survey}` package, which treats the IPW weights as survey sampling weights and adjusts the standard errors accordingly.
 Historically, many propensity score analyses in R used this approach, so you might see it out in the wild.
@@ -432,25 +432,25 @@ The second is a correction term that propagates that observation's role in fitti
 Adding the two pieces and averaging gives a closed-form variance.
 
 The two approaches are connected.
-Under a logit propensity model, @kostouraki2024 prove that the linearization and M-estimation formulas are algebraically identical.
+Under a logit propensity model, linearization and M-estimation formulas are algebraically identical [@kostouraki2024].
 :::
 
 ## Correcting standard errors for matched outcome models {#sec-matching-se}
 
 Now that we've seen some approaches for correcting IPW estimators, let's return to matching.
-The simple model `wait_minutes_posted_avg ~ park_extra_magic_morning` omits the matching covariates, so its residuals carry that omitted information.
+The simple model `wait_minutes_posted_avg ~ park_extra_magic_morning` omits the matching covariates.
 Matching pairs units with similar values of the covariates, so the paired residuals are correlated.
 `lm()` and a bare call to `sandwich()` both treat observations as independent and miss this correlation.
-@abadie2022 show that naive standard errors are valid only when matching is done without replacement, and the outcome model is correctly specified.
-Outside that case, the SEs are biased: usually toward overcoverage when treatment effects don't depend on the matching covariates, and toward undercoverage when they do.
+Naive standard errors are valid only when matching is done without replacement, and the outcome model is correctly specified [@abadie2022].
+Outside that case, the SEs are biased.
 
 There are three fixes.
 
 The most direct approach is to include the matching covariates in the outcome model with the right functional form.
 Correctly specifying the model removes the omitted-variable signal from the residuals, and naive SEs become valid.
 The catch is that we now need to avoid misspecifying the functional form of all covariates in the outcome model.
-
 The other two fixes correct the SE without including more variables in the outcome model.
+
 The second solution is a cluster-robust standard error clustered within matched pairs.
 `get_matches()` returns a `subclass` column identifying each pair, which we pass to `sandwich::vcovCL()` as the cluster argument (as a formula) to compute the cluster-robust variance.
 
@@ -523,6 +523,7 @@ The relative change is still a treatment effect among the treated, but it's on a
 The important part is that the weights allow us to average over the covariates of the treated for whichever specific estimand we're trying to estimate.
 Sometimes, when people say something like "the average treatment effect," they're referring to the difference in mean outcomes across the whole sample, so it's good to be specific.
 
+What about other types of outcomes that are not continuous?
 For example, let's discretize the continuous posted wait time into a binary indicator of whether the average wait exceeded 60 minutes.
 Discretizing a continuous variable is generally a bad idea---we're sacrificing information by dichotomizing the outcome---but we'll use it as an example to show how to approach a problem that has a binary outcome.
 
