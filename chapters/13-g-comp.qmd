@@ -201,6 +201,7 @@ avg_comparisons(
   newdata = filter(seven_dwarfs_9, park_extra_magic_morning == 0)
 )
 ```
+
 In this case, because our outcome model contains no interaction terms between the exposure and the covariates, the three estimates will be identical.
 A linear model without interactions assumes a constant treatment effect across all covariate values, so it does not matter whose covariate distribution we average over, we always recover the same gap.
 To see differences between the ATE, ATT, and ATC from g-computation, the outcome model needs to allow the effect of the exposure to vary with covariates, for example by including an interaction term like `park_extra_magic_morning * park_ticket_season`.
@@ -242,6 +243,161 @@ Once at least one interaction has been specified, the three estimates can differ
 The ATT asks what the effect was for the kinds of days that actually had Extra Magic Hours; the ATC asks what the effect would be for the kinds of days that did not.
 If the treatment effect were constant across all covariate values, the three estimates would coincide.
 When they differ, that divergence is itself informative about treatment effect heterogeneity across the population.
+
+### Binary outcomes {#sec-gcomp-binary}
+
+The same g-computation logic applies when the outcome is binary, but there are now three quantities of interest rather than one: the risk difference, the risk ratio, and the odds ratio (see @sec-binary).
+All three fall out of the same g-computation workflow; what changes is the function we apply to the predicted probabilities under each exposure.
+
+Reusing the binary version of the wait-time outcome from @sec-binary, we fit a logistic g-computation model with the same confounders as the continuous version.
+
+```{r}
+seven_dwarfs_9 <- seven_dwarfs_9 |>
+  mutate(wait_over_60 = wait_minutes_posted_avg > 60)
+
+gcomp_bin <- glm(
+  wait_over_60 ~
+    park_extra_magic_morning +
+    park_ticket_season +
+    park_close +
+    park_temperature_high,
+  data = seven_dwarfs_9,
+  family = binomial()
+)
+```
+
+We can reuse the `exposed` and `unexposed` clones from earlier (the exposure hasn't changed in this question, so the counterfactual scenarios are the same): predict the probability of the outcome under each, average the predictions, then combine the two means into whichever effect measure we want.
+
+```{r}
+probs <- bind_cols(
+  augment(gcomp_bin, newdata = exposed, type.predict = "response") |>
+    select(p_exposed = .fitted),
+  augment(gcomp_bin, newdata = unexposed, type.predict = "response") |>
+    select(p_unexposed = .fitted)
+)
+```
+
+Plotting the predicted probabilities under each counterfactual shows what those marginal means are summarizing.
+The exposed distribution sits a little to the right of the unexposed one, which is exactly what a positive risk difference looks like at the level of individual predictions.
+
+```{r}
+#| label: fig-gcomp-bin-hist
+#| fig-cap: "Predicted probability of an average wait time over 60 minutes for each park date with and without Extra Magic Mornings. The risk difference, risk ratio, and odds ratio are all summaries of the gap between these two distributions."
+
+probs |>
+  pivot_longer(
+    everything(),
+    names_to = "extra_magic_morning",
+    values_to = "predicted_prob",
+    names_prefix = "p_"
+  ) |>
+  ggplot(aes(x = predicted_prob, fill = extra_magic_morning)) +
+  geom_histogram(alpha = 0.6, position = "identity", bins = 30) +
+  labs(
+    x = "Predicted probability of wait > 60 min",
+    fill = "Extra Magic Morning"
+  )
+```
+
+Now, let's calculate each outcome measure.
+
+```{r}
+probs |>
+  summarize(
+    p_exposed = mean(p_exposed),
+    p_unexposed = mean(p_unexposed),
+    rd = p_exposed - p_unexposed,
+    rr = p_exposed / p_unexposed,
+    or = (p_exposed / (1 - p_exposed)) /
+      (p_unexposed / (1 - p_unexposed))
+  )
+```
+
+This gets us point estimates but no uncertainty.
+We can, of course, bootstrap this, as with any technique we've discussed, but we'll instead have marginaleffects compute the standard errors for us.
+`avg_comparisons()` produces the same numbers along with delta-method standard errors and confidence intervals, and selects the effect measure via its `comparison` argument.
+The default, `"difference"`, gives the risk difference: the average difference between the predicted probability for the exposed and unexposed.
+
+```{r}
+# Risk difference (ATE)
+ate_rd <- avg_comparisons(
+  gcomp_bin,
+  variables = "park_extra_magic_morning"
+)
+ate_rd
+```
+
+For the risk ratio and odds ratio, we ask for the contrast on the log scale and back-transform with `transform = exp`.
+This is the standard approach for ratio measures: the delta-method confidence interval is built on the log scale, where it is symmetric, and then exponentiated to keep it bounded above zero.
+The corresponding shortcuts are `"lnratioavg"` and `"lnoravg"`.
+
+```{r}
+# Risk ratio (ATE)
+ate_rr <- avg_comparisons(
+  gcomp_bin,
+  variables = "park_extra_magic_morning",
+  comparison = "lnratioavg",
+  transform = exp
+)
+ate_rr
+
+# Odds ratio (ATE)
+ate_or <- avg_comparisons(
+  gcomp_bin,
+  variables = "park_extra_magic_morning",
+  comparison = "lnoravg",
+  transform = exp
+)
+ate_or
+```
+
+These are the marginal ATE versions of each measure; the predictions are averaged over the full observed sample.
+Targeting the ATT or ATC works exactly as in @sec-gcomp-target: pass `newdata` to restrict the covariate distribution we average over.
+
+```{r}
+# Risk difference (ATT)
+avg_comparisons(
+  gcomp_bin,
+  variables = "park_extra_magic_morning",
+  newdata = filter(seven_dwarfs_9, park_extra_magic_morning == 1)
+)
+
+# Risk difference (ATC)
+avg_comparisons(
+  gcomp_bin,
+  variables = "park_extra_magic_morning",
+  newdata = filter(seven_dwarfs_9, park_extra_magic_morning == 0)
+)
+```
+
+The same `newdata` argument can be combined with any of the `comparison` shortcuts above to target ATT or ATC versions of the risk ratio or odds ratio.
+
+Following the advice in @sec-binary, we report the three effect measures together with the baseline probability of the outcome.
+The baseline here is the probability of an average wait over 60 minutes if no day had Extra Magic Mornings, which we can pull out of `avg_predictions()` by setting the exposure to 0 for everyone.
+
+```{r}
+ate_baseline <- avg_predictions(
+  gcomp_bin,
+  variables = list(park_extra_magic_morning = 0)
+)
+
+summary_row <- function(x, label) {
+  x |>
+    as.data.frame() |>
+    transmute(measure = label, estimate, conf.low, conf.high)
+}
+
+bind_rows(
+  summary_row(ate_baseline, "Baseline probability"),
+  summary_row(ate_rd, "Risk difference"),
+  summary_row(ate_rr, "Risk ratio"),
+  summary_row(ate_or, "Odds ratio")
+)
+```
+
+As we discussed in @sec-non-collapse, odds ratios are non-collapsible: the conditional log-odds ratio reported in the `glm()` coefficient is generally not equal to the marginal odds ratio shown above, even when there is no confounding to adjust for.
+G-computation deliberately marginalizes over the covariate distribution.
+Because it's a marginal OR, it's also comparable to an unadjusted OR, whereas a conditional OR is not.
 
 ### Continuous Exposures
 
