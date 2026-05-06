@@ -449,8 +449,9 @@ There are three fixes.
 
 The most direct approach is to include the matching covariates in the outcome model with the right functional form.
 Correctly specifying the model removes the omitted-variable signal from the residuals, and naive SEs become valid.
-The catch is that we now need to avoid misspecifying the functional form of all covariates in the outcome model.
-The other two fixes correct the SE without including more variables in the outcome model.
+The catch is that we now need to avoid misspecifying the functional form of all covariates used for matching in the outcome model.
+We can never be certain that we have achieved this.
+The other two fixes correct the SE without including more variables in the outcome model, and so they are a more forgiving approach.
 
 The second solution is a cluster-robust standard error clustered within matched pairs.
 `get_matches()` returns a `subclass` column identifying each pair, which we pass to `sandwich::vcovCL()` as the cluster argument (as a formula) to compute the cluster-robust variance.
