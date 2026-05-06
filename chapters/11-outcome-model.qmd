@@ -45,7 +45,7 @@ matched_data <- get_matches(matchit_obj)
 
 Remember that, with matching, we are trying to find a subset of the data where the assumptions of causal inference, particularly exchangeability, hold.
 If we have succeeded in doing so, we can compare the differences in wait times between the groups without additional covariates, much as we can in a randomized trial.
-There are other good reasons to include covariates besides the outcome, including improved precision, heterogeneous treatment effects, and, as we will see, to get the correct standard errors, but for now, we will focus on the simple question at hand: Does having Extra Magic Mornings change the posted wait time between 9 AM and 10 AM?
+There are other good reasons to include covariates in the outcome model, including improved precision, heterogeneous treatment effects, and, as we will see, to get the correct standard errors, but for now, we will focus on the simple question at hand: Does having Extra Magic Mornings change the posted wait time between 9 AM and 10 AM?
 
 To answer this question, let's fit a linear regression with the matched data set.
 Here, we have the posted wait times as the outcome and Extra Magic Mornings as the exposure.
@@ -72,7 +72,7 @@ What we need to do is a little more complex than for weighting---and, in fact, w
 
 Using propensity score weights in outcome models requires only one additional step: instructing the regression function to use the weights when fitting the model.
 
-In our previous examples, we used the ATE; however, here we will use ATT weights so the effect estimate is comparable to the matching-based analysis above.
+In our previous examples, we used ATE weights; however, here we will use ATT weights so the effect estimate is comparable to the matching-based analysis above.
 Our workflow is identical to the previous way we calculated the propensity score weights, except we use `propensity::wt_att()`.
 
 ```{r}
@@ -133,6 +133,7 @@ matched_outcome <- lm(
 
 Again, these weights are all 1, so we get identical results.
 However, if you are considering other matching approaches, it's a good defensive practice to ensure you specify the outcome model correctly.
+Matching itself can be thought of as an extreme form of weighting where everyone with a match gets a non-zero weight and everyone without a match gets a weight of 0, so it's also logically consistent.
 :::
 
 Using weighting, we estimate that among days that have Extra Magic Mornings, the expected impact of having Extra Magic Mornings on the average posted wait time between 9 AM and 10 AM is `r round(coef(weighted_outcome)[["park_extra_magic_morning"]], 1)` minutes.
@@ -172,7 +173,7 @@ To correctly specify the uncertainty in the second model, we need to include the
 Much of this chapter is focused on **statistical inference**.
 While *causal* inference is the set of tools that we've used so far to make causal effect estimation possible, *statistical* inference is the more general toolkit of standard errors, confidence intervals, and hypothesis tests, built on sampling distributions of estimators.
 It's the kind of inference normally taught in a statistics class.
-Like the distinction between description, prediction, and causal inference, these are separate but complementary ideas: we use statistical inference to test if our causal estimates have a meaningful statistical interpretation, and we likewise can't estimate causal effects out of hypothesis tests without a set of causal assumptions.
+Like the distinction between description, prediction, and causal inference, these are separate but complementary ideas: we use statistical inference to test if our causal estimates have a meaningful statistical interpretation, and as we have seen, interpreting statistical results such as estimation or hypothesis testing from a causal perspective requires causal assumptions.
 
 There are three ways to estimate the uncertainty for IPW:
 
