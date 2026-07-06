@@ -327,7 +327,7 @@ We'll see more about this in @sec-pred-or-explain and the rest of the book.
 Often, people mistakenly use methods for selecting features (variables) for prediction models to select confounders in causal models.
 Aside from their risk of overfitting, these methods are appropriate for prediction models but not for causal models.
 Prediction metrics cannot determine the causal structure of your question, and predictive value for the outcome does not make a variable a confounder.
-In general, background knowledge (not prediction or associational statistics) should help you select variables for causal models @robinsImpossible; we'll discuss this process in detail in [Chapter -@sec-dags] and [Chapter -@sec-building-models].
+In general, background knowledge (not prediction or associational statistics) should help you select variables for causal models [@robinsImpossible]; we'll discuss this process in detail in [Chapter -@sec-dags] and [Chapter -@sec-building-models].
 
 Prediction is nevertheless crucial to causal inference.
 From a philosophical perspective, we're comparing predictions from different *what if* scenarios: What would the outcome had one thing happened vs. if another thing happened?
