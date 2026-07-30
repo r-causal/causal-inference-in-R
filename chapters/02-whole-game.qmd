@@ -315,11 +315,11 @@ mosquito_dag |>
   dag_paths() |>
   mutate(
     effects = case_when(
-      set == "1" & path == "open path" ~ "true effect",
-      path == "open path" ~ "confounding effect",
-      TRUE ~ NA_character_
+      path_type == "direct" ~ "causal path",
+      path == "open path" ~ "open noncausal path",
+      TRUE ~ "closed path"
     ),
-    effects = factor(effects, c("true effect", "confounding effect"))
+    effects = factor(effects, c("causal path", "open noncausal path"))
   ) |>
   ggplot(aes(
     x = x,
@@ -371,13 +371,13 @@ mosquito_dag |>
     name = NULL,
     na.value = "grey90",
     order = c(3, 6),
-    breaks = c("true effect", "confounding effect")
+    breaks = c("causal path", "open noncausal path")
   ) +
   scale_edge_color_okabe_ito(
     name = NULL,
     na.value = "grey90",
     order = c(3, 6),
-    breaks = c("true effect", "confounding effect")
+    breaks = c("causal path", "open noncausal path")
   ) +
   guides(alpha = "none", edge_alpha = "none")
 ```
