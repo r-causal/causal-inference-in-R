@@ -451,7 +451,7 @@ For instance, the 16th household used a bed net and had a predicted probability 
 That's a pretty low probability considering they did, in fact, use a net, so their weight is higher at `r round(net_data_wts$wts[[16]], digits = 2)`.
 In other words, this household will be up-weighted compared to the naive linear model we fit above.
 The first household did *not* use a bed net; they're predicted probability of net use was `r round(net_data_wts$.fitted[[1]], digits = 2)` (or put differently, a predicted probability of *not* using a net of `r 1 - round(net_data_wts$.fitted[[1]], digits = 2)`).
-That's more in line with their observed value of `net`, but there's still some predicted probability of using a net, so their weight is `r round(net_data_wts$wts[[2]], digits = 2)`.
+That's more in line with their observed value of `net`, but there's still some predicted probability of using a net, so their weight is `r round(net_data_wts$wts[[1]], digits = 2)`.
 
 ## Diagnose our models
 
