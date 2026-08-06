@@ -492,7 +492,7 @@ ggplot(plot_data, aes(happiness, y_id, color = observed, shape = observed)) +
     inherit.aes = FALSE,
     color = "grey40",
     size = 3.75,
-    label.size = NA
+    linewidth = NA
   ) +
   geom_curve(
     data = exchangeability_annotation,
@@ -510,7 +510,7 @@ ggplot(plot_data, aes(happiness, y_id, color = observed, shape = observed)) +
     nudge_x = 0.5,
     color = "grey40",
     size = 4,
-    label.size = NA
+    linewidth = NA
   ) +
   facet_wrap(~potential_outcome) +
   scale_y_continuous(
@@ -982,7 +982,7 @@ ggplot(
     inherit.aes = FALSE,
     color = "grey40",
     size = 4.5,
-    label.size = NA
+    linewidth = NA
   ) +
   facet_wrap(~potential_outcome) +
   scale_y_continuous(
@@ -1065,13 +1065,13 @@ data_observed_poorly_defined <- data |>
       rbinom(n(), 1, 0.25) == 1 ~ "chocolate",
       .default = "vanilla"
     ),
-    observed_outcome = case_match(
+    observed_outcome = recode_values(
       exposure_unobserved,
       "chocolate (spoiled)" ~ y_spoiled_chocolate,
       "chocolate" ~ y_chocolate,
       "vanilla" ~ y_vanilla
     ),
-    exposure = case_match(
+    exposure = recode_values(
       exposure_unobserved,
       c("chocolate (spoiled)", "chocolate") ~ "chocolate",
       "vanilla" ~ "vanilla"
@@ -1079,7 +1079,7 @@ data_observed_poorly_defined <- data |>
   )
 ```
 
-We know the *true* average causal effect of (unspoiled) chocolate in the sample is `r mean(data |> pull(causal_effect))`; however, our estimated causal effect is `r data_observed |> group_by(exposure) |> summarise(avg_outcome = mean(observed_outcome)) |> mutate(exposure = c(1, 0)) |> pivot_wider(names_from = exposure, values_from = avg_outcome, names_prefix = "x_") |> summarise(estimate = x_1 - x_0) |> pull() |> round(1)`.
+We know the *true* average causal effect of (unspoiled) chocolate in the sample is `r mean(data |> pull(causal_effect))`; however, our estimated causal effect is `r data_observed_poorly_defined |> group_by(exposure) |> summarise(avg_outcome = mean(observed_outcome), .groups = "drop") |> summarise(estimate = avg_outcome[exposure == "chocolate"] - avg_outcome[exposure == "vanilla"]) |> pull(estimate) |> round(1)`.
 
 ```{r}
 data_observed_poorly_defined |>
@@ -1089,7 +1089,7 @@ data_observed_poorly_defined |>
 
 The potential outcome we think we are estimating is not the one we are observing.
 We're treating fresh chocolate ice cream and spoiled chocolate ice cream as the same exposure, but they have different effects on the potential outcomes.
-Because the exposure is random, we actually do a pretty good job of estimating the effect of `y(chocolate, spoiled = FALSE) | y(chocolate, spoiled = TRUE)`, but that's not what we're interested in.
+Because the exposure is random, we actually do a pretty good job of estimating the effect of `y(chocolate, spoiled = FALSE) or y(chocolate, spoiled = TRUE)`, but that's not what we're interested in.
 We just want `y(chocolate, spoiled = FALSE)`.
 
 ```{r}
@@ -1242,7 +1242,7 @@ ggplot(plot_data, aes(x = happiness, y = y_id)) +
     inherit.aes = FALSE,
     color = "grey40",
     size = 4,
-    label.size = NA
+    linewidth = NA
   ) +
   geom_curve(
     data = flawed_avg_annotation,
@@ -1259,7 +1259,7 @@ ggplot(plot_data, aes(x = happiness, y = y_id)) +
     inherit.aes = FALSE,
     color = "grey40",
     size = 4,
-    label.size = NA
+    linewidth = NA
   ) +
   geom_curve(
     data = unspoiled_arrows,
@@ -1276,7 +1276,7 @@ ggplot(plot_data, aes(x = happiness, y = y_id)) +
     inherit.aes = FALSE,
     color = "grey40",
     size = 4,
-    label.size = NA
+    linewidth = NA
   ) +
   facet_wrap(~potential_outcome) +
   scale_y_continuous(
@@ -1591,7 +1591,7 @@ ggplot(plot_data, aes(x = happiness, y = y_id)) +
     inherit.aes = FALSE,
     color = "grey40",
     size = 3,
-    label.size = NA
+    linewidth = NA
   ) +
   geom_curve(
     data = unobserved_arrows,
@@ -1608,7 +1608,7 @@ ggplot(plot_data, aes(x = happiness, y = y_id)) +
     inherit.aes = FALSE,
     color = "grey40",
     size = 3,
-    label.size = NA
+    linewidth = NA
   ) +
   geom_curve(
     data = chocolate_unobserved_arrow,
@@ -1625,7 +1625,7 @@ ggplot(plot_data, aes(x = happiness, y = y_id)) +
     inherit.aes = FALSE,
     color = "grey40",
     size = 3,
-    label.size = NA
+    linewidth = NA
   ) +
   facet_wrap(~potential_outcome) +
   scale_y_continuous(
