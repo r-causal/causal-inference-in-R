@@ -466,7 +466,7 @@ seven_dwarfs_sim2 <- seven_dwarfs_train_2018 |>
     wait_minutes_posted_avg = wait_minutes_posted_avg + u,
     park_extra_magic_morning = if_else(
       u > 10,
-      rbinom(1, 1, 0.1),
+      rbinom(n(), 1, 0.1),
       park_extra_magic_morning
     ),
     wait_time_universal = park_temperature_high /

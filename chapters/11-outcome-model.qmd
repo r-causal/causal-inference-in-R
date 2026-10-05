@@ -139,7 +139,7 @@ Matching itself can be thought of as an extreme form of weighting where everyone
 Using weighting, we estimate that among days that have Extra Magic Mornings, the expected impact of having Extra Magic Mornings on the average posted wait time between 9 AM and 10 AM is `r round(coef(weighted_outcome)[["park_extra_magic_morning"]], 1)` minutes.
 
 ::: callout-tip
-## Causal inference with `group_by()` and `summarize()`, revisted
+## Causal inference with `group_by()` and `summarize()`, revisited
 
 In this simple example, the weighted outcome model is equivalent to the difference between the weighted means.
 The weighted population is a pseudo-population where there is no confounding by the variables in the propensity score.
@@ -205,7 +205,7 @@ fit_ipw <- function(.split, ...) {
     park_extra_magic_morning ~ park_ticket_season +
       park_close +
       park_temperature_high,
-    data = seven_dwarfs_9,
+    data = .df,
     family = binomial()
   )
 

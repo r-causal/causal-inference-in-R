@@ -1180,7 +1180,7 @@ seven_dwarfs_wts |>
 ```
 
 ::: callout-note
-## Trimming and truncation, revisted
+## Trimming and truncation, revisited
 
 As we saw in @sec-weighting, trimming or truncating is a common technique for dealing with positivity and overlap issues.
 You can think of the resulting estimand as another type of overlap population.
