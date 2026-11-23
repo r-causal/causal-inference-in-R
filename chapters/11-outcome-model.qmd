@@ -205,7 +205,7 @@ fit_ipw <- function(.split, ...) {
     park_extra_magic_morning ~ park_ticket_season +
       park_close +
       park_temperature_high,
-    data = seven_dwarfs_9,
+    data = .df,
     family = binomial()
   )
 
